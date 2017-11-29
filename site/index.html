@@ -28,7 +28,7 @@ pre {
 <script src="lib/openpgp.min.js"></script>
 <script>
 const apiPost = function(path, dataObj) {
-  fetch(path, {
+  return fetch(path, {
     method: 'post',
     headers: {
       'Content-Type': 'application/json'

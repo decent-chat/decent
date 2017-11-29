@@ -3,13 +3,38 @@
 const Datastore = require('nedb-promise')
 const express = require('express')
 const bodyParser = require('body-parser')
+const bcrypt = require('bcrypt-nodejs')
+const socketio = require('socket.io')
+const http = require('http')
+
+const bcryptGenSalt = (rounds = 10) => new Promise((resolve, reject) => {
+  bcrypt.genSalt(rounds, (err, salt) => {
+    if (err) {
+      reject(err)
+    } else {
+      resolve(salt)
+    }
+  })
+})
+
+const bcryptHash = (str, salt) => new Promise((resolve, reject) => {
+  bcrypt.hash(str, salt, null, (err, hash) => {
+    if (err) {
+      reject(err)
+    } else {
+      resolve(hash)
+    }
+  })
+})
+
 const app = express()
-const http = require('http').Server(app)
-const io = require('socket.io')(http)
+const httpServer = http.Server(app)
+const io = socketio(httpServer)
 
 async function main() {
   const db = {
-    messages: new Datastore({filename: 'db/messages'})
+    messages: new Datastore({filename: 'db/messages'}),
+    users: new Datastore({filename: 'db/users'})
   }
 
   await Promise.all(Object.values(db).map(d => d.loadDatabase()))
@@ -51,6 +76,29 @@ async function main() {
     io.emit('released public key', {key, userID})
   })
 
+  app.post('/api/register', async (request, response) => {
+    const { username } = request.body
+    let { password } = request.body
+
+    if (!username || !password) {
+      return
+    }
+
+    const salt = await bcryptGenSalt()
+    const passwordHash = await bcryptHash(password, salt)
+    password = ''
+
+    const user = await db.users.insert({
+      username,
+      passwordHash,
+      salt
+    })
+
+    response.end(JSON.stringify({
+      id: user._id
+    }))
+  })
+
   io.on('connection', socket => {
     console.log('a user connected')
 
@@ -59,10 +107,10 @@ async function main() {
     })
   })
 
-  http.listen(3000, () => {
+  httpServer.listen(3000, () => {
     console.log('listening on port 3000')
   })
 }
 
 main()
-  .catch(err => console.error(err))
+  .catch(err => console.error(err.stack))
