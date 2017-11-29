@@ -27,7 +27,17 @@ pre {
 <script src="/socket.io/socket.io.js"></script>
 <script src="lib/openpgp.min.js"></script>
 <script>
-async function main() {
+const apiPost = function(path, dataObj) {
+  fetch(path, {
+    method: 'post',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(dataObj)
+  })
+}
+
+const main = async function() {
   const socket = io()
 
   let userID
@@ -100,13 +110,13 @@ async function main() {
     localStorage.privateKey = privateKey
   })
 
-  document.getElementById('publish-key').addEventListener('click', () => {
+  document.getElementById('publish-key').addEventListener('click', async () => {
     if (!(privateKey && publicKey)) {
       console.error('cannot publish key - none is available')
       return
     }
 
-    socket.emit('release public key', {
+    await apiPost('/api/release-public-key', {
       key: publicKey, userID
     })
   })
@@ -144,7 +154,7 @@ async function main() {
       console.log('signed message')
     }
 
-    socket.emit('send chat message', {
+    await apiPost('/api/send-message', {
       text,
       signature,
       userID
