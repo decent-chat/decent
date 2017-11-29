@@ -1,0 +1,3 @@
+db/*
+!db/.gitkeep
+node_modules
