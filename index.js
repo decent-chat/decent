@@ -1,5 +1,9 @@
 'use strict'
 
+process.on('unhandledRejection', err => {
+  console.error(err.stack)
+})
+
 const Datastore = require('nedb-promise')
 const express = require('express')
 const bodyParser = require('body-parser')
@@ -78,6 +82,10 @@ async function main() {
     const { text, signature, sessionID } = request.body
 
     if (!text || !sessionID) {
+      response.end(JSON.stringify({
+        error: 'missing text or sessionID field'
+      }))
+
       return
     }
 
@@ -102,6 +110,54 @@ async function main() {
     response.end(JSON.stringify({
       success: true
     }))
+  })
+
+  app.post('/api/edit-message', async (request, response) => {
+    const { messageID, text, signature, sessionID } = request.body
+
+    if (!sessionID || !messageID || !text) {
+      response.end(JSON.stringify({
+        error: 'missing sessionID, messageID, or text field'
+      }))
+
+      return
+    }
+
+    const oldMessage = await db.messages.findOne({_id: messageID})
+
+    if (!oldMessage) {
+      response.end(JSON.stringify({
+        error: 'no message by given id'
+      }))
+
+      return
+    }
+
+    const { username } = await getUserBySessionID(sessionID)
+
+    if (username !== oldMessage.author) {
+      response.end(JSON.stringify({
+        error: 'you are not the owner of this message'
+      }))
+
+      return
+    }
+
+    const [ numAffected, newMessage ] = await db.messages.update({_id: messageID}, {
+      $push: {
+        revisions: {
+          text, signature,
+          date: Date.now()
+        }
+      }
+    }, {
+      multi: false,
+      returnUpdatedDocs: true
+    })
+
+    io.emit('edited chat message', {message: newMessage})
+
+    response.end(JSON.stringify({success: true}))
   })
 
   app.post('/api/release-public-key', async (request, response) => {

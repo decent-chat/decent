@@ -246,7 +246,6 @@ const main = async function() {
 
   socket.on('received chat message', async msg => {
     if (typeof msg !== 'object') {
-      console.warn('received non-object message:', msg)
       return
     }
 
@@ -262,8 +261,24 @@ const main = async function() {
 
     const el = document.createElement('div')
     el.classList.add('message')
+    el.setAttribute('id', 'message-' + msg.message._id)
     el.appendChild(await buildMessageContent(msg.message))
     messagesContainer.appendChild(el)
+  })
+
+  socket.on('edited chat message', async msg => {
+    if (typeof msg !== 'object') {
+      return
+    }
+
+    const { revisions, author, _id } = msg.message
+
+    const el = document.getElementById('message-' + _id)
+
+    if (el) {
+      el.querySelector('.message-revision-content').remove()
+      el.appendChild(await buildMessageContent(msg.message))
+    }
   })
 
   socket.on('released public key', async msg => {
