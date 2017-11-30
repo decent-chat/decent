@@ -21,6 +21,7 @@ body, html, #app {
 #form-container {
   padding: 5px;
   background-color: #333;
+  color: #DDD;
 }
 
 #form {
@@ -33,7 +34,7 @@ body, html, #app {
   color: #EEE;
 }
 
-.message:hover {
+.message.created-by-us:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
@@ -51,7 +52,28 @@ body, html, #app {
   background-color: #232323;
 }
 
+.message-author {
+  float: left;
+}
+
+.message time {
+  float: right;
+}
+
+.message-author {
+  font-weight: bold;
+}
+
+.message-content {
+  clear: both;
+  display: block;
+}
+
 a {
   color: #E080FF;
   text-decoration: none;
+}
+
+time {
+  opacity: 0.5;
 }

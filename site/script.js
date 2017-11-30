@@ -8,11 +8,15 @@ const apiPost = function(path, dataObj) {
   }).then(res => res.json())
 }
 
+const queryByDataset = function(key, value) {
+  return `[data-${key}='${value.replace(/'/g, '\\\'')}']`
+}
+
 const main = async function() {
   const socket = io()
 
-  let sessionID
-  let user = null
+  let sessionID, sessionObj
+  let processPGP = false
   let privateKey, publicKey, privateKeyObj
   let publicKeyDictionary = {}
 
@@ -25,11 +29,51 @@ const main = async function() {
   if ('sessionID' in localStorage) {
     sessionID = localStorage.sessionID
     console.log('loaded session ID from local storage')
-
-    const { username } = await apiPost('/api/whoami', { sessionID })
-    user = { username }
-    console.log('username:', username)
   }
+
+  const loginStatusEl = document.getElementById('login-status')
+  const updateSessionData = async function() {
+    let loggedIn = false
+
+    if (sessionID) {
+      const sessionData = await fetch('/api/session/' + sessionID).then(res => res.json())
+
+      if (sessionData.success) {
+        loggedIn = true
+        sessionObj = sessionData
+      }
+    }
+
+    for (const msg of document.querySelectorAll('.message.created-by-us')) {
+      msg.classList.remove('created-by-us')
+    }
+
+    while (loginStatusEl.firstChild) loginStatusEl.firstChild.remove()
+
+    if (loggedIn) {
+      const { user: { username } } = sessionObj
+
+      loginStatusEl.appendChild(document.createTextNode(
+        'Logged in as ' + username
+      ))
+
+      document.getElementById('register').style.display = 'none'
+      document.getElementById('login').style.display = 'none'
+      document.getElementById('logout').style.removeProperty('display')
+
+      for (const msg of document.querySelectorAll(queryByDataset('author', username))) {
+        msg.classList.add('created-by-us')
+      }
+    } else {
+      loginStatusEl.appendChild(document.createTextNode('Not logged in'))
+
+      document.getElementById('register').style.removeProperty('display')
+      document.getElementById('login').style.removeProperty('display')
+      document.getElementById('logout').style.display = 'none'
+    }
+  }
+
+  await updateSessionData()
 
   document.getElementById('gen-key').addEventListener('click', async () => {
     const name = prompt('What name would you like to assign to your key?')
@@ -174,9 +218,13 @@ const main = async function() {
     sessionID = result.sessionID
     localStorage.sessionID = sessionID
 
-    user = { username }
+    await updateSessionData()
+  })
 
-    alert('Success! Logged in.')
+  document.getElementById('logout').addEventListener('click', async () => {
+    sessionID = ''
+    localStorage.sessionID = ''
+    await updateSessionData()
   })
 
   const signText = async function(text) {
@@ -215,6 +263,8 @@ const main = async function() {
     // Formats some message text and returns a <span> element ready to be displayed.
 
     const el = document.createElement('span')
+    const { user } = sessionObj
+
     let buffer = ''
     let currentToken = 'text'
     let esc = false
@@ -241,9 +291,9 @@ const main = async function() {
           el.appendChild(mentionEl)
         }
       } else if (currentToken === 'code') {
-        let codeEl = document.createElement('pre')
+        let codeEl = document.createElement('code')
 
-        codeEl.classList.add('message-inline-code'))
+        codeEl.classList.add('message-inline-code')
         codeEl.appendChild(document.createTextNode(buffer))
 
         el.appendChild(codeEl)
@@ -256,16 +306,17 @@ const main = async function() {
 
     for (let c = 0; c < text.length; c++) {
       const char = text[c]
+      const charBefore = text[c - 1] || ' '
 
       if (esc) esc = false
       else {
         if (char === '\\') { esc = true; continue }
 
-        else if (char === '@' && currentToken === 'text') startToken('mention')
+        else if (char === '@' && currentToken === 'text' && charBefore === ' ') startToken('mention')
         else if (!(/[a-zA-Z0-9_-]/).test(char) && currentToken === 'mention') startToken('text')
 
-        else if (char === '`' && currentToken !== 'code') startToken('code')
-        else if (char === '`' && currentToken === 'code') startToken('text')
+        else if (char === '`' && currentToken !== 'code') { startToken('code'); continue }
+        else if (char === '`' && currentToken === 'code') { startToken('text'); continue }
       }
 
       buffer += char
@@ -286,6 +337,10 @@ const main = async function() {
       revisionIndex = message.revisions.length - 1
     }
 
+    if (revisionIndex < 0) {
+      revisionIndex = 0
+    }
+
     const revision = message.revisions[revisionIndex]
 
     const { text, signature } = revision
@@ -298,25 +353,37 @@ const main = async function() {
     authorEl.appendChild(document.createTextNode(author))
 
     el.appendChild(authorEl)
-    el.appendChild(formatMessageText(text))
 
-    if (signature) {
-      if (author in publicKeyDictionary === false) {
-        el.appendChild(document.createTextNode(' (Signed, but this user is not in your public key dictionary)'))
-      } else {
-        const verified = await openpgp.verify({
-          message: openpgp.cleartext.readArmored(signature),
-          publicKeys: openpgp.key.readArmored(publicKeyDictionary[author]).keys
-        })
+    const messageDate = new Date(message.date)
 
-        if (verified.signatures[0].valid) {
-          el.appendChild(document.createTextNode(' (Verified)'))
+    const time = document.createElement('time')
+    time.setAttribute('datetime', messageDate.toISOString())
+    time.appendChild(document.createTextNode(`${messageDate.getHours()}:${messageDate.getMinutes()}`))
+    el.appendChild(time)
+
+    const contentEl = formatMessageText(text)
+    contentEl.classList.add('message-content')
+    el.appendChild(contentEl)
+
+    if (processPGP) {
+      if (signature) {
+        if (author in publicKeyDictionary === false) {
+          el.appendChild(document.createTextNode(' (Signed, but this user is not in your public key dictionary)'))
         } else {
-          el.appendChild(document.createTextNode(' (FORGED? Signature data provided, but sign did not match)'))
+          const verified = await openpgp.verify({
+            message: openpgp.cleartext.readArmored(signature),
+            publicKeys: openpgp.key.readArmored(publicKeyDictionary[author]).keys
+          })
+
+          if (verified.signatures[0].valid) {
+            el.appendChild(document.createTextNode(' (Verified)'))
+          } else {
+            el.appendChild(document.createTextNode(' (FORGED? Signature data provided, but sign did not match)'))
+          }
         }
+      } else {
+        el.appendChild(document.createTextNode(' (No signature data)'))
       }
-    } else {
-      el.appendChild(document.createTextNode(' (No signature data)'))
     }
 
     if (message.revisions.length > 1) {
@@ -339,6 +406,10 @@ const main = async function() {
         evt.stopPropagation()
 
         const index = prompt('View the version at what index? (Leave blank for the latest.)')
+
+        if (index === null) {
+          return
+        }
 
         if (index.trim().length) {
           await showMessageRevision(message, index - 1)
@@ -374,14 +445,24 @@ const main = async function() {
     const el = document.createElement('div')
     el.classList.add('message')
     el.setAttribute('id', 'message-' + _id)
+    el.dataset.author = author
     el.appendChild(await buildMessageContent(msg.message))
     messagesContainer.appendChild(el)
+
+    if (sessionObj && author === sessionObj.user.username) {
+      el.classList.add('created-by-us')
+    }
 
     if (wasScrolledToBottom) {
       messagesContainer.scrollTop = getScrollDist()
     }
 
     el.addEventListener('click', async () => {
+      // Don't do anything if we don't own this message!
+      if (!(sessionObj && author === sessionObj.user.username)) {
+        return
+      }
+
       const text = prompt('Edit message - new content?')
 
       if (!text || text.trim().length === 0) {

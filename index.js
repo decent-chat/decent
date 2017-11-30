@@ -172,8 +172,6 @@ async function main() {
   })
 
   app.get('/api/message/:message', async (request, response) => {
-    console.log('message', request.params.message)
-
     const message = await db.messages.findOne({_id: request.params.message})
 
     if (message) {
@@ -183,12 +181,6 @@ async function main() {
         error: 'message not found'
       }))
     }
-  })
-
-  app.post('/api/whoami', async (request, response) => {
-    const { username } = await getUserBySessionID(request.body.sessionID)
-
-    response.end(JSON.stringify({ username }))
   })
 
   app.post('/api/release-public-key', async (request, response) => {
@@ -293,6 +285,28 @@ async function main() {
         error: 'incorrect password'
       }))
     }
+  })
+
+  app.get('/api/session/:sessionID', async (request, response) => {
+    const user = await getUserBySessionID(request.params.sessionID)
+
+    if (!user) {
+      response.end(JSON.stringify({
+        error: 'session not found'
+      }))
+
+      return
+    }
+
+    // Don't give the following away, even to the user themselves.
+    delete user.passwordHash
+    delete user.salt
+    delete user._id
+
+    response.end(JSON.stringify({
+      success: true,
+      user
+    }))
   })
 
   io.on('connection', socket => {
