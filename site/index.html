@@ -15,7 +15,11 @@ pre {
 </form>
 <p>
   <button id="set-userid">Set new user ID</button>
-  Your user ID: <span id="user-id">(no ID)</span>
+  Your (deprecated, soon to be obsolete) user ID: <span id="user-id">(no ID)</span>
+</p>
+<p>
+  <button id="register">Register</button>
+  <button id="login">Login</button>
 </p>
 <p>
   <button id="gen-key">Generate OpenPGP key</button>
@@ -34,13 +38,14 @@ const apiPost = function(path, dataObj) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(dataObj)
-  })
+  }).then(res => res.json())
 }
 
 const main = async function() {
   const socket = io()
 
   let userID
+  let sessionID
 
   const userIDSpan = document.getElementById('user-id')
   const setUserID = function(newUserID) {
@@ -127,6 +132,54 @@ const main = async function() {
     if (newUserID) {
       setUserID(newUserID)
     }
+  })
+
+  document.getElementById('register').addEventListener('click', async () => {
+    const username = prompt('Username?')
+    const password = prompt(
+      'Password? (Must be at least 6 characters long.)\n' +
+      'This password is NOT secure yet! It is stored securely, but you are probably not on an HTTPS connection.\n' +
+      'That means just about anyone can look at your HTTP request and find out your password.\n' +
+      'DO NOT use something you use anywhere else!'
+    )
+
+    if (!username || !password) {
+      alert('Please enter both a username and a password.')
+      return
+    }
+
+    const result = await apiPost('/api/register', {username, password})
+
+    if (result.error === 'password must be at least 6 characters long') {
+      alert('Couldn\'t create account - password too short!')
+      return
+    }
+
+    alert(`Success! Account ${username} created. Please log in.`)
+  })
+
+  document.getElementById('login').addEventListener('click', async () => {
+    const username = prompt('Username?')
+    const password = prompt('Password?')
+
+    if (!username || !password ) {
+      alert('Please enter both a username and a password.')
+    }
+
+    const result = await apiPost('/api/login', {username, password})
+
+    if (result.error) {
+      if (result.error === 'user not found') {
+        alert(`There is no user with the username ${username}.`)
+      } else if (result.error === 'incorrect password') {
+        alert(`Incorrect password!`)
+      }
+      return
+    }
+
+    sessionID = result.sessionID
+
+    alert('Success! Logged in.')
   })
 
   const chatInput = document.getElementById('chat-input')
