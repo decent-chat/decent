@@ -69,6 +69,22 @@ body, html, #app {
   display: block;
 }
 
+.message-format-b {
+  font-weight: bold;
+}
+
+.message-format-i {
+  font-style: italic;
+}
+
+.message-format-u {
+  text-decoration: underline;
+}
+
+.message-format-s {
+  text-decoration: line-through;
+}
+
 a {
   color: #E080FF;
   text-decoration: none;

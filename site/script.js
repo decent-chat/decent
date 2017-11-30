@@ -267,6 +267,7 @@ const main = async function() {
 
     let buffer = ''
     let currentToken = 'text'
+    let styles = {} // (b)old, (i)talics, (u)nderline, (s)trikethrough
     let esc = false
 
     function startToken(nextToken) {
@@ -274,13 +275,22 @@ const main = async function() {
       if (buffer === '') {
         ;
       } else if (currentToken === 'text') {
-        el.appendChild(document.createTextNode(buffer))
+        const textNode = document.createTextNode(buffer)
+        const spanEl = document.createElement('span')
+        spanEl.appendChild(textNode)
+
+        // (b)old, (i)talic, etc.
+        for (let [ style, enabled ] of Object.entries(styles)) {
+          if (enabled) spanEl.classList.add('message-format-' + style)
+        }
+
+        el.appendChild(spanEl)
       } else if (currentToken === 'mention') {
         if (buffer === '@') { // TODO: must be a logged-in username!
           // not a mention; treat as text
           el.appendChild(document.createTextNode(buffer))
         } else {
-          let mentionEl = document.createElement('span')
+          const mentionEl = document.createElement('span')
 
           mentionEl.classList.add('message-mention')
 
@@ -291,7 +301,7 @@ const main = async function() {
           el.appendChild(mentionEl)
         }
       } else if (currentToken === 'code') {
-        let codeEl = document.createElement('code')
+        const codeEl = document.createElement('code')
 
         codeEl.classList.add('message-inline-code')
         codeEl.appendChild(document.createTextNode(buffer))
@@ -304,9 +314,22 @@ const main = async function() {
       currentToken = nextToken
     }
 
+    function toggleStyle(k) {
+      if (styles[k] === true) {
+        // end style
+        startToken('text')
+        styles[k] = false
+      } else {
+        // start style
+        startToken('text') // end current token
+        styles[k] = true
+      }
+    }
+
     for (let c = 0; c < text.length; c++) {
       const char = text[c]
       const charBefore = text[c - 1] || ' '
+      const charNext = text[c + 1] || ' '
 
       if (esc) esc = false
       else {
@@ -315,6 +338,40 @@ const main = async function() {
         else if (char === '@' && currentToken === 'text' && charBefore === ' ') startToken('mention')
         else if (!(/[a-zA-Z0-9_-]/).test(char) && currentToken === 'mention') startToken('text')
 
+        else if (char === '*' && currentToken === 'text') {
+          if (charNext === '*') {
+            // bold
+            toggleStyle('b')
+            c++ // skip charNext
+          } else {
+            // italic
+            toggleStyle('i')
+          }
+
+          continue
+        }
+
+        else if (char === '_' && currentToken === 'text') {
+          if (charNext === '_') {
+            // underline
+            toggleStyle('u')
+            c++ // skip charNext
+          } else {
+            // italic
+            toggleStyle('i')
+          }
+
+          continue
+        }
+
+        else if (char === '~' && charNext === '~' && currentToken === 'text') {
+          // strikethrough
+          toggleStyle('s')
+          c++ // skip charNext
+
+          continue
+        }
+
         else if (char === '`' && currentToken !== 'code') { startToken('code'); continue }
         else if (char === '`' && currentToken === 'code') { startToken('text'); continue }
       }
@@ -322,6 +379,7 @@ const main = async function() {
       buffer += char
     }
 
+    styles = {}
     startToken(null)
     return el
   }
