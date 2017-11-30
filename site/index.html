@@ -1,3 +1,4 @@
+<link rel="stylesheet" href="styles.css">
 <style>
 pre {
   max-height: 100px;
@@ -8,13 +9,15 @@ pre {
 }
 </style>
 
-<div id="messages"></div>
-<p>
+<div id="app">
+  <div id="messages"></div>
   <form id="form" action="">
     <input id="chat-input" autofocus>
     <button>Send</button>
   </form>
-</p>
+</div>
+
+<div style="display: none;">
 <p>
   <button id="register">Register</button>
   <button id="login">Login</button>
@@ -25,6 +28,7 @@ pre {
   <button id="save-key">Save key</button>
   <button id="publish-key">Publish public key</button>
 </p>
+</div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="lib/openpgp.min.js"></script>

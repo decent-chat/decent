@@ -1,0 +1,39 @@
+body, html, #app {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  font-family: sans-serif;
+}
+
+#messages {
+  flex-grow: 1;
+  background-color: #444;
+  padding: 5px 40px;
+  overflow-y: scroll;
+}
+
+#form {
+  padding: 5px;
+  background-color: #333;
+  margin: 0;
+}
+
+.message {
+  padding: 4px;
+  color: #EEE;
+}
+
+.message:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+a {
+  color: #E080FF;
+  text-decoration: none;
+}
