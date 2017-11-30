@@ -89,10 +89,17 @@ async function main() {
       return
     }
 
-    const { username } = await getUserBySessionID(sessionID)
+    const user = await getUserBySessionID(sessionID)
+
+    if (!user) {
+      response.end(JSON.stringify({
+        error: 'invalid session ID'
+      }))
+      return
+    }
 
     const message = await db.messages.insert({
-      author: username,
+      author: user.username,
       date: Date.now(),
       revisions: [
         {
@@ -100,9 +107,7 @@ async function main() {
           signature: request.body.signature,
           date: Date.now()
         }
-      ],
-      author: username,
-      date: Date.now()
+      ]
     })
 
     io.emit('received chat message', {message})
@@ -133,9 +138,15 @@ async function main() {
       return
     }
 
-    const { username } = await getUserBySessionID(sessionID)
+    const user = await getUserBySessionID(sessionID)
 
-    if (username !== oldMessage.author) {
+    if (!user) {
+      response.end(JSON.stringify({
+        error: 'invalid session ID'
+      }))
+    }
+
+    if (user.username !== oldMessage.author) {
       response.end(JSON.stringify({
         error: 'you are not the owner of this message'
       }))
@@ -181,7 +192,17 @@ async function main() {
       return
     }
 
-    const { username } = await getUserBySessionID(sessionID)
+    const user = await getUserBySessionID(sessionID)
+
+    if (!user) {
+      response.end(JSON.stringify({
+        error: 'invalid session ID'
+      }))
+
+      return
+    }
+
+    const { username } = user
 
     io.emit('released public key', {key, username})
 
