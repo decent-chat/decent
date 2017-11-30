@@ -211,7 +211,7 @@ async function main() {
 
   app.post('/api/register', async (request, response) => {
     const { username } = request.body
-    const reValidUsername = /[a-zA-Z0-9_-]+/g
+    const reValidUsername = /^[a-zA-Z0-9_-]+$/g
     let { password } = request.body
 
     if (!username || !password) {

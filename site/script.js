@@ -180,6 +180,8 @@ const main = async function() {
         alert('Couldn\'t create account - password too short.')
       } else if (result.error === 'username already taken') {
         alert('Couldn\'t create account - username already taken.')
+      } else if (result.error === 'username invalid') {
+        alert('Couldn\'t create account - username is invalid (only alphanumeric, underscores, and dashes allowed)')
       }
       return
     }
