@@ -50,6 +50,11 @@ const main = async function() {
     console.log('loaded key pair from local storage')
   }
 
+  if ('sessionID' in localStorage) {
+    sessionID = localStorage.sessionID
+    console.log('loaded session ID from local storage')
+  }
+
   document.getElementById('gen-key').addEventListener('click', async () => {
     const name = prompt('What name would you like to assign to your key?')
     const email = prompt('What email address would you like to assign to your key?')
@@ -155,6 +160,7 @@ const main = async function() {
     }
 
     sessionID = result.sessionID
+    localStorage.sessionID = sessionID
 
     alert('Success! Logged in.')
   })
