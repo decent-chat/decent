@@ -27,6 +27,16 @@ const bcryptHash = (str, salt) => new Promise((resolve, reject) => {
   })
 })
 
+const bcryptCompare = (data, encrypted) => new Promise((resolve, reject) => {
+  bcrypt.compare(data, encrypted, (err, result) => {
+    if (err) {
+      reject(err)
+    } else {
+      resolve(result)
+    }
+  })
+})
+
 const app = express()
 const httpServer = http.Server(app)
 const io = socketio(httpServer)
@@ -95,8 +105,34 @@ async function main() {
     })
 
     response.end(JSON.stringify({
-      id: user._id
+      id: user._id, username
     }))
+  })
+
+  app.post('/api/login', async (request, response) => {
+    const { username } = request.body
+    let { password } = request.body
+
+    const user = await db.users.findOne({username})
+
+    if (!user) {
+      response.end(JSON.stringify({
+        error: 'user not found'
+      }))
+      return
+    }
+
+    const { salt, passwordHash } = user
+
+    if (await bcryptCompare(password, passwordHash)) {
+      response.end(JSON.stringify({
+        nice: 123
+      }))
+    } else {
+      response.end(JSON.stringify({
+        error: 'incorrect password'
+      }))
+    }
   })
 
   io.on('connection', socket => {
