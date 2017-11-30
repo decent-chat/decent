@@ -283,6 +283,7 @@ const main = async function() {
 
         // (b)old, (i)talic, etc.
         for (let [ style, enabled ] of Object.entries(styles)) {
+          if (style == 'i_') style = 'i'
           if (enabled) spanEl.classList.add('message-format-' + style)
         }
 
@@ -309,6 +310,13 @@ const main = async function() {
         codeEl.appendChild(document.createTextNode(buffer))
 
         el.appendChild(codeEl)
+      } else if (currentToken === 'latex') {
+        const spanEl = document.createElement('span')
+
+        spanEl.classList.add('message-latex')
+        katex.render(buffer, spanEl)
+
+        el.appendChild(spanEl)
       }
 
       // start next token
@@ -360,7 +368,7 @@ const main = async function() {
             c++ // skip charNext
           } else {
             // italic
-            toggleStyle('i')
+            toggleStyle('i_')
           }
 
           continue
@@ -373,6 +381,9 @@ const main = async function() {
 
           continue
         }
+
+        else if (char === '$' && charNext === '$' && currentToken !== 'latex') { startToken('latex'); c++; continue }
+        else if (char === '$' && charNext === '$' && currentToken === 'latex') { startToken('text'); c++; continue }
 
         else if (char === '`' && currentToken !== 'code') { startToken('code'); continue }
         else if (char === '`' && currentToken === 'code') { startToken('text'); continue }
