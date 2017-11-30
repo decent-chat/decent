@@ -160,6 +160,20 @@ async function main() {
     response.end(JSON.stringify({success: true}))
   })
 
+  app.get('/api/message/:message', async (request, response) => {
+    console.log('message', request.params.message)
+
+    const message = await db.messages.findOne({_id: request.params.message})
+
+    if (message) {
+      response.end(JSON.stringify(message))
+    } else {
+      response.end(JSON.stringify({
+        error: 'message not found'
+      }))
+    }
+  })
+
   app.post('/api/release-public-key', async (request, response) => {
     const { key, sessionID } = request.body
 

@@ -239,6 +239,35 @@ const main = async function() {
       el.appendChild(document.createTextNode(' (No signature data)'))
     }
 
+    if (message.revisions.length > 1) {
+      let label
+      if (message.revisions.length === 2) {
+        label = '(Edited)'
+      } else {
+        label = `(Edited ${message.revisions.length - 1} times)`
+      }
+
+      const a = document.createElement('a')
+      a.href = '#'
+      a.appendChild(document.createTextNode(label))
+
+      el.appendChild(document.createTextNode(' '))
+      el.appendChild(a)
+
+      a.addEventListener('click', async evt => {
+        evt.preventDefault()
+        evt.stopPropagation()
+
+        const index = prompt('View the version at what index? (Leave blank for the latest.)')
+
+        if (index.trim().length) {
+          await showMessageRevision(message, index - 1)
+        } else {
+          await showMessageRevision(message)
+        }
+      })
+    }
+
     return el
   }
 
@@ -280,19 +309,21 @@ const main = async function() {
     })
   })
 
+  const showMessageRevision = async function(message, index = undefined) {
+    const el = document.getElementById('message-' + message._id)
+
+    if (el) {
+      el.querySelector('.message-revision-content').remove()
+      el.appendChild(await buildMessageContent(message, index))
+    }
+  }
+
   socket.on('edited chat message', async msg => {
     if (typeof msg !== 'object') {
       return
     }
 
-    const { revisions, author, _id } = msg.message
-
-    const el = document.getElementById('message-' + _id)
-
-    if (el) {
-      el.querySelector('.message-revision-content').remove()
-      el.appendChild(await buildMessageContent(msg.message))
-    }
+    await showMessageRevision(msg.message)
   })
 
   socket.on('released public key', async msg => {
