@@ -18,9 +18,13 @@ body, html, #app {
   overflow-y: scroll;
 }
 
-#form {
+#form-container {
   padding: 5px;
   background-color: #333;
+}
+
+#form {
+  display: inline-block;
   margin: 0;
 }
 

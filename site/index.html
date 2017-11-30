@@ -11,17 +11,17 @@ pre {
 
 <div id="app">
   <div id="messages"></div>
-  <form id="form" action="">
-    <input id="chat-input" autofocus>
-    <button>Send</button>
-  </form>
+  <div id="form-container">
+    <form id="form" action="">
+      <input id="chat-input" autofocus>
+      <button>Send</button>
+    </form>
+    <button id="register">Register</button>
+    <button id="login">Login</button>
+  </div>
 </div>
 
 <div style="display: none;">
-<p>
-  <button id="register">Register</button>
-  <button id="login">Login</button>
-</p>
 <p>
   <button id="gen-key">Generate OpenPGP key</button>
   <button id="load-key">Decrypt/load key</button>
@@ -63,8 +63,22 @@ const main = async function() {
 
   document.getElementById('gen-key').addEventListener('click', async () => {
     const name = prompt('What name would you like to assign to your key?')
+
+    if (name === null) {
+      return
+    }
+
     const email = prompt('What email address would you like to assign to your key?')
+
+    if (email === null) {
+      return
+    }
+
     const passphrase = prompt('What passphrase would you like to use with your key?')
+
+    if (passphrase === null) {
+      return
+    }
 
     if (!(name && email && passphrase)) {
       alert('Please specify a name, email address, and passphrase.')
@@ -124,12 +138,21 @@ const main = async function() {
 
   document.getElementById('register').addEventListener('click', async () => {
     const username = prompt('Username?')
+
+    if (username === null) {
+      return
+    }
+
     const password = prompt(
       'Password? (Must be at least 6 characters long.)\n' +
       'This password is NOT secure yet! It is stored securely, but you are probably not on an HTTPS connection.\n' +
       'That means just about anyone can look at your HTTP request and find out your password.\n' +
       'DO NOT use something you use anywhere else!'
     )
+
+    if (password === null) {
+      return
+    }
 
     if (!username || !password) {
       alert('Please enter both a username and a password.')
@@ -152,7 +175,16 @@ const main = async function() {
 
   document.getElementById('login').addEventListener('click', async () => {
     const username = prompt('Username?')
+
+    if (username === null) {
+      return
+    }
+
     const password = prompt('Password?')
+
+    if (password === null) {
+      return
+    }
 
     if (!username || !password ) {
       alert('Please enter both a username and a password.')
