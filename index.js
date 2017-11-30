@@ -146,7 +146,9 @@ async function main() {
     })
 
     response.end(JSON.stringify({
-      id: user._id, username
+      success: true,
+      username: username,
+      id: user._id,
     }))
   })
 
