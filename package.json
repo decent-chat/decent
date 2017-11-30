@@ -5,6 +5,7 @@
     "express": "^4.16.2",
     "nedb": "^1.8.0",
     "nedb-promise": "^2.0.1",
-    "socket.io": "^2.0.4"
+    "socket.io": "^2.0.4",
+    "uuid": "^3.1.0"
   }
 }

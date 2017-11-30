@@ -6,6 +6,7 @@ const bodyParser = require('body-parser')
 const bcrypt = require('bcrypt-nodejs')
 const socketio = require('socket.io')
 const http = require('http')
+const uuidv4 = require('uuid/v4')
 
 const bcryptGenSalt = (rounds = 10) => new Promise((resolve, reject) => {
   bcrypt.genSalt(rounds, (err, salt) => {
@@ -44,7 +45,8 @@ const io = socketio(httpServer)
 async function main() {
   const db = {
     messages: new Datastore({filename: 'db/messages'}),
-    users: new Datastore({filename: 'db/users'})
+    users: new Datastore({filename: 'db/users'}),
+    sessions: new Datastore({filename: 'db/sessions'})
   }
 
   await Promise.all(Object.values(db).map(d => d.loadDatabase()))
@@ -74,7 +76,6 @@ async function main() {
 
     response.end('sent')
   })
-
 
   app.post('/api/release-public-key', async (request, response) => {
     const { key, userID } = request.body
@@ -125,8 +126,13 @@ async function main() {
     const { salt, passwordHash } = user
 
     if (await bcryptCompare(password, passwordHash)) {
+      const session = await db.sessions.insert({
+        _id: uuidv4(),
+        user: user._id
+      })
+
       response.end(JSON.stringify({
-        nice: 123
+        sessionID: session._id
       }))
     } else {
       response.end(JSON.stringify({
