@@ -43,6 +43,22 @@ const httpServer = http.Server(app)
 const io = socketio(httpServer)
 
 async function main() {
+  const getUserBySessionID = async function(sessionID) {
+    const session = await db.sessions.findOne({_id: sessionID})
+
+    if (!session) {
+      return null
+    }
+
+    const user = await db.users.findOne({_id: session.user})
+
+    if (!user) {
+      return null
+    }
+
+    return user
+  }
+
   const db = {
     messages: new Datastore({filename: 'db/messages'}),
     users: new Datastore({filename: 'db/users'}),
@@ -59,32 +75,42 @@ async function main() {
   })
 
   app.post('/api/send-message', async (request, response) => {
-    const { text, signature, userID } = request.body
+    const { text, signature, sessionID } = request.body
 
-    if (!text || !userID) {
+    if (!text || !sessionID) {
       return
     }
+
+    const { username } = await getUserBySessionID(sessionID)
 
     const message = await db.messages.insert({
       text: request.body.text,
       signature: request.body.signature,
-      author: request.body.userID,
+      author: username,
       date: Date.now()
     })
 
     io.emit('received chat message', {message})
 
-    response.end('sent')
+    response.end(JSON.stringify({
+      success: true
+    }))
   })
 
   app.post('/api/release-public-key', async (request, response) => {
-    const { key, userID } = request.body
+    const { key, sessionID } = request.body
 
-    if (!key || !userID) {
+    if (!key || !sessionID) {
       return
     }
 
-    io.emit('released public key', {key, userID})
+    const { username } = await getUserBySessionID(sessionID)
+
+    io.emit('released public key', {key, username})
+
+    response.end(JSON.stringify({
+      success: true
+    }))
   })
 
   app.post('/api/register', async (request, response) => {

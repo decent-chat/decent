@@ -14,10 +14,6 @@ pre {
   <button>Send</button>
 </form>
 <p>
-  <button id="set-userid">Set new user ID</button>
-  Your (deprecated, soon to be obsolete) user ID: <span id="user-id">(no ID)</span>
-</p>
-<p>
   <button id="register">Register</button>
   <button id="login">Login</button>
 </p>
@@ -44,18 +40,7 @@ const apiPost = function(path, dataObj) {
 const main = async function() {
   const socket = io()
 
-  let userID
   let sessionID
-
-  const userIDSpan = document.getElementById('user-id')
-  const setUserID = function(newUserID) {
-    userID = newUserID
-    while (userIDSpan.firstChild) userIDSpan.firstChild.remove()
-    document.getElementById('user-id').appendChild(document.createTextNode(userID))
-  }
-
-  setUserID('user' + Math.trunc(1000000 * Math.random()))
-
   let privateKey, publicKey, privateKeyObj
   let publicKeyDictionary = {}
 
@@ -122,16 +107,8 @@ const main = async function() {
     }
 
     await apiPost('/api/release-public-key', {
-      key: publicKey, userID
+      key: publicKey, sessionID
     })
-  })
-
-  document.getElementById('set-userid').addEventListener('click', () => {
-    const newUserID = prompt('What do you want your new user ID to be?')
-
-    if (newUserID) {
-      setUserID(newUserID)
-    }
   })
 
   document.getElementById('register').addEventListener('click', async () => {
@@ -210,7 +187,7 @@ const main = async function() {
     await apiPost('/api/send-message', {
       text,
       signature,
-      userID
+      sessionID
     })
   })
 
@@ -259,16 +236,14 @@ const main = async function() {
       return
     }
 
-    if ('key' in msg === false) {
-      return
-    }
+    const { key, username } = msg
 
-    if ('userID' in msg === false) {
-      return
+    if (!key || !username) {
+      return false
     }
 
     const el = document.createElement('div')
-    el.appendChild(document.createTextNode(msg.userID))
+    el.appendChild(document.createTextNode(msg.username))
     el.appendChild(document.createTextNode(' has released a public key!'))
 
     const pre = document.createElement('pre')
