@@ -12,6 +12,7 @@ const main = async function() {
   const socket = io()
 
   let sessionID
+  let user = null
   let privateKey, publicKey, privateKeyObj
   let publicKeyDictionary = {}
 
@@ -24,6 +25,10 @@ const main = async function() {
   if ('sessionID' in localStorage) {
     sessionID = localStorage.sessionID
     console.log('loaded session ID from local storage')
+
+    const { username } = await apiPost('/api/whoami', { sessionID })
+    user = { username }
+    console.log('username:', username)
   }
 
   document.getElementById('gen-key').addEventListener('click', async () => {
@@ -169,6 +174,8 @@ const main = async function() {
     sessionID = result.sessionID
     localStorage.sessionID = sessionID
 
+    user = { username }
+
     alert('Success! Logged in.')
   })
 
@@ -204,6 +211,70 @@ const main = async function() {
     })
   })
 
+  const formatMessageText = function(text) {
+    // Formats some message text and returns a <span> element ready to be displayed.
+
+    const el = document.createElement('span')
+    let buffer = ''
+    let currentToken = 'text'
+    let esc = false
+
+    function startToken(nextToken) {
+      // end the current token
+      if (buffer === '') {
+        ;
+      } else if (currentToken === 'text') {
+        el.appendChild(document.createTextNode(buffer))
+      } else if (currentToken === 'mention') {
+        if (buffer === '@') { // TODO: must be a logged-in username!
+          // not a mention; treat as text
+          el.appendChild(document.createTextNode(buffer))
+        } else {
+          let mentionEl = document.createElement('span')
+
+          mentionEl.classList.add('message-mention')
+
+          if (buffer === '@' + user.username || buffer === '@everyone')
+            mentionEl.classList.add('message-mention-of-user')
+
+          mentionEl.appendChild(document.createTextNode(buffer))
+          el.appendChild(mentionEl)
+        }
+      } else if (currentToken === 'code') {
+        let codeEl = document.createElement('pre')
+
+        codeEl.classList.add('message-inline-code'))
+        codeEl.appendChild(document.createTextNode(buffer))
+
+        el.appendChild(codeEl)
+      }
+
+      // start next token
+      buffer = ''
+      currentToken = nextToken
+    }
+
+    for (let c = 0; c < text.length; c++) {
+      const char = text[c]
+
+      if (esc) esc = false
+      else {
+        if (char === '\\') { esc = true; continue }
+
+        else if (char === '@' && currentToken === 'text') startToken('mention')
+        else if (!(/[a-zA-Z0-9_-]/).test(char) && currentToken === 'mention') startToken('text')
+
+        else if (char === '`' && currentToken !== 'code') startToken('code')
+        else if (char === '`' && currentToken === 'code') startToken('text')
+      }
+
+      buffer += char
+    }
+
+    startToken(null)
+    return el
+  }
+
   const buildMessageContent = async function(message, revisionIndex = null) {
     // Builds the message content elements of a message. If the passed revision index
     // is set to null, or is greater than the number of revisions, the most recent
@@ -221,7 +292,13 @@ const main = async function() {
 
     const el = document.createElement('div')
     el.classList.add('message-revision-content')
-    el.appendChild(document.createTextNode(`${author}: ${text}`))
+
+    const authorEl = document.createElement('div')
+    authorEl.classList.add('message-author')
+    authorEl.appendChild(document.createTextNode(author))
+
+    el.appendChild(authorEl)
+    el.appendChild(formatMessageText(text))
 
     if (signature) {
       if (author in publicKeyDictionary === false) {

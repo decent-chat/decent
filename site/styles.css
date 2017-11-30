@@ -37,6 +37,20 @@ body, html, #app {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
+.message-mention {
+  color: #cfa041;
+}
+
+.message-mention-of-user {
+  color: white;
+  background-color: #cfa041;
+}
+
+.message-inline-code {
+  color: white;
+  background-color: #232323;
+}
+
 a {
   color: #E080FF;
   text-decoration: none;

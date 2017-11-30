@@ -185,6 +185,12 @@ async function main() {
     }
   })
 
+  app.post('/api/whoami', async (request, response) => {
+    const { username } = await getUserBySessionID(request.body.sessionID)
+
+    response.end(JSON.stringify({ username }))
+  })
+
   app.post('/api/release-public-key', async (request, response) => {
     const { key, sessionID } = request.body
 
@@ -213,9 +219,17 @@ async function main() {
 
   app.post('/api/register', async (request, response) => {
     const { username } = request.body
+    const reValidUsername = /[a-zA-Z0-9_-]+/g
     let { password } = request.body
 
     if (!username || !password) {
+      return
+    }
+
+    if (!reValidUsername.test(username)) {
+      response.end(JSON.stringify({
+        error: 'username invalid'
+      }))
       return
     }
 
