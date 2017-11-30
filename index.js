@@ -121,6 +121,13 @@ async function main() {
       return
     }
 
+    if (await db.users.findOne({username})) {
+      response.end(JSON.stringify({
+        error: 'username already taken'
+      }))
+      return
+    }
+
     if (password.length < 6) {
       response.end(JSON.stringify({
         error: 'password must be at least 6 characters long'

@@ -132,8 +132,12 @@ const main = async function() {
 
     const result = await apiPost('/api/register', {username, password})
 
-    if (result.error === 'password must be at least 6 characters long') {
-      alert('Couldn\'t create account - password too short!')
+    if (result.error) {
+      if (result.error === 'password must be at least 6 characters long') {
+        alert('Couldn\'t create account - password too short.')
+      } else if (result.error === 'username already taken') {
+        alert('Couldn\'t create account - username already taken.')
+      }
       return
     }
 
