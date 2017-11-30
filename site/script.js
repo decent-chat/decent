@@ -8,6 +8,10 @@ const apiPost = function(path, dataObj) {
   }).then(res => res.json())
 }
 
+const queryByDataset = function(key, value) {
+  return `[data-${key}='${value.replace(/'/g, '\\\'')}']`
+}
+
 const main = async function() {
   const socket = io()
 
@@ -40,6 +44,10 @@ const main = async function() {
       }
     }
 
+    for (const msg of document.querySelectorAll('.message.created-by-us')) {
+      msg.classList.remove('created-by-us')
+    }
+
     while (loginStatusEl.firstChild) loginStatusEl.firstChild.remove()
 
     if (loggedIn) {
@@ -52,6 +60,10 @@ const main = async function() {
       document.getElementById('register').style.display = 'none'
       document.getElementById('login').style.display = 'none'
       document.getElementById('logout').style.removeProperty('display')
+
+      for (const msg of document.querySelectorAll(queryByDataset('author', username))) {
+        msg.classList.add('created-by-us')
+      }
     } else {
       loginStatusEl.appendChild(document.createTextNode('Not logged in'))
 
@@ -258,6 +270,10 @@ const main = async function() {
       revisionIndex = message.revisions.length - 1
     }
 
+    if (revisionIndex < 0) {
+      revisionIndex = 0
+    }
+
     const revision = message.revisions[revisionIndex]
 
     const { text, signature } = revision
@@ -316,6 +332,10 @@ const main = async function() {
 
         const index = prompt('View the version at what index? (Leave blank for the latest.)')
 
+        if (index === null) {
+          return
+        }
+
         if (index.trim().length) {
           await showMessageRevision(message, index - 1)
         } else {
@@ -350,14 +370,24 @@ const main = async function() {
     const el = document.createElement('div')
     el.classList.add('message')
     el.setAttribute('id', 'message-' + _id)
+    el.dataset.author = author
     el.appendChild(await buildMessageContent(msg.message))
     messagesContainer.appendChild(el)
+
+    if (sessionObj && author === sessionObj.user.username) {
+      el.classList.add('created-by-us')
+    }
 
     if (wasScrolledToBottom) {
       messagesContainer.scrollTop = getScrollDist()
     }
 
     el.addEventListener('click', async () => {
+      // Don't do anything if we don't own this message!
+      if (!(sessionObj && author === sessionObj.user.username)) {
+        return
+      }
+
       const text = prompt('Edit message - new content?')
 
       if (!text || text.trim().length === 0) {
