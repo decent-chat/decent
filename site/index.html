@@ -169,6 +169,17 @@ const main = async function() {
     alert('Success! Logged in.')
   })
 
+  const signText = async function(text) {
+    if (publicKey && privateKeyObj) {
+      const cleartext = await openpgp.sign({
+        data: text,
+        privateKeys: privateKeyObj
+      })
+
+      return cleartext.data
+    }
+  }
+
   const chatInput = document.getElementById('chat-input')
   const form = document.getElementById('form')
   form.addEventListener('submit', async evt => {
@@ -181,18 +192,7 @@ const main = async function() {
       return
     }
 
-    let signature
-
-    if (publicKey && privateKeyObj) {
-      const cleartext = await openpgp.sign({
-        data: text,
-        privateKeys: privateKeyObj
-      })
-
-      signature = cleartext.data
-
-      console.log('signed message')
-    }
+    const signature = await signText(text)
 
     await apiPost('/api/send-message', {
       text,
@@ -249,7 +249,7 @@ const main = async function() {
       return
     }
 
-    const { revisions, author } = msg.message
+    const { revisions, author, _id } = msg.message
 
     if (!revisions || !author) {
       return
@@ -261,9 +261,23 @@ const main = async function() {
 
     const el = document.createElement('div')
     el.classList.add('message')
-    el.setAttribute('id', 'message-' + msg.message._id)
+    el.setAttribute('id', 'message-' + _id)
     el.appendChild(await buildMessageContent(msg.message))
     messagesContainer.appendChild(el)
+
+    el.addEventListener('click', async () => {
+      const text = prompt('Edit message - new content?')
+
+      if (text.trim().length === 0) {
+        return
+      }
+
+      const result = await apiPost('/api/edit-message', {
+        sessionID, text,
+        messageID: _id,
+        signature: await signText(text)
+      })
+    })
   })
 
   socket.on('edited chat message', async msg => {
