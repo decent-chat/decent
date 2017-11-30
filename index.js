@@ -84,8 +84,15 @@ async function main() {
     const { username } = await getUserBySessionID(sessionID)
 
     const message = await db.messages.insert({
-      text: request.body.text,
-      signature: request.body.signature,
+      author: username,
+      date: Date.now(),
+      revisions: [
+        {
+          text: request.body.text,
+          signature: request.body.signature,
+          date: Date.now()
+        }
+      ],
       author: username,
       date: Date.now()
     })

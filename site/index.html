@@ -201,22 +201,23 @@ const main = async function() {
     })
   })
 
-  const messagesContainer = document.getElementById('messages')
+  const buildMessageContent = async function(message, revisionIndex = null) {
+    // Builds the message content elements of a message. If the passed revision index
+    // is set to null, or is greater than the number of revisions, the most recent
+    // revision is used.
 
-  socket.on('received chat message', async msg => {
-    if (typeof msg !== 'object') {
-      console.warn('received non-object message:', msg)
-      return
+    const { author } = message
+
+    if (revisionIndex === null || revisionIndex >= message.revisions.length) {
+      revisionIndex = message.revisions.length - 1
     }
 
-    const { text, signature, author } = msg.message
+    const revision = message.revisions[revisionIndex]
 
-    if (!text || !author) {
-      return
-    }
+    const { text, signature } = revision
 
     const el = document.createElement('div')
-
+    el.classList.add('message-revision-content')
     el.appendChild(document.createTextNode(`${author}: ${text}`))
 
     if (signature) {
@@ -238,6 +239,30 @@ const main = async function() {
       el.appendChild(document.createTextNode(' (No signature data)'))
     }
 
+    return el
+  }
+
+  const messagesContainer = document.getElementById('messages')
+
+  socket.on('received chat message', async msg => {
+    if (typeof msg !== 'object') {
+      console.warn('received non-object message:', msg)
+      return
+    }
+
+    const { revisions, author } = msg.message
+
+    if (!revisions || !author) {
+      return
+    }
+
+    if (!revisions.length || !revisions[0].text) {
+      return
+    }
+
+    const el = document.createElement('div')
+    el.classList.add('message')
+    el.appendChild(await buildMessageContent(msg.message))
     messagesContainer.appendChild(el)
   })
 
