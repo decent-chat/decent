@@ -310,7 +310,7 @@ const main = async function() {
     el.addEventListener('click', async () => {
       const text = prompt('Edit message - new content?')
 
-      if (text.trim().length === 0) {
+      if (!text || text.trim().length === 0) {
         return
       }
 
