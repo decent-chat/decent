@@ -11,7 +11,8 @@ const apiPost = function(path, dataObj) {
 const main = async function() {
   const socket = io()
 
-  let sessionID
+  let sessionID, sessionObj
+  let processPGP = false
   let privateKey, publicKey, privateKeyObj
   let publicKeyDictionary = {}
 
@@ -25,6 +26,42 @@ const main = async function() {
     sessionID = localStorage.sessionID
     console.log('loaded session ID from local storage')
   }
+
+  const loginStatusEl = document.getElementById('login-status')
+  const updateSessionData = async function() {
+    let loggedIn = false
+
+    if (sessionID) {
+      const sessionData = await fetch('/api/session/' + sessionID).then(res => res.json())
+
+      if (sessionData.success) {
+        loggedIn = true
+        sessionObj = sessionData
+      }
+    }
+
+    while (loginStatusEl.firstChild) loginStatusEl.firstChild.remove()
+
+    if (loggedIn) {
+      const { user: { username } } = sessionObj
+
+      loginStatusEl.appendChild(document.createTextNode(
+        'Logged in as ' + username
+      ))
+
+      document.getElementById('register').style.display = 'none'
+      document.getElementById('login').style.display = 'none'
+      document.getElementById('logout').style.removeProperty('display')
+    } else {
+      loginStatusEl.appendChild(document.createTextNode('Not logged in'))
+
+      document.getElementById('register').style.removeProperty('display')
+      document.getElementById('login').style.removeProperty('display')
+      document.getElementById('logout').style.display = 'none'
+    }
+  }
+
+  await updateSessionData()
 
   document.getElementById('gen-key').addEventListener('click', async () => {
     const name = prompt('What name would you like to assign to your key?')
@@ -169,7 +206,13 @@ const main = async function() {
     sessionID = result.sessionID
     localStorage.sessionID = sessionID
 
-    alert('Success! Logged in.')
+    await updateSessionData()
+  })
+
+  document.getElementById('logout').addEventListener('click', async () => {
+    sessionID = ''
+    localStorage.sessionID = ''
+    await updateSessionData()
   })
 
   const signText = async function(text) {
@@ -231,23 +274,25 @@ const main = async function() {
 
     el.appendChild(document.createTextNode(` ${author}: ${text}`))
 
-    if (signature) {
-      if (author in publicKeyDictionary === false) {
-        el.appendChild(document.createTextNode(' (Signed, but this user is not in your public key dictionary)'))
-      } else {
-        const verified = await openpgp.verify({
-          message: openpgp.cleartext.readArmored(signature),
-          publicKeys: openpgp.key.readArmored(publicKeyDictionary[author]).keys
-        })
-
-        if (verified.signatures[0].valid) {
-          el.appendChild(document.createTextNode(' (Verified)'))
+    if (processPGP) {
+      if (signature) {
+        if (author in publicKeyDictionary === false) {
+          el.appendChild(document.createTextNode(' (Signed, but this user is not in your public key dictionary)'))
         } else {
-          el.appendChild(document.createTextNode(' (FORGED? Signature data provided, but sign did not match)'))
+          const verified = await openpgp.verify({
+            message: openpgp.cleartext.readArmored(signature),
+            publicKeys: openpgp.key.readArmored(publicKeyDictionary[author]).keys
+          })
+
+          if (verified.signatures[0].valid) {
+            el.appendChild(document.createTextNode(' (Verified)'))
+          } else {
+            el.appendChild(document.createTextNode(' (FORGED? Signature data provided, but sign did not match)'))
+          }
         }
+      } else {
+        el.appendChild(document.createTextNode(' (No signature data)'))
       }
-    } else {
-      el.appendChild(document.createTextNode(' (No signature data)'))
     }
 
     if (message.revisions.length > 1) {

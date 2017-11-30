@@ -172,8 +172,6 @@ async function main() {
   })
 
   app.get('/api/message/:message', async (request, response) => {
-    console.log('message', request.params.message)
-
     const message = await db.messages.findOne({_id: request.params.message})
 
     if (message) {
@@ -279,6 +277,23 @@ async function main() {
         error: 'incorrect password'
       }))
     }
+  })
+
+  app.get('/api/session/:sessionID', async (request, response) => {
+    const user = await getUserBySessionID(request.params.sessionID)
+
+    if (!user) {
+      response.end(JSON.stringify({
+        error: 'session not found'
+      }))
+
+      return
+    }
+
+    response.end(JSON.stringify({
+      success: true,
+      user
+    }))
   })
 
   io.on('connection', socket => {
