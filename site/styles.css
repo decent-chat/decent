@@ -41,3 +41,7 @@ a {
   color: #E080FF;
   text-decoration: none;
 }
+
+time {
+  opacity: 0.5;
+}

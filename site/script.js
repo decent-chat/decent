@@ -221,7 +221,15 @@ const main = async function() {
 
     const el = document.createElement('div')
     el.classList.add('message-revision-content')
-    el.appendChild(document.createTextNode(`${author}: ${text}`))
+
+    const messageDate = new Date(message.date)
+
+    const time = document.createElement('time')
+    time.setAttribute('datetime', messageDate.toISOString())
+    time.appendChild(document.createTextNode(`${messageDate.getHours()}:${messageDate.getMinutes()}`))
+    el.appendChild(time)
+
+    el.appendChild(document.createTextNode(` ${author}: ${text}`))
 
     if (signature) {
       if (author in publicKeyDictionary === false) {
