@@ -294,11 +294,18 @@ const main = async function() {
       return
     }
 
+    const getScrollDist = () => messages.scrollHeight - messages.offsetHeight
+    let wasScrolledToBottom = (messages.scrollTop === getScrollDist())
+
     const el = document.createElement('div')
     el.classList.add('message')
     el.setAttribute('id', 'message-' + _id)
     el.appendChild(await buildMessageContent(msg.message))
     messagesContainer.appendChild(el)
+
+    if (wasScrolledToBottom) {
+      messagesContainer.scrollTop = getScrollDist()
+    }
 
     el.addEventListener('click', async () => {
       const text = prompt('Edit message - new content?')
