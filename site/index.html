@@ -326,7 +326,10 @@ const main = async function() {
     const el = document.getElementById('message-' + message._id)
 
     if (el) {
-      el.querySelector('.message-revision-content').remove()
+      const content = el.querySelector('.message-revision-content')
+      if (content) {
+        content.remove()
+      }
       el.appendChild(await buildMessageContent(message, index))
     }
   }
