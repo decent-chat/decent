@@ -98,7 +98,7 @@ async function main() {
     const { text, signature, sessionID } = request.body
 
     if (!text || !sessionID) {
-      response.end(JSON.stringify({
+      response.status(400).end(JSON.stringify({
         error: 'missing text or sessionID field'
       }))
 
@@ -108,7 +108,7 @@ async function main() {
     const user = await getUserBySessionID(sessionID)
 
     if (!user) {
-      response.end(JSON.stringify({
+      response.status(401).end(JSON.stringify({
         error: 'invalid session ID'
       }))
       return
@@ -129,7 +129,7 @@ async function main() {
 
     io.emit('received chat message', {message})
 
-    response.end(JSON.stringify({
+    response.status(201).end(JSON.stringify({
       success: true
     }))
   })
@@ -138,18 +138,8 @@ async function main() {
     const { messageID, text, signature, sessionID } = request.body
 
     if (!sessionID || !messageID || !text) {
-      response.end(JSON.stringify({
+      response.status(200).end(JSON.stringify({
         error: 'missing sessionID, messageID, or text field'
-      }))
-
-      return
-    }
-
-    const oldMessage = await db.messages.findOne({_id: messageID})
-
-    if (!oldMessage) {
-      response.end(JSON.stringify({
-        error: 'no message by given id'
       }))
 
       return
@@ -158,13 +148,23 @@ async function main() {
     const userID = await getUserIDBySessionID(sessionID)
 
     if (!userID) {
-      response.end(JSON.stringify({
+      response.status(401).end(JSON.stringify({
         error: 'invalid session ID'
       }))
     }
 
+    const oldMessage = await db.messages.findOne({_id: messageID})
+
+    if (!oldMessage) {
+      response.status(500).end(JSON.stringify({
+        error: 'no message by given id'
+      }))
+
+      return
+    }
+
     if (userID !== oldMessage.authorID) {
-      response.end(JSON.stringify({
+      response.status(403).end(JSON.stringify({
         error: 'you are not the owner of this message'
       }))
 
@@ -185,16 +185,16 @@ async function main() {
 
     io.emit('edited chat message', {message: newMessage})
 
-    response.end(JSON.stringify({success: true}))
+    response.status(200).end(JSON.stringify({success: true}))
   })
 
   app.get('/api/message/:message', async (request, response) => {
     const message = await db.messages.findOne({_id: request.params.message})
 
     if (message) {
-      response.end(JSON.stringify(message))
+      response.status(200).end(JSON.stringify(message))
     } else {
-      response.end(JSON.stringify({
+      response.status(404).end(JSON.stringify({
         error: 'message not found'
       }))
     }
@@ -204,13 +204,17 @@ async function main() {
     const { key, sessionID } = request.body
 
     if (!key || !sessionID) {
+      response.status(400).end(JSON.stringify({
+        error: 'missing key or sessionID field'
+      }))
+
       return
     }
 
     const user = await getUserBySessionID(sessionID)
 
     if (!user) {
-      response.end(JSON.stringify({
+      response.status(401).end(JSON.stringify({
         error: 'invalid session ID'
       }))
 
@@ -221,7 +225,7 @@ async function main() {
 
     io.emit('released public key', {key, username})
 
-    response.end(JSON.stringify({
+    response.status(200).end(JSON.stringify({
       success: true
     }))
   })
@@ -230,7 +234,7 @@ async function main() {
     const { name, sessionID } = request.body
 
     if (!name || !sessionID) {
-      response.end(JSON.stringify({
+      response.status(400).end(JSON.stringify({
         error: 'missing name or sessionID field'
       }))
 
@@ -240,7 +244,7 @@ async function main() {
     const user = await getUserBySessionID(sessionID)
 
     if (!user) {
-      response.end(JSON.stringify({
+      response.status(401).end(JSON.stringify({
         error: 'invalid session id'
       }))
 
@@ -250,7 +254,7 @@ async function main() {
     const { permissionLevel } = user
 
     if (permissionLevel !== 'admin') {
-      response.end(JSON.stringify({
+      response.status(403).end(JSON.stringify({
         error: 'you are not an admin'
       }))
 
@@ -258,7 +262,7 @@ async function main() {
     }
 
     if (await db.channels.findOne({name})) {
-      response.end(JSON.stringify({
+      response.status(500).end(JSON.stringify({
         error: 'channel name already taken'
       }))
 
@@ -269,7 +273,7 @@ async function main() {
       name
     })
 
-    response.end(JSON.stringify({
+    response.status(201).end(JSON.stringify({
       success: true,
       channel
     }))
@@ -280,21 +284,23 @@ async function main() {
     let { password } = request.body
 
     if (!username || !password) {
-      response.end(JSON.stringify({
+      response.status(400).end(JSON.stringify({
         error: 'missing username or password field'
       }))
+
       return
     }
 
     if (await db.users.findOne({username})) {
-      response.end(JSON.stringify({
+      response.status(500).end(JSON.stringify({
         error: 'username already taken'
       }))
+
       return
     }
 
     if (password.length < 6) {
-      response.end(JSON.stringify({
+      response.status(400).end(JSON.stringify({
         error: 'password must be at least 6 characters long'
       }))
       return
@@ -311,7 +317,7 @@ async function main() {
       salt
     })
 
-    response.end(JSON.stringify({
+    response.status(201).end(JSON.stringify({
       success: true,
       username: username,
       id: user._id,
@@ -325,7 +331,7 @@ async function main() {
     const user = await db.users.findOne({username})
 
     if (!user) {
-      response.end(JSON.stringify({
+      response.status(404).end(JSON.stringify({
         error: 'user not found'
       }))
       return
@@ -339,11 +345,11 @@ async function main() {
         user: user._id
       })
 
-      response.end(JSON.stringify({
+      response.status(200).end(JSON.stringify({
         sessionID: session._id
       }))
     } else {
-      response.end(JSON.stringify({
+      response.status(401).end(JSON.stringify({
         error: 'incorrect password'
       }))
     }
@@ -353,14 +359,14 @@ async function main() {
     const user = await getUserBySessionID(request.params.sessionID)
 
     if (!user) {
-      response.end(JSON.stringify({
+      response.status(404).end(JSON.stringify({
         error: 'session not found'
       }))
 
       return
     }
 
-    response.end(JSON.stringify({
+    response.status(200).end(JSON.stringify({
       success: true,
       user
     }))
