@@ -285,6 +285,15 @@ async function main() {
     }))
   })
 
+  app.get('/api/channel-list', async (request, response) => {
+    const channels = await db.channels.find({}, {name: 1})
+
+    response.status(200).end(JSON.stringify({
+      success: true,
+      channels
+    }))
+  })
+
   app.post('/api/register', async (request, response) => {
     const { username } = request.body
     let { password } = request.body
