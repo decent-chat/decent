@@ -257,6 +257,14 @@ async function main() {
       return
     }
 
+    if (await db.channels.findOne({name})) {
+      response.end(JSON.stringify({
+        error: 'channel name already taken'
+      }))
+
+      return
+    }
+
     const channel = await db.channels.insert({
       name
     })
