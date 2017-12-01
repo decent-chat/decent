@@ -50,97 +50,107 @@ module.exports = function attachAPI(app, {io, db}) {
     return (new Date()).toISOString()
   }
 
+  const loadVarsFromRequestObject = function(object, request, response, next) {
+    // TODO: Actually implement the variable system..!
+    request[middleware.input] = {}
+    request[middleware.output] = {}
+
+    for (const [ key, value ] of Object.entries(object)) {
+      request[middleware.input][key] = value
+    }
+
+    next()
+  }
+
   const middleware = {
     input: Symbol('Middleware input'),
     output: Symbol('Middleware output'),
 
-    loadInputFromObject: function(object, request, response, next) {
-      request[middleware.input] = {}
-      request[middleware.output] = {}
-
-      for (const [ key, value ] of Object.entries(object)) {
-        request[middleware.input][key] = value
+    loadInputFromBody: () => [
+      function(request, response, next) {
+        loadVarsFromRequestObject(request.body, request, response, next)
       }
+    ],
 
-      next()
-    },
-
-    loadInputFromBody: function(request, response, next) {
-      middleware.loadInputFromObject(request.body, request, response, next)
-    },
-
-    loadInputFromParams: function(request, response, next) {
-      middleware.loadInputFromObject(request.params, request, response, next)
-    },
-
-    getSessionUserFromID: async function(request, response, next) {
-      const { sessionID } = request[middleware.input]
-
-      if (!sessionID) {
-        response.status(400).end(JSON.stringify({
-          error: 'missing sessionID field'
-        }))
-
-        return
+    loadInputFromParams: () => [
+      function(request, response, next) {
+        loadVarsFromRequestObject(request.params, request, response, next)
       }
+    ],
 
-      const user = await getUserBySessionID(sessionID)
+    getSessionUserFromID: () => [
+      async function(request, response, next) {
+        const { sessionID } = request[middleware.input]
 
-      if (!user) {
-        response.status(401).end(JSON.stringify({
-          error: 'invalid session ID'
-        }))
+        if (!sessionID) {
+          response.status(400).end(JSON.stringify({
+            error: 'missing sessionID field'
+          }))
 
-        return
+          return
+        }
+
+        const user = await getUserBySessionID(sessionID)
+
+        if (!user) {
+          response.status(401).end(JSON.stringify({
+            error: 'invalid session ID'
+          }))
+
+          return
+        }
+
+        request[middleware.output].sessionUser = user
+
+        next()
       }
+    ],
 
-      request[middleware.output].sessionUser = user
+    getMessageFromID: () => [
+      async function(request, response, next) {
+        const { messageID } = request[middleware.input]
 
-      next()
-    },
+        if (!messageID) {
+          response.status(400).end(JSON.stringify({
+            error: 'missing messageID field'
+          }))
 
-    getMessageFromID: async function (request, response, next) {
-      const { messageID } = request[middleware.input]
+          return
+        }
 
-      if (!messageID) {
-        response.status(400).end(JSON.stringify({
-          error: 'missing messageID field'
-        }))
+        const message = await db.messages.findOne({_id: messageID})
 
-        return
+        if (!message) {
+          response.status(404).end(JSON.stringify({
+            error: 'message not found'
+          }))
+
+          return
+        }
+
+        request[middleware.output].message = message
+
+        next()
       }
+    ],
 
-      const message = await db.messages.findOne({_id: messageID})
+    requireAdminSession: () => [
+      async function(request, response, next) {
+        const { sessionUser } = request[middleware.output]
 
-      if (!message) {
-        response.status(404).end(JSON.stringify({
-          error: 'message not found'
-        }))
+        if (sessionUser.permissionLevel !== 'admin') {
+          response.status(403).end(JSON.stringify({
+            error: 'you are not an admin'
+          }))
 
-        return
+          return
+        }
+
+        next()
       }
-
-      request[middleware.output].message = message
-
-      next()
-    },
-
-    requireAdminSession: async function (request, response, next) {
-      const { sessionUser } = request[middleware.output]
-
-      if (sessionUser.permissionLevel !== 'admin') {
-        response.status(403).end(JSON.stringify({
-          error: 'you are not an admin'
-        }))
-
-        return
-      }
-
-      next()
-    }
+    ]
   }
 
-  app.use(express.static('site'))
   app.use(bodyParser.json())
 
   app.get('/', (req, res) => {
@@ -153,202 +163,218 @@ module.exports = function attachAPI(app, {io, db}) {
     next()
   })
 
-  app.post('/api/send-message', middleware.loadInputFromBody)
-  app.post('/api/send-message', middleware.getSessionUserFromID)
-  app.post('/api/send-message', async (request, response) => {
-    const { text, signature } = request[middleware.input]
-    const { sessionUser } = request[middleware.output]
+  app.post('/api/send-message', [
+    ...middleware.loadInputFromBody(),
+    ...middleware.getSessionUserFromID(),
 
-    if (!text) {
-      response.status(400).end(JSON.stringify({
-        error: 'missing text field'
-      }))
+    async (request, response) => {
+      const { text, signature } = request[middleware.input]
+      const { sessionUser } = request[middleware.output]
 
-      return
-    }
-
-    const message = await db.messages.insert({
-      authorID: sessionUser._id,
-      authorUsername: sessionUser.username,
-      date: getDateAsISOString(),
-      revisions: [
-        {
-          text: request.body.text,
-          signature: request.body.signature,
-          date: getDateAsISOString()
-        }
-      ],
-      reactions: {}
-    })
-
-    io.emit('received chat message', {message})
-
-    response.status(201).end(JSON.stringify({
-      success: true,
-      messageID: message._id
-    }))
-  })
-
-  app.post('/api/add-message-reaction', middleware.loadInputFromBody)
-  app.post('/api/add-message-reaction', middleware.getSessionUserFromID)
-  app.post('/api/add-message-reaction', middleware.getMessageFromID)
-  app.post('/api/add-message-reaction', async (request, response) => {
-    const { reactionCode } = request[middleware.input]
-    const { message, sessionUser: { _id: userID } } = request[middleware.output]
-
-    if (!reactionCode) {
-      response.status(400).end(JSON.stringify({
-        error: 'missing reactionCode field'
-      }))
-
-      return
-    }
-
-    if (reactionCode.length !== 1) {
-      response.status(400).end(JSON.stringify({
-        error: 'reactionCode should be 1-character string'
-      }))
-
-      return
-    }
-
-    let newReactionCount
-
-    if (reactionCode in message.reactions) {
-      if (message.reactions[reactionCode].includes(userID)) {
-        response.status(500).end(JSON.stringify({
-          error: 'you already reacted with this'
+      if (!text) {
+        response.status(400).end(JSON.stringify({
+          error: 'missing text field'
         }))
 
         return
       }
 
-      const [ numAffected, newMessage ] = await db.messages.update({_id: message._id}, {
+      const message = await db.messages.insert({
+        authorID: sessionUser._id,
+        authorUsername: sessionUser.username,
+        date: getDateAsISOString(),
+        revisions: [
+          {
+            text: request.body.text,
+            signature: request.body.signature,
+            date: getDateAsISOString()
+          }
+        ],
+        reactions: {}
+      })
+
+      io.emit('received chat message', {message})
+
+      response.status(201).end(JSON.stringify({
+        success: true,
+        messageID: message._id
+      }))
+    }
+  ])
+
+  app.post('/api/add-message-reaction', [
+    ...middleware.loadInputFromBody(),
+    ...middleware.getSessionUserFromID(),
+    ...middleware.getMessageFromID(),
+
+    async (request, response) => {
+      const { reactionCode } = request[middleware.input]
+      const { message, sessionUser: { _id: userID } } = request[middleware.output]
+
+      if (!reactionCode) {
+        response.status(400).end(JSON.stringify({
+          error: 'missing reactionCode field'
+        }))
+
+        return
+      }
+
+      if (reactionCode.length !== 1) {
+        response.status(400).end(JSON.stringify({
+          error: 'reactionCode should be 1-character string'
+        }))
+
+        return
+      }
+
+      let newReactionCount
+
+      if (reactionCode in message.reactions) {
+        if (message.reactions[reactionCode].includes(userID)) {
+          response.status(500).end(JSON.stringify({
+            error: 'you already reacted with this'
+          }))
+
+          return
+        }
+
+        const [ numAffected, newMessage ] = await db.messages.update({_id: message._id}, {
+          $push: {
+            [`reactions.${reactionCode}`]: userID
+          }
+        }, {
+          multi: false,
+          returnUpdatedDocs: true
+        })
+
+        newReactionCount = newMessage.reactions[reactionCode].length
+      } else {
+        await db.messages.update({_id: message._id}, {
+          $set: {
+            [`reactions.${reactionCode}`]: [userID]
+          }
+        })
+
+        newReactionCount = 1
+      }
+
+      response.status(200).end(JSON.stringify({
+        success: true,
+        newCount: newReactionCount
+      }))
+    }
+  ])
+
+  app.post('/api/edit-message', [
+    ...middleware.loadInputFromBody(),
+    ...middleware.getSessionUserFromID(),
+    ...middleware.getMessageFromID(),
+
+    async (request, response) => {
+      const { text, signature } = request[middleware.input]
+      const { message: oldMessage, sessionUser: { _id: userID } } = request[middleware.output]
+
+      if (!text) {
+        response.status(400).end(JSON.stringify({
+          error: 'missing text field'
+        }))
+
+        return
+      }
+
+      if (userID !== oldMessage.authorID) {
+        response.status(403).end(JSON.stringify({
+          error: 'you are not the owner of this message'
+        }))
+
+        return
+      }
+
+      const [ numAffected, newMessage ] = await db.messages.update({_id: oldMessage._id}, {
         $push: {
-          [`reactions.${reactionCode}`]: userID
+          revisions: {
+            text, signature,
+            date: getDateAsISOString()
+          }
         }
       }, {
         multi: false,
         returnUpdatedDocs: true
       })
 
-      newReactionCount = newMessage.reactions[reactionCode].length
-    } else {
-      await db.messages.update({_id: message._id}, {
-        $set: {
-          [`reactions.${reactionCode}`]: [userID]
-        }
+      io.emit('edited chat message', {message: newMessage})
+
+      response.status(200).end(JSON.stringify({success: true}))
+    }
+  ])
+
+  app.get('/api/message/:messageID', [
+    ...middleware.loadInputFromParams(),
+    ...middleware.getMessageFromID(),
+    async (request, response) => {
+      const { message } = request[middleware.output]
+
+      response.status(200).end(JSON.stringify(message))
+    }
+  ])
+
+  app.post('/api/release-public-key', [
+    ...middleware.loadInputFromBody(),
+    ...middleware.getSessionUserFromID(),
+    async (request, response) => {
+      const { key } = request[middleware.input]
+      const { sessionUser: { username } } = request[middleware.output]
+
+      if (!key) {
+        response.status(400).end(JSON.stringify({
+          error: 'missing key field'
+        }))
+
+        return
+      }
+
+      io.emit('released public key', {key, username})
+
+      response.status(200).end(JSON.stringify({
+        success: true
+      }))
+    }
+  ])
+
+  app.post('/api/create-channel', [
+    ...middleware.loadInputFromBody(),
+    ...middleware.getSessionUserFromID(),
+    ...middleware.requireAdminSession(),
+
+    async (request, response) => {
+      const { name } = request[middleware.input]
+
+      if (!name) {
+        response.status(400).end(JSON.stringify({
+          error: 'missing name field'
+        }))
+
+        return
+      }
+
+      if (await db.channels.findOne({name})) {
+        response.status(500).end(JSON.stringify({
+          error: 'channel name already taken'
+        }))
+
+        return
+      }
+
+      const channel = await db.channels.insert({
+        name
       })
 
-      newReactionCount = 1
-    }
-
-    response.status(200).end(JSON.stringify({
-      success: true,
-      newCount: newReactionCount
-    }))
-  })
-
-  app.post('/api/edit-message', middleware.loadInputFromBody)
-  app.post('/api/edit-message', middleware.getSessionUserFromID)
-  app.post('/api/edit-message', middleware.getMessageFromID)
-  app.post('/api/edit-message', async (request, response) => {
-    const { text, signature } = request[middleware.input]
-    const { message: oldMessage, sessionUser: { _id: userID } } = request[middleware.output]
-
-    if (!text) {
-      response.status(400).end(JSON.stringify({
-        error: 'missing text field'
+      response.status(201).end(JSON.stringify({
+        success: true,
+        channel
       }))
-
-      return
     }
-
-    if (userID !== oldMessage.authorID) {
-      response.status(403).end(JSON.stringify({
-        error: 'you are not the owner of this message'
-      }))
-
-      return
-    }
-
-    const [ numAffected, newMessage ] = await db.messages.update({_id: oldMessage._id}, {
-      $push: {
-        revisions: {
-          text, signature,
-          date: getDateAsISOString()
-        }
-      }
-    }, {
-      multi: false,
-      returnUpdatedDocs: true
-    })
-
-    io.emit('edited chat message', {message: newMessage})
-
-    response.status(200).end(JSON.stringify({success: true}))
-  })
-
-  app.get('/api/message/:messageID', middleware.loadInputFromParams)
-  app.get('/api/message/:messageID', middleware.getMessageFromID)
-  app.get('/api/message/:messageID', async (request, response) => {
-    const { message } = request[middleware.output]
-
-    response.status(200).end(JSON.stringify(message))
-  })
-
-  app.post('/api/release-public-key', middleware.loadInputFromBody)
-  app.post('/api/release-public-key', middleware.getSessionUserFromID)
-  app.post('/api/release-public-key', async (request, response) => {
-    const { key } = request[middleware.input]
-    const { sessionUser: { username } } = request[middleware.output]
-
-    if (!key) {
-      response.status(400).end(JSON.stringify({
-        error: 'missing key field'
-      }))
-
-      return
-    }
-
-    io.emit('released public key', {key, username})
-
-    response.status(200).end(JSON.stringify({
-      success: true
-    }))
-  })
-
-  app.post('/api/create-channel', middleware.loadInputFromBody)
-  app.post('/api/create-channel', middleware.getSessionUserFromID)
-  app.post('/api/create-channel', middleware.requireAdminSession)
-  app.post('/api/create-channel', async (request, response) => {
-    const { name } = request[middleware.input]
-
-    if (!name) {
-      response.status(400).end(JSON.stringify({
-        error: 'missing name field'
-      }))
-
-      return
-    }
-
-    if (await db.channels.findOne({name})) {
-      response.status(500).end(JSON.stringify({
-        error: 'channel name already taken'
-      }))
-
-      return
-    }
-
-    const channel = await db.channels.insert({
-      name
-    })
-
-    response.status(201).end(JSON.stringify({
-      success: true,
-      channel
-    }))
-  })
+  ])
 
   app.get('/api/channel-list', async (request, response) => {
     const channels = await db.channels.find({}, {name: 1})

@@ -26,6 +26,7 @@ async function main() {
 
   await Promise.all(Object.values(db).map(d => d.loadDatabase()))
 
+  app.use(express.static('site'))
   attachAPI(app, {io, db})
 
   await new Promise(resolve => httpServer.listen(3000, resolve))
