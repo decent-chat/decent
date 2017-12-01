@@ -266,7 +266,7 @@ const main = async function() {
 
     const { authorUsername } = message
 
-    if (revisionIndex === null || revisionIndex >= message.revisions.length) {
+    if (!(revisionIndex in message.revisions)) {
       revisionIndex = message.revisions.length - 1
     }
 
