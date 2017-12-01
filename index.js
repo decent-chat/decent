@@ -433,6 +433,29 @@ async function main() {
     }))
   })
 
+  app.get('/api/user/:userID', async (request, response) => {
+    const { userID } = request.params
+
+    const user = await db.users.findOne({_id: userID})
+
+    if (!user) {
+      response.status(404).end(JSON.stringify({
+        error: 'user not found'
+      }))
+
+      return
+    }
+
+    // TODO: Duplicated code...
+    delete user.passwordHash
+    delete user.salt
+
+    response.status(200).end(JSON.stringify({
+      success: true,
+      user
+    }))
+  })
+
   app.post('/api/login', async (request, response) => {
     const { username } = request.body
     let { password } = request.body
@@ -443,6 +466,7 @@ async function main() {
       response.status(404).end(JSON.stringify({
         error: 'user not found'
       }))
+
       return
     }
 
