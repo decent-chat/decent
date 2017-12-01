@@ -1,3 +1,15 @@
+// TODO: Resources. When a resource is sent back to the client, it is sent in a
+// serialized form - for example, a User resource might serialize to not include
+// the password hash or salt fields. (NOTE: Resources DO NOT have to be JavaScript
+// objects! It could be as simple as defining "serialize" functions for each type
+// of resource, e.g. serializeUser.)
+
+// TODO: Parameters. When defining an API endpoint, parameters can be specified.
+// These may be automatically processed - for example, a sessionID parameter could
+// automatically be turned into a user object fetched from the database, and, if
+// that user object is not found, it could automatically prevent the API request
+// from continuing.
+
 const express = require('express')
 const bodyParser = require('body-parser')
 const uuidv4 = require('uuid/v4')
@@ -38,6 +50,47 @@ module.exports = function attachAPI(app, {io, db}) {
     return (new Date()).toISOString()
   }
 
+  const middleware = {
+    input: Symbol('Middleware input'),
+    output: Symbol('Middleware output'),
+
+    loadInputFromBody: function(request, response, next) {
+      request[middleware.input] = {}
+      request[middleware.output] = {}
+
+      for (const [ key, value ] of Object.entries(request.body)) {
+        request[middleware.input][key] = value
+      }
+
+      next()
+    },
+
+    parseSessionID: async function(request, response, next) {
+      const { sessionID } = request[middleware.input]
+
+      if (!sessionID) {
+        response.status(400).end(JSON.stringify({
+          error: 'missing sessionID field'
+        }))
+
+        return
+      }
+
+      const user = await getUserBySessionID(sessionID)
+
+      if (!user) {
+        response.status(401).end(JSON.stringify({
+          error: 'invalid session ID'
+        }))
+
+        return
+      }
+
+      request[middleware.output].sessionUser = user
+
+      next()
+    }
+  }
 
   app.use(express.static('site'))
   app.use(bodyParser.json())
@@ -52,29 +105,23 @@ module.exports = function attachAPI(app, {io, db}) {
     next()
   })
 
+  app.post('/api/send-message', middleware.loadInputFromBody)
+  app.post('/api/send-message', middleware.parseSessionID)
   app.post('/api/send-message', async (request, response) => {
-    const { text, signature, sessionID } = request.body
+    const { text, signature } = request[middleware.input]
+    const { sessionUser } = request[middleware.output]
 
-    if (!text || !sessionID) {
+    if (!text) {
       response.status(400).end(JSON.stringify({
-        error: 'missing text or sessionID field'
+        error: 'missing text field'
       }))
 
-      return
-    }
-
-    const user = await getUserBySessionID(sessionID)
-
-    if (!user) {
-      response.status(401).end(JSON.stringify({
-        error: 'invalid session ID'
-      }))
       return
     }
 
     const message = await db.messages.insert({
-      authorID: user._id,
-      authorUsername: user.username,
+      authorID: sessionUser._id,
+      authorUsername: sessionUser.username,
       date: getDateAsISOString(),
       revisions: [
         {
