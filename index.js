@@ -11,6 +11,7 @@ const bcrypt = require('bcrypt-nodejs')
 const socketio = require('socket.io')
 const http = require('http')
 const uuidv4 = require('uuid/v4')
+const readline = require('readline')
 
 const bcryptGenSalt = (rounds = 10) => new Promise((resolve, reject) => {
   bcrypt.genSalt(rounds, (err, salt) => {
@@ -63,10 +64,25 @@ async function main() {
     return user
   }
 
+  const getUserIDBySessionID = async function(sessionID) {
+    // Gets the user ID of a session (by the session's ID).
+    // This uses one less database request than getUserBySessionID, since it
+    // does not actually request the stored user data.
+
+    const session = await db.sessions.findOne({_id: sessionID})
+
+    if (!session) {
+      return null
+    }
+
+    return session.user
+  }
+
   const db = {
     messages: new Datastore({filename: 'db/messages'}),
     users: new Datastore({filename: 'db/users'}),
-    sessions: new Datastore({filename: 'db/sessions'})
+    sessions: new Datastore({filename: 'db/sessions'}),
+    channels: new Datastore({filename: 'db/channels'}),
   }
 
   await Promise.all(Object.values(db).map(d => d.loadDatabase()))
@@ -78,11 +94,17 @@ async function main() {
     res.sendFile(__dirname + '/site/index.html')
   })
 
+  app.use('/api/*', async (request, response, next) => {
+    response.header('Content-Type', 'application/json')
+
+    next()
+  })
+
   app.post('/api/send-message', async (request, response) => {
     const { text, signature, sessionID } = request.body
 
     if (!text || !sessionID) {
-      response.end(JSON.stringify({
+      response.status(400).end(JSON.stringify({
         error: 'missing text or sessionID field'
       }))
 
@@ -92,14 +114,15 @@ async function main() {
     const user = await getUserBySessionID(sessionID)
 
     if (!user) {
-      response.end(JSON.stringify({
+      response.status(401).end(JSON.stringify({
         error: 'invalid session ID'
       }))
       return
     }
 
     const message = await db.messages.insert({
-      author: user.username,
+      authorID: user._id,
+      authorUsername: user.username,
       date: Date.now(),
       revisions: [
         {
@@ -112,7 +135,7 @@ async function main() {
 
     io.emit('received chat message', {message})
 
-    response.end(JSON.stringify({
+    response.status(201).end(JSON.stringify({
       success: true
     }))
   })
@@ -121,33 +144,33 @@ async function main() {
     const { messageID, text, signature, sessionID } = request.body
 
     if (!sessionID || !messageID || !text) {
-      response.end(JSON.stringify({
+      response.status(200).end(JSON.stringify({
         error: 'missing sessionID, messageID, or text field'
       }))
 
       return
     }
 
+    const userID = await getUserIDBySessionID(sessionID)
+
+    if (!userID) {
+      response.status(401).end(JSON.stringify({
+        error: 'invalid session ID'
+      }))
+    }
+
     const oldMessage = await db.messages.findOne({_id: messageID})
 
     if (!oldMessage) {
-      response.end(JSON.stringify({
+      response.status(500).end(JSON.stringify({
         error: 'no message by given id'
       }))
 
       return
     }
 
-    const user = await getUserBySessionID(sessionID)
-
-    if (!user) {
-      response.end(JSON.stringify({
-        error: 'invalid session ID'
-      }))
-    }
-
-    if (user.username !== oldMessage.author) {
-      response.end(JSON.stringify({
+    if (userID !== oldMessage.authorID) {
+      response.status(403).end(JSON.stringify({
         error: 'you are not the owner of this message'
       }))
 
@@ -168,16 +191,16 @@ async function main() {
 
     io.emit('edited chat message', {message: newMessage})
 
-    response.end(JSON.stringify({success: true}))
+    response.status(200).end(JSON.stringify({success: true}))
   })
 
   app.get('/api/message/:message', async (request, response) => {
     const message = await db.messages.findOne({_id: request.params.message})
 
     if (message) {
-      response.end(JSON.stringify(message))
+      response.status(200).end(JSON.stringify(message))
     } else {
-      response.end(JSON.stringify({
+      response.status(404).end(JSON.stringify({
         error: 'message not found'
       }))
     }
@@ -187,13 +210,17 @@ async function main() {
     const { key, sessionID } = request.body
 
     if (!key || !sessionID) {
+      response.status(400).end(JSON.stringify({
+        error: 'missing key or sessionID field'
+      }))
+
       return
     }
 
     const user = await getUserBySessionID(sessionID)
 
     if (!user) {
-      response.end(JSON.stringify({
+      response.status(401).end(JSON.stringify({
         error: 'invalid session ID'
       }))
 
@@ -204,8 +231,66 @@ async function main() {
 
     io.emit('released public key', {key, username})
 
-    response.end(JSON.stringify({
+    response.status(200).end(JSON.stringify({
       success: true
+    }))
+  })
+
+  app.post('/api/create-channel', async (request, response) => {
+    const { name, sessionID } = request.body
+
+    if (!name || !sessionID) {
+      response.status(400).end(JSON.stringify({
+        error: 'missing name or sessionID field'
+      }))
+
+      return
+    }
+
+    const user = await getUserBySessionID(sessionID)
+
+    if (!user) {
+      response.status(401).end(JSON.stringify({
+        error: 'invalid session id'
+      }))
+
+      return
+    }
+
+    const { permissionLevel } = user
+
+    if (permissionLevel !== 'admin') {
+      response.status(403).end(JSON.stringify({
+        error: 'you are not an admin'
+      }))
+
+      return
+    }
+
+    if (await db.channels.findOne({name})) {
+      response.status(500).end(JSON.stringify({
+        error: 'channel name already taken'
+      }))
+
+      return
+    }
+
+    const channel = await db.channels.insert({
+      name
+    })
+
+    response.status(201).end(JSON.stringify({
+      success: true,
+      channel
+    }))
+  })
+
+  app.get('/api/channel-list', async (request, response) => {
+    const channels = await db.channels.find({}, {name: 1})
+
+    response.status(200).end(JSON.stringify({
+      success: true,
+      channels
     }))
   })
 
@@ -215,6 +300,10 @@ async function main() {
     let { password } = request.body
 
     if (!username || !password) {
+      response.status(400).end(JSON.stringify({
+        error: 'missing username or password field'
+      }))
+
       return
     }
 
@@ -227,9 +316,10 @@ async function main() {
     }
 
     if (await db.users.findOne({username})) {
-      response.end(JSON.stringify({
+      response.status(500).end(JSON.stringify({
         error: 'username already taken'
       }))
+
       return
     }
 
@@ -248,10 +338,11 @@ async function main() {
     const user = await db.users.insert({
       username,
       passwordHash,
+      permissionLevel: 'member',
       salt
     })
 
-    response.end(JSON.stringify({
+    response.status(201).end(JSON.stringify({
       success: true,
       username: username,
       id: user._id,
@@ -265,7 +356,7 @@ async function main() {
     const user = await db.users.findOne({username})
 
     if (!user) {
-      response.end(JSON.stringify({
+      response.status(404).end(JSON.stringify({
         error: 'user not found'
       }))
       return
@@ -279,11 +370,11 @@ async function main() {
         user: user._id
       })
 
-      response.end(JSON.stringify({
+      response.status(200).end(JSON.stringify({
         sessionID: session._id
       }))
     } else {
-      response.end(JSON.stringify({
+      response.status(401).end(JSON.stringify({
         error: 'incorrect password'
       }))
     }
@@ -293,7 +384,7 @@ async function main() {
     const user = await getUserBySessionID(request.params.sessionID)
 
     if (!user) {
-      response.end(JSON.stringify({
+      response.status(404).end(JSON.stringify({
         error: 'session not found'
       }))
 
@@ -305,22 +396,65 @@ async function main() {
     delete user.passwordHash
     delete user.salt
 
-    response.end(JSON.stringify({
+    response.status(200).end(JSON.stringify({
       success: true,
       user
     }))
   })
 
-  io.on('connection', socket => {
-    console.log('a user connected')
+  await new Promise(resolve => httpServer.listen(3000, resolve))
 
-    socket.on('disconnect', () => {
-      console.log('a user disconnected')
-    })
+  console.log('listening on port 3000')
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
   })
 
-  httpServer.listen(3000, () => {
-    console.log('listening on port 3000')
+  rl.setPrompt('> ')
+  rl.prompt()
+
+  rl.on('line', async input => {
+    rl.pause()
+
+    const parts = input.split(' ').filter(p => p.length > 0)
+
+    if (parts.length) handleCommand: {
+      if (parts[0] === 'help' || parts[0] === '?') {
+        console.log('This is the administrator command line interface for')
+        console.log('the bantisocial chat system. This is NOT a text-based')
+        console.log('interface for chatting; use an actual client for that.')
+        console.log('Commands:')
+        console.log(' - make-admin: makes an already-registered user an admin.')
+      }
+
+      if (parts[0] === 'make-admin') {
+        if (parts.length !== 2) {
+          console.error('Expected (make-admin <username>)')
+          break handleCommand
+        }
+
+        const username = parts[1]
+
+        const user = await db.users.findOne({username})
+
+        if (!user) {
+          console.error('Error: There is no user with username ' + username)
+          break handleCommand
+        }
+
+        await db.users.update({username}, {
+          $set: {
+            permissionLevel: 'admin'
+          }
+        })
+
+        console.log(`Made ${username} an admin.`)
+      }
+    }
+
+    rl.resume()
+    rl.prompt()
   })
 }
 
