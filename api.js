@@ -123,6 +123,20 @@ module.exports = function attachAPI(app, {io, db}) {
       request[middleware.output].message = message
 
       next()
+    },
+
+    requireAdminSession: async function (request, response, next) {
+      const { sessionUser } = request[middleware.output]
+
+      if (sessionUser.permissionLevel !== 'admin') {
+        response.status(403).end(JSON.stringify({
+          error: 'you are not an admin'
+        }))
+
+        return
+      }
+
+      next()
     }
   }
 
@@ -304,32 +318,15 @@ module.exports = function attachAPI(app, {io, db}) {
     }))
   })
 
+  app.post('/api/create-channel', middleware.loadInputFromBody)
+  app.post('/api/create-channel', middleware.getSessionUserFromID)
+  app.post('/api/create-channel', middleware.requireAdminSession)
   app.post('/api/create-channel', async (request, response) => {
-    const { name, sessionID } = request.body
+    const { name } = request[middleware.input]
 
-    if (!name || !sessionID) {
+    if (!name) {
       response.status(400).end(JSON.stringify({
-        error: 'missing name or sessionID field'
-      }))
-
-      return
-    }
-
-    const user = await getUserBySessionID(sessionID)
-
-    if (!user) {
-      response.status(401).end(JSON.stringify({
-        error: 'invalid session id'
-      }))
-
-      return
-    }
-
-    const { permissionLevel } = user
-
-    if (permissionLevel !== 'admin') {
-      response.status(403).end(JSON.stringify({
-        error: 'you are not an admin'
+        error: 'missing name field'
       }))
 
       return
