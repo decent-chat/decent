@@ -80,7 +80,8 @@ async function main() {
   const db = {
     messages: new Datastore({filename: 'db/messages'}),
     users: new Datastore({filename: 'db/users'}),
-    sessions: new Datastore({filename: 'db/sessions'})
+    sessions: new Datastore({filename: 'db/sessions'}),
+    channels: new Datastore({filename: 'db/channels'}),
   }
 
   await Promise.all(Object.values(db).map(d => d.loadDatabase()))
@@ -224,6 +225,16 @@ async function main() {
     }))
   })
 
+  /*
+  app.post('/api/create-channel', async (request, response) => {
+    const { name } = request.body
+
+    if (!name) {
+      return
+    }
+  })
+  */
+
   app.post('/api/register', async (request, response) => {
     const { username } = request.body
     let { password } = request.body
@@ -309,14 +320,6 @@ async function main() {
       success: true,
       user
     }))
-  })
-
-  io.on('connection', socket => {
-    console.log('a user connected')
-
-    socket.on('disconnect', () => {
-      console.log('a user disconnected')
-    })
   })
 
   httpServer.listen(3000, () => {
