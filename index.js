@@ -63,6 +63,20 @@ async function main() {
     return user
   }
 
+  const getUserIDBySessionID = async function(sessionID) {
+    // Gets the user ID of a session (by the session's ID).
+    // This uses one less database request than getUserBySessionID, since it
+    // does not actually request the stored user data.
+
+    const session = await db.sessions.findOne({_id: sessionID})
+
+    if (!session) {
+      return null
+    }
+
+    return session.user
+  }
+
   const db = {
     messages: new Datastore({filename: 'db/messages'}),
     users: new Datastore({filename: 'db/users'}),
@@ -99,7 +113,8 @@ async function main() {
     }
 
     const message = await db.messages.insert({
-      author: user.username,
+      authorID: user._id,
+      authorUsername: user.username,
       date: Date.now(),
       revisions: [
         {
@@ -138,15 +153,15 @@ async function main() {
       return
     }
 
-    const user = await getUserBySessionID(sessionID)
+    const userID = await getUserIDBySessionID(sessionID)
 
-    if (!user) {
+    if (!userID) {
       response.end(JSON.stringify({
         error: 'invalid session ID'
       }))
     }
 
-    if (user.username !== oldMessage.author) {
+    if (userID !== oldMessage.authorID) {
       response.end(JSON.stringify({
         error: 'you are not the owner of this message'
       }))

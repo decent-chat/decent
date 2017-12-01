@@ -51,7 +51,7 @@ const main = async function() {
     while (loginStatusEl.firstChild) loginStatusEl.firstChild.remove()
 
     if (loggedIn) {
-      const { user: { username } } = sessionObj
+      const { user: { username, _id: userID } } = sessionObj
 
       loginStatusEl.appendChild(document.createTextNode(
         'Logged in as ' + username
@@ -61,7 +61,7 @@ const main = async function() {
       document.getElementById('login').style.display = 'none'
       document.getElementById('logout').style.removeProperty('display')
 
-      for (const msg of document.querySelectorAll(queryByDataset('author', username))) {
+      for (const msg of document.querySelectorAll(queryByDataset('author', userID))) {
         msg.classList.add('created-by-us')
       }
     } else {
@@ -264,7 +264,7 @@ const main = async function() {
     // is set to null, or is greater than the number of revisions, the most recent
     // revision is used.
 
-    const { author } = message
+    const { authorUsername } = message
 
     if (revisionIndex === null || revisionIndex >= message.revisions.length) {
       revisionIndex = message.revisions.length - 1
@@ -288,16 +288,17 @@ const main = async function() {
     time.appendChild(document.createTextNode(`${messageDate.getHours()}:${messageDate.getMinutes()}`))
     el.appendChild(time)
 
-    el.appendChild(document.createTextNode(` ${author}: ${text}`))
+    el.appendChild(document.createTextNode(` ${authorUsername}: ${text}`))
 
     if (processPGP) {
+      // TODO: Re-write this code to work with user IDs rather than usernames.
       if (signature) {
-        if (author in publicKeyDictionary === false) {
+        if (authorUsername in publicKeyDictionary === false) {
           el.appendChild(document.createTextNode(' (Signed, but this user is not in your public key dictionary)'))
         } else {
           const verified = await openpgp.verify({
             message: openpgp.cleartext.readArmored(signature),
-            publicKeys: openpgp.key.readArmored(publicKeyDictionary[author]).keys
+            publicKeys: openpgp.key.readArmored(publicKeyDictionary[authorUsername]).keys
           })
 
           if (verified.signatures[0].valid) {
@@ -354,9 +355,9 @@ const main = async function() {
       return
     }
 
-    const { revisions, author, _id } = msg.message
+    const { revisions, authorID, _id } = msg.message
 
-    if (!revisions || !author) {
+    if (!revisions || !authorID) {
       return
     }
 
@@ -370,11 +371,11 @@ const main = async function() {
     const el = document.createElement('div')
     el.classList.add('message')
     el.setAttribute('id', 'message-' + _id)
-    el.dataset.author = author
+    el.dataset.author = authorID
     el.appendChild(await buildMessageContent(msg.message))
     messagesContainer.appendChild(el)
 
-    if (sessionObj && author === sessionObj.user.username) {
+    if (sessionObj && authorID === sessionObj.user._id) {
       el.classList.add('created-by-us')
     }
 
@@ -384,7 +385,7 @@ const main = async function() {
 
     el.addEventListener('click', async () => {
       // Don't do anything if we don't own this message!
-      if (!(sessionObj && author === sessionObj.user.username)) {
+      if (!(sessionObj && authorID === sessionObj.user._id)) {
         return
       }
 
