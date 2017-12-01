@@ -281,11 +281,15 @@ const main = async function() {
     const el = document.createElement('div')
     el.classList.add('message-revision-content')
 
-    const messageDate = new Date(message.date)
+    const messageDate = new Date(Date.parse(message.date))
+
+    const pad = value => value.toString().padStart(2, '0')
 
     const time = document.createElement('time')
     time.setAttribute('datetime', messageDate.toISOString())
-    time.appendChild(document.createTextNode(`${messageDate.getHours()}:${messageDate.getMinutes()}`))
+    time.appendChild(document.createTextNode(
+      `${pad(messageDate.getHours())}:${pad(messageDate.getMinutes())}`
+    ))
     el.appendChild(time)
 
     el.appendChild(document.createTextNode(` ${authorUsername}: ${text}`))

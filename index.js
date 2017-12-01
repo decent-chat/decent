@@ -78,6 +78,10 @@ async function main() {
     return session.user
   }
 
+  const getDateAsISOString = function() {
+    return (new Date()).toISOString()
+  }
+
   const db = {
     messages: new Datastore({filename: 'db/messages'}),
     users: new Datastore({filename: 'db/users'}),
@@ -123,12 +127,12 @@ async function main() {
     const message = await db.messages.insert({
       authorID: user._id,
       authorUsername: user.username,
-      date: Date.now(),
+      date: getDateAsISOString(),
       revisions: [
         {
           text: request.body.text,
           signature: request.body.signature,
-          date: Date.now()
+          date: getDateAsISOString()
         }
       ]
     })
@@ -136,7 +140,8 @@ async function main() {
     io.emit('received chat message', {message})
 
     response.status(201).end(JSON.stringify({
-      success: true
+      success: true,
+      messageID: message._id
     }))
   })
 
@@ -181,7 +186,7 @@ async function main() {
       $push: {
         revisions: {
           text, signature,
-          date: Date.now()
+          date: getDateAsISOString()
         }
       }
     }, {
