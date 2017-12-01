@@ -11,6 +11,7 @@ const bcrypt = require('bcrypt-nodejs')
 const socketio = require('socket.io')
 const http = require('http')
 const uuidv4 = require('uuid/v4')
+const readline = require('readline')
 
 const bcryptGenSalt = (rounds = 10) => new Promise((resolve, reject) => {
   bcrypt.genSalt(rounds, (err, salt) => {
@@ -264,6 +265,7 @@ async function main() {
     const user = await db.users.insert({
       username,
       passwordHash,
+      permissionLevel: 'member',
       salt
     })
 
@@ -322,8 +324,59 @@ async function main() {
     }))
   })
 
-  httpServer.listen(3000, () => {
-    console.log('listening on port 3000')
+  await new Promise(resolve => httpServer.listen(3000, resolve))
+
+  console.log('listening on port 3000')
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  })
+
+  rl.setPrompt('> ')
+  rl.prompt()
+
+  rl.on('line', async input => {
+    rl.pause()
+
+    const parts = input.split(' ').filter(p => p.length > 0)
+
+    if (parts.length) handleCommand: {
+      if (parts[0] === 'help' || parts[0] === '?') {
+        console.log('This is the administrator command line interface for')
+        console.log('the bantisocial chat system. This is NOT a text-based')
+        console.log('interface for chatting; use an actual client for that.')
+        console.log('Commands:')
+        console.log(' - make-admin: makes an already-registered user an admin.')
+      }
+
+      if (parts[0] === 'make-admin') {
+        if (parts.length !== 2) {
+          console.error('Expected (make-admin <username>)')
+          break handleCommand
+        }
+
+        const username = parts[1]
+
+        const user = await db.users.findOne({username})
+
+        if (!user) {
+          console.error('Error: There is no user with username ' + username)
+          break handleCommand
+        }
+
+        await db.users.update({username}, {
+          $set: {
+            permissionLevel: 'admin'
+          }
+        })
+
+        console.log(`Made ${username} an admin.`)
+      }
+    }
+
+    rl.resume()
+    rl.prompt()
   })
 }
 
