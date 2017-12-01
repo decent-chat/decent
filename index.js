@@ -272,6 +272,9 @@ async function main() {
     let { password } = request.body
 
     if (!username || !password) {
+      response.end(JSON.stringify({
+        error: 'missing username or password field'
+      }))
       return
     }
 
