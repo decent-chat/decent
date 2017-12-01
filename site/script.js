@@ -421,7 +421,7 @@ const main = async function() {
 
     const authorEl = document.createElement('div')
     authorEl.classList.add('message-author')
-    authorEl.appendChild(document.createTextNode(author))
+    authorEl.appendChild(document.createTextNode(authorUsername))
 
     el.appendChild(authorEl)
 
