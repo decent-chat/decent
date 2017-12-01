@@ -54,15 +54,23 @@ module.exports = function attachAPI(app, {io, db}) {
     input: Symbol('Middleware input'),
     output: Symbol('Middleware output'),
 
-    loadInputFromBody: function(request, response, next) {
+    loadInputFromObject: function(object, request, response, next) {
       request[middleware.input] = {}
       request[middleware.output] = {}
 
-      for (const [ key, value ] of Object.entries(request.body)) {
+      for (const [ key, value ] of Object.entries(object)) {
         request[middleware.input][key] = value
       }
 
       next()
+    },
+
+    loadInputFromBody: function(request, response, next) {
+      middleware.loadInputFromObject(request.body, request, response, next)
+    },
+
+    loadInputFromParams: function(request, response, next) {
+      middleware.loadInputFromObject(request.params, request, response, next)
     },
 
     getSessionUserFromID: async function(request, response, next) {
@@ -267,16 +275,12 @@ module.exports = function attachAPI(app, {io, db}) {
     response.status(200).end(JSON.stringify({success: true}))
   })
 
-  app.get('/api/message/:message', async (request, response) => {
-    const message = await db.messages.findOne({_id: request.params.message})
+  app.get('/api/message/:messageID', middleware.loadInputFromParams)
+  app.get('/api/message/:messageID', middleware.getMessageFromID)
+  app.get('/api/message/:messageID', async (request, response) => {
+    const { message } = request[middleware.output]
 
-    if (message) {
-      response.status(200).end(JSON.stringify(message))
-    } else {
-      response.status(404).end(JSON.stringify({
-        error: 'message not found'
-      }))
-    }
+    response.status(200).end(JSON.stringify(message))
   })
 
   app.post('/api/release-public-key', async (request, response) => {
