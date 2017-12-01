@@ -283,28 +283,19 @@ module.exports = function attachAPI(app, {io, db}) {
     response.status(200).end(JSON.stringify(message))
   })
 
+  app.post('/api/release-public-key', middleware.loadInputFromBody)
+  app.post('/api/release-public-key', middleware.getSessionUserFromID)
   app.post('/api/release-public-key', async (request, response) => {
-    const { key, sessionID } = request.body
+    const { key } = request[middleware.input]
+    const { sessionUser: { username } } = request[middleware.output]
 
-    if (!key || !sessionID) {
+    if (!key) {
       response.status(400).end(JSON.stringify({
-        error: 'missing key or sessionID field'
+        error: 'missing key field'
       }))
 
       return
     }
-
-    const user = await getUserBySessionID(sessionID)
-
-    if (!user) {
-      response.status(401).end(JSON.stringify({
-        error: 'invalid session ID'
-      }))
-
-      return
-    }
-
-    const { username } = user
 
     io.emit('released public key', {key, username})
 
