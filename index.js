@@ -94,6 +94,12 @@ async function main() {
     res.sendFile(__dirname + '/site/index.html')
   })
 
+  app.use('/api/*', async (request, response, next) => {
+    response.header('Content-Type', 'application/json')
+
+    next()
+  })
+
   app.post('/api/send-message', async (request, response) => {
     const { text, signature, sessionID } = request.body
 
