@@ -149,7 +149,7 @@ async function main() {
     const { messageID, text, signature, sessionID } = request.body
 
     if (!sessionID || !messageID || !text) {
-      response.status(200).end(JSON.stringify({
+      response.status(400).end(JSON.stringify({
         error: 'missing sessionID, messageID, or text field'
       }))
 
@@ -162,6 +162,8 @@ async function main() {
       response.status(401).end(JSON.stringify({
         error: 'invalid session ID'
       }))
+
+      return
     }
 
     const oldMessage = await db.messages.findOne({_id: messageID})
