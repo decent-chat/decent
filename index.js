@@ -226,15 +226,46 @@ async function main() {
     }))
   })
 
-  /*
   app.post('/api/create-channel', async (request, response) => {
-    const { name } = request.body
+    const { name, sessionID } = request.body
 
-    if (!name) {
+    if (!name || !sessionID) {
+      response.end(JSON.stringify({
+        error: 'missing name or sessionID field'
+      }))
+
       return
     }
+
+    const user = await getUserBySessionID(sessionID)
+
+    if (!user) {
+      response.end(JSON.stringify({
+        error: 'invalid session id'
+      }))
+
+      return
+    }
+
+    const { permissionLevel } = user
+
+    if (permissionLevel !== 'admin') {
+      response.end(JSON.stringify({
+        error: 'you are not an admin'
+      }))
+
+      return
+    }
+
+    const channel = await db.channels.insert({
+      name
+    })
+
+    response.end(JSON.stringify({
+      success: true,
+      channel
+    }))
   })
-  */
 
   app.post('/api/register', async (request, response) => {
     const { username } = request.body
