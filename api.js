@@ -441,6 +441,14 @@ module.exports = function attachAPI(app, {io, db}) {
     const { username } = request.body
     let { password } = request.body
 
+    if (!username || !password) {
+      response.status(400).end(JSON.stringify({
+        error: 'missing username or password field'
+      }))
+
+      return
+    }
+
     const user = await db.users.findOne({username})
 
     if (!user) {
