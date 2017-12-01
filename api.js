@@ -227,32 +227,16 @@ module.exports = function attachAPI(app, {io, db}) {
     }))
   })
 
+  app.post('/api/edit-message', middleware.loadInputFromBody)
+  app.post('/api/edit-message', middleware.getSessionUserFromID)
+  app.post('/api/edit-message', middleware.getMessageFromID)
   app.post('/api/edit-message', async (request, response) => {
-    const { messageID, text, signature, sessionID } = request.body
+    const { text, signature } = request[middleware.input]
+    const { message: oldMessage, sessionUser: { _id: userID } } = request[middleware.output]
 
-    if (!sessionID || !messageID || !text) {
+    if (!text) {
       response.status(400).end(JSON.stringify({
-        error: 'missing sessionID, messageID, or text field'
-      }))
-
-      return
-    }
-
-    const userID = await getUserIDBySessionID(sessionID)
-
-    if (!userID) {
-      response.status(401).end(JSON.stringify({
-        error: 'invalid session ID'
-      }))
-
-      return
-    }
-
-    const oldMessage = await db.messages.findOne({_id: messageID})
-
-    if (!oldMessage) {
-      response.status(500).end(JSON.stringify({
-        error: 'no message by given id'
+        error: 'missing text field'
       }))
 
       return
@@ -266,7 +250,7 @@ module.exports = function attachAPI(app, {io, db}) {
       return
     }
 
-    const [ numAffected, newMessage ] = await db.messages.update({_id: messageID}, {
+    const [ numAffected, newMessage ] = await db.messages.update({_id: oldMessage._id}, {
       $push: {
         revisions: {
           text, signature,
