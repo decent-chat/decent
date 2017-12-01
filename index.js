@@ -301,11 +301,20 @@ async function main() {
 
   app.post('/api/register', async (request, response) => {
     const { username } = request.body
+    const reValidUsername = /^[a-zA-Z0-9_-]+$/g
     let { password } = request.body
 
     if (!username || !password) {
       response.status(400).end(JSON.stringify({
         error: 'missing username or password field'
+      }))
+
+      return
+    }
+
+    if (!reValidUsername.test(username)) {
+      response.status(400).end(JSON.stringify({
+        error: 'username invalid'
       }))
 
       return
@@ -323,6 +332,7 @@ async function main() {
       response.status(400).end(JSON.stringify({
         error: 'password must be at least 6 characters long'
       }))
+
       return
     }
 
@@ -385,6 +395,11 @@ async function main() {
 
       return
     }
+
+    // Don't give the following away, even to the user themselves.
+    // They should never have a use for them regardless of security.
+    delete user.passwordHash
+    delete user.salt
 
     response.status(200).end(JSON.stringify({
       success: true,

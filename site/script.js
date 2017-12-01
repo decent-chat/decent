@@ -180,6 +180,8 @@ const main = async function() {
         alert('Couldn\'t create account - password too short.')
       } else if (result.error === 'username already taken') {
         alert('Couldn\'t create account - username already taken.')
+      } else if (result.error === 'username invalid') {
+        alert('Couldn\'t create account - username is invalid (only alphanumeric, underscores, and dashes allowed)')
       }
       return
     }
@@ -259,6 +261,142 @@ const main = async function() {
     })
   })
 
+  const formatMessageText = function(text) {
+    // Formats some message text and returns a <span> element ready to be displayed.
+
+    const el = document.createElement('span')
+    const { user } = sessionObj
+
+    let buffer = ''
+    let currentToken = 'text'
+    let styles = {} // (b)old, (i)talics, (u)nderline, (s)trikethrough
+    let esc = false
+
+    function startToken(nextToken) {
+      // end the current token
+      if (buffer === '') {
+        ;
+      } else if (currentToken === 'text') {
+        const textNode = document.createTextNode(buffer)
+        const spanEl = document.createElement('span')
+        spanEl.appendChild(textNode)
+
+        // (b)old, (i)talic, etc.
+        for (let [ style, enabled ] of Object.entries(styles)) {
+          if (style == 'i_') style = 'i'
+          if (enabled) spanEl.classList.add('message-format-' + style)
+        }
+
+        el.appendChild(spanEl)
+      } else if (currentToken === 'mention') {
+        if (buffer === '@') { // TODO: must be a logged-in username!
+          // not a mention; treat as text
+          el.appendChild(document.createTextNode(buffer))
+        } else {
+          const mentionEl = document.createElement('span')
+
+          mentionEl.classList.add('message-mention')
+
+          if (buffer === '@' + user.username || buffer === '@everyone')
+            mentionEl.classList.add('message-mention-of-user')
+
+          mentionEl.appendChild(document.createTextNode(buffer))
+          el.appendChild(mentionEl)
+        }
+      } else if (currentToken === 'code') {
+        const codeEl = document.createElement('code')
+
+        codeEl.classList.add('message-inline-code')
+        codeEl.appendChild(document.createTextNode(buffer))
+
+        el.appendChild(codeEl)
+      } else if (currentToken === 'latex') {
+        const spanEl = document.createElement('span')
+
+        spanEl.classList.add('message-latex')
+        katex.render(buffer, spanEl)
+
+        el.appendChild(spanEl)
+      }
+
+      // start next token
+      buffer = ''
+      currentToken = nextToken
+    }
+
+    function toggleStyle(k) {
+      if (styles[k] === true) {
+        // end style
+        startToken('text')
+        styles[k] = false
+      } else {
+        // start style
+        startToken('text') // end current token
+        styles[k] = true
+      }
+    }
+
+    for (let c = 0; c < text.length; c++) {
+      const char = text[c]
+      const charBefore = text[c - 1] || ' '
+      const charNext = text[c + 1] || ' '
+
+      if (esc) esc = false
+      else {
+        if (char === '\\') { esc = true; continue }
+
+        else if (char === '@' && currentToken === 'text' && charBefore === ' ') startToken('mention')
+        else if (!(/[a-zA-Z0-9_-]/).test(char) && currentToken === 'mention') startToken('text')
+
+        else if (char === '*' && currentToken === 'text') {
+          if (charNext === '*') {
+            // bold
+            toggleStyle('b')
+            c++ // skip charNext
+          } else {
+            // italic
+            toggleStyle('i')
+          }
+
+          continue
+        }
+
+        else if (char === '_' && currentToken === 'text') {
+          if (charNext === '_') {
+            // underline
+            toggleStyle('u')
+            c++ // skip charNext
+          } else {
+            // italic
+            toggleStyle('i_')
+          }
+
+          continue
+        }
+
+        else if (char === '~' && charNext === '~' && currentToken === 'text') {
+          // strikethrough
+          toggleStyle('s')
+          c++ // skip charNext
+
+          continue
+        }
+
+        else if (char === '$' && charNext === '$' && currentToken !== 'latex') { startToken('latex'); c++; continue }
+        else if (char === '$' && charNext === '$' && currentToken === 'latex') { startToken('text'); c++; continue }
+
+        else if (char === '`' && currentToken !== 'code') { startToken('code'); continue }
+        else if (char === '`' && currentToken === 'code') { startToken('text'); continue }
+      }
+
+      buffer += char
+    }
+
+    styles = {}
+    startToken(null)
+    return el
+  }
+
   const buildMessageContent = async function(message, revisionIndex = null) {
     // Builds the message content elements of a message. If the passed revision index
     // is set to null, or is greater than the number of revisions, the most recent
@@ -281,8 +419,13 @@ const main = async function() {
     const el = document.createElement('div')
     el.classList.add('message-revision-content')
 
-    const messageDate = new Date(Date.parse(message.date))
+    const authorEl = document.createElement('div')
+    authorEl.classList.add('message-author')
+    authorEl.appendChild(document.createTextNode(authorUsername))
 
+    el.appendChild(authorEl)
+
+    const messageDate = new Date(Date.parse(message.date))
     const pad = value => value.toString().padStart(2, '0')
 
     const time = document.createElement('time')
@@ -292,7 +435,9 @@ const main = async function() {
     ))
     el.appendChild(time)
 
-    el.appendChild(document.createTextNode(` ${authorUsername}: ${text}`))
+    const contentEl = formatMessageText(text)
+    contentEl.classList.add('message-content')
+    el.appendChild(contentEl)
 
     if (processPGP) {
       // TODO: Re-write this code to work with user IDs rather than usernames.

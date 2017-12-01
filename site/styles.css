@@ -38,6 +38,53 @@ body, html, #app {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
+.message-mention {
+  color: #cfa041;
+}
+
+.message-mention-of-user {
+  color: white;
+  background-color: #cfa041;
+}
+
+.message-inline-code {
+  color: white;
+  background-color: #232323;
+}
+
+.message-author {
+  float: left;
+}
+
+.message time {
+  float: right;
+}
+
+.message-author {
+  font-weight: bold;
+}
+
+.message-content {
+  clear: both;
+  display: block;
+}
+
+.message-format-b {
+  font-weight: bold;
+}
+
+.message-format-i {
+  font-style: italic;
+}
+
+.message-format-u {
+  text-decoration: underline;
+}
+
+.message-format-s {
+  text-decoration: line-through;
+}
+
 a {
   color: #E080FF;
   text-decoration: none;
