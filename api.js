@@ -65,7 +65,7 @@ module.exports = function attachAPI(app, {io, db}) {
       next()
     },
 
-    parseSessionID: async function(request, response, next) {
+    getSessionUserFromID: async function(request, response, next) {
       const { sessionID } = request[middleware.input]
 
       if (!sessionID) {
@@ -89,6 +89,32 @@ module.exports = function attachAPI(app, {io, db}) {
       request[middleware.output].sessionUser = user
 
       next()
+    },
+
+    getMessageFromID: async function (request, response, next) {
+      const { messageID } = request[middleware.input]
+
+      if (!messageID) {
+        response.status(400).end(JSON.stringify({
+          error: 'missing messageID field'
+        }))
+
+        return
+      }
+
+      const message = await db.messages.findOne({_id: messageID})
+
+      if (!message) {
+        response.status(404).end(JSON.stringify({
+          error: 'message not found'
+        }))
+
+        return
+      }
+
+      request[middleware.output].message = message
+
+      next()
     }
   }
 
@@ -106,7 +132,7 @@ module.exports = function attachAPI(app, {io, db}) {
   })
 
   app.post('/api/send-message', middleware.loadInputFromBody)
-  app.post('/api/send-message', middleware.parseSessionID)
+  app.post('/api/send-message', middleware.getSessionUserFromID)
   app.post('/api/send-message', async (request, response) => {
     const { text, signature } = request[middleware.input]
     const { sessionUser } = request[middleware.output]
@@ -141,12 +167,16 @@ module.exports = function attachAPI(app, {io, db}) {
     }))
   })
 
+  app.post('/api/add-message-reaction', middleware.loadInputFromBody)
+  app.post('/api/add-message-reaction', middleware.getSessionUserFromID)
+  app.post('/api/add-message-reaction', middleware.getMessageFromID)
   app.post('/api/add-message-reaction', async (request, response) => {
-    const { messageID, reactionCode, sessionID } = request.body
+    const { reactionCode } = request[middleware.input]
+    const { message, sessionUser: { _id: userID } } = request[middleware.output]
 
-    if (!messageID || !reactionCode || !sessionID) {
+    if (!reactionCode) {
       response.status(400).end(JSON.stringify({
-        error: 'missing messageID, reactionCode, or sessionID field'
+        error: 'missing reactionCode field'
       }))
 
       return
@@ -155,26 +185,6 @@ module.exports = function attachAPI(app, {io, db}) {
     if (reactionCode.length !== 1) {
       response.status(400).end(JSON.stringify({
         error: 'reactionCode should be 1-character string'
-      }))
-
-      return
-    }
-
-    const userID = await getUserIDBySessionID(sessionID)
-
-    if (!userID) {
-      response.status(401).end(JSON.stringify({
-        error: 'invalid session ID'
-      }))
-
-      return
-    }
-
-    const message = await db.messages.findOne({_id: messageID})
-
-    if (!message) {
-      response.status(404).end(JSON.stringify({
-        error: 'message not found'
       }))
 
       return
@@ -191,7 +201,7 @@ module.exports = function attachAPI(app, {io, db}) {
         return
       }
 
-      const [ numAffected, newMessage ] = await db.messages.update({_id: messageID}, {
+      const [ numAffected, newMessage ] = await db.messages.update({_id: message._id}, {
         $push: {
           [`reactions.${reactionCode}`]: userID
         }
@@ -202,7 +212,7 @@ module.exports = function attachAPI(app, {io, db}) {
 
       newReactionCount = newMessage.reactions[reactionCode].length
     } else {
-      await db.messages.update({_id: messageID}, {
+      await db.messages.update({_id: message._id}, {
         $set: {
           [`reactions.${reactionCode}`]: [userID]
         }
