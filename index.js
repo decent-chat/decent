@@ -134,7 +134,8 @@ async function main() {
           signature: request.body.signature,
           date: getDateAsISOString()
         }
-      ]
+      ],
+      reactions: {}
     })
 
     io.emit('received chat message', {message})
@@ -142,6 +143,82 @@ async function main() {
     response.status(201).end(JSON.stringify({
       success: true,
       messageID: message._id
+    }))
+  })
+
+  app.post('/api/add-message-reaction', async (request, response) => {
+    const { messageID, reactionCode, sessionID } = request.body
+
+    if (!messageID || !reactionCode || !sessionID) {
+      response.status(400).end(JSON.stringify({
+        error: 'missing messageID, reactionCode, or sessionID field'
+      }))
+
+      return
+    }
+
+    if (reactionCode.length !== 1) {
+      response.status(400).end(JSON.stringify({
+        error: 'reactionCode should be 1-character string'
+      }))
+
+      return
+    }
+
+    const userID = await getUserIDBySessionID(sessionID)
+
+    if (!userID) {
+      response.status(401).end(JSON.stringify({
+        error: 'invalid session ID'
+      }))
+
+      return
+    }
+
+    const message = await db.messages.findOne({_id: messageID})
+
+    if (!message) {
+      response.status(404).end(JSON.stringify({
+        error: 'message not found'
+      }))
+
+      return
+    }
+
+    let newReactionCount
+
+    if (reactionCode in message.reactions) {
+      if (message.reactions[reactionCode].includes(userID)) {
+        response.status(500).end(JSON.stringify({
+          error: 'you already reacted with this'
+        }))
+
+        return
+      }
+
+      const [ numAffected, newMessage ] = await db.messages.update({_id: messageID}, {
+        $push: {
+          [`reactions.${reactionCode}`]: userID
+        }
+      }, {
+        multi: false,
+        returnUpdatedDocs: true
+      })
+
+      newReactionCount = newMessage.reactions[reactionCode].length
+    } else {
+      await db.messages.update({_id: messageID}, {
+        $set: {
+          [`reactions.${reactionCode}`]: [userID]
+        }
+      })
+
+      newReactionCount = 1
+    }
+
+    response.status(200).end(JSON.stringify({
+      success: true,
+      newCount: newReactionCount
     }))
   })
 
