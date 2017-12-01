@@ -219,9 +219,10 @@ async function main() {
     }
 
     if (!reValidUsername.test(username)) {
-      response.end(JSON.stringify({
+      response.status(400).end(JSON.stringify({
         error: 'username invalid'
       }))
+
       return
     }
 
@@ -233,9 +234,10 @@ async function main() {
     }
 
     if (password.length < 6) {
-      response.end(JSON.stringify({
+      response.status(400).end(JSON.stringify({
         error: 'password must be at least 6 characters long'
       }))
+
       return
     }
 
@@ -299,9 +301,9 @@ async function main() {
     }
 
     // Don't give the following away, even to the user themselves.
+    // They should never have a use for them regardless of security.
     delete user.passwordHash
     delete user.salt
-    delete user._id
 
     response.end(JSON.stringify({
       success: true,
