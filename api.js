@@ -52,35 +52,68 @@ module.exports = function attachAPI(app, {io, db}) {
 
   const loadVarsFromRequestObject = function(object, request, response, next) {
     // TODO: Actually implement the variable system..!
-    request[middleware.input] = {}
-    request[middleware.output] = {}
+    request[middleware.vars] = {}
 
     for (const [ key, value ] of Object.entries(object)) {
-      request[middleware.input][key] = value
+      request[middleware.vars][key] = value
     }
 
     next()
   }
 
   const middleware = {
-    input: Symbol('Middleware input'),
-    output: Symbol('Middleware output'),
+    vars: Symbol('Middleware variables'),
 
-    loadInputFromBody: () => [
+    verifyVarsExists: () => [
+      // Makes sure the vars dictionary is actually a thing stored on the request.
+      // If it isn't, this creates it.
+
       function(request, response, next) {
-        loadVarsFromRequestObject(request.body, request, response, next)
+        if (middleware.vars in request === false) {
+          request[middleware.vars] = {}
+        }
+
+        next()
       }
     ],
 
-    loadInputFromParams: () => [
+    loadVarFromBody: (key, required = true) => [
+      // Takes a value from the given body object and stores it as a variable.
+      // If the 'required' argument is set to true and the key is not found in
+      // the request's body, an error message is shown in response.
+
+      ...middleware.verifyVarsExists(),
+
       function(request, response, next) {
-        loadVarsFromRequestObject(request.params, request, response, next)
+        if (required && (key in request.body === false)) {
+          response.status(400).end(JSON.stringify({
+            error: `${key} field missing`
+          }))
+
+          return
+        }
+
+        request[middleware.vars][key] = request.body[key]
+        next()
       }
     ],
 
-    getSessionUserFromID: () => [
+    loadVarFromParams: key => [
+      // Same as loadVarFromBody, but it loads from the request's params.
+      // Use this for GET requests where the parameter is labeled in the URL,
+      // e.g .get('/api/message/:messageID').
+
+      ...middleware.verifyVarsExists(),
+
+      function(request, response, next) {
+        request[middleware.vars][key] = request.params[key]
+        next()
+      }
+    ],
+
+    getSessionUserFromID: (sessionIDVar, sessionUserVar) => [
       async function(request, response, next) {
-        const { sessionID } = request[middleware.input]
+        const sessionID = request[middleware.vars][sessionIDVar]
 
         if (!sessionID) {
           response.status(400).end(JSON.stringify({
@@ -100,15 +133,34 @@ module.exports = function attachAPI(app, {io, db}) {
           return
         }
 
-        request[middleware.output].sessionUser = user
+        request[middleware.vars][sessionUserVar] = user
 
         next()
       }
     ],
 
-    getMessageFromID: () => [
+    getUserFromUsername: (usernameVar, userVar) => [
       async function(request, response, next) {
-        const { messageID } = request[middleware.input]
+        const username = request[middleware.vars][usernameVar]
+        const user = await db.users.findOne({username})
+
+        if (!user) {
+          response.status(404).end(JSON.stringify({
+            error: 'user not found'
+          }))
+
+          return
+        }
+
+        request[middleware.vars][userVar] = user
+
+        next()
+      }
+    ],
+
+    getMessageFromID: (messageIDVar, messageVar) => [
+      async function(request, response, next) {
+        const messageID = request[middleware.vars][messageIDVar]
 
         if (!messageID) {
           response.status(400).end(JSON.stringify({
@@ -128,19 +180,36 @@ module.exports = function attachAPI(app, {io, db}) {
           return
         }
 
-        request[middleware.output].message = message
+        request[middleware.vars][messageVar] = message
 
         next()
       }
     ],
 
-    requireAdminSession: () => [
+    requireBeAdmin: userVar => [
       async function(request, response, next) {
-        const { sessionUser } = request[middleware.output]
+        const { permissionLevel } = request[middleware.vars][userVar]
 
-        if (sessionUser.permissionLevel !== 'admin') {
+        if (permissionLevel !== 'admin') {
           response.status(403).end(JSON.stringify({
             error: 'you are not an admin'
+          }))
+
+          return
+        }
+
+        next()
+      }
+    ],
+
+    requireBeMessageAuthor: (messageVar, userVar) => [
+      async function(request, response, next) {
+        const message = request[middleware.vars][messageVar]
+        const user = request[middleware.vars][userVar]
+
+        if (message.authorID !== user._id) {
+          response.status(403).end(JSON.stringify({
+            error: 'you are not the author of this message'
           }))
 
           return
@@ -164,20 +233,13 @@ module.exports = function attachAPI(app, {io, db}) {
   })
 
   app.post('/api/send-message', [
-    ...middleware.loadInputFromBody(),
-    ...middleware.getSessionUserFromID(),
+    ...middleware.loadVarFromBody('text'),
+    ...middleware.loadVarFromBody('signature', false),
+    ...middleware.loadVarFromBody('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
 
     async (request, response) => {
-      const { text, signature } = request[middleware.input]
-      const { sessionUser } = request[middleware.output]
-
-      if (!text) {
-        response.status(400).end(JSON.stringify({
-          error: 'missing text field'
-        }))
-
-        return
-      }
+      const { text, signature, sessionUser } = request[middleware.vars]
 
       const message = await db.messages.insert({
         authorID: sessionUser._id,
@@ -203,21 +265,14 @@ module.exports = function attachAPI(app, {io, db}) {
   ])
 
   app.post('/api/add-message-reaction', [
-    ...middleware.loadInputFromBody(),
-    ...middleware.getSessionUserFromID(),
-    ...middleware.getMessageFromID(),
+    ...middleware.loadVarFromBody('reactionCode'),
+    ...middleware.loadVarFromBody('sessionID'),
+    ...middleware.loadVarFromBody('messageID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.getMessageFromID('messageID', 'message'),
 
     async (request, response) => {
-      const { reactionCode } = request[middleware.input]
-      const { message, sessionUser: { _id: userID } } = request[middleware.output]
-
-      if (!reactionCode) {
-        response.status(400).end(JSON.stringify({
-          error: 'missing reactionCode field'
-        }))
-
-        return
-      }
+      const { reactionCode, message, sessionUser: { _id: userID } } = request[middleware.vars]
 
       if (reactionCode.length !== 1) {
         response.status(400).end(JSON.stringify({
@@ -266,21 +321,16 @@ module.exports = function attachAPI(app, {io, db}) {
   ])
 
   app.post('/api/edit-message', [
-    ...middleware.loadInputFromBody(),
-    ...middleware.getSessionUserFromID(),
-    ...middleware.getMessageFromID(),
+    ...middleware.loadVarFromBody('sessionID'),
+    ...middleware.loadVarFromBody('messageID'),
+    ...middleware.loadVarFromBody('text'),
+    ...middleware.loadVarFromBody('signature', false),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.getMessageFromID('messageID', 'oldMessage'),
+    ...middleware.requireBeMessageAuthor('oldMessage', 'sessionUser'),
 
     async (request, response) => {
-      const { text, signature } = request[middleware.input]
-      const { message: oldMessage, sessionUser: { _id: userID } } = request[middleware.output]
-
-      if (!text) {
-        response.status(400).end(JSON.stringify({
-          error: 'missing text field'
-        }))
-
-        return
-      }
+      const { text, signature, oldMessage, sessionUser: { _id: userID } } = request[middleware.vars]
 
       if (userID !== oldMessage.authorID) {
         response.status(403).end(JSON.stringify({
@@ -309,21 +359,23 @@ module.exports = function attachAPI(app, {io, db}) {
   ])
 
   app.get('/api/message/:messageID', [
-    ...middleware.loadInputFromParams(),
-    ...middleware.getMessageFromID(),
+    ...middleware.loadVarFromParams('messageID'),
+    ...middleware.getMessageFromID('messageID', 'message'),
+
     async (request, response) => {
-      const { message } = request[middleware.output]
+      const { message } = request[middleware.vars]
 
       response.status(200).end(JSON.stringify(message))
     }
   ])
 
   app.post('/api/release-public-key', [
-    ...middleware.loadInputFromBody(),
-    ...middleware.getSessionUserFromID(),
+    ...middleware.loadVarFromBody('key'),
+    ...middleware.loadVarFromBody('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+
     async (request, response) => {
-      const { key } = request[middleware.input]
-      const { sessionUser: { username } } = request[middleware.output]
+      const { key, sessionUser: { username } } = request[middleware.vars]
 
       if (!key) {
         response.status(400).end(JSON.stringify({
@@ -342,20 +394,13 @@ module.exports = function attachAPI(app, {io, db}) {
   ])
 
   app.post('/api/create-channel', [
-    ...middleware.loadInputFromBody(),
-    ...middleware.getSessionUserFromID(),
-    ...middleware.requireAdminSession(),
+    ...middleware.loadVarFromBody('name'),
+    ...middleware.loadVarFromBody('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.requireBeAdmin('sessionUser'),
 
     async (request, response) => {
-      const { name } = request[middleware.input]
-
-      if (!name) {
-        response.status(400).end(JSON.stringify({
-          error: 'missing name field'
-        }))
-
-        return
-      }
+      const { name } = request[middleware.vars]
 
       if (await db.channels.findOne({name})) {
         response.status(500).end(JSON.stringify({
@@ -385,143 +430,133 @@ module.exports = function attachAPI(app, {io, db}) {
     }))
   })
 
-  app.post('/api/register', async (request, response) => {
-    const { username } = request.body
-    const reValidUsername = /^[a-zA-Z0-9_-]+$/g
-    let { password } = request.body
+  app.post('/api/register', [
+    ...middleware.loadVarFromBody('username'),
+    ...middleware.loadVarFromBody('password'),
 
-    if (!username || !password) {
-      response.status(400).end(JSON.stringify({
-        error: 'missing username or password field'
-      }))
+    async (request, response) => {
+      const { username, password } = request[middleware.vars]
+      const reValidUsername = /^[a-zA-Z0-9_-]+$/g
 
-      return
-    }
+      if (!reValidUsername.test(username)) {
+        response.status(400).end(JSON.stringify({
+          error: 'username invalid'
+        }))
 
-    if (!reValidUsername.test(username)) {
-      response.status(400).end(JSON.stringify({
-        error: 'username invalid'
-      }))
+        return
+      }
 
-      return
-    }
+      if (await db.users.findOne({username})) {
+        response.status(500).end(JSON.stringify({
+          error: 'username already taken'
+        }))
 
-    if (await db.users.findOne({username})) {
-      response.status(500).end(JSON.stringify({
-        error: 'username already taken'
-      }))
+        return
+      }
 
-      return
-    }
+      if (password.length < 6) {
+        response.status(400).end(JSON.stringify({
+          error: 'password must be at least 6 characters long'
+        }))
 
-    if (password.length < 6) {
-      response.status(400).end(JSON.stringify({
-        error: 'password must be at least 6 characters long'
-      }))
+        return
+      }
 
-      return
-    }
+      const salt = await bcrypt.genSalt()
+      const passwordHash = await bcrypt.hash(password, salt)
 
-    const salt = await bcrypt.genSalt()
-    const passwordHash = await bcrypt.hash(password, salt)
-    password = ''
-
-    const user = await db.users.insert({
-      username,
-      passwordHash,
-      permissionLevel: 'member',
-      salt
-    })
-
-    response.status(201).end(JSON.stringify({
-      success: true,
-      username: username,
-      id: user._id,
-    }))
-  })
-
-  app.get('/api/user/:userID', async (request, response) => {
-    const { userID } = request.params
-
-    const user = await db.users.findOne({_id: userID})
-
-    if (!user) {
-      response.status(404).end(JSON.stringify({
-        error: 'user not found'
-      }))
-
-      return
-    }
-
-    // TODO: Duplicated code...
-    delete user.passwordHash
-    delete user.salt
-
-    response.status(200).end(JSON.stringify({
-      success: true,
-      user
-    }))
-  })
-
-  app.post('/api/login', async (request, response) => {
-    const { username } = request.body
-    let { password } = request.body
-
-    if (!username || !password) {
-      response.status(400).end(JSON.stringify({
-        error: 'missing username or password field'
-      }))
-
-      return
-    }
-
-    const user = await db.users.findOne({username})
-
-    if (!user) {
-      response.status(404).end(JSON.stringify({
-        error: 'user not found'
-      }))
-
-      return
-    }
-
-    const { salt, passwordHash } = user
-
-    if (await bcrypt.compare(password, passwordHash)) {
-      const session = await db.sessions.insert({
-        _id: uuidv4(),
-        user: user._id
+      const user = await db.users.insert({
+        username,
+        passwordHash,
+        permissionLevel: 'member',
+        salt
       })
 
+      response.status(201).end(JSON.stringify({
+        success: true,
+        username: username,
+        id: user._id,
+      }))
+    }
+  ])
+
+  app.get('/api/user/:userID', [
+    ...middleware.loadVarFromParams('userID'),
+
+    async (request, response) => {
+      const { userID } = request[middleware.vars]
+
+      const user = await db.users.findOne({_id: userID})
+
+      if (!user) {
+        response.status(404).end(JSON.stringify({
+          error: 'user not found'
+        }))
+
+        return
+      }
+
+      // TODO: Duplicated code...
+      delete user.passwordHash
+      delete user.salt
+
       response.status(200).end(JSON.stringify({
-        sessionID: session._id
-      }))
-    } else {
-      response.status(401).end(JSON.stringify({
-        error: 'incorrect password'
+        success: true,
+        user
       }))
     }
-  })
+  ])
 
-  app.get('/api/session/:sessionID', async (request, response) => {
-    const user = await getUserBySessionID(request.params.sessionID)
+  app.post('/api/login', [
+    ...middleware.loadVarFromBody('username'),
+    ...middleware.loadVarFromBody('password'),
+    ...middleware.getUserFromUsername('username', 'user'),
 
-    if (!user) {
-      response.status(404).end(JSON.stringify({
-        error: 'session not found'
-      }))
+    async (request, response) => {
+      const { username, password, user } = request[middleware.vars]
+      const { salt, passwordHash } = user
 
-      return
+      if (await bcrypt.compare(password, passwordHash)) {
+        const session = await db.sessions.insert({
+          _id: uuidv4(),
+          user: user._id
+        })
+
+        response.status(200).end(JSON.stringify({
+          sessionID: session._id
+        }))
+      } else {
+        response.status(401).end(JSON.stringify({
+          error: 'incorrect password'
+        }))
+      }
     }
+  ])
 
-    // Don't give the following away, even to the user themselves.
-    // They should never have a use for them regardless of security.
-    delete user.passwordHash
-    delete user.salt
+  app.get('/api/session/:sessionID', [
+    ...middleware.loadVarFromParams('sessionID'),
 
-    response.status(200).end(JSON.stringify({
-      success: true,
-      user
-    }))
-  })
+    async (request, response) => {
+      const { sessionID } = request[middleware.vars]
+      const user = await getUserBySessionID(sessionID)
+
+      if (!user) {
+        response.status(404).end(JSON.stringify({
+          error: 'session not found'
+        }))
+
+        return
+      }
+
+      // Don't give the following away, even to the user themselves.
+      // They should never have a use for them regardless of security.
+      delete user.passwordHash
+      delete user.salt
+
+      response.status(200).end(JSON.stringify({
+        success: true,
+        user
+      }))
+    }
+  ])
 }
