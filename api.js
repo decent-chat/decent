@@ -16,6 +16,10 @@ const uuidv4 = require('uuid/v4')
 const bcrypt = require('./bcrypt-util')
 
 module.exports = function attachAPI(app, {io, db}) {
+  // Used to only send message events to clients who are in the same channel as the
+  // message.
+  const socketChannelMap = new Map()
+
   const getUserBySessionID = async function(sessionID) {
     const session = await db.sessions.findOne({_id: sessionID})
 
@@ -186,6 +190,26 @@ module.exports = function attachAPI(app, {io, db}) {
       }
     ],
 
+    getChannelFromID: (channelIDVar, channelVar) => [
+      async function(request, response, next) {
+        const channelID = request[middleware.vars][channelIDVar]
+
+        const channel = await db.channels.findOne({_id: channelID})
+
+        if (!channel) {
+          response.status(404).end(JSON.stringify({
+            error: 'channel not found'
+          }))
+
+          return
+        }
+
+        request[middleware.vars][channelVar] = channel
+
+        next()
+      }
+    ],
+
     requireBeAdmin: userVar => [
       async function(request, response, next) {
         const { permissionLevel } = request[middleware.vars][userVar]
@@ -234,17 +258,19 @@ module.exports = function attachAPI(app, {io, db}) {
 
   app.post('/api/send-message', [
     ...middleware.loadVarFromBody('text'),
+    ...middleware.loadVarFromBody('channelID'),
     ...middleware.loadVarFromBody('signature', false),
     ...middleware.loadVarFromBody('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
 
     async (request, response) => {
-      const { text, signature, sessionUser } = request[middleware.vars]
+      const { text, signature, channelID, sessionUser } = request[middleware.vars]
 
       const message = await db.messages.insert({
         authorID: sessionUser._id,
         authorUsername: sessionUser.username,
         date: getDateAsISOString(),
+        channelID: channelID,
         revisions: [
           {
             text: request.body.text,
@@ -255,7 +281,9 @@ module.exports = function attachAPI(app, {io, db}) {
         reactions: {}
       })
 
-      io.emit('received chat message', {message})
+      Array.from(socketChannelMap.entries())
+        .filter(([ socket, socketChannelID ]) => socketChannelID === channelID)
+        .forEach(([ socket ]) => socket.emit('received chat message', {message}))
 
       response.status(201).end(JSON.stringify({
         success: true,
@@ -559,4 +587,20 @@ module.exports = function attachAPI(app, {io, db}) {
       }))
     }
   ])
+
+  io.on('connection', socket => {
+    socketChannelMap.set(socket, null)
+
+    socket.on('view channel', channelID => {
+      if (!channelID) {
+        return
+      }
+
+      socketChannelMap.set(socket, channelID)
+    })
+
+    io.on('disconnect', () => {
+      socketChannelMap.delete(socket)
+    })
+  })
 }

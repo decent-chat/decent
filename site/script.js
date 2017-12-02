@@ -17,6 +17,7 @@ const main = async function() {
 
   let sessionID, sessionObj
   let processPGP = false
+  let activeChannelID
   let privateKey, publicKey, privateKeyObj
   let publicKeyDictionary = {}
 
@@ -229,6 +230,29 @@ const main = async function() {
     await updateSessionData()
   })
 
+  const viewChannel = function(channelID) {
+    activeChannelID = channelID
+    socket.emit('view channel', channelID)
+  }
+
+  // Super temporary function!!!
+  const viewChannelIndex = async function(index) {
+    const { channels } = await fetch('/api/channel-list').then(res => res.json())
+    if (channels[index]) {
+      viewChannel(channels[index]._id)
+    } else {
+      console.error('cannot view channel #' + index + ' because it does not index')
+    }
+  }
+
+  document.getElementById('view-channel-1').addEventListener('click', () => {
+    viewChannelIndex(0)
+  })
+
+  document.getElementById('view-channel-2').addEventListener('click', () => {
+    viewChannelIndex(1)
+  })
+
   const signText = async function(text) {
     if (publicKey && privateKeyObj) {
       const cleartext = await openpgp.sign({
@@ -253,10 +277,12 @@ const main = async function() {
     }
 
     const signature = await signText(text)
+    const channelID = activeChannelID
 
     await apiPost('/api/send-message', {
       text,
       signature,
+      channelID,
       sessionID
     })
   })
