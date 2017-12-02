@@ -269,22 +269,51 @@ const main = async function() {
   form.addEventListener('submit', async evt => {
     evt.preventDefault()
 
-    const text = chatInput.value
-    chatInput.value = ''
-
-    if (text.trim().length === 0) {
+    if (!sessionID) {
+      alert('You must be logged in to send a message.')
       return
     }
 
-    const signature = await signText(text)
-    const channelID = activeChannelID
+    if (!activeChannelID) {
+      alert('You must be in a channel to send a message.')
+      return
+    }
 
-    await apiPost('/api/send-message', {
-      text,
-      signature,
-      channelID,
-      sessionID
-    })
+    const text = chatInput.value
+
+    try {
+      chatInput.value = ''
+
+      if (text.trim().length === 0) {
+        return
+      }
+
+      const signature = await signText(text)
+      const channelID = activeChannelID
+
+      const result = await apiPost('/api/send-message', {
+        text,
+        signature,
+        channelID,
+        sessionID
+      })
+
+      if (result.success) {
+        return
+      }
+    } catch(error) {
+      console.error(error)
+    }
+
+    const restore = confirm(
+      'Your message was NOT sent! Some sort of internal error. See your browser network/console log.\n' +
+      'However, its content was saved:\n"""\n' + text + '\n"""\n' +
+      'Would you like to restore this into the chat input box?'
+    )
+
+    if (restore) {
+      chatInput.value = text
+    }
   })
 
   const formatMessageText = function(text) {
