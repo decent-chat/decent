@@ -27,27 +27,13 @@ module.exports = function attachAPI(app, {io, db}) {
       return null
     }
 
-    const user = await db.users.findOne({_id: session.user})
+    const user = await db.users.findOne({_id: session.userID})
 
     if (!user) {
       return null
     }
 
     return user
-  }
-
-  const getUserIDBySessionID = async function(sessionID) {
-    // Gets the user ID of a session (by the session's ID).
-    // This uses one less database request than getUserBySessionID, since it
-    // does not actually request the stored user data.
-
-    const session = await db.sessions.findOne({_id: sessionID})
-
-    if (!session) {
-      return null
-    }
-
-    return session.user
   }
 
   const getDateAsISOString = function() {
@@ -63,6 +49,34 @@ module.exports = function attachAPI(app, {io, db}) {
     }
 
     next()
+  }
+
+  const serialize = {
+    message: m => ({
+      id: m._id,
+      authorUsername: m.authorUsername,
+      authorID: m.authorID,
+      date: m.date,
+      channelID: m.channelID,
+      revisions: m.revisions.map(serialize.messageRevision),
+      reactions: m.reactions
+    }),
+
+    messageRevision: r => ({
+      text: r.text,
+      signature: r.signature,
+      date: r.date
+    }),
+
+    user: u => ({
+      id: u._id,
+      username: u.username
+    }),
+
+    channel: c => ({
+      id: c._id,
+      name: c.name
+    })
   }
 
   const middleware = {
@@ -262,9 +276,9 @@ module.exports = function attachAPI(app, {io, db}) {
         reactions: {}
       })
 
-      Array.from(socketChannelMap.entries())
-        .filter(([ socket, socketChannelID ]) => socketChannelID === channelID)
-        .forEach(([ socket ]) => socket.emit('received chat message', {message}))
+      io.emit('received chat message', {
+        message: serialize.message(message)
+      })
 
       response.status(201).end(JSON.stringify({
         success: true,
@@ -361,7 +375,7 @@ module.exports = function attachAPI(app, {io, db}) {
         returnUpdatedDocs: true
       })
 
-      io.emit('edited chat message', {message: newMessage})
+      io.emit('edited chat message', {message: serialize.message(newMessage)})
 
       response.status(200).end(JSON.stringify({success: true}))
     }
@@ -374,7 +388,7 @@ module.exports = function attachAPI(app, {io, db}) {
     async (request, response) => {
       const { message } = request[middleware.vars]
 
-      response.status(200).end(JSON.stringify(message))
+      response.status(200).end(JSON.stringify(serialize.message(message)))
     }
   ])
 
@@ -435,7 +449,7 @@ module.exports = function attachAPI(app, {io, db}) {
 
     response.status(200).end(JSON.stringify({
       success: true,
-      channels
+      channels: channels.map(serialize.channel)
     }))
   })
 
@@ -483,8 +497,7 @@ module.exports = function attachAPI(app, {io, db}) {
 
       response.status(201).end(JSON.stringify({
         success: true,
-        username: username,
-        id: user._id,
+        user: serialize.user(user)
       }))
     }
   ])
@@ -505,13 +518,9 @@ module.exports = function attachAPI(app, {io, db}) {
         return
       }
 
-      // TODO: Duplicated code...
-      delete user.passwordHash
-      delete user.salt
-
       response.status(200).end(JSON.stringify({
         success: true,
-        user
+        user: serialize.user(user)
       }))
     }
   ])
@@ -528,10 +537,11 @@ module.exports = function attachAPI(app, {io, db}) {
       if (await bcrypt.compare(password, passwordHash)) {
         const session = await db.sessions.insert({
           _id: uuidv4(),
-          user: user._id
+          userID: user._id
         })
 
         response.status(200).end(JSON.stringify({
+          success: true,
           sessionID: session._id
         }))
       } else {
@@ -557,14 +567,9 @@ module.exports = function attachAPI(app, {io, db}) {
         return
       }
 
-      // Don't give the following away, even to the user themselves.
-      // They should never have a use for them regardless of security.
-      delete user.passwordHash
-      delete user.salt
-
       response.status(200).end(JSON.stringify({
         success: true,
-        user
+        user: serialize.user(user)
       }))
     }
   ])

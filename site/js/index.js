@@ -52,7 +52,7 @@ const main = async function() {
     while (loginStatusEl.firstChild) loginStatusEl.firstChild.remove()
 
     if (loggedIn) {
-      const { user: { username, _id: userID } } = sessionObj
+      const { user: { username, id: userID } } = sessionObj
 
       loginStatusEl.appendChild(document.createTextNode(
         'Logged in as ' + username
@@ -239,7 +239,7 @@ const main = async function() {
   const viewChannelIndex = async function(index) {
     const { channels } = await fetch('/api/channel-list').then(res => res.json())
     if (channels[index]) {
-      viewChannel(channels[index]._id)
+      viewChannel(channels[index].id)
     } else {
       console.error('cannot view channel #' + index + ' because it does not index')
     }
@@ -252,6 +252,8 @@ const main = async function() {
   document.getElementById('view-channel-2').addEventListener('click', () => {
     viewChannelIndex(1)
   })
+
+  viewChannelIndex(0)
 
   const signText = async function(text) {
     if (publicKey && privateKeyObj) {
@@ -559,7 +561,7 @@ const main = async function() {
       return
     }
 
-    const { revisions, authorID, _id } = msg.message
+    const { revisions, authorID, id: messageID } = msg.message
 
     if (!revisions || !authorID) {
       return
@@ -574,12 +576,12 @@ const main = async function() {
 
     const el = document.createElement('div')
     el.classList.add('message')
-    el.setAttribute('id', 'message-' + _id)
+    el.setAttribute('id', 'message-' + messageID)
     el.dataset.author = authorID
     el.appendChild(await buildMessageContent(msg.message))
     messagesContainer.appendChild(el)
 
-    if (sessionObj && authorID === sessionObj.user._id) {
+    if (sessionObj && authorID === sessionObj.user.id) {
       el.classList.add('created-by-us')
     }
 
@@ -589,7 +591,7 @@ const main = async function() {
 
     el.addEventListener('click', async () => {
       // Don't do anything if we don't own this message!
-      if (!(sessionObj && authorID === sessionObj.user._id)) {
+      if (!(sessionObj && authorID === sessionObj.user.id)) {
         return
       }
 
@@ -600,15 +602,14 @@ const main = async function() {
       }
 
       const result = await apiPost('/api/edit-message', {
-        sessionID, text,
-        messageID: _id,
+        sessionID, text, messageID,
         signature: await signText(text)
       })
     })
   })
 
   const showMessageRevision = async function(message, index = undefined) {
-    const el = document.getElementById('message-' + message._id)
+    const el = document.getElementById('message-' + message.id)
 
     if (el) {
       const content = el.querySelector('.message-revision-content')
