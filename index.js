@@ -55,7 +55,6 @@ async function main() {
           console.log('interface for chatting; use an actual client for that.')
           console.log('Commands:')
           console.log(' - make-admin: makes an already-registered user an admin.')
-          console.log(' - create-channel: creates a new channel')
 
           break
         }
@@ -86,26 +85,8 @@ async function main() {
           break
         }
 
-        case 'create-channel': {
-          if (parts.length !== 2) {
-            console.error('Expected (create-channel <name>)')
-            break
-          }
-
-          const name = parts[1]
-
-          await db.channels.insert({
-            name
-          })
-
-          console.log(`Created channel #${name}`)
-
-          break
-        }
-
         default: {
-          console.log('??')
-          console.log('type help for help')
+          console.log('Unknown command. Try the help command?')
 
           break
         }
