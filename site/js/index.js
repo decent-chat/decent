@@ -1,25 +1,44 @@
-const apiPost = function(path, dataObj) {
-  return fetch(path, {
-    method: 'post',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(dataObj)
-  }).then(res => res.json())
-}
+import { post as apiPost } from './api.js'
+
+// MEGA TODO
+import SessionActor from './SessionActor.js'
+import ChannelsActor from './ChannelsActor.js'
+import MessagesActor from './MessagesActor.js'
 
 const queryByDataset = function(key, value) {
   return `[data-${key}='${value.replace(/'/g, '\\\'')}']`
 }
 
 const main = async function() {
-  const socket = io()
-
-  let sessionID, sessionObj
+  /*
   let processPGP = false
-  let activeChannelID
   let privateKey, publicKey, privateKeyObj
   let publicKeyDictionary = {}
+  */
+
+  // Everyone is an actor! Actors are essentially objects that
+  // talk to eachother by posting messages to eachother. Kinda
+  // like EventEmitters, but with a much snazzier name.
+  // See https://en.wikipedia.org/wiki/Actor_model.
+  const actors = {
+    session:  new SessionActor,  // Remembers the session ID.
+    channels: new ChannelsActor, // Controls the channel list sidebar.
+    messages: new MessagesActor, // Handles sending/recieving messages.
+  }
+
+  // Establish a WebSocket connection. It's *almost* an
+  // actor but not enough to live in the `actors` object.
+  const socket = io()
+
+  // Actors get references to other actors, plus a
+  // reference to the WebSocket connection.
+  for (let actor of actors) {
+    actor.actors = actors
+    actor.socket = socket
+    actor.go()
+  }
+
+  return // XXX
 
   if ('privateKey' in localStorage && 'publicKey' in localStorage) {
     privateKey = localStorage.privateKey
@@ -28,7 +47,7 @@ const main = async function() {
   }
 
   if ('sessionID' in localStorage) {
-    sessionID = localStorage.sessionID
+    state,sessionID = localStorage.sessionID
     console.log('loaded session ID from local storage')
   }
 
@@ -36,8 +55,8 @@ const main = async function() {
   const updateSessionData = async function() {
     let loggedIn = false
 
-    if (sessionID) {
-      const sessionData = await fetch('/api/session/' + sessionID).then(res => res.json())
+    if (state.sessionID) {
+      const sessionData = await fetch('/api/session/' + state.sessionID).then(res => res.json())
 
       if (sessionData.success) {
         loggedIn = true
@@ -147,7 +166,7 @@ const main = async function() {
     }
 
     await apiPost('/api/release-public-key', {
-      key: publicKey, sessionID
+      key: publicKey, sessionID: state.sessionID
     })
   })
 
@@ -218,42 +237,17 @@ const main = async function() {
       return
     }
 
-    sessionID = result.sessionID
-    localStorage.sessionID = sessionID
+    state.sessionID = result.sessionID
+    localStorage.sessionID = state.sessionID
 
     await updateSessionData()
   })
 
   document.getElementById('logout').addEventListener('click', async () => {
-    sessionID = ''
+    state.sessionID = ''
     localStorage.sessionID = ''
     await updateSessionData()
   })
-
-  const viewChannel = function(channelID) {
-    activeChannelID = channelID
-    socket.emit('view channel', channelID)
-  }
-
-  // Super temporary function!!!
-  const viewChannelIndex = async function(index) {
-    const { channels } = await fetch('/api/channel-list').then(res => res.json())
-    if (channels[index]) {
-      viewChannel(channels[index].id)
-    } else {
-      console.error('cannot view channel #' + index + ' because it does not index')
-    }
-  }
-
-  document.getElementById('view-channel-1').addEventListener('click', () => {
-    viewChannelIndex(0)
-  })
-
-  document.getElementById('view-channel-2').addEventListener('click', () => {
-    viewChannelIndex(1)
-  })
-
-  viewChannelIndex(0)
 
   const signText = async function(text) {
     if (publicKey && privateKeyObj) {
@@ -271,12 +265,12 @@ const main = async function() {
   form.addEventListener('submit', async evt => {
     evt.preventDefault()
 
-    if (!sessionID) {
+    if (!state.sessionID) {
       alert('You must be logged in to send a message.')
       return
     }
 
-    if (!activeChannelID) {
+    if (!state.activeChannelID) {
       alert('You must be in a channel to send a message.')
       return
     }
@@ -291,7 +285,7 @@ const main = async function() {
       }
 
       const signature = await signText(text)
-      const channelID = activeChannelID
+      const channelID = state.activeChannelID, sessionID = state.sessionID
 
       const result = await apiPost('/api/send-message', {
         text,

@@ -437,6 +437,8 @@ module.exports = function attachAPI(app, {io, db}) {
         name
       })
 
+      io.emit('created new channel', {channel})
+
       response.status(201).end(JSON.stringify({
         success: true,
         channel
