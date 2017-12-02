@@ -46,37 +46,69 @@ async function main() {
 
     const parts = input.split(' ').filter(p => p.length > 0)
 
-    if (parts.length) handleCommand: {
-      if (parts[0] === 'help' || parts[0] === '?') {
-        console.log('This is the administrator command line interface for')
-        console.log('the bantisocial chat system. This is NOT a text-based')
-        console.log('interface for chatting; use an actual client for that.')
-        console.log('Commands:')
-        console.log(' - make-admin: makes an already-registered user an admin.')
-      }
+    if (parts.length) {
+      switch (parts[0]) {
+        case 'help':
+        case '?': {
+          console.log('This is the administrator command line interface for')
+          console.log('the bantisocial chat system. This is NOT a text-based')
+          console.log('interface for chatting; use an actual client for that.')
+          console.log('Commands:')
+          console.log(' - make-admin: makes an already-registered user an admin.')
+          console.log(' - create-channel: creates a new channel')
 
-      if (parts[0] === 'make-admin') {
-        if (parts.length !== 2) {
-          console.error('Expected (make-admin <username>)')
-          break handleCommand
+          break
         }
 
-        const username = parts[1]
-
-        const user = await db.users.findOne({username})
-
-        if (!user) {
-          console.error('Error: There is no user with username ' + username)
-          break handleCommand
-        }
-
-        await db.users.update({username}, {
-          $set: {
-            permissionLevel: 'admin'
+        case 'make-admin': {
+          if (parts.length !== 2) {
+            console.error('Expected (make-admin <username>)')
+            break
           }
-        })
 
-        console.log(`Made ${username} an admin.`)
+          const username = parts[1]
+
+          const user = await db.users.findOne({username})
+
+          if (!user) {
+            console.error('Error: There is no user with username ' + username)
+            break
+          }
+
+          await db.users.update({username}, {
+            $set: {
+              permissionLevel: 'admin'
+            }
+          })
+
+          console.log(`Made ${username} an admin.`)
+
+          break
+        }
+
+        case 'create-channel': {
+          if (parts.length !== 2) {
+            console.error('Expected (create-channel <name>)')
+            break
+          }
+
+          const name = parts[1]
+
+          await db.channels.insert({
+            name
+          })
+
+          console.log(`Created channel #${name}`)
+
+          break
+        }
+
+        default: {
+          console.log('??')
+          console.log('type help for help')
+
+          break
+        }
       }
     }
 
