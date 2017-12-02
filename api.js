@@ -118,15 +118,6 @@ module.exports = function attachAPI(app, {io, db}) {
     getSessionUserFromID: (sessionIDVar, sessionUserVar) => [
       async function(request, response, next) {
         const sessionID = request[middleware.vars][sessionIDVar]
-
-        if (!sessionID) {
-          response.status(400).end(JSON.stringify({
-            error: 'missing sessionID field'
-          }))
-
-          return
-        }
-
         const user = await getUserBySessionID(sessionID)
 
         if (!user) {
@@ -165,15 +156,6 @@ module.exports = function attachAPI(app, {io, db}) {
     getMessageFromID: (messageIDVar, messageVar) => [
       async function(request, response, next) {
         const messageID = request[middleware.vars][messageIDVar]
-
-        if (!messageID) {
-          response.status(400).end(JSON.stringify({
-            error: 'missing messageID field'
-          }))
-
-          return
-        }
-
         const message = await db.messages.findOne({_id: messageID})
 
         if (!message) {
@@ -193,7 +175,6 @@ module.exports = function attachAPI(app, {io, db}) {
     getChannelFromID: (channelIDVar, channelVar) => [
       async function(request, response, next) {
         const channelID = request[middleware.vars][channelIDVar]
-
         const channel = await db.channels.findOne({_id: channelID})
 
         if (!channel) {
