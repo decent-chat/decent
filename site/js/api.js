@@ -1,5 +1,5 @@
 export function post(path, dataObj) {
-  return fetch(path, {
+  return fetch('/api/' + path, {
     method: 'post',
     headers: {
       'Content-Type': 'application/json'
@@ -9,8 +9,8 @@ export function post(path, dataObj) {
 }
 
 export function get(path) {
-  return fetch(path, {
-    method: 'post',
+  return fetch('/api/' + path, {
+    method: 'get',
     headers: {
       'Content-Type': 'application/json'
     },

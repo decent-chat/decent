@@ -1,19 +1,41 @@
-// See https://en.wikipedia.org/wiki/Actor_model.
+// See https://en.wikipedia.org/wiki/Actor_model, ish.
 // Like an EventEmitter but cooler.
 
-// TODO
 export default class Actor {
   constructor() {
-    this.listeners = {}
+    this.__subscribers = []
   }
 
-  // Subscribes to a message from an actor.
-  on() {}
+  init() {} // Subscribe to events here.
+  go() {}   // Perform initial actions here.
 
-  // Same as Actor#on(), but only once.
-  once(message) {}
+  // Subscribes to a message type from this actor.
+  on(message, callback, times = Infinity) {
+    let subs = this.__subscribers[message] || []
+    subs.push({ callback, times })
 
-  publish(message, data) {
+    this.__subscribers[message] = subs
+  }
 
+  // Waits for `message` and then resolves the promise.
+  waitFor(message) {
+    return new Promise(resolve => {
+      this.on(message, resolve, 1)
+    })
+  }
+
+  // Emits a message and notifies all subscribers.
+  // Other actors should not call this.
+  emit(message, ...data) {
+    let subs = (this.__subscribers[message] || [])
+
+    console.info(this.name + '::', message, ...data)
+
+    for (let sub of subs) {
+      sub.callback(...data)
+      sub.times--
+    }
+
+    this.__subscribers[message] = subs.filter(sub => sub.times > 0)
   }
 }
