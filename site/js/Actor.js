@@ -1,9 +1,11 @@
 // See https://en.wikipedia.org/wiki/Actor_model, ish.
 // Like an EventEmitter but cooler.
 
+export const subscribers = Symbol()
+
 export default class Actor {
   constructor() {
-    this.__subscribers = []
+    this[subscribers] = []
   }
 
   init() {} // Subscribe to events here.
@@ -11,10 +13,10 @@ export default class Actor {
 
   // Subscribes to a message type from this actor.
   on(message, callback, times = Infinity) {
-    let subs = this.__subscribers[message] || []
+    const subs = this[subscribers][message] || []
     subs.push({ callback, times })
 
-    this.__subscribers[message] = subs
+    this.[subscribers][message] = subs
   }
 
   // Waits for `message` and then resolves the promise.
@@ -27,15 +29,15 @@ export default class Actor {
   // Emits a message and notifies all subscribers.
   // Other actors should not call this.
   emit(message, ...data) {
-    let subs = (this.__subscribers[message] || [])
+    const subs = (this.[subscribers][message] || [])
 
     console.info(this.name + '::', message, ...data)
 
-    for (let sub of subs) {
+    for (const sub of subs) {
       sub.callback(...data)
       sub.times--
     }
 
-    this.__subscribers[message] = subs.filter(sub => sub.times > 0)
+    this[subscribers][message] = subs.filter(sub => sub.times > 0)
   }
 }

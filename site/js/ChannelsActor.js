@@ -8,8 +8,9 @@ export default class ChannelsActor extends Actor {
       if (this.activeChannelID === null) {
         const defaultChannel = channels[0]
 
-        if (defaultChannel)
+        if (defaultChannel) {
           this.viewChannel(defaultChannel.id)
+        }
       }
 
       // Update UI
@@ -35,7 +36,7 @@ export default class ChannelsActor extends Actor {
       })
 
       if (res.error) {
-        alert('Error: ' + res.error)
+        alert('Error while creating channel: ' + res.error)
       } else {
         // No emission here, because socket will emit
         // `created new channel` if successful.
@@ -78,14 +79,16 @@ export default class ChannelsActor extends Actor {
     const sidebarEl = document.querySelector('#sidebar')
 
     // Remove old channels list
-    let oldListEl = sidebarEl.querySelector('#channels-list')
-    if (oldListEl)  oldListEl.remove()
+    const oldListEl = sidebarEl.querySelector('#channels-list')
+    if (oldListEl) {
+      oldListEl.remove()
+    }
 
     // Create (new) channels list
     const listEl = document.createElement('ul')
     listEl.id = 'channels-list'
 
-    for (let channel of channels) {
+    for (const channel of channels) {
       const el = document.createElement('li')
       el.classList.add('channel')
       el.appendChild(document.createTextNode('#' + channel.name))
