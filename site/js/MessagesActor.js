@@ -15,9 +15,6 @@ export default class MessagesActor extends Actor {
       for (const msg of messages) {
         await this.showMessage(msg)
       }
-
-      const getScrollDist = () => 
-      messagesContainer.scrollTop = messages.scrollHeight - messages.offsetHeight
     })
 
     this.actors.session.on('update', (loggedIn, sessionObj) => {
