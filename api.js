@@ -578,6 +578,26 @@ module.exports = function attachAPI(app, {io, db}) {
     }
   ])
 
+  app.get('/api/username-available/:username', [
+    ...middleware.loadVarFromParams('username'),
+
+    async (request, response) => {
+      const { username } = request[middleware.vars]
+
+      const user = await db.users.findOne({username})
+
+      if (user) {
+        response.status(200).end(JSON.stringify({
+          available: false
+        }))
+      } else {
+        response.status(200).end(JSON.stringify({
+          available: true
+        }))
+      }
+    }
+  ])
+
   app.post('/api/login', [
     ...middleware.loadVarFromBody('username'),
     ...middleware.loadVarFromBody('password'),
