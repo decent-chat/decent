@@ -7,9 +7,17 @@ export function queryByDataset(key, value) {
 
 export default class MessagesActor extends Actor {
   init() {
-    this.actors.channels.on('update active channel', () => {
+    this.actors.channels.on('update active channel', async channel => {
       this.clear()
-      // TODO fetch recent messages
+      
+      // Display latest messages in the channel
+      const { messages } = await get(`channel/${channel.id}/latest-messages`)
+      for (const msg of messages) {
+        await this.showMessage(msg)
+      }
+
+      const getScrollDist = () => 
+      messagesContainer.scrollTop = messages.scrollHeight - messages.offsetHeight
     })
 
     this.actors.session.on('update', (loggedIn, sessionObj) => {
@@ -77,61 +85,12 @@ export default class MessagesActor extends Actor {
       }
     })
   
-    const messagesContainer = document.getElementById('messages')
     this.socket.on('received chat message', async msg => {
       if (typeof msg !== 'object') {
         return
       }
 
-      const { revisions, authorID, id: messageID } = msg.message
-
-      if (!revisions || !authorID) {
-        return
-      }
-
-      if (!revisions.length || !revisions[0].text) {
-        return
-      }
-
-      const getScrollDist = () => messages.scrollHeight - messages.offsetHeight
-      let wasScrolledToBottom = (messages.scrollTop === getScrollDist())
-
-      const el = document.createElement('div')
-      el.classList.add('message')
-      el.setAttribute('id', 'message-' + messageID)
-      el.dataset.author = authorID
-      el.appendChild(await this.buildMessageContent(msg.message))
-      messagesContainer.appendChild(el)
-
-      if (this.actors.session.isCurrentUser(authorID)) {
-        el.classList.add('created-by-us')
-      }
-
-      if (wasScrolledToBottom) {
-        messagesContainer.scrollTop = getScrollDist()
-      }
-
-      el.addEventListener('click', async () => {
-        // Don't do anything if we don't own this message!
-        if (!actors.session.isCurrentUser(authorID)) {
-          return
-        }
-
-        let text
-        try {
-          text = await this.actors.modals.prompt('Edit message')
-        } catch (error) {
-          if (error !== 'modal closed') {
-            throw error
-          }
-        }
-
-        const result = await post('edit-message', {
-          sessionID: this.actors.session.sessionID,
-          text, messageID,
-          //signature: await signText(text)
-        })
-      })
+      await this.showMessage(msg.message)
     })
 
     this.socket.on('edited chat message', async msg => {
@@ -147,6 +106,60 @@ export default class MessagesActor extends Actor {
     for (const msg of document.querySelectorAll('.message')) { 
       msg.remove() 
     }
+  }
+
+  async showMessage(message) {
+    const { revisions, authorID, id: messageID } = message
+
+    if (!revisions || !authorID) {
+      return
+    }
+
+    if (!revisions.length || !revisions[0].text) {
+      return
+    }
+
+    const messagesContainer = document.getElementById('messages')
+
+    const getScrollDist = () => messages.scrollHeight - messages.offsetHeight
+    let wasScrolledToBottom = (messages.scrollTop === getScrollDist())
+
+    const el = document.createElement('div')
+    el.classList.add('message')
+    el.setAttribute('id', 'message-' + messageID)
+    el.dataset.author = authorID
+    el.appendChild(await this.buildMessageContent(message))
+    messagesContainer.appendChild(el)
+
+    if (this.actors.session.isCurrentUser(authorID)) {
+      el.classList.add('created-by-us')
+    }
+
+    if (wasScrolledToBottom) {
+      messagesContainer.scrollTop = getScrollDist()
+    }
+
+    el.addEventListener('click', async () => {
+      // Don't do anything if we don't own this message!
+      if (!actors.session.isCurrentUser(authorID)) {
+        return
+      }
+
+      let text
+      try {
+        text = await this.actors.modals.prompt('Edit message')
+      } catch (error) {
+        if (error !== 'modal closed') {
+          throw error
+        }
+      }
+
+      const result = await post('edit-message', {
+        sessionID: this.actors.session.sessionID,
+        text, messageID,
+        //signature: await signText(text)
+      })
+    })
   }
 
   async showMessageRevision(message, index = undefined) {
