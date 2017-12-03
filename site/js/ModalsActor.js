@@ -21,6 +21,8 @@ export default class ModalsActor extends Actor {
             onclick: resolve,
           },
         ],
+        defaultAction: 0,
+        cancelAction: 0,
       })
 
       this.displayModalsFromBacklog()
@@ -39,7 +41,7 @@ export default class ModalsActor extends Actor {
         title, desc,
         input: { type: inputType, placeholder, validateFn },
         buttons: [
-          { 
+          {
             text: btnCancelText,
             onclick: () => reject('modal closed'),
           },
@@ -52,6 +54,8 @@ export default class ModalsActor extends Actor {
             onclick: resolve,
           },
         ],
+        defaultAction: 1,
+        cancelAction: 0,
       })
 
       this.displayModalsFromBacklog()
@@ -96,21 +100,26 @@ export default class ModalsActor extends Actor {
       inputEl.placeholder = modalData.input.placeholder || ''
       inputEl.type = modalData.input.type || 'text'
 
-      inputEl.addEventListener('keydown', evt => {
-        if (evt.keyCode === 13) {
-          // Return/enter key, submit form
-          const btns = modalData.buttons.filter(btn => btn.doValidate === true)
-          
-          if (btns.length === 1) {
-            btns[0].el.click()
-          } else if (btns.length > 1) {
-            // There are multiple options available, so don't
-            // assume one!
-          }
-        }
-      })
-
       modalEl.appendChild(inputEl)
+    }
+
+    const captureKeypress = evt => {
+      if (evt.keyCode === 13) {
+        // Return/enter key, perform defaultAction
+        // note: also serves to capture enter keypress in inputEl
+        const btn = modalData.buttons[modalData.defaultAction]
+
+        if (btn) {
+          btn.el.click()
+        }
+      } else if (evt.keyCode === 27) {
+        // Escape key, perform cancelAction
+        const btn = modalData.buttons[modalData.cancelAction]
+
+        if (btn) {
+          btn.el.click()
+        }
+      }
     }
 
     const actionsEl = document.createElement('div')
@@ -144,6 +153,7 @@ export default class ModalsActor extends Actor {
         }
 
         // Close the modal
+        document.removeEventListener('keydown', captureKeypress)
         modalEl.remove()
         this.emit('close modal', modalData, modalEl)
         document.getElementById('app').classList.remove('modal-visible')
@@ -174,6 +184,8 @@ export default class ModalsActor extends Actor {
     document.getElementById('app').classList.add('modal-visible')
     document.body.appendChild(modalEl)
     this.emit('display modal', modalData, modalEl)
+
+    document.addEventListener('keydown', captureKeypress)
 
     if (inputEl) {
       inputEl.focus()
