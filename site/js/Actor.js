@@ -29,7 +29,7 @@ export default class Actor {
   // Emits a message and notifies all subscribers.
   // Other actors should not call this.
   emit(message, ...data) {
-    const subs = (this.[subscribers][message] || [])
+    const subs = (this[subscribers][message] || [])
 
     console.info(this.name + '::', message, ...data)
 
