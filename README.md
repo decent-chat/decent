@@ -21,7 +21,7 @@ You will need:
 
 * A web browser. Probably a very, very, very cutting-edge browser. We're testing Bantisocial in Firefox Nightly, but you probably don't need the nightly version. Just run the latest release of your favorite browser.
 
-* If you want to use a browser that isn't Firefox Nightly (see below), you'll need to run the build script, which requires Parcel and Rust (get Rust, then do `cargo install parcel`).
+* If you want to use a browser that isn't Firefox Nightly (see below), you'll need to run the build script, which requires Parcel and Rust ([get Rust](https://www.rustup.rs/), then do `cargo install parcel`).
 
 ### Installing/running
 
