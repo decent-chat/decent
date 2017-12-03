@@ -36,10 +36,6 @@ module.exports = function attachAPI(app, {io, db}) {
     return user
   }
 
-  const getDateAsISOString = function() {
-    return (new Date()).toISOString()
-  }
-
   const loadVarsFromRequestObject = function(object, request, response, next) {
     // TODO: Actually implement the variable system..!
     request[middleware.vars] = {}
@@ -103,7 +99,7 @@ module.exports = function attachAPI(app, {io, db}) {
       ...middleware.verifyVarsExists(),
 
       function(request, response, next) {
-        if (required && (key in request.body === false)) {
+        if (required && request.body[key] === undefined) {
           response.status(400).end(JSON.stringify({
             error: `${key} field missing`
           }))
@@ -111,7 +107,10 @@ module.exports = function attachAPI(app, {io, db}) {
           return
         }
 
-        request[middleware.vars][key] = request.body[key]
+        if (request.body[key] !== undefined) {
+          request[middleware.vars][key] = request.body[key]
+        }
+
         next()
       }
     ],
@@ -124,10 +123,23 @@ module.exports = function attachAPI(app, {io, db}) {
       ...middleware.verifyVarsExists(),
 
       function(request, response, next) {
-        request[middleware.vars][key] = request.params[key]
+        if (request.params[key] !== undefined) {
+          request[middleware.vars][key] = request.params[key]
+        }
+
         next()
       }
     ],
+
+    runIfVarExists: (varName, runIfSo) => (
+      runIfSo.map(callback => (request, response, next) => {
+        if (varName in request[middleware.vars]) {
+          callback(request, response, next)
+        } else {
+          next()
+        }
+      })
+    ),
 
     getSessionUserFromID: (sessionIDVar, sessionUserVar) => [
       async function(request, response, next) {
@@ -264,13 +276,13 @@ module.exports = function attachAPI(app, {io, db}) {
       const message = await db.messages.insert({
         authorID: sessionUser._id,
         authorUsername: sessionUser.username,
-        date: getDateAsISOString(),
+        date: Date.now(),
         channelID: channelID,
         revisions: [
           {
             text: request.body.text,
             signature: request.body.signature,
-            date: getDateAsISOString()
+            date: Date.now()
           }
         ],
         reactions: {}
@@ -367,7 +379,7 @@ module.exports = function attachAPI(app, {io, db}) {
         $push: {
           revisions: {
             text, signature,
-            date: getDateAsISOString()
+            date: Date.now()
           }
         }
       }, {
@@ -454,6 +466,42 @@ module.exports = function attachAPI(app, {io, db}) {
       channels: channels.map(serialize.channel)
     }))
   })
+
+  app.get('/api/channel/:channelID/latest-messages(/before/:beforeMessageID)?', [
+    ...middleware.loadVarFromParams('channelID'),
+    ...middleware.loadVarFromParams('beforeMessageID'),
+    ...middleware.getChannelFromID('channelID', '_'), // Just to make sure the channel exists
+    ...middleware.runIfVarExists('beforeMessageID',
+      middleware.getMessageFromID('beforeMessageID', 'beforeMessage')
+    ),
+
+    async (request, response) => {
+      const { channelID, beforeMessage } = request[middleware.vars]
+
+      const query = {channelID}
+      if (beforeMessage) {
+        query.date = {$lt: beforeMessage.date}
+      }
+
+      // TODO: If there is more than 50, show that somehow.
+      // TODO: Store 50 as a constant somewhere?
+      const cursor = db.messages.cfind(query)
+      cursor.sort({date: -1})
+      cursor.limit(50)
+      const messages = await cursor.exec()
+      messages.reverse()
+
+      // We sort the messages by NEWEST date ({date: -1}), so that we're returned
+      // the newest messages, but then we reverse the array, so that the actual
+      // data returned from the API is sorted by oldest first. (This is so that
+      // appending message elements is easier.)
+
+      response.status(200).end(JSON.stringify({
+        success: true,
+        messages: messages.map(serialize.message)
+      }))
+    }
+  ])
 
   app.post('/api/register', [
     ...middleware.loadVarFromBody('username'),
