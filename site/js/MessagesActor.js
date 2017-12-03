@@ -168,7 +168,7 @@ export default class MessagesActor extends Actor {
     let styles = {} // (b)old, (i)talics, (u)nderline, (s)trikethrough
     let esc = false
 
-    function startToken(nextToken) {
+    const startToken = nextToken => {
       // end the current token
       if (buffer === '') {
         ;
@@ -198,6 +198,32 @@ export default class MessagesActor extends Actor {
 
           mentionEl.appendChild(document.createTextNode(buffer))
           el.appendChild(mentionEl)
+        }
+      } else if (currentToken === 'channelref') {
+        const channelName = buffer.substr(1)
+        const channel = this.actors.channels.getChannelByName(channelName)
+
+        if (!channel) {
+          // not an actual channel; treat as text
+          el.appendChild(document.createTextNode(buffer))
+        } else {
+          const refEl = document.createElement('span')
+
+          refEl.classList.add('message-channelref')
+          refEl.appendChild(document.createTextNode(buffer))
+
+          // Go to the channel on-click
+          refEl.addEventListener('click', evt => {
+            evt.preventDefault()
+            evt.stopPropagation() // Don't trigger edit message
+
+            this.emit('click on channel reference', channel)
+            this.actors.channels.viewChannel(channel.id)
+
+            return false
+          })
+
+          el.appendChild(refEl)
         }
       } else if (currentToken === 'code') {
         const codeEl = document.createElement('code')
@@ -243,6 +269,9 @@ export default class MessagesActor extends Actor {
 
         else if (char === '@' && currentToken === 'text' && charBefore === ' ') startToken('mention')
         else if (!(/[a-zA-Z0-9_-]/).test(char) && currentToken === 'mention') startToken('text')
+
+        else if (char === '#' && currentToken === 'text' && charBefore === ' ') startToken('channelref')
+        else if (!(/[a-zA-Z0-9_-]/).test(char) && currentToken === 'channelref') startToken('text')
 
         else if (char === '*' && currentToken === 'text') {
           if (charNext === '*') {

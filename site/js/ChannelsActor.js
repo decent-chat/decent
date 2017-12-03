@@ -34,6 +34,10 @@ export default class ChannelsActor extends Actor {
     return this.channels.find(c => c.id === channelID) || null
   }
 
+  getChannelByName(channelName) {
+    return this.channels.find(c => c.name === channelName) || null
+  }
+
   viewChannel(channelID) {
     this.activeChannelID = channelID
     this.socket.emit('view channel', channelID)

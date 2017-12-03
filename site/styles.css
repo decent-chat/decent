@@ -82,6 +82,18 @@ body, html, #app {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
+.message-channelref {
+  color: white;
+  background-color: #222222;
+
+  cursor: pointer;
+}
+
+.message-channelref:hover {
+  color: white;
+  background-color: #161616;
+}
+
 .message-mention {
   color: #cfa041;
 }
