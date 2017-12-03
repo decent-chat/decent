@@ -30,9 +30,10 @@ async function main() {
   app.use(express.static('site'))
   attachAPI(app, {io, db})
 
-  await new Promise(resolve => httpServer.listen(3000, resolve))
+  const port = parseInt(process.argv[2]) || 3000
+  await new Promise(resolve => httpServer.listen(port, resolve))
 
-  console.log('bantisocial - listening on port 3000 (try "license" or "help" for info)')
+  console.log(`bantisocial - listening on port ${port} (try "license" or "help" for info)`)
 
   const rl = readline.createInterface({
     input: process.stdin,
