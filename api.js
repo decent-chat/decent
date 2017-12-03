@@ -260,6 +260,8 @@ module.exports = function attachAPI(app, {io, db}) {
 
   app.use('/api/*', async (request, response, next) => {
     response.header('Content-Type', 'application/json')
+    response.header('Access-Control-Allow-Origin', '*')
+    response.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
 
     next()
   })

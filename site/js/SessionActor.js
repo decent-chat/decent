@@ -13,20 +13,22 @@ export default class SessionActor extends Actor {
       //       for showing/hiding the buttons based on login state.
 
       if (loggedIn) {
-        loginStatusEl.innerText = 'Logged in as ' + sessionObj.user.username
+        loginStatusEl.innerText = 'Logged in as ' + sessionObj.user.username + '.'
 
         registerEl.style.display = 'none'
         loginEl.style.display = 'none'
         logoutEl.style.removeProperty('display')
         formEl.style.removeProperty('display')
       } else {
-        loginStatusEl.innerText = 'Not logged in'
+        loginStatusEl.innerText = 'Not logged in.'
 
         registerEl.style.removeProperty('display')
         loginEl.style.removeProperty('display')
         logoutEl.style.display = 'none'
         formEl.style.display = 'none'
       }
+
+      loginStatusEl.innerText += ' Connected to ' + this.currentServerURL
     })
 
     document.getElementById('register').addEventListener('click', () => {
@@ -42,11 +44,14 @@ export default class SessionActor extends Actor {
     })
   }
 
-  go() {
-    // Load session from LocalStorage, if it has that data.
-    if ('sessionID' in localStorage) {
-      this.loadSessionID(localStorage.sessionID)
-    } else this.loadSessionID('')
+  async initialLoad() {
+    // Load session IDs from LocalStorage, if it has that data.
+    if ('sessionIDs' in localStorage) {
+      this.sessionIDs = JSON.parse(localStorage.sessionIDs)
+    }
+
+    await this.switchServer(window.location.host)
+    return window.location.host
   }
 
   isCurrentUser(userID) {
@@ -54,10 +59,17 @@ export default class SessionActor extends Actor {
     else return this.sessionObj.user.id === userID
   }
 
+  async switchServer(url) {
+    this.currentServerURL = url
+    this.sessionID = this.sessionIDs[url] || ''
+    this.loadSessionID(this.sessionID)
+    this.emit('switch server', url)
+  }
+
   async loadSessionID(sessionID = '') {
     const sessionData = sessionID === ''
       ? { success: false } // No sessionID = logged out
-      : await get('session/' + sessionID)
+      : await get('session/' + sessionID, this.actors.session.currentServerURL)
 
     if (sessionData.success) {
       this.loggedIn = true
@@ -67,7 +79,10 @@ export default class SessionActor extends Actor {
       this.sessionObj = {}
     }
 
-    localStorage.sessionID = this.sessionID = sessionID
+    this.sessionID = sessionID
+    this.sessionIDs[this.currentServerURL] = this.sessionID
+
+    localStorage.sessionIDs = JSON.stringify(this.sessionIDs)
     this.emit('update', this.loggedIn, this.sessionObj)
   }
 
@@ -116,7 +131,7 @@ export default class SessionActor extends Actor {
       }
     }
 
-    const result = await post('login', {username, password})
+    const result = await post('login', {username, password}, this.actors.session.currentServerURL)
 
     if (result.error) {
       if (result.error === 'user not found') {
@@ -179,7 +194,7 @@ export default class SessionActor extends Actor {
       }
     }
 
-    const result = await post('register', {username, password})
+    const result = await post('register', {username, password}, this.actors.session.currentServerURL)
 
     if (result.error) {
       if (result.error === 'password must be at least 6 characters long') {
