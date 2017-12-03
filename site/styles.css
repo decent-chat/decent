@@ -26,6 +26,11 @@ body, html, #app {
   user-select: none;
 }
 
+#sidebar .sidebar-heading {
+  padding: 8px 18px;
+  font-size: 120%;
+}
+
 #sidebar #channels-list {
   display: block;
 

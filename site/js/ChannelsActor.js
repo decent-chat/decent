@@ -23,6 +23,27 @@ export default class ChannelsActor extends Actor {
       this.populateSidebarList(this.channels)
     })
 
+    document.getElementById('create-channel').addEventListener('click', async evt => {
+      evt.preventDefault()
+
+      const channelName = prompt('New channel name?')
+      if (!channelName) return
+
+      const res = await post('create-channel', {
+        name: channelName,
+        sessionID: this.actors.session.sessionID,
+      })
+
+      if (res.error) {
+        alert('Error: ' + res.error)
+      } else {
+        // No emission here, because socket will emit
+        // `created new channel` if successful.
+      }
+
+      return false
+    })
+
     this.activeChannelID = null
   }
 
