@@ -349,7 +349,7 @@ export default class MessagesActor extends Actor {
 
     el.appendChild(authorEl)
 
-    const messageDate = new Date(Date.parse(message.date))
+    const messageDate = new Date(message.date)
     const pad = value => value.toString().padStart(2, '0')
 
     const time = document.createElement('time')
