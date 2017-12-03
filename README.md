@@ -6,7 +6,7 @@ All-in-one text chat for people that's free as in freedom *and* beer, and works 
 
 Stop using proprietary software and using a chat site which is actually competitive. Simplify your life.
 
-[Download for Any System](https://github.com/towerofnix/bantisocial/archive/master.zip)
+[Download for Any System](https://github.com/towerofnix/bantisocial/archive/master.zip)<br>
 [Open Bantisocial](#getting-started)
 
 ## Getting Started
