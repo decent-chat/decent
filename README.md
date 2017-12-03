@@ -1,8 +1,6 @@
-###### `Readme: todo. Alex please.`
-
 # Bantisocial
 
-## It's time to ditch Skype and TeamSpeak.
+## It's time to ditch Discord.
 
 All-in-one text chat for people that's free as in freedom *and* beer, and works on your desktop.
 
