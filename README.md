@@ -21,6 +21,8 @@ You will need:
 
 * A web browser. Probably a very, very, very cutting-edge browser. We're testing Bantisocial in Firefox Nightly, but you probably don't need the nightly version. Just run the latest release of your favorite browser.
 
+* If you want to use a browser that isn't Firefox Nightly (see below), you'll need to run the build script, which requires Parcel and Rust (get Rust, then do `cargo install parcel`).
+
 ### Installing/running
 
 ```
@@ -29,9 +31,12 @@ $ cd bantisocial
 $ npm install
 $ node .
 # open http://localhost:3000
-
-# If none of the buttons do anything, try 'npm run build', then run 'node .' again.
 ```
+
+Try clicking on Register. If the button doesn't do anything..
+
+* ..and you're on Firefox Nightly, change the configuration flag `dom.moduleScripts.enabled` to **true**.
+* ..and you're on any other browser, stop node and build the folder. That means getting Rust and Parcel (see preqreuisites), and then running `npm run build`. After that, start up node again (`node .`) and reload the browser page. Then try clicking on Register.
 
 You'll probably need to make a channel, but to do that, you'll need to make an admin user. Start by registering a user through your web browser (just click on the register button); once you've done that, type `make-admin (the username you picked)` into the `node` process:
 
