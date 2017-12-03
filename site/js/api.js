@@ -1,5 +1,9 @@
-export function post(path, dataObj) {
-  return fetch('/api/' + path, {
+// These functions assume that serverURL is running
+// on standard HTTP - this will likely change in the
+// future (e.g. Service Workers only work on https).
+
+export function post(path, dataObj, serverURL) {
+  return fetch('http://' + serverURL + '/api/' + path, {
     method: 'post',
     headers: {
       'Content-Type': 'application/json'
@@ -8,8 +12,8 @@ export function post(path, dataObj) {
   }).then(res => res.json())
 }
 
-export function get(path) {
-  return fetch('/api/' + path, {
+export function get(path, serverURL) {
+  return fetch('http://' + serverURL + '/api/' + path, {
     method: 'get',
     headers: {
       'Content-Type': 'application/json'

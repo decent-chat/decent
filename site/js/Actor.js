@@ -8,8 +8,9 @@ export default class Actor {
     this[subscribers] = []
   }
 
-  init() {} // Subscribe to events here.
-  go() {}   // Perform initial actions here.
+  init() {}               // Subscribe to events from other actors here.
+  go() {}                 // Perform initial actions here.
+  bindToSocket(socket) {} // Subscribe to *socket* events here.
 
   // Subscribes to a message type from this actor.
   on(message, callback, times = Infinity) {
