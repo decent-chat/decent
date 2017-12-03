@@ -15,6 +15,9 @@ export default class MessagesActor extends Actor {
       for (const msg of messages) {
         await this.showMessage(msg)
       }
+
+      const getScrollDist = () => 
+      messagesContainer.scrollTop = messages.scrollHeight - messages.offsetHeight
     })
 
     this.actors.session.on('update', (loggedIn, sessionObj) => {
@@ -142,14 +145,18 @@ export default class MessagesActor extends Actor {
         return
       }
 
-      const text = prompt('Edit message - new content?')
-
-      if (!text || text.trim().length === 0) {
-        return
+      let text
+      try {
+        text = await this.actors.modals.prompt('Edit message')
+      } catch (error) {
+        if (error !== 'modal closed') {
+          throw error
+        }
       }
 
       const result = await post('edit-message', {
-        sessionID, text, messageID,
+        sessionID: this.actors.session.sessionID,
+        text, messageID,
         //signature: await signText(text)
       })
     })
@@ -163,7 +170,7 @@ export default class MessagesActor extends Actor {
       if (content) {
         content.remove()
       }
-      el.appendChild(await buildMessageContent(message, index))
+      el.appendChild(await this.buildMessageContent(message, index))
     }
   }
 
