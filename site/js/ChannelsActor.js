@@ -1,5 +1,6 @@
 import Actor from './Actor.js'
 import { get, post } from './api.js'
+import bindKeys from './bind-keys.js'
 
 export default class ChannelsActor extends Actor {
   init() {
@@ -22,7 +23,7 @@ export default class ChannelsActor extends Actor {
       const btn = document.getElementById('create-channel')
 
       if (!loggedIn || sessionObj.user.permissionLevel !== 'admin') {
-        btn.style.display = 'none' 
+        btn.style.display = 'none'
       } else {
         btn.style.removeProperty('display')
       }
@@ -76,6 +77,28 @@ export default class ChannelsActor extends Actor {
       return false
     })
 
+    // Alt + Up -> view above channel
+    bindKeys([ 18, 38 ], () => {
+      const activeIndex = this.getChannelIndexByID(this.activeChannelID)
+
+      if (this.channels[activeIndex - 1]) {
+        this.viewChannel(this.channels[activeIndex - 1].id)
+      } else {
+        this.viewChannel(this.channels[this.channels.length - 1].id)
+      }
+    })
+
+    // Alt + Down -> view below channel
+    bindKeys([ 18, 40 ], () => {
+      const activeIndex = this.getChannelIndexByID(this.activeChannelID)
+
+      if (this.channels[activeIndex + 1]) {
+        this.viewChannel(this.channels[activeIndex + 1].id)
+      } else {
+        this.viewChannel(this.channels[0].id)
+      }
+    })
+
     this.activeChannelID = null
   }
 
@@ -85,6 +108,10 @@ export default class ChannelsActor extends Actor {
 
   getChannelByID(channelID) {
     return this.channels.find(c => c.id === channelID) || null
+  }
+
+  getChannelIndexByID(channelID) {
+    return this.channels.findIndex(c => c.id === channelID) || null
   }
 
   getChannelByName(channelName) {
