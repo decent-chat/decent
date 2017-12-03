@@ -9,6 +9,7 @@ const express = require('express')
 const socketio = require('socket.io')
 const http = require('http')
 const readline = require('readline')
+const fixWS = require('fix-whitespace')
 
 const attachAPI = require('./api')
 
@@ -31,7 +32,7 @@ async function main() {
 
   await new Promise(resolve => httpServer.listen(3000, resolve))
 
-  console.log('listening on port 3000')
+  console.log('bantisocial - listening on port 3000 (try "license" or "help" for info)')
 
   const rl = readline.createInterface({
     input: process.stdin,
@@ -50,11 +51,14 @@ async function main() {
       switch (parts[0]) {
         case 'help':
         case '?': {
-          console.log('This is the administrator command line interface for')
-          console.log('the bantisocial chat system. This is NOT a text-based')
-          console.log('interface for chatting; use an actual client for that.')
-          console.log('Commands:')
-          console.log(' - make-admin: makes an already-registered user an admin.')
+          console.log(fixWS`
+            This is the administrator command line interface for
+            the bantisocial chat system. This is NOT a text-based
+            interface for chatting; use an actual client for that.
+            Commands:
+            - license: shows license information (hint: it's GPL 3.0!)
+            - make-admin: makes an already-registered user an admin.
+          `)
 
           break
         }
@@ -81,6 +85,27 @@ async function main() {
           })
 
           console.log(`Made ${username} an admin.`)
+
+          break
+        }
+
+        case 'license': {
+          console.log(fixWS`
+            bantisocial - actually free rip-off of Discord
+
+            This program is free software: you can redistribute it and/or modify
+            it under the terms of the GNU General Public License as published by
+            the Free Software Foundation, either version 3 of the License, or
+            (at your option) any later version.
+
+            This program is distributed in the hope that it will be useful,
+            but WITHOUT ANY WARRANTY; without even the implied warranty of
+            MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+            GNU General Public License for more details.
+
+            You should have received a copy of the GNU General Public License
+            along with this program.  If not, see <https://www.gnu.org/licenses/>.
+          `)
 
           break
         }
