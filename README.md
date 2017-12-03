@@ -36,7 +36,7 @@ $ node .
 Try clicking on Register. If the button doesn't do anything..
 
 * ..and you're on Firefox Nightly, change the configuration flag `dom.moduleScripts.enabled` to **true**.
-* ..and you're on any other browser, stop node and build the folder. That means getting Rust and Parcel (see preqreuisites), and then running `npm run build`. After that, start up node again (`node .`) and reload the browser page. Then try clicking on Register.
+* ..and you're on any other browser, stop node and build the folder. That means getting Rust and Parcel (see preqreuisites), and then running `npm run build`. After that, start up node again (`node .`) and reload the browser page.
 
 You'll probably need to make a channel, but to do that, you'll need to make an admin user. Start by registering a user through your web browser (just click on the register button); once you've done that, type `make-admin (the username you picked)` into the `node` process:
 
