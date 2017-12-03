@@ -21,7 +21,7 @@ const main = async function() {
 
   // Actors get references to other actors, plus a
   // reference to the WebSocket connection.
-  for (let [ name, actor ] of Object.entries(actors)) {
+  for (const [ name, actor ] of Object.entries(actors)) {
     actor.name = name
     actor.actors = actors
     actor.socket = socket
@@ -30,7 +30,7 @@ const main = async function() {
   }
 
   // Let every actor begin to do stuff.
-  for (let actor of Object.values(actors)) {
+  for (const actor of Object.values(actors)) {
     actor.go() // Actors should load data here.
   }
 
