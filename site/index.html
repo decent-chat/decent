@@ -13,19 +13,28 @@ pre {
 </style>
 
 <div id="app">
-  <div id="messages"></div>
-  <div id="form-container">
-    <form id="form" action="">
-      <input id="chat-input" autofocus>
-      <button>Send</button>
-    </form>
-    <button id="register">Register</button>
-    <button id="login">Login</button>
-    <button id="logout">Logout</button>
-    <button id="view-channel-1">View channel 1</button>
-    <button id="view-channel-2">View channel 2</button>
-    <span id="login-status"></span>
-  </div>
+  <aside id="sidebar">
+    <div class="sidebar-heading">
+      <b>Channels</b>
+      <button id="create-channel">New</button>
+    </div>
+  </aside>
+
+  <main id="central-pane">
+    <div id="messages"></div>
+    <div id="form-container">
+      <form id="form" action="">
+        <input id="chat-input" autofocus>
+        <button>Send</button>
+      </form>
+
+      <button id="register" class="session-action-btn">Register</button>
+      <button id="login" class="session-action-btn">Login</button>
+      <button id="logout" class="session-action-btn">Logout</button>
+
+      <span id="login-status"></span>
+    </div>
+  </main>
 </div>
 
 <div style="display: none;">
@@ -40,5 +49,6 @@ pre {
 <script src="/socket.io/socket.io.js"></script>
 <script src="lib/openpgp.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0-alpha2/katex.min.js" integrity="sha384-OMvkZ24ANLwviZR2lVq8ujbE/bUO8IR1FdBrKLQBI14Gq5Xp/lksIccGkmKL8m+h" crossorigin="anonymous"></script>
+
 <script nomodule src="script-nomodule.js"></script> <!-- for browsers not supporting es6 modules -->
 <script type="module" src="js/index.js"></script>   <!-- for those whomst do -->
