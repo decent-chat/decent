@@ -17,19 +17,30 @@ const main = async function() {
     modals:   new ModalsActor,   // Creates and handles modal dialogs.
   }
 
-  // Establish a WebSocket connection. It's *almost* an
-  // actor but not enough to live in the `actors` object.
-  const socket = io()
-
-  // Actors get references to other actors, plus a
-  // reference to the WebSocket connection.
+  // Actors get references to other actors.
   for (const [ name, actor ] of Object.entries(actors)) {
     actor.name = name
     actor.actors = actors
-    actor.socket = socket
 
-    actor.init() // Actors should subscribe to events here.
+    actor.init() // Actors should subscribe to events from eachother here.
   }
+
+  let socket = null
+
+  actors.session.on('switch server', url => {
+    if (socket) {
+      socket.close()
+    }
+
+    socket = io('http://' + url) // https:// soon (tm)? see api.js
+
+    // Get actors to listen to this new socket instead
+    for (const actor of Object.values(actors)) {
+      actor.bindToSocket(socket)
+    }
+  })
+
+  await actors.session.initialLoad()
 
   // Let every actor begin to do stuff.
   for (const actor of Object.values(actors)) {
