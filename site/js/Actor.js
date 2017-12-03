@@ -16,7 +16,7 @@ export default class Actor {
     const subs = this[subscribers][message] || []
     subs.push({ callback, times })
 
-    this.[subscribers][message] = subs
+    this[subscribers][message] = subs
   }
 
   // Waits for `message` and then resolves the promise.
