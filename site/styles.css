@@ -1,6 +1,6 @@
 :root {
   /* Mute (black/navy) */
-  --mute-darker: #020202;
+  --mute-darker: #0E0E0F;
   --mute-dark: #121214;
   --mute: #18191c;
   --mute-light: #27292f;
@@ -130,7 +130,7 @@ body, html, #app {
 
   color: var(--text-white);
   background: none;
-  
+
   height: 45px;
   line-height: 45px;
 
@@ -177,7 +177,7 @@ body, html, #app {
 
   color: var(--white);
   background-color: var(--mute-darker);
-  
+
   padding: 5px 40px;
   overflow-y: scroll; }
 
