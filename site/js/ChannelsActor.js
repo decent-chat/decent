@@ -17,6 +17,17 @@ export default class ChannelsActor extends Actor {
       this.populateSidebarList(channels)
     })
 
+    // Show/hide the create channel button depending on session state
+    this.actors.session.on('update', (loggedIn, sessionObj) => {
+      const btn = document.getElementById('create-channel')
+
+      if (!loggedIn || sessionObj.user.permissionLevel !== 'admin') {
+        btn.style.display = 'none' 
+      } else {
+        btn.style.removeProperty('display')
+      }
+    })
+
     this.socket.on('created new channel', () => this.loadChannels())
 
     this.on('update active channel', channel => {
@@ -27,8 +38,28 @@ export default class ChannelsActor extends Actor {
     document.getElementById('create-channel').addEventListener('click', async evt => {
       evt.preventDefault()
 
-      const channelName = prompt('New channel name?')
-      if (!channelName) return
+      let channelName
+
+      try {
+        channelName = await this.actors.modals.prompt(
+          'Create channel', 'New channel name?', '',
+          async name => {
+            const reValid = /^[a-zA-Z0-9-]+$/
+
+            if (name.length === 0) {
+              throw 'Please enter a channel name.'
+            } else if (!reValid.test(name)) {
+              throw 'Channel names must be alphanumeric with dashes! No spaces.'
+            }
+          },
+          'Create channel', 'Cancel')
+      } catch(error) {
+        if (error !== 'modal closed') {
+          throw error
+        }
+
+        return
+      }
 
       const res = await post('create-channel', {
         name: channelName,
@@ -36,7 +67,7 @@ export default class ChannelsActor extends Actor {
       })
 
       if (res.error) {
-        alert('Error while creating channel: ' + res.error)
+        await this.actors.modals.alert('Error creating channel', res.error)
       } else {
         // No emission here, because socket will emit
         // `created new channel` if successful.

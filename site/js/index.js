@@ -1,6 +1,7 @@
 import SessionActor from './SessionActor.js'
 import ChannelsActor from './ChannelsActor.js'
 import MessagesActor from './MessagesActor.js'
+import ModalsActor from './ModalsActor.js'
 
 import { get as apiGet, post as apiPost } from './api.js'
 
@@ -13,6 +14,7 @@ const main = async function() {
     session:  new SessionActor,  // Handles login/register/session UI.
     channels: new ChannelsActor, // Controls the channel list sidebar.
     messages: new MessagesActor, // Handles sending/recieving messages.
+    modals:   new ModalsActor,   // Creates and handles modal dialogs.
   }
 
   // Establish a WebSocket connection. It's *almost* an

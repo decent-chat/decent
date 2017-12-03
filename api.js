@@ -66,7 +66,8 @@ module.exports = function attachAPI(app, {io, db}) {
 
     user: u => ({
       id: u._id,
-      username: u.username
+      username: u.username,
+      permissionLevel: u.permissionLevel,
     }),
 
     channel: c => ({

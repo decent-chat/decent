@@ -7,6 +7,7 @@ export default class SessionActor extends Actor {
     this.on('update', (loggedIn, sessionObj) => {
       const loginStatusEl = document.getElementById('login-status')
       const [ registerEl, loginEl, logoutEl ] = document.querySelectorAll('.session-action-btn')
+      const formEl = document.getElementById('form')
 
       // TODO: should probably use a CSS class at some app root level
       //       for showing/hiding the buttons based on login state.
@@ -17,12 +18,14 @@ export default class SessionActor extends Actor {
         registerEl.style.display = 'none'
         loginEl.style.display = 'none'
         logoutEl.style.removeProperty('display')
+        formEl.style.removeProperty('display')
       } else {
         loginStatusEl.innerText = 'Not logged in'
 
         registerEl.style.removeProperty('display')
         loginEl.style.removeProperty('display')
         logoutEl.style.display = 'none'
+        formEl.style.display = 'none'
       }
     })
 
@@ -59,40 +62,67 @@ export default class SessionActor extends Actor {
     if (sessionData.success) {
       this.loggedIn = true
       this.sessionObj = sessionData
-      localStorage.sessionID = sessionID
     } else {
       this.loggedIn = false
       this.sessionObj = {}
     }
 
-    this.sessionID = sessionID
+    localStorage.sessionID = this.sessionID = sessionID
     this.emit('update', this.loggedIn, this.sessionObj)
   }
 
   async promptLogin() {
-    const username = prompt('Username?')
+    let username, password
 
-    if (username === null) {
-      return
+    try {
+      username = await this.actors.modals.prompt(
+        'Login', 'Username?', '',
+        async name => {
+          const reValid = /^[a-zA-Z0-9-_]+$/
+
+          if (name.length === 0) {
+            throw 'Please enter a username.'
+          } else if (!reValid.test(name)) {
+            throw 'Usernames cannot contain special characters other than - and _.'
+          }
+        },
+        'Continue', 'Cancel')
+    } catch(error) {
+      if (error === 'modal closed') {
+        this.emit('login cancel', 1)
+
+        return
+      } else {
+        throw error
+      }
     }
 
-    const password = prompt('Password?')
+    try {
+      password = await this.actors.modals.prompt(
+        'Login', 'Password?', '',
+        async pass => {
+          if (pass.length === 0) {
+            throw 'Please enter a password.'
+          }
+        },
+        'Continue', 'Cancel', 'password')
+    } catch(error) {
+      if (error === 'modal closed') {
+        this.emit('login cancel', 2)
 
-    if (password === null) {
-      return
-    }
-
-    if (!username || !password ) {
-      alert('Please enter both a username and a password.')
+        return
+      } else {
+        throw error
+      }
     }
 
     const result = await post('login', {username, password})
 
     if (result.error) {
       if (result.error === 'user not found') {
-        alert(`There is no user with the username ${username}.`)
+        this.actors.modals.alert('Login failure', `There is no user with the username ${username}.`)
       } else if (result.error === 'incorrect password') {
-        alert(`Incorrect password!`)
+        this.actors.modals.alert('Login failure', `Incorrect password!`)
       }
       return
     }
@@ -101,48 +131,72 @@ export default class SessionActor extends Actor {
   }
 
   async promptRegister() {
-    const username = prompt('Username?')
+    let username, password
 
-    if (username === null) {
-      this.emit('registration cancel')
-      return
+    try {
+      username = await this.actors.modals.prompt(
+        'Register', 'Username?', '',
+        async name => {
+          const reValid = /^[a-zA-Z0-9-_]+$/
+
+          if (name.length === 0) {
+            throw 'Please enter a username.'
+          } else if (!reValid.test(name)) {
+            throw 'Usernames cannot contain special characters other than - and _.'
+          }
+
+          // TODO check if username is taken or not here, in advance
+        },
+        'Continue', 'Cancel')
+    } catch(error) {
+      if (error === 'modal closed') {
+        this.emit('registration cancel', 1)
+
+        return
+      } else {
+        throw error
+      }
     }
 
-    const password = prompt(
-      'Password? (Must be at least 6 characters long.)\n' +
-      'This password is NOT secure yet! It is stored securely, but you are probably not on an HTTPS connection.\n' +
-      'That means just about anyone can look at your HTTP request and find out your password.\n' +
-      'DO NOT use something you use anywhere else!'
-    )
+    try {
+      password = await this.actors.modals.prompt(
+        'Register', 'Password? Must be at least 6 characters long.', '',
+        async pass => {
+          if (pass.length === 0) {
+            throw 'Please enter a password.'
+          } else if (pass.length < 6) {
+            throw 'Your password needs to be at least 6 characters long.'
+          }
+        },
+        'Continue', 'Cancel', 'password')
+    } catch(error) {
+      if (error === 'modal closed') {
+        this.emit('registration cancel', 2)
 
-    if (password === null) {
-      this.emit('registration cancel')
-      return
-    }
-
-    if (!username || !password) {
-      alert('Please enter both a username and a password.')
-
-      this.emit('registration error', 'enter both username and password')
-      return
+        return
+      } else {
+        throw error
+      }
     }
 
     const result = await post('register', {username, password})
 
     if (result.error) {
       if (result.error === 'password must be at least 6 characters long') {
-        alert('Couldn\'t create account - password too short.')
+        // impossible
+        this.actors.modals.alert(`Couldn't create account`, 'Password too short.')
       } else if (result.error === 'username already taken') {
-        alert('Couldn\'t create account - username already taken.')
+        this.actors.modals.alert(`Couldn't create account`, 'Username already taken.')
       } else if (result.error === 'username invalid') {
-        alert('Couldn\'t create account - username is invalid (only alphanumeric, underscores, and dashes allowed)')
+        // impossible
+        this.actors.modals.alert(`Couldn't create account`, 'Username is invalid.')
       }
 
       this.emit('registration error', result.error)
       return result.error
     }
 
-    alert(`Success! Account ${username} created. Please log in.`)
+    this.actors.modals.alert('Account created', `Success! Account ${username} created. Please login.`)
     this.emit('registration success', result.user)
 
     return result.user
