@@ -106,7 +106,7 @@ export default class MessagesActor extends Actor {
   }
 
   async showMessage(message) {
-    const { revisions, authorID, id: messageID } = message
+    const { revisions, authorID, authorUsername, id: messageID } = message
 
     if (!revisions || !authorID) {
       return
@@ -134,6 +134,11 @@ export default class MessagesActor extends Actor {
       messageGroupEl.classList.add('message-group')
       messageGroupEl.dataset.authorID = authorID
       messagesContainer.appendChild(messageGroupEl)
+
+      const authorEl = document.createElement('div')
+      authorEl.classList.add('message-group-author')
+      authorEl.appendChild(document.createTextNode(authorUsername))
+      messageGroupEl.appendChild(authorEl)
 
       const messageListEl = document.createElement('div')
       messageListEl.classList.add('messages')
@@ -359,7 +364,7 @@ export default class MessagesActor extends Actor {
   // is set to null, or is greater than the number of revisions, the most recent
   // revision is used.
   async buildMessageContent(message, revisionIndex = null) {
-    const { authorUsername } = message
+    const { authorUsername, date } = message
 
     if (!(revisionIndex in message.revisions)) {
       revisionIndex = message.revisions.length - 1
@@ -376,19 +381,13 @@ export default class MessagesActor extends Actor {
     const el = document.createElement('div')
     el.classList.add('message-revision-content')
 
-    const authorEl = document.createElement('div')
-    authorEl.classList.add('message-author')
-    authorEl.appendChild(document.createTextNode(authorUsername))
-
-    el.appendChild(authorEl)
-
-    const messageDate = new Date(message.date)
+    const dateObj = new Date(date)
     const pad = value => value.toString().padStart(2, '0')
 
     const time = document.createElement('time')
-    time.setAttribute('datetime', messageDate.toISOString())
+    time.setAttribute('datetime', dateObj.toISOString())
     time.appendChild(document.createTextNode(
-      `${pad(messageDate.getHours())}:${pad(messageDate.getMinutes())}`
+      `${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}`
     ))
     el.appendChild(time)
 
