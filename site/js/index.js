@@ -3,6 +3,7 @@ import ChannelsActor from './ChannelsActor.js'
 import MessagesActor from './MessagesActor.js'
 import ModalsActor from './ModalsActor.js'
 
+import Socket from './Socket.js'
 import { get as apiGet, post as apiPost } from './api.js'
 
 const main = async function() {
@@ -17,19 +18,32 @@ const main = async function() {
     modals:   new ModalsActor,   // Creates and handles modal dialogs.
   }
 
-  // Establish a WebSocket connection. It's *almost* an
-  // actor but not enough to live in the `actors` object.
-  const socket = io()
-
-  // Actors get references to other actors, plus a
-  // reference to the WebSocket connection.
+  // Actors get references to other actors.
   for (const [ name, actor ] of Object.entries(actors)) {
     actor.name = name
     actor.actors = actors
-    actor.socket = socket
 
-    actor.init() // Actors should subscribe to events here.
+    actor.init() // Actors should subscribe to events from eachother here.
   }
+
+  let socket = null
+
+  actors.session.on('switch server', hostname => {
+    const url = 'ws://' + hostname // wss:// soon (tm)? see api.js
+    if (socket) {
+      socket.url = url
+      socket.reconnect()
+    } else {
+      socket = new Socket(url)
+
+      // Allow actors to subscribe to messages from the socket.
+      for (const actor of Object.values(actors)) {
+        actor.bindToSocket(socket)
+      }
+    }
+  })
+
+  await actors.session.initialLoad()
 
   // Let every actor begin to do stuff.
   for (const actor of Object.values(actors)) {

@@ -4,6 +4,11 @@ import bindKeys from './bind-keys.js'
 
 export default class ChannelsActor extends Actor {
   init() {
+    this.actors.session.on('switch server', () => {
+      this.activeChannelID = null
+      this.loadChannels()
+    })
+
     this.on('update channel list', channels => {
       // Join the first channel if we're not already in one
       if (this.activeChannelID === null) {
@@ -28,8 +33,6 @@ export default class ChannelsActor extends Actor {
         btn.style.removeProperty('display')
       }
     })
-
-    this.socket.on('created new channel', () => this.loadChannels())
 
     this.on('update active channel', channel => {
       document.title = '#' + channel.name
@@ -65,7 +68,7 @@ export default class ChannelsActor extends Actor {
       const res = await post('create-channel', {
         name: channelName,
         sessionID: this.actors.session.sessionID,
-      })
+      }, this.actors.session.currentServerURL)
 
       if (res.error) {
         await this.actors.modals.alert('Error creating channel', res.error)
@@ -106,6 +109,10 @@ export default class ChannelsActor extends Actor {
     this.loadChannels()
   }
 
+  bindToSocket(socket) {
+    socket.on('created new channel', () => this.loadChannels())
+  }
+
   getChannelByID(channelID) {
     return this.channels.find(c => c.id === channelID) || null
   }
@@ -118,14 +125,14 @@ export default class ChannelsActor extends Actor {
     return this.channels.find(c => c.name === channelName) || null
   }
 
-  viewChannel(channelID) {
+  async viewChannel(channelID) {
     this.activeChannelID = channelID
-    this.socket.emit('view channel', channelID)
+    //this.socket.emit('view channel', channelID) // TODO use api for this
     this.emit('update active channel', this.getChannelByID(channelID))
   }
 
   async loadChannels() {
-    const { channels } = await get('channel-list')
+    const { channels } = await get('channel-list', this.actors.session.currentServerURL)
 
     this.channels = channels
     this.emit('update channel list', channels)
@@ -134,7 +141,7 @@ export default class ChannelsActor extends Actor {
   }
 
   async populateSidebarList(channels) {
-    const sidebarEl = document.querySelector('#sidebar')
+    const sidebarEl = document.querySelector('#channels-sidebar-section')
 
     // Remove old channels list
     const oldListEl = sidebarEl.querySelector('#channels-list')

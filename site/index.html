@@ -14,10 +14,19 @@ pre {
 
 <div id="app">
   <aside id="sidebar">
-    <div class="sidebar-heading">
-      <b>Channels</b>
-      <button class="btn" id="create-channel">New</button>
-    </div>
+    <section class="sidebar-section sidebar-section-light">
+      <div class="sidebar-heading">
+        <div id="server-status">Connecting...</div>
+        <button class="btn btn-visible" id="switch-server-btn">Switch server</button>
+      </div>
+    </section>
+
+    <section class="sidebar-section" id="channels-sidebar-section">
+      <div class="sidebar-heading">
+        <b>Channels</b>
+        <button class="btn" id="create-channel">New</button>
+      </div>
+    </section>
   </aside>
 
   <main id="central-pane">
@@ -37,7 +46,6 @@ pre {
   </main>
 </div>
 
-<script src="/socket.io/socket.io.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0-alpha2/katex.min.js" integrity="sha384-OMvkZ24ANLwviZR2lVq8ujbE/bUO8IR1FdBrKLQBI14Gq5Xp/lksIccGkmKL8m+h" crossorigin="anonymous"></script>
 
 <script nomodule src="script-nomodule.js"></script> <!-- for browsers not supporting es6 modules -->

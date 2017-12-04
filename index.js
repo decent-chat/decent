@@ -6,7 +6,7 @@ process.on('unhandledRejection', err => {
 
 const Datastore = require('nedb-promise')
 const express = require('express')
-const socketio = require('socket.io')
+const WebSocket = require('ws')
 const http = require('http')
 const readline = require('readline')
 const fixWS = require('fix-whitespace')
@@ -14,8 +14,14 @@ const fixWS = require('fix-whitespace')
 const attachAPI = require('./api')
 
 const app = express()
-const httpServer = http.Server(app)
-const io = socketio(httpServer)
+const httpServer = http.createServer(app)
+
+// WebSockets are not limited by the Same Origin Policy (i.e.
+// CORS) -- it's up to the server to reject/accept connections
+// on its own. This is great for us because we want to accept
+// every connection regardless of origin, since servers/clients
+// should be able to communicate cross-domain.
+const wss = new WebSocket.Server({ server: httpServer })
 
 async function main() {
   const db = {
@@ -27,8 +33,9 @@ async function main() {
 
   await Promise.all(Object.values(db).map(d => d.loadDatabase()))
 
+  app.enable('trust proxy')
   app.use(express.static('site'))
-  attachAPI(app, {io, db})
+  attachAPI(app, {wss, db})
 
   const port = parseInt(process.argv[2]) || 3000
   await new Promise(resolve => httpServer.listen(port, resolve))

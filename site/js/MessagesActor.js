@@ -13,7 +13,7 @@ export default class MessagesActor extends Actor {
       this.clear()
 
       // Display latest messages in the channel
-      const { messages } = await get(`channel/${channel.id}/latest-messages`)
+      const { messages } = await get(`channel/${channel.id}/latest-messages`, this.actors.session.currentServerURL)
       for (const msg of messages) {
         await this.showMessage(msg)
       }
@@ -64,7 +64,7 @@ export default class MessagesActor extends Actor {
           //signature,
           channelID,
           sessionID,
-        })
+        }, this.actors.session.currentServerURL)
 
         if (result.success) {
           return
@@ -83,8 +83,10 @@ export default class MessagesActor extends Actor {
         chatInput.value = text
       }
     })
+  }
 
-    this.socket.on('received chat message', async msg => {
+  bindToSocket(socket) {
+    socket.on('received chat message', async msg => {
       if (typeof msg !== 'object') {
         return
       }
@@ -92,7 +94,7 @@ export default class MessagesActor extends Actor {
       await this.showMessage(msg.message)
     })
 
-    this.socket.on('edited chat message', async msg => {
+    socket.on('edited chat message', async msg => {
       if (typeof msg !== 'object') {
         return
       }
@@ -179,7 +181,7 @@ export default class MessagesActor extends Actor {
         sessionID: this.actors.session.sessionID,
         text, messageID,
         //signature: await signText(text)
-      })
+      }, this.actors.session.currentServerURL)
     })
   }
 
@@ -231,7 +233,7 @@ export default class MessagesActor extends Actor {
 
           mentionEl.classList.add('message-mention')
 
-          if (buffer === '@' + user.username || buffer === '@everyone')
+          if (user && buffer === '@' + user.username || buffer === '@everyone')
             mentionEl.classList.add('message-mention-of-user')
 
           mentionEl.appendChild(document.createTextNode(buffer))

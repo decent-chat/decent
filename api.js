@@ -15,10 +15,16 @@ const bodyParser = require('body-parser')
 const uuidv4 = require('uuid/v4')
 const bcrypt = require('./bcrypt-util')
 
-module.exports = function attachAPI(app, {io, db}) {
-  // Used to only send message events to clients who are in the same channel as the
-  // message.
-  const socketChannelMap = new Map()
+module.exports = function attachAPI(app, {wss, db}) {
+  // Used to keep track of connected clients and related
+  // data, such as the channelID it is currently viewing.
+  const connectedSocketsMap = new Map()
+
+  const sendToAllSockets = function(evt, data) {
+    for (const socket of connectedSocketsMap.keys()) {
+      socket.send(JSON.stringify({ evt, data }))
+    }
+  }
 
   const getUserBySessionID = async function(sessionID) {
     const session = await db.sessions.findOne({_id: sessionID})
@@ -260,6 +266,8 @@ module.exports = function attachAPI(app, {io, db}) {
 
   app.use('/api/*', async (request, response, next) => {
     response.header('Content-Type', 'application/json')
+    response.header('Access-Control-Allow-Origin', '*')
+    response.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
 
     next()
   })
@@ -289,7 +297,7 @@ module.exports = function attachAPI(app, {io, db}) {
         reactions: {}
       })
 
-      io.emit('received chat message', {
+      sendToAllSockets('received chat message', {
         message: serialize.message(message)
       })
 
@@ -388,7 +396,7 @@ module.exports = function attachAPI(app, {io, db}) {
         returnUpdatedDocs: true
       })
 
-      io.emit('edited chat message', {message: serialize.message(newMessage)})
+      sendToAllSockets('edited chat message', {message: serialize.message(newMessage)})
 
       response.status(200).end(JSON.stringify({success: true}))
     }
@@ -426,7 +434,7 @@ module.exports = function attachAPI(app, {io, db}) {
         name
       })
 
-      io.emit('created new channel', {
+      sendToAllSockets('created new channel', {
         channel: serialize.channel(channel),
       })
 
@@ -623,19 +631,63 @@ module.exports = function attachAPI(app, {io, db}) {
     }
   ])
 
-  io.on('connection', socket => {
-    socketChannelMap.set(socket, null)
+  wss.on('connection', socket => {
+    connectedSocketsMap.set(socket, {
+      channelID: null,
+      isAlive: true,
+    })
 
-    socket.on('view channel', channelID => {
-      if (!channelID) {
+    socket.on('message', message => {
+      let messageObj
+      try {
+        messageObj = JSON.parse(message)
+      } catch(err) {
         return
       }
 
-      socketChannelMap.set(socket, channelID)
+      const { evt, data } = messageObj
+
+      if (evt === 'view channel') {
+        if (!data) {
+          return
+        }
+
+        connectedSocketsMap.set(socket, {
+          channelID: data // channelID
+        })
+      }
     })
 
-    io.on('disconnect', () => {
-      socketChannelMap.delete(socket)
+    socket.on('pong', () => {
+      const socketData = connectedSocketsMap.get(socket)
+
+      if (!socketData.isAlive) {
+        // Pong!
+        socketData.isAlive = true
+        connectedSocketsMap.set(socket, socketData)
+      }
+    })
+
+    socket.on('close', () => {
+      connectedSocketsMap.delete(socket)
     })
   })
+
+  setInterval(() => {
+    // Prune dead socket connections, and ping all
+    // other sockets to check they're still alive.
+    for (const [ socket, socketData ] of connectedSocketsMap) {
+      if (!socketData.isAlive) {
+        // R.I.P.
+        socket.terminate()
+        connectedSocketsMap.delete(socket)
+      } else {
+        // Ping!
+        socketData.isAlive = false
+        connectedSocketsMap.set(socket, socketData)
+
+        socket.ping('', false, true)
+      }
+    }
+  }, 10 * 1000) // Every 10s.
 }

@@ -3,6 +3,12 @@ import { get, post } from './api.js'
 
 export default class SessionActor extends Actor {
   init() {
+    // When we connect to a new server, update the UI.
+    this.on('switch server', hostname => {
+      const serverStatusEl = document.getElementById('server-status')
+      serverStatusEl.innerText = hostname
+    })
+
     // When there's a session update, update the UI too.
     this.on('update', (loggedIn, sessionObj) => {
       const loginStatusEl = document.getElementById('login-status')
@@ -29,6 +35,19 @@ export default class SessionActor extends Actor {
       }
     })
 
+    document.getElementById('switch-server-btn').addEventListener('click', async () => {
+      const url = await this.actors.modals.prompt(
+        'Switch server', 'Hostname?', window.location.host,
+        async url => {
+          if (url.trim().startsWith('http')) {
+            throw 'Please leave off the HTTP protocol.'
+          }
+        },
+        'Connect', 'Cancel').then(url => url.trim().toLowerCase())
+
+      this.switchServer(url)
+    })
+
     document.getElementById('register').addEventListener('click', () => {
       this.promptRegister()
     })
@@ -42,11 +61,18 @@ export default class SessionActor extends Actor {
     })
   }
 
-  go() {
-    // Load session from LocalStorage, if it has that data.
-    if ('sessionID' in localStorage) {
-      this.loadSessionID(localStorage.sessionID)
-    } else this.loadSessionID('')
+  async initialLoad() {
+    // Load session IDs from LocalStorage, if it has that data.
+    if ('sessionIDs' in localStorage) {
+      this.sessionIDs = JSON.parse(localStorage.sessionIDs)
+    }
+
+    if (typeof this.sessionIDs !== Object) {
+      this.sessionIDs = {}
+    }
+
+    await this.switchServer(window.location.host)
+    return window.location.host
   }
 
   isCurrentUser(userID) {
@@ -54,10 +80,17 @@ export default class SessionActor extends Actor {
     else return this.sessionObj.user.id === userID
   }
 
+  async switchServer(url) {
+    this.currentServerURL = url
+    this.sessionID = this.sessionIDs[url] || ''
+    this.loadSessionID(this.sessionID)
+    this.emit('switch server', url)
+  }
+
   async loadSessionID(sessionID = '') {
     const sessionData = sessionID === ''
       ? { success: false } // No sessionID = logged out
-      : await get('session/' + sessionID)
+      : await get('session/' + sessionID, this.actors.session.currentServerURL)
 
     if (sessionData.success) {
       this.loggedIn = true
@@ -67,7 +100,10 @@ export default class SessionActor extends Actor {
       this.sessionObj = {}
     }
 
-    localStorage.sessionID = this.sessionID = sessionID
+    this.sessionID = sessionID
+    this.sessionIDs[this.currentServerURL] = this.sessionID
+
+    localStorage.sessionIDs = JSON.stringify(this.sessionIDs)
     this.emit('update', this.loggedIn, this.sessionObj)
   }
 
@@ -116,7 +152,7 @@ export default class SessionActor extends Actor {
       }
     }
 
-    const result = await post('login', {username, password})
+    const result = await post('login', {username, password}, this.actors.session.currentServerURL)
 
     if (result.error) {
       if (result.error === 'user not found') {
@@ -183,7 +219,7 @@ export default class SessionActor extends Actor {
       }
     }
 
-    const result = await post('register', {username, password})
+    const result = await post('register', {username, password}, this.actors.session.currentServerURL)
 
     if (result.error) {
       if (result.error === 'password must be at least 6 characters long') {
