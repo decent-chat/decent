@@ -3,6 +3,7 @@ import ChannelsActor from './ChannelsActor.js'
 import MessagesActor from './MessagesActor.js'
 import ModalsActor from './ModalsActor.js'
 
+import Socket from './Socket.js'
 import { get as apiGet, post as apiPost } from './api.js'
 
 const main = async function() {
@@ -27,16 +28,18 @@ const main = async function() {
 
   let socket = null
 
-  actors.session.on('switch server', url => {
+  actors.session.on('switch server', hostname => {
+    const url = 'ws://' + hostname // wss:// soon (tm)? see api.js
     if (socket) {
-      socket.close()
-    }
+      socket.url = hostname
+      socket.reconnect()
+    } else {
+      socket = new Socket('ws://' + hostname)
 
-    socket = io('http://' + url) // https:// soon (tm)? see api.js
-
-    // Get actors to listen to this new socket instead
-    for (const actor of Object.values(actors)) {
-      actor.bindToSocket(socket)
+      // Allow actors to subscribe to messages from the socket.
+      for (const actor of Object.values(actors)) {
+        actor.bindToSocket(socket)
+      }
     }
   })
 
