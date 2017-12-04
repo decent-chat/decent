@@ -77,6 +77,8 @@ export default class ChannelsActor extends Actor {
         // `created new channel` if successful.
       }
 
+      document.getElementById('chat-input').focus()
+
       return false
     })
 
@@ -164,6 +166,7 @@ export default class ChannelsActor extends Actor {
       } else {
         el.addEventListener('click', () => {
           this.viewChannel(channel.id)
+          document.getElementById('chat-input')
         })
       }
 
