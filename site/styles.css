@@ -9,6 +9,14 @@
   --accent-light: #8cb0de;
   --accent: #4375b5;
 
+  /* Additional colors */
+  --color-red: #d2103e;
+  --color-red-light: #e01e4c;
+  --color-yellow: #e6d411;
+  --color-yellow-light: #f6e418;
+  --color-green: #10d23d;
+  --color-green-light: #13e344;
+
   /* Text */
   --text-black: #151314;
   --text-red: #c54445;
