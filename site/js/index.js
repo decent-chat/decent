@@ -23,7 +23,7 @@ const main = async function() {
     actor.name = name
     actor.actors = actors
 
-    actor.init() // Actors should subscribe to events from eachother here.
+    actor.init() // Actors should subscribe to events from each-other here.
   }
 
   let socket = null
