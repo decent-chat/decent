@@ -9,24 +9,21 @@ export default class MessagesActor extends Actor {
   init() {
     this.actors.channels.on('update active channel', async channel => {
       this.clear()
-      
+
       // Display latest messages in the channel
       const { messages } = await get(`channel/${channel.id}/latest-messages`)
       for (const msg of messages) {
         await this.showMessage(msg)
       }
-
-      const getScrollDist = () => 
-      messagesContainer.scrollTop = messages.scrollHeight - messages.offsetHeight
     })
 
     this.actors.session.on('update', (loggedIn, sessionObj) => {
-      for (const msg of document.querySelectorAll('.message.created-by-us')) { 
-        msg.classList.remove('created-by-us') 
+      for (const msg of document.querySelectorAll('.message.created-by-us')) {
+        msg.classList.remove('created-by-us')
       }
 
       if (loggedIn) {
-        for (const msg of document.querySelectorAll(queryByDataset('author', sessionObj.user.id))) { 
+        for (const msg of document.querySelectorAll(queryByDataset('author', sessionObj.user.id))) {
           msg.classList.add('created-by-us')
         }
       }
@@ -84,7 +81,7 @@ export default class MessagesActor extends Actor {
         chatInput.value = text
       }
     })
-  
+
     this.socket.on('received chat message', async msg => {
       if (typeof msg !== 'object') {
         return
@@ -103,8 +100,8 @@ export default class MessagesActor extends Actor {
   }
 
   clear() {
-    for (const msg of document.querySelectorAll('.message')) { 
-      msg.remove() 
+    for (const msg of document.querySelectorAll('.message')) {
+      msg.remove()
     }
   }
 
