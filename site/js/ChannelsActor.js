@@ -1,6 +1,5 @@
 import Actor from './Actor.js'
 import { get, post } from './api.js'
-import bindKeys from './bind-keys.js'
 
 export default class ChannelsActor extends Actor {
   init() {
@@ -83,7 +82,7 @@ export default class ChannelsActor extends Actor {
     })
 
     // Alt + Up -> view above channel
-    bindKeys([ 18, 38 ], () => {
+    Mousetrap.bind('alt+up', () => {
       const activeIndex = this.getChannelIndexByID(this.activeChannelID)
 
       if (this.channels[activeIndex - 1]) {
@@ -94,7 +93,7 @@ export default class ChannelsActor extends Actor {
     })
 
     // Alt + Down -> view below channel
-    bindKeys([ 18, 40 ], () => {
+    Mousetrap.bind('alt+down', () => {
       const activeIndex = this.getChannelIndexByID(this.activeChannelID)
 
       if (this.channels[activeIndex + 1]) {
