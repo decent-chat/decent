@@ -37,16 +37,21 @@ export default class Socket {
     // Display some kind of onscreen notification that
     // the connection to the server has been lost.
 
-    // Attempt to reconnect in a couple seconds.
-    const attemptReconnect = () => {
-      setTimeout(() => this.reconnect().then(() => {
-        // Connection re-established! :tada:
-        this.isDead = false
-        console.info('socket:: connection re-established after death')
-      }).catch(attemptReconnect), 2000)
-    }
+    // Attempt to reconnect every couple seconds.
+    const intervalID = setInterval(() => {
+      if (!this.isDead) {
+        // We're alive now, no need to try again.
+        clearInterval(intervalID)
 
-    attemptReconnect()
+        return
+      }
+
+      this.reconnect().then(() => {
+        // Connection re-established! :tada:
+        // (reconnect() automatically sets this.isDead = false)
+        console.info('socket:: connection re-established after death')
+      })
+    }, 2000)
   }
 
   reconnect() {
@@ -55,12 +60,8 @@ export default class Socket {
     }
 
     return new Promise((resolve, reject) => {
-      let ws
-      try {
-        ws = new WebSocket(this.url)
-      } catch (error) {
-        reject(error)
-      }
+      const ws = new WebSocket(this.url)
+      this.isDead = false
 
       const closeHandler = evt => {
         ws.removeEventListener('close', closeHandler)
@@ -73,8 +74,6 @@ export default class Socket {
 
       const messageHandler = message => {
         const { evt, data } = JSON.parse(message.data)
-
-        this.lastMessage = Date.now()
 
         if (evt !== 'pong') {
           console.info('socket[' + evt + ']::', data)
