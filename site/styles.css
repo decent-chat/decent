@@ -47,6 +47,11 @@ body, html, #app {
 
   #app.modal-visible {
     opacity: .4;
+
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+
     pointer-events: none; }
 
   #central-pane {
@@ -68,6 +73,9 @@ body, html, #app {
   background: var(--mute);
 
   padding: 0;
+
+  -moz-user-select: none;
+  -webkit-user-select: none;
   user-select: none; }
 
   #sidebar .sidebar-heading {
@@ -193,6 +201,10 @@ body, html, #app {
 #form-container {
   display: flex;
   flex-direction: row;
+
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
 
   padding: 5px;
   background-color: var(--mute-dark);
