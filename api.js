@@ -78,9 +78,13 @@ module.exports = function attachAPI(app, {io, db}) {
     // Extra details for a channel - these aren't returned in the channel list API,
     // but are when a specific channel is fetched.
     channelDetail: async c => Object.assign(serialize.channelShort(c), {
-      pinnedMessages: await Promise.all(c.pinnedMessageIDs.map(
-        async id => serialize.message(await db.messages.findOne({_id: id}))
-      ))
+      // Null messages are filtered out, just in case there's a broken message ID in the
+      // pinned message list (e.g. because a message was deleted).
+      pinnedMessages: (
+        (await Promise.all(c.pinnedMessageIDs.map(id => db.messages.findOne({_id: id}))))
+          .filter(Boolean)
+          .map(serialize.message)
+      )
     })
   }
 
