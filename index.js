@@ -33,6 +33,7 @@ async function main() {
 
   await Promise.all(Object.values(db).map(d => d.loadDatabase()))
 
+  app.enable('trust proxy')
   app.use(express.static('site'))
   attachAPI(app, {wss, db})
 
