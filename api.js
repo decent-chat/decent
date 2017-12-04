@@ -306,6 +306,42 @@ module.exports = function attachAPI(app, {io, db}) {
     }
   ])
 
+  app.post('/api/pin-message', [
+    ...middleware.loadVarFromBody('messageID'),
+    ...middleware.loadVarFromBody('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.getMessageFromID('messageID', 'message'),
+    (req, res, next) => {
+      const v = req[middleware.vars]
+      v.channelID = v.message.channelID
+      next()
+    },
+    ...middleware.getChannelFromID('channelID', 'channel'),
+
+    async (request, response) => {
+      const { messageID, channel } = request[middleware.vars]
+
+      if (channel.pinnedMessageIDs.includes(messageID)) {
+        response.status(500).end(JSON.stringify({
+          error: 'this message is already pinned'
+        }))
+
+        return
+      }
+
+      await db.channels.update({_id: channel._id}, {
+        $push: {
+          pinnedMessageIDs: messageID
+        }
+      })
+
+      response.status(200).end(JSON.stringify({
+        success: true
+      }))
+    }
+  ])
+
   app.post('/api/add-message-reaction', [
     ...middleware.loadVarFromBody('reactionCode'),
     ...middleware.loadVarFromBody('sessionID'),
