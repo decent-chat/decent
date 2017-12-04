@@ -121,12 +121,31 @@ export default class MessagesActor extends Actor {
     const getScrollDist = () => messages.scrollHeight - messages.offsetHeight
     let wasScrolledToBottom = (messages.scrollTop === getScrollDist())
 
+    // We need to have a message group element to actually append the message
+    // element to. If the last message group element's author is the author
+    // of this current message, we'll reuse it; otherwise, we'll make a new
+    // message group.
+    let messageGroupEl
+    const lastMessageGroupEl = messagesContainer.lastChild
+    if (lastMessageGroupEl && lastMessageGroupEl.dataset.authorID === authorID) {
+      messageGroupEl = lastMessageGroupEl
+    } else {
+      messageGroupEl = document.createElement('div')
+      messageGroupEl.classList.add('message-group')
+      messageGroupEl.dataset.authorID = authorID
+      messagesContainer.appendChild(messageGroupEl)
+
+      const messageListEl = document.createElement('div')
+      messageListEl.classList.add('messages')
+      messageGroupEl.appendChild(messageListEl)
+    }
+
     const el = document.createElement('div')
     el.classList.add('message')
     el.setAttribute('id', 'message-' + messageID)
     el.dataset.author = authorID
     el.appendChild(await this.buildMessageContent(message))
-    messagesContainer.appendChild(el)
+    messageGroupEl.querySelector('.messages').appendChild(el)
 
     if (this.actors.session.isCurrentUser(authorID)) {
       el.classList.add('created-by-us')
