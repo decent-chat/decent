@@ -19,22 +19,33 @@ export default class SessionActor extends Actor {
       //       for showing/hiding the buttons based on login state.
 
       if (loggedIn) {
-        loginStatusEl.innerText = 'Logged in as ' + sessionObj.user.username + '.'
+        loginStatusEl.innerText = 'Logged in as ' + sessionObj.user.username
 
         registerEl.style.display = 'none'
         loginEl.style.display = 'none'
         logoutEl.style.removeProperty('display')
         formEl.style.removeProperty('display')
       } else {
-        loginStatusEl.innerText = 'Not logged in.'
+        loginStatusEl.innerText = 'Not logged in'
 
         registerEl.style.removeProperty('display')
         loginEl.style.removeProperty('display')
         logoutEl.style.display = 'none'
         formEl.style.display = 'none'
       }
+    })
 
-      loginStatusEl.innerText += ' Connected to ' + this.currentServerURL
+    document.getElementById('switch-server-btn').addEventListener('click', async () => {
+      const url = await this.actors.modals.prompt(
+        'Switch server', 'Hostname?', window.location.host,
+        async url => {
+          if (url.trim().startsWith('http')) {
+            throw 'Please leave off the HTTP protocol.'
+          }
+        },
+        'Connect', 'Cancel').then(url => url.trim().toLowerCase())
+
+      this.switchServer(url)
     })
 
     document.getElementById('switch-server-btn').addEventListener('click', async () => {
