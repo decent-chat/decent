@@ -127,7 +127,7 @@ export default class ChannelsActor extends Actor {
 
   async viewChannel(channelID) {
     this.activeChannelID = channelID
-    //this.socket.emit('view channel', channelID) // TODO use api for this
+    this.socket.emit('view channel', channelID)
     this.emit('update active channel', this.getChannelByID(channelID))
   }
 
