@@ -4,6 +4,11 @@ import bindKeys from './bind-keys.js'
 
 export default class ChannelsActor extends Actor {
   init() {
+    this.actors.session.on('switch server', () => {
+      this.activeChannelID = null
+      this.loadChannels()
+    })
+
     this.on('update channel list', channels => {
       // Join the first channel if we're not already in one
       if (this.activeChannelID === null) {
