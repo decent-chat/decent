@@ -233,7 +233,7 @@ export default class MessagesActor extends Actor {
 
           mentionEl.classList.add('message-mention')
 
-          if (buffer === '@' + user.username || buffer === '@everyone')
+          if (user && buffer === '@' + user.username || buffer === '@everyone')
             mentionEl.classList.add('message-mention-of-user')
 
           mentionEl.appendChild(document.createTextNode(buffer))
