@@ -14,10 +14,19 @@ pre {
 
 <div id="app">
   <aside id="sidebar">
-    <div class="sidebar-heading">
-      <b>Channels</b>
-      <button class="btn" id="create-channel">New</button>
-    </div>
+    <section class="sidebar-section sidebar-section-light">
+      <div class="sidebar-heading">
+        <div id="server-status">Connecting...</div>
+        <button class="btn btn-visible" id="switch-server-btn">Switch server</button>
+      </div>
+    </section>
+
+    <section class="sidebar-section" id="channels-sidebar-section">
+      <div class="sidebar-heading">
+        <b>Channels</b>
+        <button class="btn" id="create-channel">New</button>
+      </div>
+    </section>
   </aside>
 
   <main id="central-pane">
