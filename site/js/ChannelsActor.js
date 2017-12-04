@@ -141,7 +141,7 @@ export default class ChannelsActor extends Actor {
   }
 
   async populateSidebarList(channels) {
-    const sidebarEl = document.querySelector('#sidebar')
+    const sidebarEl = document.querySelector('#channels-sidebar-section')
 
     // Remove old channels list
     const oldListEl = sidebarEl.querySelector('#channels-list')

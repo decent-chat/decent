@@ -51,12 +51,25 @@ body, html, #app {
   color: var(--text-grey);
   background: var(--mute);
 
-  padding: 18px 0;
+  padding: 0;
   user-select: none; }
 
   #sidebar .sidebar-heading {
     padding: 8px 18px;
     font-size: 120%; }
+
+  #sidebar .sidebar-section {
+    border-top: 1px dotted var(--mute-light);
+    padding: 18px 0; }
+
+    #sidebar .sidebar-section-light {
+      background: var(--mute-light); }
+
+  #sidebar #server-status {
+    font-size: 14px;
+
+    margin-left: 4px;
+    margin-bottom: 16px; }
 
   #sidebar #channels-list {
     display: block;
