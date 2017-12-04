@@ -31,10 +31,10 @@ const main = async function() {
   actors.session.on('switch server', hostname => {
     const url = 'ws://' + hostname // wss:// soon (tm)? see api.js
     if (socket) {
-      socket.url = hostname
+      socket.url = url
       socket.reconnect()
     } else {
-      socket = new Socket('ws://' + hostname)
+      socket = new Socket(url)
 
       // Allow actors to subscribe to messages from the socket.
       for (const actor of Object.values(actors)) {
