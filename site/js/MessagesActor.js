@@ -313,7 +313,10 @@ export default class MessagesActor extends Actor {
     text = text.trim()
 
     const startToken = nextToken => {
-      // end the current token
+      // End the current token
+
+      const treatAsText = () => el.appendChild(document.createTextNode(buffer))
+
       if (buffer === '') {
         if (currentToken === 'newline') {
           el.appendChild(document.createElement('br'))
@@ -333,7 +336,7 @@ export default class MessagesActor extends Actor {
       } else if (currentToken === 'mention') {
         if (buffer === '@') { // TODO: must be a logged-in username!
           // not a mention; treat as text
-          el.appendChild(document.createTextNode(buffer))
+          treatAsText()
         } else {
           const mentionEl = document.createElement('span')
 
@@ -346,10 +349,39 @@ export default class MessagesActor extends Actor {
           el.appendChild(mentionEl)
         }
       } else if (currentToken === 'channelref') {
-        const channelName = buffer.substr(1)
-        const channel = this.actors.channels.getChannelByName(channelName)
+        if (buffer.length <= 1) {
+          return treatAsText()
+        }
 
-        if (!channel) {
+        let serverURL = '', channelName = '', part = '?', miniBuffer = ''
+        for (const char of buffer) {
+          if (char === '+') {
+            if (part === '?') {
+              part = '+'
+            } else {
+              // ???
+              return treatAsText()
+            }
+          } else if (char === '#') {
+            if (part === '?' || part === '+') {
+              serverURL = miniBuffer
+              part = '#'
+            } else {
+              // ???
+              return treatAsText()
+            }
+          } else {
+            miniBuffer += char
+          }
+        }
+
+        if (part === '+') {
+          serverURL = miniBuffer
+        } else if (part === '#') {
+          channelName = miniBuffer
+        }
+
+        if (serverURL === '' && !this.actors.channels.getChannelByName(channelName)) {
           // not an actual channel; treat as text
           el.appendChild(document.createTextNode(buffer))
         } else {
@@ -359,11 +391,18 @@ export default class MessagesActor extends Actor {
           refEl.appendChild(document.createTextNode(buffer))
 
           // Go to the channel on-click
-          refEl.addEventListener('click', evt => {
+          refEl.addEventListener('click', async evt => {
             evt.preventDefault()
             evt.stopPropagation() // Don't trigger edit message
 
-            this.emit('click on channel reference', channel)
+            this.emit('click on channel reference', channelName, serverURL)
+
+            if (serverURL.length > 0) {
+              // Go to server first!
+              await Promise.all([ this.actors.session.switchServer(serverURL), this.actors.channels.waitFor('update channel list') ])
+            }
+
+            const channel = this.actors.channels.getChannelByName(channelName)
             this.actors.channels.viewChannel(channel.id)
 
             return false
@@ -433,7 +472,8 @@ export default class MessagesActor extends Actor {
       else if (!(/[a-zA-Z0-9_-]/).test(char) && currentToken === 'mention') startToken('text')
 
       else if (char === '#' && currentToken === 'text' && charBefore === ' ') startToken('channelref')
-      else if (!(/[a-zA-Z0-9_-]/).test(char) && currentToken === 'channelref') startToken('text')
+      else if (char === '+' && currentToken === 'text' && charBefore === ' ') startToken('channelref')
+      else if (!(/[a-zA-Z0-9\.#_-]/).test(char) && currentToken === 'channelref') startToken('text')
 
       else if (char === '*' && currentToken === 'text') {
         if (charNext === '*') {
