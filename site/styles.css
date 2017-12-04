@@ -21,7 +21,10 @@
   --text-black: #151314;
   --text-red: #c54445;
   --text-grey: #737f8d;
-  --text-white: white; }
+  --text-white: white;
+
+  /* Settings */
+  --sidebar-width: 240px; }
 
 body, html, #app {
   width: 100%;
@@ -49,12 +52,17 @@ body, html, #app {
   #central-pane {
     flex-grow: 1;
 
+    /* Don't let overflows happen */
+    width: calc(100vw - var(--sidebar-width));
+    position: relative;
+
     display: flex;
     flex-direction: column; }
 
 #sidebar {
   flex-grow: 0;
-  width: 240px;
+  flex-shrink: 0;
+  width: var(--sidebar-width);
 
   color: var(--text-grey);
   background: var(--mute);
@@ -67,10 +75,11 @@ body, html, #app {
     font-size: 120%; }
 
   #sidebar .sidebar-section {
-    border-top: 1px dotted var(--mute-light);
+    border-bottom: 1px dotted var(--mute-light);
     padding: 18px 0; }
 
     #sidebar .sidebar-section-light {
+      border-bottom: none;
       background: var(--mute-light); }
 
   #sidebar #server-status {
@@ -182,13 +191,24 @@ body, html, #app {
       background: var(--accent-light); }
 
 #form-container {
+  display: flex;
+  flex-direction: row;
+
   padding: 5px;
   background-color: var(--mute-dark);
   color: var(--text-white); }
 
   #form-container #form {
-    display: inline-block;
+    flex-grow: 1;
+
+    display: inline-flex;
+    flex-direction: row;
+
     margin: 0; }
+
+    #form-container #form #chat-input {
+      resize: none;
+      flex-grow: 1; }
 
   #login-status {
     font-size: 11px;
@@ -242,6 +262,8 @@ body, html, #app {
     float: right; }
 
   .message-content {
+    max-width: 100%;
+    word-wrap: break-word;
     display: block; }
 
     .message-format-b {
@@ -255,6 +277,10 @@ body, html, #app {
 
     .message-format-s {
       text-decoration: line-through; }
+
+    .message-latex-error {
+      font-weight: bold;
+      color: var(--text-red); }
 
 a {
   color: #E080FF;

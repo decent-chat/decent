@@ -11,7 +11,6 @@ export default class SessionActor extends Actor {
 
     // When there's a session update, update the UI too.
     this.on('update', (loggedIn, sessionObj) => {
-      const loginStatusEl = document.getElementById('login-status')
       const [ registerEl, loginEl, logoutEl ] = document.querySelectorAll('.session-action-btn')
       const formEl = document.getElementById('form')
 
@@ -19,15 +18,11 @@ export default class SessionActor extends Actor {
       //       for showing/hiding the buttons based on login state.
 
       if (loggedIn) {
-        loginStatusEl.innerText = 'Logged in as ' + sessionObj.user.username
-
         registerEl.style.display = 'none'
         loginEl.style.display = 'none'
         logoutEl.style.removeProperty('display')
         formEl.style.removeProperty('display')
       } else {
-        loginStatusEl.innerText = 'Not logged in'
-
         registerEl.style.removeProperty('display')
         loginEl.style.removeProperty('display')
         logoutEl.style.display = 'none'

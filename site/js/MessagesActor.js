@@ -33,88 +33,42 @@ export default class MessagesActor extends Actor {
     })
 
     const chatInput = document.getElementById('chat-input')
-    const form = document.getElementById('form')
-    form.addEventListener('submit', async evt => {
-      evt.preventDefault()
 
-      if (!this.actors.session.loggedIn) {
-        alert('You must be logged in to send a message.')
-        return
-      }
+    // Up arrow         -> Edit most recent message
+    // Enter [no shift] -> Send
+    let shifted = false
+    chatInput.addEventListener('keydown', evt => {
+      if (evt.keyCode === 16) {
+        // Shift
+        shifted = true
+      } else if (evt.keyCode === 13 && !shifted) {
+        // Enter [no shift]
+        this.submitFormAction(evt)
+      } else if (evt.keyCode === 38) {
+        // Up arrow
 
-      if (!this.actors.channels.activeChannelID) {
-        alert('You must be in a channel to send a message.')
-        return
-      }
-
-      const text = chatInput.value
-
-      if (this.formSubmitOverloadFn) {
-        this.formSubmitOverloadFn({ evt, text, chatInput })
-        this.formSubmitOverloadFn = null
-
-        return
-      }
-
-      try {
-        chatInput.value = ''
-
-        if (text.trim().length === 0) {
+        // Ignore if the form has been overloaded (e.g. currently editing message)
+        if (this.formSubmitOverloadFn) {
           return
         }
 
-        //const signature = await signText(text)
-        const channelID = this.actors.channels.activeChannelID
-        const sessionID = this.actors.session.sessionID
-
-        const result = await post('send-message', {
-          text,
-          //signature,
-          channelID,
-          sessionID,
-        }, this.actors.session.currentServerURL)
-
-        if (result.success) {
-          this.mostRecentMessageID = result.messageID
-
+        // Only work if the chat input is empty!
+        if (chatInput.value.length > 0) {
           return
         }
-      } catch(error) {
-        console.error(error)
-      }
 
-      const restore = confirm(
-        'Your message was NOT sent! Some sort of internal error. See your browser network/console log.\n' +
-        'However, its content was saved:\n"""\n' + text + '\n"""\n' +
-        'Would you like to restore this into the chat input box?'
-      )
+        this.editMessage(this.mostRecentMessageID)
 
-      if (restore) {
-        chatInput.value = text
+        evt.preventDefault()
+        return false
       }
     })
 
-    // Up arrow -> Edit most recent message
-    chatInput.addEventListener('keydown', async evt => {
-      // Ignore if the form has been overloaded (e.g. currently editing message)
-      if (this.formSubmitOverloadFn) {
-        return
+    chatInput.addEventListener('keyup', evt => {
+      // Unshift
+      if (evt.keyCode === 16) {
+        shifted = false
       }
-
-      // Only work if the chat input is empty!
-      if (chatInput.value.length > 0) {
-        return
-      }
-
-      // Up arrow
-      if (evt.keyCode !== 38) {
-        return
-      }
-
-      this.editMessage(this.mostRecentMessageID)
-
-      evt.preventDefault()
-      return false
     })
   }
 
@@ -139,6 +93,67 @@ export default class MessagesActor extends Actor {
   clear() {
     for (const el of this.messagesContainer.querySelectorAll('.message-group')) {
       el.remove()
+    }
+  }
+
+  async submitFormAction(evt) {
+    if (!this.actors.session.loggedIn) {
+      alert('You must be logged in to send a message.')
+      return
+    }
+
+    if (!this.actors.channels.activeChannelID) {
+      alert('You must be in a channel to send a message.')
+      return
+    }
+
+    const chatInput = document.getElementById('chat-input')
+    const text = chatInput.value
+
+    chatInput.value = ''
+    evt.preventDefault()
+
+    if (this.formSubmitOverloadFn) {
+      this.formSubmitOverloadFn({ evt, text, chatInput })
+      this.formSubmitOverloadFn = null
+
+      return
+    }
+
+    try {
+      if (text.trim().length === 0) {
+        return
+      }
+
+      //const signature = await signText(text)
+      const channelID = this.actors.channels.activeChannelID
+      const sessionID = this.actors.session.sessionID
+
+      const result = await post('send-message', {
+        text,
+        //signature,
+        channelID,
+        sessionID,
+      }, this.actors.session.currentServerURL)
+
+      if (result.success) {
+        this.mostRecentMessageID = result.messageID
+
+        return
+      }
+    } catch(error) {
+      console.error(error)
+    }
+
+    // TODO make better
+    const restore = confirm(
+      'Your message was NOT sent! Some sort of internal error. See your browser network/console log.\n' +
+      'However, its content was saved:\n"""\n' + text + '\n"""\n' +
+      'Would you like to restore this into the chat input box?'
+    )
+
+    if (restore) {
+      chatInput.value = text
     }
   }
 
@@ -295,10 +310,14 @@ export default class MessagesActor extends Actor {
     let styles = {} // (b)old, (i)talics, (u)nderline, (s)trikethrough
     let esc = false
 
+    text = text.trim()
+
     const startToken = nextToken => {
       // end the current token
       if (buffer === '') {
-        ;
+        if (currentToken === 'newline') {
+          el.appendChild(document.createElement('br'))
+        }
       } else if (currentToken === 'text') {
         const textNode = document.createTextNode(buffer)
         const spanEl = document.createElement('span')
@@ -363,7 +382,13 @@ export default class MessagesActor extends Actor {
         const spanEl = document.createElement('span')
 
         spanEl.classList.add('message-latex')
-        katex.render(buffer, spanEl)
+
+        try {
+          katex.render(buffer, spanEl)
+        } catch (err) {
+          spanEl.classList.add('message-latex-error')
+          spanEl.appendChild(document.createTextNode('LaTeX error'))
+        }
 
         el.appendChild(spanEl)
       }
@@ -390,61 +415,77 @@ export default class MessagesActor extends Actor {
       const charBefore = text[c - 1] || ' '
       const charNext = text[c + 1] || ' '
 
-      if (esc) esc = false
-      else {
-        if (char === '\\') { esc = true; continue }
+      if (esc) {
+        esc = false
 
-        else if (char === '@' && currentToken === 'text' && charBefore === ' ') startToken('mention')
-        else if (!(/[a-zA-Z0-9_-]/).test(char) && currentToken === 'mention') startToken('text')
-
-        else if (char === '#' && currentToken === 'text' && charBefore === ' ') startToken('channelref')
-        else if (!(/[a-zA-Z0-9_-]/).test(char) && currentToken === 'channelref') startToken('text')
-
-        else if (char === '*' && currentToken === 'text') {
-          if (charNext === '*') {
-            // bold
-            toggleStyle('b')
-            c++ // skip charNext
-          } else {
-            // italic
-            toggleStyle('i')
-          }
-
+        if ([ '@', '*', '_', '$', '~', '`', '\n', '\\' ].includes(char)) {
+          buffer += char
           continue
+        } else {
+          // Useless escape -- pretend it wasn't one.
+          buffer += '\\'
         }
+      }
 
-        else if (char === '_' && currentToken === 'text') {
-          if (charNext === '_') {
-            // underline
-            toggleStyle('u')
-            c++ // skip charNext
-          } else {
-            // italic
-            toggleStyle('i_')
-          }
+      if (char === '\\') { esc = true; continue }
 
-          continue
-        }
+      else if (char === '@' && currentToken === 'text' && charBefore === ' ') startToken('mention')
+      else if (!(/[a-zA-Z0-9_-]/).test(char) && currentToken === 'mention') startToken('text')
 
-        else if (char === '~' && charNext === '~' && currentToken === 'text') {
-          // strikethrough
-          toggleStyle('s')
+      else if (char === '#' && currentToken === 'text' && charBefore === ' ') startToken('channelref')
+      else if (!(/[a-zA-Z0-9_-]/).test(char) && currentToken === 'channelref') startToken('text')
+
+      else if (char === '*' && currentToken === 'text') {
+        if (charNext === '*') {
+          // bold
+          toggleStyle('b')
           c++ // skip charNext
-
-          continue
+        } else {
+          // italic
+          toggleStyle('i')
         }
 
-        else if (char === '$' && charNext === '$' && currentToken !== 'latex') { startToken('latex'); c++; continue }
-        else if (char === '$' && charNext === '$' && currentToken === 'latex') { startToken('text'); c++; continue }
+        continue
+      }
 
-        else if (char === '`' && currentToken !== 'code') { startToken('code'); continue }
-        else if (char === '`' && currentToken === 'code') { startToken('text'); continue }
+      else if (char === '_' && currentToken === 'text') {
+        if (charNext === '_') {
+          // underline
+          toggleStyle('u')
+          c++ // skip charNext
+        } else {
+          // italic
+          toggleStyle('i_')
+        }
+
+        continue
+      }
+
+      else if (char === '~' && charNext === '~' && currentToken === 'text') {
+        // strikethrough
+        toggleStyle('s')
+        c++ // skip charNext
+
+        continue
+      }
+
+      else if (char === '$' && charNext === '$' && currentToken !== 'latex') { startToken('latex'); c++; continue }
+      else if (char === '$' && charNext === '$' && currentToken === 'latex') { startToken('text'); c++; continue }
+
+      else if (char === '`' && currentToken !== 'code') { startToken('code'); continue }
+      else if (char === '`' && currentToken === 'code') { startToken('text'); continue }
+
+      else if (char === '\n') {
+        const state = currentToken
+        startToken('newline')
+        startToken(state)
       }
 
       buffer += char
     }
 
-    styles = {}
+    // Note: the parser will parse incomplete sequences as if they were complete, for
+    //       example, (**hello) will output (<b>hello</b>).
     startToken(null)
     return el
   }
