@@ -395,30 +395,6 @@ export default class MessagesActor extends Actor {
     contentEl.classList.add('message-content')
     el.appendChild(contentEl)
 
-    /*
-    if (processPGP) {
-      // TODO: Re-write this code to work with user IDs rather than usernames.
-      if (signature) {
-        if (authorUsername in publicKeyDictionary === false) {
-          el.appendChild(document.createTextNode(' (Signed, but this user is not in your public key dictionary)'))
-        } else {
-          const verified = await openpgp.verify({
-            message: openpgp.cleartext.readArmored(signature),
-            publicKeys: openpgp.key.readArmored(publicKeyDictionary[authorUsername]).keys
-          })
-
-          if (verified.signatures[0].valid) {
-            el.appendChild(document.createTextNode(' (Verified)'))
-          } else {
-            el.appendChild(document.createTextNode(' (FORGED? Signature data provided, but sign did not match)'))
-          }
-        }
-      } else {
-        el.appendChild(document.createTextNode(' (No signature data)'))
-      }
-    }
-    */
-
     if (message.revisions.length > 1) {
       let label
       if (message.revisions.length === 2) {
