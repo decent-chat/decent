@@ -48,44 +48,48 @@ module.exports = function attachAPI(app, {io, db}) {
   }
 
   const serialize = {
-    message: m => ({
+    message: async m => ({
       id: m._id,
       authorUsername: m.authorUsername,
       authorID: m.authorID,
       date: m.date,
       channelID: m.channelID,
-      revisions: m.revisions.map(serialize.messageRevision),
+      revisions: await Promise.all(m.revisions.map(serialize.messageRevision)),
       reactions: m.reactions
     }),
 
-    messageRevision: r => ({
+    messageRevision: async r => ({
       text: r.text,
       signature: r.signature,
       date: r.date
     }),
 
-    user: u => ({
+    user: async u => ({
       id: u._id,
       username: u.username,
       permissionLevel: u.permissionLevel,
     }),
 
-    channelShort: c => ({
+    channelShort: async c => ({
       id: c._id,
       name: c.name
     }),
 
     // Extra details for a channel - these aren't returned in the channel list API,
     // but are when a specific channel is fetched.
-    channelDetail: async c => Object.assign(serialize.channelShort(c), {
+    channelDetail: async c => {
+      let pinnedMessages = await Promise.all(c.pinnedMessageIDs.map(id => db.messages.findOne({_id: id})))
+
       // Null messages are filtered out, just in case there's a broken message ID in the
       // pinned message list (e.g. because a message was deleted).
-      pinnedMessages: (
-        (await Promise.all(c.pinnedMessageIDs.map(id => db.messages.findOne({_id: id}))))
-          .filter(Boolean)
-          .map(serialize.message)
-      )
-    })
+      pinnedMessages = pinnedMessages.filter(Boolean)
+
+      pinnedMessages = await Promise.all(pinnedMessages.map(serialize.message))
+
+      Object.assign(await serialize.channelShort(c), {
+        pinnedMessages
+      })
+    }
   }
 
   const middleware = {
@@ -302,7 +306,7 @@ module.exports = function attachAPI(app, {io, db}) {
       })
 
       io.emit('received chat message', {
-        message: serialize.message(message)
+        message: await serialize.message(message)
       })
 
       response.status(201).end(JSON.stringify({
@@ -436,7 +440,7 @@ module.exports = function attachAPI(app, {io, db}) {
         returnUpdatedDocs: true
       })
 
-      io.emit('edited chat message', {message: serialize.message(newMessage)})
+      io.emit('edited chat message', {message: await serialize.message(newMessage)})
 
       response.status(200).end(JSON.stringify({success: true}))
     }
@@ -449,7 +453,7 @@ module.exports = function attachAPI(app, {io, db}) {
     async (request, response) => {
       const { message } = request[middleware.vars]
 
-      response.status(200).end(JSON.stringify(serialize.message(message)))
+      response.status(200).end(JSON.stringify(await serialize.message(message)))
     }
   ])
 
@@ -505,7 +509,7 @@ module.exports = function attachAPI(app, {io, db}) {
 
     response.status(200).end(JSON.stringify({
       success: true,
-      channels: channels.map(serialize.channelShort)
+      channels: await Promise.all(channels.map(serialize.channelShort))
     }))
   })
 
@@ -540,7 +544,7 @@ module.exports = function attachAPI(app, {io, db}) {
 
       response.status(200).end(JSON.stringify({
         success: true,
-        messages: messages.map(serialize.message)
+        messages: await Promise.all(messages.map(serialize.message))
       }))
     }
   ])
@@ -589,7 +593,7 @@ module.exports = function attachAPI(app, {io, db}) {
 
       response.status(201).end(JSON.stringify({
         success: true,
-        user: serialize.user(user)
+        user: await serialize.user(user)
       }))
     }
   ])
@@ -612,7 +616,7 @@ module.exports = function attachAPI(app, {io, db}) {
 
       response.status(200).end(JSON.stringify({
         success: true,
-        user: serialize.user(user)
+        user: await serialize.user(user)
       }))
     }
   ])
@@ -681,7 +685,7 @@ module.exports = function attachAPI(app, {io, db}) {
 
       response.status(200).end(JSON.stringify({
         success: true,
-        user: serialize.user(user)
+        user: await serialize.user(user)
       }))
     }
   ])
