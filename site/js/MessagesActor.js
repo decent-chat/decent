@@ -8,6 +8,7 @@ export function queryByDataset(key, value) {
 export default class MessagesActor extends Actor {
   init() {
     this.messagesContainer = document.getElementById('messages')
+    this.mostRecentMessageID = null // Used for the [Up -> Edit most recent mesage] binding
 
     this.actors.channels.on('update active channel', async channel => {
       this.clear()
@@ -48,6 +49,13 @@ export default class MessagesActor extends Actor {
 
       const text = chatInput.value
 
+      if (this.formSubmitOverloadFn) {
+        this.formSubmitOverloadFn({ evt, text, chatInput })
+        this.formSubmitOverloadFn = null
+
+        return
+      }
+
       try {
         chatInput.value = ''
 
@@ -67,6 +75,8 @@ export default class MessagesActor extends Actor {
         }, this.actors.session.currentServerURL)
 
         if (result.success) {
+          this.mostRecentMessageID = result.messageID
+
           return
         }
       } catch(error) {
@@ -82,6 +92,29 @@ export default class MessagesActor extends Actor {
       if (restore) {
         chatInput.value = text
       }
+    })
+
+    // Up arrow -> Edit most recent message
+    chatInput.addEventListener('keydown', async evt => {
+      // Ignore if the form has been overloaded (e.g. currently editing message)
+      if (this.formSubmitOverloadFn) {
+        return
+      }
+
+      // Only work if the chat input is empty!
+      if (chatInput.value.length > 0) {
+        return
+      }
+
+      // Up arrow
+      if (evt.keyCode !== 38) {
+        return
+      }
+
+      this.editMessage(this.mostRecentMessageID)
+
+      evt.preventDefault()
+      return false
     })
   }
 
@@ -107,6 +140,71 @@ export default class MessagesActor extends Actor {
     for (const el of this.messagesContainer.querySelectorAll('.message-group')) {
       el.remove()
     }
+  }
+
+  async editMessage(messageID) {
+    const messageEl = document.getElementById('message-' + messageID)
+    const chatInput = document.getElementById('chat-input')
+
+    if (!messageEl) {
+      throw 'Message with ID (' + messageID + ') not loaded'
+    }
+
+    messageEl.classList.add('being-edited')
+    this.emit('editing message', messageID)
+
+    chatInput.value = messageEl.dataset.source
+    chatInput.select()
+
+    return new Promise((resolve, reject) => {
+      // Also serves as a cancelEdit() fn.
+      const done = didEdit => {
+        messageEl.classList.remove('being-edited')
+        chatInput.value = ''
+
+        chatInput.removeEventListener('keydown', done)
+        resolve(didEdit)
+
+        if (didEdit) {
+          this.emit('edited message', messageID)
+        } else {
+          this.emit('canceled edit', messageID)
+        }
+      }
+
+      // Esc -> Cancel edit
+      chatInput.addEventListener('keydown', evt => {
+        if (evt.keyCode === 27) {
+          done(false)
+        }
+      })
+
+      this.formSubmitOverloadFn = async ({ evt, text }) => {
+        if (text.trim().length === 0) {
+          // TODO Delete message instead!
+          done(false)
+          alert('Deleting messages isn\'t a thing yet sorry')
+
+          return
+        }
+
+        done(true)
+
+        const result = await post('edit-message', {
+          sessionID: this.actors.session.sessionID,
+          text, messageID,
+          //signature: await signText(text)
+        }, this.actors.session.currentServerURL)
+
+        if (result.success) {
+          resolve(true)
+        } else {
+          reject(result.error)
+        }
+
+        evt.preventDefault()
+      }
+    })
   }
 
   async showMessage(message) {
@@ -151,6 +249,7 @@ export default class MessagesActor extends Actor {
     el.classList.add('message')
     el.setAttribute('id', 'message-' + messageID)
     el.dataset.author = authorID
+    el.dataset.source = message.revisions[message.revisions.length - 1].text
     el.appendChild(await this.buildMessageContent(message))
     messageGroupEl.querySelector('.messages').appendChild(el)
 
@@ -168,20 +267,7 @@ export default class MessagesActor extends Actor {
         return
       }
 
-      let text
-      try {
-        text = await this.actors.modals.prompt('Edit message')
-      } catch (error) {
-        if (error !== 'modal closed') {
-          throw error
-        }
-      }
-
-      const result = await post('edit-message', {
-        sessionID: this.actors.session.sessionID,
-        text, messageID,
-        //signature: await signText(text)
-      }, this.actors.session.currentServerURL)
+      this.editMessage(messageID)
     })
   }
 
@@ -193,6 +279,7 @@ export default class MessagesActor extends Actor {
       if (content) {
         content.remove()
       }
+      el.dataset.source = message.revisions[message.revisions.length - 1].text
       el.appendChild(await this.buildMessageContent(message, index))
     }
   }
