@@ -77,8 +77,10 @@ module.exports = function attachAPI(app, {io, db}) {
 
     // Extra details for a channel - these aren't returned in the channel list API,
     // but are when a specific channel is fetched.
-    channelDetail: c => Object.assign(serialize.channelShort(c), {
-      pinnedMessageIDs: c.pinnedMessageIDs
+    channelDetail: async c => Object.assign(serialize.channelShort(c), {
+      pinnedMessages: await Promise.all(c.pinnedMessageIDs.map(
+        async id => serialize.message(await db.messages.findOne({_id: id}))
+      ))
     })
   }
 
@@ -470,7 +472,7 @@ module.exports = function attachAPI(app, {io, db}) {
       })
 
       io.emit('created new channel', {
-        channel: serialize.channelDetail(channel),
+        channel: await serialize.channelDetail(channel),
       })
 
       response.status(201).end(JSON.stringify({
@@ -489,7 +491,7 @@ module.exports = function attachAPI(app, {io, db}) {
 
       response.status(200).end(JSON.stringify({
         success: true,
-        channel: serialize.channelDetail(channel)
+        channel: await serialize.channelDetail(channel)
       }))
     }
   ])
