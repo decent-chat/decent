@@ -106,9 +106,12 @@ body, html, #app {
       list-style: none;
       cursor: pointer;
 
+      border-left: 2px solid transparent;
       padding: 8px 18px; }
 
       #sidebar #channels-list .channel.active {
+        border-left-color: var(--accent);
+        background-color: var(--mute-dark);
         color: var(--text-white); }
 
       #sidebar #channels-list .channel:hover {
