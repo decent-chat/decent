@@ -26,6 +26,7 @@ body, html, #app {
 
   font-family: sans-serif;
 
+  color: var(--text-white);
   background: var(--mute);
   box-sizing: border-box; }
 
@@ -181,9 +182,16 @@ body, html, #app {
   padding: 5px 40px;
   overflow-y: scroll; }
 
-  .message {
-    padding: 4px;
+  .message-group {
+    padding: 6px 4px 4px 4px;
+    border-bottom: 1px solid var(--mute-light);
     color: #EEE; }
+
+  .message-group-author {
+    font-weight: bold; }
+
+  .message {
+    padding: 4px 0; }
 
   .message.created-by-us:hover {
     background-color: rgba(255, 255, 255, 0.1); }
@@ -209,17 +217,10 @@ body, html, #app {
     color: white;
     background-color: #232323; }
 
-  .message-author {
-    float: left; }
-
   .message time {
     float: right; }
 
-  .message-author {
-    font-weight: bold; }
-
   .message-content {
-    clear: both;
     display: block; }
 
     .message-format-b {

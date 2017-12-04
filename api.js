@@ -407,30 +407,6 @@ module.exports = function attachAPI(app, {io, db}) {
     }
   ])
 
-  app.post('/api/release-public-key', [
-    ...middleware.loadVarFromBody('key'),
-    ...middleware.loadVarFromBody('sessionID'),
-    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-
-    async (request, response) => {
-      const { key, sessionUser: { username } } = request[middleware.vars]
-
-      if (!key) {
-        response.status(400).end(JSON.stringify({
-          error: 'missing key field'
-        }))
-
-        return
-      }
-
-      io.emit('released public key', {key, username})
-
-      response.status(200).end(JSON.stringify({
-        success: true
-      }))
-    }
-  ])
-
   app.post('/api/create-channel', [
     ...middleware.loadVarFromBody('name'),
     ...middleware.loadVarFromBody('sessionID'),
@@ -577,6 +553,26 @@ module.exports = function attachAPI(app, {io, db}) {
         success: true,
         user: serialize.user(user)
       }))
+    }
+  ])
+
+  app.get('/api/username-available/:username', [
+    ...middleware.loadVarFromParams('username'),
+
+    async (request, response) => {
+      const { username } = request[middleware.vars]
+
+      const user = await db.users.findOne({username})
+
+      if (user) {
+        response.status(200).end(JSON.stringify({
+          available: false
+        }))
+      } else {
+        response.status(200).end(JSON.stringify({
+          available: true
+        }))
+      }
     }
   ])
 

@@ -160,7 +160,11 @@ export default class SessionActor extends Actor {
             throw 'Usernames cannot contain special characters other than - and _.'
           }
 
-          // TODO check if username is taken or not here, in advance
+          const { available } = await get('username-available/' + name)
+
+          if (!available) {
+            throw 'Username unavailable.'
+          }
         },
         'Continue', 'Cancel')
     } catch(error) {

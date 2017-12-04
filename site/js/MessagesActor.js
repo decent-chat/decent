@@ -7,6 +7,8 @@ export function queryByDataset(key, value) {
 
 export default class MessagesActor extends Actor {
   init() {
+    this.messagesContainer = document.getElementById('messages')
+
     this.actors.channels.on('update active channel', async channel => {
       this.clear()
 
@@ -15,9 +17,6 @@ export default class MessagesActor extends Actor {
       for (const msg of messages) {
         await this.showMessage(msg)
       }
-
-      const getScrollDist = () =>
-      messagesContainer.scrollTop = messages.scrollHeight - messages.offsetHeight
     })
 
     this.actors.session.on('update', (loggedIn, sessionObj) => {
@@ -105,13 +104,13 @@ export default class MessagesActor extends Actor {
   }
 
   clear() {
-    for (const msg of document.querySelectorAll('.message')) {
-      msg.remove()
+    for (const el of this.messagesContainer.querySelectorAll('.message-group')) {
+      el.remove()
     }
   }
 
   async showMessage(message) {
-    const { revisions, authorID, id: messageID } = message
+    const { revisions, authorID, authorUsername, id: messageID } = message
 
     if (!revisions || !authorID) {
       return
@@ -121,24 +120,46 @@ export default class MessagesActor extends Actor {
       return
     }
 
-    const messagesContainer = document.getElementById('messages')
-
     const getScrollDist = () => messages.scrollHeight - messages.offsetHeight
     let wasScrolledToBottom = (messages.scrollTop === getScrollDist())
+
+    // We need to have a message group element to actually append the message
+    // element to. If the last message group element's author is the author
+    // of this current message, we'll reuse it; otherwise, we'll make a new
+    // message group.
+    let messageGroupEl
+    const lastMessageGroupEl = this.messagesContainer.lastChild
+    if (lastMessageGroupEl && lastMessageGroupEl.dataset.authorID === authorID) {
+      messageGroupEl = lastMessageGroupEl
+    } else {
+      messageGroupEl = document.createElement('div')
+      messageGroupEl.classList.add('message-group')
+      messageGroupEl.dataset.authorID = authorID
+      this.messagesContainer.appendChild(messageGroupEl)
+
+      const authorEl = document.createElement('div')
+      authorEl.classList.add('message-group-author')
+      authorEl.appendChild(document.createTextNode(authorUsername))
+      messageGroupEl.appendChild(authorEl)
+
+      const messageListEl = document.createElement('div')
+      messageListEl.classList.add('messages')
+      messageGroupEl.appendChild(messageListEl)
+    }
 
     const el = document.createElement('div')
     el.classList.add('message')
     el.setAttribute('id', 'message-' + messageID)
     el.dataset.author = authorID
     el.appendChild(await this.buildMessageContent(message))
-    messagesContainer.appendChild(el)
+    messageGroupEl.querySelector('.messages').appendChild(el)
 
     if (this.actors.session.isCurrentUser(authorID)) {
       el.classList.add('created-by-us')
     }
 
     if (wasScrolledToBottom) {
-      messagesContainer.scrollTop = getScrollDist()
+      this.messagesContainer.scrollTop = getScrollDist()
     }
 
     el.addEventListener('click', async () => {
@@ -345,7 +366,7 @@ export default class MessagesActor extends Actor {
   // is set to null, or is greater than the number of revisions, the most recent
   // revision is used.
   async buildMessageContent(message, revisionIndex = null) {
-    const { authorUsername } = message
+    const { authorUsername, date } = message
 
     if (!(revisionIndex in message.revisions)) {
       revisionIndex = message.revisions.length - 1
@@ -362,49 +383,19 @@ export default class MessagesActor extends Actor {
     const el = document.createElement('div')
     el.classList.add('message-revision-content')
 
-    const authorEl = document.createElement('div')
-    authorEl.classList.add('message-author')
-    authorEl.appendChild(document.createTextNode(authorUsername))
-
-    el.appendChild(authorEl)
-
-    const messageDate = new Date(message.date)
+    const dateObj = new Date(date)
     const pad = value => value.toString().padStart(2, '0')
 
     const time = document.createElement('time')
-    time.setAttribute('datetime', messageDate.toISOString())
+    time.setAttribute('datetime', dateObj.toISOString())
     time.appendChild(document.createTextNode(
-      `${pad(messageDate.getHours())}:${pad(messageDate.getMinutes())}`
+      `${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}`
     ))
     el.appendChild(time)
 
     const contentEl = this.formatMessageText(text)
     contentEl.classList.add('message-content')
     el.appendChild(contentEl)
-
-    /*
-    if (processPGP) {
-      // TODO: Re-write this code to work with user IDs rather than usernames.
-      if (signature) {
-        if (authorUsername in publicKeyDictionary === false) {
-          el.appendChild(document.createTextNode(' (Signed, but this user is not in your public key dictionary)'))
-        } else {
-          const verified = await openpgp.verify({
-            message: openpgp.cleartext.readArmored(signature),
-            publicKeys: openpgp.key.readArmored(publicKeyDictionary[authorUsername]).keys
-          })
-
-          if (verified.signatures[0].valid) {
-            el.appendChild(document.createTextNode(' (Verified)'))
-          } else {
-            el.appendChild(document.createTextNode(' (FORGED? Signature data provided, but sign did not match)'))
-          }
-        }
-      } else {
-        el.appendChild(document.createTextNode(' (No signature data)'))
-      }
-    }
-    */
 
     if (message.revisions.length > 1) {
       let label
