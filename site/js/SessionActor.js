@@ -90,7 +90,7 @@ export default class SessionActor extends Actor {
   async loadSessionID(sessionID = '') {
     const sessionData = sessionID === ''
       ? { success: false } // No sessionID = logged out
-      : await get('session/' + sessionID, this.actors.session.currentServerURL)
+      : await get('session/' + sessionID, this.currentServerURL)
 
     if (sessionData.success) {
       this.loggedIn = true
@@ -152,7 +152,7 @@ export default class SessionActor extends Actor {
       }
     }
 
-    const result = await post('login', {username, password}, this.actors.session.currentServerURL)
+    const result = await post('login', {username, password}, this.currentServerURL)
 
     if (result.error) {
       if (result.error === 'user not found') {
@@ -181,7 +181,7 @@ export default class SessionActor extends Actor {
             throw 'Usernames cannot contain special characters other than - and _.'
           }
 
-          const { available } = await get('username-available/' + name)
+          const { available } = await get('username-available/' + name, this.currentServerURL)
 
           if (!available) {
             throw 'Username unavailable.'
@@ -219,7 +219,7 @@ export default class SessionActor extends Actor {
       }
     }
 
-    const result = await post('register', {username, password}, this.actors.session.currentServerURL)
+    const result = await post('register', {username, password}, this.currentServerURL)
 
     if (result.error) {
       if (result.error === 'password must be at least 6 characters long') {

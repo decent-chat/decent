@@ -110,6 +110,7 @@ export default class ChannelsActor extends Actor {
   }
 
   bindToSocket(socket) {
+    this.socket = socket
     socket.on('created new channel', () => this.loadChannels())
   }
 
