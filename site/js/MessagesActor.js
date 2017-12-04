@@ -7,6 +7,8 @@ export function queryByDataset(key, value) {
 
 export default class MessagesActor extends Actor {
   init() {
+    this.messagesContainer = document.getElementById('messages')
+
     this.actors.channels.on('update active channel', async channel => {
       this.clear()
 
@@ -100,8 +102,8 @@ export default class MessagesActor extends Actor {
   }
 
   clear() {
-    for (const msg of document.querySelectorAll('.message')) {
-      msg.remove()
+    for (const el of this.messagesContainer.querySelectorAll('.message-group')) {
+      el.remove()
     }
   }
 
@@ -116,8 +118,6 @@ export default class MessagesActor extends Actor {
       return
     }
 
-    const messagesContainer = document.getElementById('messages')
-
     const getScrollDist = () => messages.scrollHeight - messages.offsetHeight
     let wasScrolledToBottom = (messages.scrollTop === getScrollDist())
 
@@ -126,14 +126,14 @@ export default class MessagesActor extends Actor {
     // of this current message, we'll reuse it; otherwise, we'll make a new
     // message group.
     let messageGroupEl
-    const lastMessageGroupEl = messagesContainer.lastChild
+    const lastMessageGroupEl = this.messagesContainer.lastChild
     if (lastMessageGroupEl && lastMessageGroupEl.dataset.authorID === authorID) {
       messageGroupEl = lastMessageGroupEl
     } else {
       messageGroupEl = document.createElement('div')
       messageGroupEl.classList.add('message-group')
       messageGroupEl.dataset.authorID = authorID
-      messagesContainer.appendChild(messageGroupEl)
+      this.messagesContainer.appendChild(messageGroupEl)
 
       const authorEl = document.createElement('div')
       authorEl.classList.add('message-group-author')
@@ -157,7 +157,7 @@ export default class MessagesActor extends Actor {
     }
 
     if (wasScrolledToBottom) {
-      messagesContainer.scrollTop = getScrollDist()
+      this.messagesContainer.scrollTop = getScrollDist()
     }
 
     el.addEventListener('click', async () => {
