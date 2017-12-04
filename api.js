@@ -70,9 +70,15 @@ module.exports = function attachAPI(app, {io, db}) {
       permissionLevel: u.permissionLevel,
     }),
 
-    channel: c => ({
+    channelShort: c => ({
       id: c._id,
       name: c.name
+    }),
+
+    // Extra details for a channel - these aren't returned in the channel list API,
+    // but are when a specific channel is fetched.
+    channelDetail: c => Object.assign(serialize.channelShort(c), {
+      pinnedMessageIDs: c.pinnedMessageIDs
     })
   }
 
@@ -423,11 +429,12 @@ module.exports = function attachAPI(app, {io, db}) {
       }
 
       const channel = await db.channels.insert({
-        name
+        name,
+        pinnedMessageIDs: []
       })
 
       io.emit('created new channel', {
-        channel: serialize.channel(channel),
+        channel: serialize.channelDetail(channel),
       })
 
       response.status(201).end(JSON.stringify({
@@ -437,12 +444,26 @@ module.exports = function attachAPI(app, {io, db}) {
     }
   ])
 
+  app.get('/api/channel/:channelID', [
+    ...middleware.loadVarFromParams('channelID'),
+    ...middleware.getChannelFromID('channelID', 'channel'),
+
+    async (request, response) => {
+      const { channel } = request[middleware.vars]
+
+      response.status(200).end(JSON.stringify({
+        success: true,
+        channel: serialize.channelDetail(channel)
+      }))
+    }
+  ])
+
   app.get('/api/channel-list', async (request, response) => {
     const channels = await db.channels.find({}, {name: 1})
 
     response.status(200).end(JSON.stringify({
       success: true,
-      channels: channels.map(serialize.channel)
+      channels: channels.map(serialize.channelShort)
     }))
   })
 
