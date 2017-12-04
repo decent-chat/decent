@@ -121,7 +121,7 @@ export default class MessagesActor extends Actor {
     }
 
     const getScrollDist = () => messages.scrollHeight - messages.offsetHeight
-    let wasScrolledToBottom = (messages.scrollTop === getScrollDist())
+    let wasScrolledToBottom = (messages.scrollTop > getScrollDist() - 50)
 
     // We need to have a message group element to actually append the message
     // element to. If the last message group element's author is the author
