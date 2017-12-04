@@ -67,6 +67,10 @@ export default class SessionActor extends Actor {
       this.sessionIDs = JSON.parse(localStorage.sessionIDs)
     }
 
+    if (typeof this.sessionIDs !== Object) {
+      this.sessionIDs = {}
+    }
+
     await this.switchServer(window.location.host)
     return window.location.host
   }
