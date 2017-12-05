@@ -3,6 +3,8 @@ import { get, post } from './api.js'
 
 export default class SessionActor extends Actor {
   init() {
+    this.sessionIDs = {}
+
     // When we connect to a new server, update the UI.
     this.on('switch server', hostname => {
       const currentServerEl = document.getElementById('server-current')
@@ -102,10 +104,14 @@ export default class SessionActor extends Actor {
     // Load session IDs from LocalStorage, if it has that data.
     if ('sessionIDs' in localStorage) {
       this.sessionIDs = JSON.parse(localStorage.sessionIDs)
+    } else {
+      this.sessionIDs = {}
+      localStorage.sessionIDs = '{}'
     }
 
-    if (typeof this.sessionIDs !== 'object') {
+    if (typeof this.sessionIDs !== 'object' || Array.isArray(this.sessionIDs)) {
       this.sessionIDs = {}
+      localStorage.sessionIDs = '{}'
     }
 
     await this.switchServer(window.location.host)
