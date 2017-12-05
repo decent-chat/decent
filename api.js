@@ -16,8 +16,7 @@ const uuidv4 = require('uuid/v4')
 const bcrypt = require('./bcrypt-util')
 
 const {
-  serverSettingsID, serverPropertiesID,
-  setSetting, getSetting,
+  serverSettingsID, serverPropertiesID, setSetting,
 } = require('./settings')
 
 module.exports = async function attachAPI(app, {wss, db}) {
