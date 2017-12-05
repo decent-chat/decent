@@ -12,8 +12,7 @@ const readline = require('readline')
 const fixWS = require('fix-whitespace')
 
 const attachAPI = require('./api')
-const setupDefaultSettings = require('./default-settings')
-const { serverPropertiesID } = setupDefaultSettings
+const { setupDefaultSettings, serverPropertiesID, setSetting } = require('./settings')
 
 const app = express()
 const httpServer = http.createServer(app)
@@ -111,21 +110,13 @@ async function main() {
 
           const [ key, value ] = parts.slice(1)
 
-          const serverProperties = await db.settings.findOne({_id: serverPropertiesID})
+          const result = await setSetting(db.settings, serverPropertiesID, key, value)
 
-          if (key in serverProperties === false) {
-            console.error('Not a valid property key:', key)
-
-            break
+          if (result === 'updated') {
+            console.log('Set.')
+          } else {
+            console.log('Error: ' + result)
           }
-
-          await db.settings.update({_id: serverPropertiesID}, {
-            $set: {
-              [key]: value
-            }
-          })
-
-          console.log('Set.')
 
           break
         }
