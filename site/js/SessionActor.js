@@ -49,7 +49,17 @@ export default class SessionActor extends Actor {
     let serverListOpen = false
     document.querySelector('.server-list-heading').addEventListener('click', async evt => {
       const serverListEl = document.getElementById('server-list')
-      serverListEl.style.setProperty('--server-list-height', ((Object.keys(this.sessionIDs).length + 1) * 54 + 32) + 'px')
+
+      // Set CSS variable used for animation. Numbers here relate to
+      // the heights of different elements in #server-list.
+      //
+      // This must be arbitrarilly set based on the number of servers
+      // we should display in the list.
+      //
+      // Using variables for this is *significantly* better than the
+      // horrible, unreliable max-height: auto hack for animating height.
+      serverListEl.style.setProperty('--server-list-height',
+        ((Object.keys(this.sessionIDs).length + 1) * 54 + 32) + 'px')
 
       evt.preventDefault()
       evt.stopPropagation()
