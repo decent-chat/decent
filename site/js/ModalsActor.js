@@ -144,14 +144,13 @@ export default class ModalsActor extends Actor {
           inputEl.disabled = true
 
           try {
-            await new Promise(resolve => setTimeout(resolve, 2000))
             await modalData.input.validateFn(inputEl.value || inputEl.placeholder)
           } catch (error) {
             // Display error & re-enable input
 
             inputEl.disabled = false
             inputEl.focus()
-            
+
             errorEl.innerText = error
             this.emit('modal validation error', error)
 
