@@ -98,6 +98,12 @@ export default class SessionActor extends Actor {
     })
   }
 
+  bindToSocket(socket) {
+    socket.on('ping for data', () => {
+      socket.send('pong data', {sessionID: this.sessionID})
+    })
+  }
+
   async initialLoad() {
     // Load session IDs from LocalStorage, if it has that data.
     if ('sessionIDs' in localStorage) {

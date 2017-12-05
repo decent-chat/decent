@@ -46,6 +46,17 @@ module.exports = async function attachAPI(app, {wss, db}) {
     return user
   }
 
+  const isUserOnline = async function(userID) {
+    // Simple logic: a user is online iff there is at least one socket whose
+    // session belongs to that user.
+
+    const sessions = await db.sessions.find({userID})
+
+    return Array.from(connectedSocketsMap.values())
+      .some(socketData => sessions
+        .some(session => session._id === socketData.sessionID))
+  }
+
   const loadVarsFromRequestObject = function(object, request, response, next) {
     // TODO: Actually implement the variable system..!
     request[middleware.vars] = {}
@@ -78,6 +89,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
       id: u._id,
       username: u.username,
       permissionLevel: u.permissionLevel,
+      online: await isUserOnline(u._id)
     }),
 
     channelShort: async c => ({
@@ -752,6 +764,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
   wss.on('connection', socket => {
     connectedSocketsMap.set(socket, {
       channelID: null,
+      sessionID: null,
       isAlive: true,
     })
 
@@ -770,25 +783,46 @@ module.exports = async function attachAPI(app, {wss, db}) {
           return
         }
 
-        connectedSocketsMap.set(socket, {
+        Object.assign(connectedSocketsMap.get(socket), {
           channelID: data // channelID
+        })
+      } else if (evt === 'pong data') {
+        // Not the built-in pong; this event is used for gathering
+        // socket-specific data.
+
+        if (!data) {
+          return
+        }
+
+        const { sessionID } = data
+
+        if (!sessionID) {
+          return
+        }
+
+        Object.assign(connectedSocketsMap.get(socket), {
+          sessionID
         })
       }
     })
 
+    // Built-in pong - not the pong event.
     socket.on('pong', () => {
-      const socketData = connectedSocketsMap.get(socket)
-
-      if (!socketData.isAlive) {
-        // Pong!
-        socketData.isAlive = true
-        connectedSocketsMap.set(socket, socketData)
-      }
+      // Pong!
+      Object.assign(connectedSocketsMap.get(socket), {
+        isAlive: true
+      })
     })
 
     socket.on('close', () => {
       connectedSocketsMap.delete(socket)
     })
+
+    // Immediately send out a ping for data event; this will fill in important
+    // data (like the session ID) for the socket as soon as possible. Without this
+    // we wait for the next ping, which is an unwanted delay (e.g. it would make
+    // detecting the user being online be delayed by up to 10 seconds).
+    socket.send(JSON.stringify({evt: 'ping for data'}))
   })
 
   setInterval(() => {
@@ -805,6 +839,11 @@ module.exports = async function attachAPI(app, {wss, db}) {
         connectedSocketsMap.set(socket, socketData)
 
         socket.ping('', false, true)
+
+        // The built-in socket ping method is great for obliterating dead sockets,
+        // but we also want to detect data, so we need to send out a normal 'ping'
+        // event at the same time, which the client can detect and respond to.
+        socket.send(JSON.stringify({evt: 'ping for data'}))
       }
     }
   }, 10 * 1000) // Every 10s.

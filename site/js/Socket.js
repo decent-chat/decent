@@ -16,7 +16,7 @@ export default class Socket {
 
   // Note: socket.io calls this `emit`.
   send(evt, data) {
-    if (evt !== 'ping') {
+    if (evt !== 'pong data') {
       console.info('socket.send[' + evt + ']::', data)
     }
 
@@ -75,7 +75,7 @@ export default class Socket {
       const messageHandler = message => {
         const { evt, data } = JSON.parse(message.data)
 
-        if (evt !== 'pong') {
+        if (evt !== 'ping for data') {
           console.info('socket[' + evt + ']::', data)
         }
 
