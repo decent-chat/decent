@@ -65,10 +65,6 @@ module.exports.setSetting = async function(settingsDB, categoryID, key, value) {
   return 'updated'
 }
 
-module.exports.getSetting = async function(settingsDB, categoryID, key) {
-  return await settingsDB.findOne({_id: categoryID})[key]
-}
-
 Object.assign(module.exports, {
   serverSettingsID,
   serverPropertiesID,
