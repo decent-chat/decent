@@ -15,7 +15,10 @@ const bodyParser = require('body-parser')
 const uuidv4 = require('uuid/v4')
 const bcrypt = require('./bcrypt-util')
 
-const { serverPropertiesID } = require('./default-settings')
+const {
+  serverSettingsID, serverPropertiesID,
+  setSetting, getSetting,
+} = require('./settings')
 
 module.exports = async function attachAPI(app, {wss, db}) {
   // Used to keep track of connected clients and related
@@ -308,22 +311,13 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       const serverSettings = await db.settings.findOne({_id: serverSettingsID})
 
-      for (const key of Object.keys(patch)) {
-        if (key in serverSettings === false) {
-          response.status(400).end(JSON.stringify({
-            error: 'unknown key',
-            unknownKey: key
-          }))
+      const results = {}
 
-          return
-        }
+      for (const [ key, value ] of Object.entries(patch)) {
+        results[key] = await setSetting(db.settings, serverSettingsID, key, value)
       }
 
-      await db.settings.update({_id: serverSettingsID}, {$set: patch})
-
-      response.status(200).end(JSON.stringify({
-        success: true
-      }))
+      response.status(200).end(JSON.stringify({results}))
     }
   ])
 
