@@ -18,6 +18,8 @@ export default class MessagesActor extends Actor {
       for (const msg of messages) {
         await this.showMessage(msg)
       }
+
+      this.emit('loaded messages', channel)
     })
 
     this.actors.session.on('update', (loggedIn, sessionObj) => {
@@ -365,6 +367,7 @@ export default class MessagesActor extends Actor {
           } else if (char === '#') {
             if (part === '?' || part === '+') {
               serverURL = miniBuffer
+              miniBuffer = ''
               part = '#'
             } else {
               // ???
@@ -399,11 +402,19 @@ export default class MessagesActor extends Actor {
 
             if (serverURL.length > 0) {
               // Go to server first!
-              await Promise.all([ this.actors.session.switchServer(serverURL), this.actors.channels.waitFor('update channel list') ])
+              await Promise.all([
+                this.actors.session.switchServer(serverURL),         // Actual switch
+                this.actors.channels.waitFor('update channel list'), // Channels list update
+                this.waitFor('load messages'),                       // Messages loaded in default channel
+              ])
             }
 
-            const channel = this.actors.channels.getChannelByName(channelName)
-            this.actors.channels.viewChannel(channel.id)
+            if (channelName) {
+              const channel = this.actors.channels.getChannelByName(channelName)
+              this.actors.channels.viewChannel(channel.id)
+            }
+
+            // TODO pushState
 
             return false
           })
