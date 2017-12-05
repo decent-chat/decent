@@ -5,8 +5,8 @@ export default class SessionActor extends Actor {
   init() {
     // When we connect to a new server, update the UI.
     this.on('switch server', hostname => {
-      const serverStatusEl = document.getElementById('server-status')
-      serverStatusEl.innerText = hostname
+      const currentServerEl = document.getElementById('server-current')
+      currentServerEl.innerText = hostname
     })
 
     // When there's a session update, update the UI too.
@@ -30,9 +30,12 @@ export default class SessionActor extends Actor {
       }
     })
 
-    document.getElementById('switch-server-btn').addEventListener('click', async () => {
+    document.querySelector('#server-list .server-new').addEventListener('click', async evt => {
+      evt.preventDefault()
+      evt.stopPropagation()
+
       const url = await this.actors.modals.prompt(
-        'Switch server', 'Hostname?', window.location.host,
+        'Add new server', 'Hostname?', window.location.host,
         async url => {
           if (url.trim().startsWith('http')) {
             throw 'Please leave off the HTTP protocol.'
@@ -41,6 +44,35 @@ export default class SessionActor extends Actor {
         'Connect', 'Cancel').then(url => url.trim().toLowerCase())
 
       this.switchServer(url)
+    })
+
+    let serverListOpen = false
+    document.querySelector('.server-list-heading').addEventListener('click', async evt => {
+      const serverListEl = document.getElementById('server-list')
+      serverListEl.style.setProperty('--server-list-height', ((Object.keys(this.sessionIDs).length + 1) * 54 + 32) + 'px')
+
+      evt.preventDefault()
+      evt.stopPropagation()
+
+      const closeFn = evt => {
+        serverListOpen = false
+        this.emit('close server list')
+
+        serverListEl.classList.remove('open')
+        document.removeEventListener('click', closeFn)
+      }
+
+      if (serverListOpen) {
+        closeFn()
+      } else {
+        this.emit('open server list')
+        serverListOpen = true
+
+        serverListEl.classList.add('open')
+        document.addEventListener('click', closeFn)
+      }
+
+      return false
     })
 
     document.getElementById('register').addEventListener('click', () => {
@@ -75,9 +107,44 @@ export default class SessionActor extends Actor {
     else return this.sessionObj.user.id === userID
   }
 
+  async rebuildServerList(servers) {
+    const serverURLs = servers || Object.keys(this.sessionIDs)
+    const serverListEl = document.querySelector('#server-list')
+    const serverNewEl = serverListEl.querySelector('.server-new')
+
+    // Cleanup
+    for (const el of serverListEl.querySelectorAll('.server-actual-option')) {
+      el.remove()
+    }
+
+    // Build
+    for (const url of serverURLs) {
+      if (url === this.currentServerURL) {
+        continue // See #server-current
+      }
+
+      const el = document.createElement('div')
+
+      el.classList.add('server')
+      el.classList.add('server-selectable')
+      el.classList.add('server-actual-option')
+
+      el.appendChild(document.createTextNode(url)) // TODO: get server name and display that instead
+
+      el.addEventListener('click', () => {
+        this.switchServer(url)
+      })
+
+      serverListEl.insertBefore(el, serverNewEl)
+    }
+  }
+
   async switchServer(url) {
     this.currentServerURL = url
     this.sessionID = this.sessionIDs[url] || ''
+
+    await this.rebuildServerList()
+
     this.loadSessionID(this.sessionID)
     this.emit('switch server', url)
   }

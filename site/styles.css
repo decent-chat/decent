@@ -4,6 +4,7 @@
   --mute-dark: #121214;
   --mute: #18191c;
   --mute-light: #27292f;
+  --mute-lighter: #4e555d;
 
   /* Accent (blue) */
   --accent-light: #8cb0de;
@@ -18,7 +19,7 @@
   --color-yellow-alpha1: rgba(230, 212, 17, 0.2);
   --color-yellow-alpha2: rgba(230, 212, 17, 0.4);
   --color-yellow-light: #f6e418;
-  --color-green: #10d23d;
+  --color-green: #4eb967;
   --color-green-light: #13e344;
 
   /* Text */
@@ -87,18 +88,92 @@ body, html, #app {
     font-size: 120%; }
 
   #sidebar .sidebar-section {
-    border-bottom: 1px dotted var(--mute-light);
+    border-bottom: 1px solid var(--mute-light);
     padding: 18px 0; }
 
     #sidebar .sidebar-section-light {
-      border-bottom: none;
       background: var(--mute-light); }
 
-  #sidebar #server-status {
-    font-size: 14px;
+  #sidebar #server-list {
+    height: 54px;
+    transition: height 110ms ease-out;
+    overflow: hidden;
 
-    margin-left: 4px;
-    margin-bottom: 16px; }
+    padding: 0;
+    font-size: 16px; }
+
+    #sidebar #server-list.open {
+      height: var(--server-list-height); } /* set by JS */
+
+    #sidebar #server-list .server {
+      height: 18px;
+      padding: 18px 21px;
+
+      cursor: pointer;
+
+      border-left: 3px solid transparent;
+      background: var(--mute-light); }
+
+      #sidebar #server-list.open .server-selectable:hover {
+        background: var(--mute); }
+
+    #sidebar #server-list .server-list-heading-actual {
+      font-size: 120%;
+      font-weight: bold;
+
+      cursor: default;
+      color: white;
+      background: var(--mute-lighter); }
+
+    #sidebar #server-list .server-list-heading {
+      position: relative;
+      color: white;
+      border-left-color: var(--accent-light);
+
+      transition: margin-top 110ms ease-out;
+      margin-top: -54px; }
+
+      #sidebar #server-list.open .server-list-heading {
+        margin-top: 0; }
+
+      #sidebar .server-list-heading #server-current {
+        max-width: calc(var(--sidebar-width) - 18px); }
+
+      #sidebar .server-list-heading #server-list-dropdown-icon {
+        position: absolute;
+        top: 15px;
+        right: 21px;
+
+        transform: scale(1);
+        transition: top 120ms ease-out, transform 80ms ease-out;
+
+        height: 24px; }
+
+        #sidebar .server-list-heading:hover #server-list-dropdown-icon {
+          top: 18px; }
+
+        #sidebar #server-list.open #server-list-dropdown-icon {
+          top: -54px;
+          transform: scale(0); }
+
+    #sidebar #server-list .server-new {
+      color: var(--color-green); }
+
+      #sidebar #server-list .server-new:hover {
+        border-color: var(--color-green); }
+
+    #sidebar #server-list .server-remove {
+      color: var(--color-red); }
+
+      #sidebar #server-list .server-remove:hover {
+        border-color: var(--color-red); }
+
+    #sidebar #server-list .server-new,
+    #sidebar #server-list .server-remove {
+      font-size: 90%;
+      font-weight: bold;
+      padding: 8px 21px;
+      height: 16px; }
 
   #sidebar #channels-list {
     display: block;

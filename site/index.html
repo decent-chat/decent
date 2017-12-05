@@ -2,23 +2,26 @@
 
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0-alpha2/katex.min.css" integrity="sha384-exe4Ak6B0EoJI0ogGxjJ8rn+RN3ftPnEQrGwX59KTCl5ybGzvHGKjhPKk/KC3abb" crossorigin="anonymous">
-<style>
-pre {
-  max-height: 100px;
-  overflow-y: scroll;
-  padding: 5px;
-  background-color: #CCC;
-  color: #111;
-}
-</style>
 
 <div id="app">
   <aside id="sidebar">
-    <section class="sidebar-section sidebar-section-light">
-      <div class="sidebar-heading">
-        <div id="server-status">Connecting...</div>
-        <button class="btn btn-visible" id="switch-server-btn">Switch server</button>
+    <section class="sidebar-section sidebar-section-light" id="server-list">
+      <div class="server server-list-heading-actual">Server list</div>
+
+      <div class="server server-selectable server-list-heading">
+        <div id="server-current">Connecting...</div>
+        <img id="server-list-dropdown-icon" src="img/caret-down.svg">
       </div>
+
+      <div class="server server-selectable server-new">
+        + Add new
+      </div>
+
+      <!--
+      <div class="server server-selectable server-remove">
+        - Remove
+      </div>
+      -->
     </section>
 
     <section class="sidebar-section" id="channels-sidebar-section">
