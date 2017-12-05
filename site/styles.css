@@ -246,6 +246,10 @@ body, html, #app {
   .input:focus {
     background: var(--mute); }
 
+  .input[disabled] {
+    cursor: not-allowed;
+    background: var(--mute-dark); }
+
 .btn {
   cursor: pointer;
 

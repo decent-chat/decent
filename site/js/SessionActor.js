@@ -256,7 +256,7 @@ export default class SessionActor extends Actor {
           const { available } = await get('username-available/' + name, this.currentServerURL)
 
           if (!available) {
-            throw 'Username unavailable.'
+            throw 'Username not available: ' + name
           }
         },
         'Continue', 'Cancel')
