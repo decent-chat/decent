@@ -43,32 +43,6 @@ export default class SessionActor extends Actor {
       this.switchServer(url)
     })
 
-    document.getElementById('switch-server-btn').addEventListener('click', async () => {
-      const url = await this.actors.modals.prompt(
-        'Switch server', 'Hostname?', window.location.host,
-        async url => {
-          if (url.trim().startsWith('http')) {
-            throw 'Please leave off the HTTP protocol.'
-          }
-        },
-        'Connect', 'Cancel').then(url => url.trim().toLowerCase())
-
-      this.switchServer(url)
-    })
-
-    document.getElementById('switch-server-btn').addEventListener('click', async () => {
-      const url = await this.actors.modals.prompt(
-        'Switch server', 'Hostname?', window.location.host,
-        async url => {
-          if (url.trim().startsWith('http')) {
-            throw 'Please leave off the HTTP protocol.'
-          }
-        },
-        'Connect', 'Cancel').then(url => url.trim().toLowerCase())
-
-      this.switchServer(url)
-    })
-
     document.getElementById('register').addEventListener('click', () => {
       this.promptRegister()
     })
