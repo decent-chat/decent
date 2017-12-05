@@ -14,11 +14,6 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const uuidv4 = require('uuid/v4')
 const bcrypt = require('./bcrypt-util')
-const fs = require('fs')
-const { promisify } = require('util')
-
-const readFile = promisify(fs.readFile)
-const writeFile = promisify(fs.writeFile)
 
 module.exports = async function attachAPI(app, {wss, db}) {
   // Used to keep track of connected clients and related

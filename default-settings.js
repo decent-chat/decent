@@ -11,8 +11,7 @@ module.exports = async function(settingsDB) {
     const originalSettingsDoc = settingsDB.findOne({_id: settingsCategoryID})
 
     if (originalSettingsDoc) {
-      // If the settings doc already exists, we only want to set fields which
-      // don't already exist.
+      // If the settings doc already exists, we want to avoid overwriting any fields.
       query = {$set: {}}
       for (const [ key, value ] of Object.entries(properties)) {
         if (key in originalSettingsDoc === false) {
