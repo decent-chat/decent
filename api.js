@@ -15,6 +15,8 @@ const bodyParser = require('body-parser')
 const uuidv4 = require('uuid/v4')
 const bcrypt = require('./bcrypt-util')
 
+const { serverPropertiesID } = require('./default-settings')
+
 module.exports = async function attachAPI(app, {wss, db}) {
   // Used to keep track of connected clients and related
   // data, such as the channelID it is currently viewing.
@@ -321,6 +323,16 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       response.status(200).end(JSON.stringify({
         success: true
+      }))
+    }
+  ])
+
+  app.get('/api/should-use-secure', [
+    async (request, response) => {
+      const { https } = await db.settings.findOne({_id: serverPropertiesID})
+
+      response.status(200).end(JSON.stringify({
+        useSecure: https === 'on' ? true : false
       }))
     }
   ])
