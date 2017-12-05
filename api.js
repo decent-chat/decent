@@ -671,6 +671,15 @@ module.exports = async function attachAPI(app, {wss, db}) {
     }
   ])
 
+  app.get('/api/user-list', async (request, response) => {
+    const users = await db.users.find({})
+
+    response.status(200).end(JSON.stringify({
+      success: true,
+      users: await Promise.all(users.map(serialize.user))
+    }))
+  })
+
   app.get('/api/username-available/:username', [
     ...middleware.loadVarFromParams('username'),
 
