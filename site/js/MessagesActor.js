@@ -225,13 +225,17 @@ export default class MessagesActor extends Actor {
   }
 
   async showMessage(message) {
-    const { revisions, authorID, authorUsername, id: messageID } = message
+    const { revisions, authorID, authorUsername, id: messageID, channelID } = message
 
     if (!revisions || !authorID) {
       return
     }
 
     if (!revisions.length || !revisions[0].text) {
+      return
+    }
+
+    if (!channelID || this.actors.channels.activeChannelID !== channelID) {
       return
     }
 

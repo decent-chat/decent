@@ -27,7 +27,6 @@ const main = async function() {
   }
 
   let socket = null
-
   actors.session.on('switch server', hostname => {
     const url = 'ws://' + hostname // wss:// soon (tm)? see api.js
     if (socket) {
@@ -41,7 +40,32 @@ const main = async function() {
         actor.bindToSocket(socket)
       }
     }
+
+    if ('serviceWorker' in navigator && actors.session.sessionID) {
+      Promise.all([ navigator.serviceWorker.ready, Notification.requestPermission() ]).then(async ([ reg, permission ]) => {
+        if (permission !== 'granted') {
+          throw 'denied notification permission'
+        }
+
+        // If the server sends a POST request to `pushSub.endpoint`, a
+        // 'push' event will be triggered on the ServiceWorker. This
+        // is awesome!!
+        const pushSub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+        })
+
+        await apiPost('add-push-subscriber', {
+          subscription: pushSub, // serializes
+          sessionID: actors.session.sessionID,
+        }, hostname)
+      })
+    }
   })
+
+  if ('serviceWorker' in navigator) {
+    await navigator.serviceWorker.register('/sw.js')
+      .catch(console.error)
+  }
 
   await actors.session.initialLoad()
 

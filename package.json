@@ -7,6 +7,7 @@
     "nedb": "^1.8.0",
     "nedb-promise": "^2.0.1",
     "uuid": "^3.1.0",
+    "web-push": "^3.2.5",
     "ws": "^3.3.2"
   },
   "scripts": {

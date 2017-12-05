@@ -14,19 +14,36 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const uuidv4 = require('uuid/v4')
 const bcrypt = require('./bcrypt-util')
+const webPush = require('web-push') // XXX: hmmst, we keep getting IncomingMessage errors
 
 const {
   serverSettingsID, serverPropertiesID, setSetting,
 } = require('./settings')
 
 module.exports = async function attachAPI(app, {wss, db}) {
-  // Used to keep track of connected clients and related
-  // data, such as the channelID it is currently viewing.
+  // Used to keep track of connected clients and related data.
   const connectedSocketsMap = new Map()
 
   const sendToAllSockets = function(evt, data) {
     for (const socket of connectedSocketsMap.keys()) {
       socket.send(JSON.stringify({ evt, data }))
+    }
+  }
+
+  const sendToAllSubscribers = async function(data) {
+    // Find all users with a push notification subscription
+    const subscribers = await db.users.find({
+      $not: {
+        subscriptions: {
+          $size: 0
+        }
+      }
+    }, { subscriptions: 1 })
+
+    for (const { subscriptions } of subscribers) {
+      for (const subscription of subscriptions) {
+        webPush.sendNotification(subscription, JSON.stringify(data))
+      }
     }
   }
 
@@ -371,6 +388,12 @@ module.exports = async function attachAPI(app, {wss, db}) {
         message: await serialize.message(message)
       })
 
+      sendToAllSubscribers({
+        title: 'Message from ' + message.authorUsername,
+        body: request.body.text,
+        tag: 'message',
+      })
+
       response.status(201).end(JSON.stringify({
         success: true,
         messageID: message._id
@@ -650,7 +673,8 @@ module.exports = async function attachAPI(app, {wss, db}) {
         username,
         passwordHash,
         permissionLevel: 'member',
-        salt
+        salt,
+        subscriptions: [],
       })
 
       response.status(201).end(JSON.stringify({
@@ -761,9 +785,28 @@ module.exports = async function attachAPI(app, {wss, db}) {
     }
   ])
 
+  app.post('/api/add-push-subscriber', [
+    ...middleware.loadVarFromBody('subscription'),
+    ...middleware.loadVarFromBody('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+
+    async (request, response) => {
+      const { subscription, sessionUser } = request[middleware.vars]
+
+      await db.users.update({_id: sessionUser._id}, {
+        $addToSet:{
+          subscriptions: subscription
+        }
+      }, {})
+
+      response.status(200).end(JSON.stringify({
+        success: true
+      }))
+    }
+  ])
+
   wss.on('connection', socket => {
     connectedSocketsMap.set(socket, {
-      channelID: null,
       sessionID: null,
       isAlive: true,
     })
@@ -778,15 +821,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       const { evt, data } = messageObj
 
-      if (evt === 'view channel') {
-        if (!data) {
-          return
-        }
-
-        Object.assign(connectedSocketsMap.get(socket), {
-          channelID: data // channelID
-        })
-      } else if (evt === 'pong data') {
+      if (evt === 'pong data') {
         // Not the built-in pong; this event is used for gathering
         // socket-specific data.
 
@@ -809,9 +844,9 @@ module.exports = async function attachAPI(app, {wss, db}) {
     // Built-in pong - not the pong event.
     socket.on('pong', () => {
       // Pong!
-      Object.assign(connectedSocketsMap.get(socket), {
+      connectedSocketsMap.set(socket, Object.assign(connectedSocketsMap.get(socket), {
         isAlive: true
-      })
+      }))
     })
 
     socket.on('close', () => {
