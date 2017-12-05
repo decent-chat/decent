@@ -24,6 +24,11 @@ module.exports = async function attachAPI(app, {wss, db}) {
   // data, such as the channelID it is currently viewing.
   const connectedSocketsMap = new Map()
 
+  // The olde General Valid Name regex. In the off-chance it's decided that
+  // emojis should be allowed (or whatever) in channel/user/etc names, this
+  // regex can be updated.
+  const generalValidNameRegex = /^[a-zA-Z0-9_-]+$/g
+
   const sendToAllSockets = function(evt, data) {
     for (const socket of connectedSocketsMap.keys()) {
       socket.send(JSON.stringify({ evt, data }))
@@ -528,6 +533,14 @@ module.exports = async function attachAPI(app, {wss, db}) {
     async (request, response) => {
       const { name } = request[middleware.vars]
 
+      if (!generalValidNameRegex.test(name)) {
+        response.status(400).end(JSON.stringify({
+          error: 'name invalid'
+        }))
+
+        return
+      }
+
       if (await db.channels.findOne({name})) {
         response.status(500).end(JSON.stringify({
           error: 'channel name already taken'
@@ -617,9 +630,8 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
     async (request, response) => {
       const { username, password } = request[middleware.vars]
-      const reValidUsername = /^[a-zA-Z0-9_-]+$/g
 
-      if (!reValidUsername.test(username)) {
+      if (!generalValidNameRegex.test(username)) {
         response.status(400).end(JSON.stringify({
           error: 'username invalid'
         }))
