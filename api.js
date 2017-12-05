@@ -14,8 +14,13 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const uuidv4 = require('uuid/v4')
 const bcrypt = require('./bcrypt-util')
+const fs = require('fs')
+const { promisify } = require('util')
 
-module.exports = function attachAPI(app, {wss, db}) {
+const readFile = promisify(fs.readFile)
+const writeFile = promisify(fs.writeFile)
+
+module.exports = async function attachAPI(app, {wss, db}) {
   // Used to keep track of connected clients and related
   // data, such as the channelID it is currently viewing.
   const connectedSocketsMap = new Map()
@@ -287,6 +292,43 @@ module.exports = function attachAPI(app, {wss, db}) {
 
     next()
   })
+
+  app.get('/api/server-settings', [
+    async (request, response) => {
+      const serverSettings = await db.settings.findOne({_id: serverSettingsID})
+      response.status(200).end(JSON.stringify(serverSettings))
+    }
+  ])
+
+  app.post('/api/server-settings', [
+    ...middleware.loadVarFromBody('sessionID'),
+    ...middleware.loadVarFromBody('patch'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.requireBeAdmin('sessionUser'),
+
+    async (request, response) => {
+      const { patch } = request[middleware.vars]
+
+      const serverSettings = await db.settings.findOne({_id: serverSettingsID})
+
+      for (const key of Object.keys(patch)) {
+        if (key in serverSettings === false) {
+          response.status(400).end(JSON.stringify({
+            error: 'unknown key',
+            unknownKey: key
+          }))
+
+          return
+        }
+      }
+
+      await db.settings.update({_id: serverSettingsID}, {$set: patch})
+
+      response.status(200).end(JSON.stringify({
+        success: true
+      }))
+    }
+  ])
 
   app.post('/api/send-message', [
     ...middleware.loadVarFromBody('text'),
