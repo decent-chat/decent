@@ -301,7 +301,7 @@ export default class MessagesActor extends Actor {
 
   // Formats some message text. Returns a <span>
   // element ready to be displayed.
-  formatMessageText(text) {
+  async formatMessageText(text) {
     const el = document.createElement('span')
     const { user } = this.actors.session.sessionObj
 
@@ -312,7 +312,7 @@ export default class MessagesActor extends Actor {
 
     text = text.trim()
 
-    const startToken = nextToken => {
+    const startToken = async nextToken => {
       // End the current token
 
       const treatAsText = () => el.appendChild(document.createTextNode(buffer))
@@ -334,7 +334,7 @@ export default class MessagesActor extends Actor {
 
         el.appendChild(spanEl)
       } else if (currentToken === 'mention') {
-        if (buffer === '@') { // TODO: must be a logged-in username!
+        if (buffer === '@' || (await get('username-available/' + buffer.substr(1), this.actors.session.currentServerURL)).available) {
           // not a mention; treat as text
           treatAsText()
         } else {
@@ -437,14 +437,14 @@ export default class MessagesActor extends Actor {
       currentToken = nextToken
     }
 
-    function toggleStyle(k) {
+    async function toggleStyle(k) {
       if (styles[k] === true) {
         // end style
-        startToken('text')
+        await startToken('text')
         styles[k] = false
       } else {
         // start style
-        startToken('text') // end current token
+        await startToken('text') // end current token
         styles[k] = true
       }
     }
@@ -468,21 +468,21 @@ export default class MessagesActor extends Actor {
 
       if (char === '\\') { esc = true; continue }
 
-      else if (char === '@' && currentToken === 'text' && charBefore === ' ') startToken('mention')
-      else if (!(/[a-zA-Z0-9_-]/).test(char) && currentToken === 'mention') startToken('text')
+      else if (char === '@' && currentToken === 'text' && charBefore === ' ') await startToken('mention')
+      else if (!(/[a-zA-Z0-9_-]/).test(char) && currentToken === 'mention') await startToken('text')
 
-      else if (char === '#' && currentToken === 'text' && charBefore === ' ') startToken('channelref')
-      else if (char === '+' && currentToken === 'text' && charBefore === ' ') startToken('channelref')
-      else if (!(/[a-zA-Z0-9\.#_-]/).test(char) && currentToken === 'channelref') startToken('text')
+      else if (char === '#' && currentToken === 'text' && charBefore === ' ') await startToken('channelref')
+      else if (char === '+' && currentToken === 'text' && charBefore === ' ') await startToken('channelref')
+      else if (!(/[a-zA-Z0-9\.#_-]/).test(char) && currentToken === 'channelref') await startToken('text')
 
       else if (char === '*' && currentToken === 'text') {
         if (charNext === '*') {
           // bold
-          toggleStyle('b')
+          await toggleStyle('b')
           c++ // skip charNext
         } else {
           // italic
-          toggleStyle('i')
+          await toggleStyle('i')
         }
 
         continue
@@ -491,11 +491,11 @@ export default class MessagesActor extends Actor {
       else if (char === '_' && currentToken === 'text') {
         if (charNext === '_') {
           // underline
-          toggleStyle('u')
+          await toggleStyle('u')
           c++ // skip charNext
         } else {
           // italic
-          toggleStyle('i_')
+          await toggleStyle('i_')
         }
 
         continue
@@ -503,22 +503,22 @@ export default class MessagesActor extends Actor {
 
       else if (char === '~' && charNext === '~' && currentToken === 'text') {
         // strikethrough
-        toggleStyle('s')
+        await toggleStyle('s')
         c++ // skip charNext
 
         continue
       }
 
-      else if (char === '$' && charNext === '$' && currentToken !== 'latex') { startToken('latex'); c++; continue }
-      else if (char === '$' && charNext === '$' && currentToken === 'latex') { startToken('text'); c++; continue }
+      else if (char === '$' && charNext === '$' && currentToken !== 'latex') { await startToken('latex'); c++; continue }
+      else if (char === '$' && charNext === '$' && currentToken === 'latex') { await startToken('text'); c++; continue }
 
-      else if (char === '`' && currentToken !== 'code') { startToken('code'); continue }
-      else if (char === '`' && currentToken === 'code') { startToken('text'); continue }
+      else if (char === '`' && currentToken !== 'code') { await startToken('code'); continue }
+      else if (char === '`' && currentToken === 'code') { await startToken('text'); continue }
 
       else if (char === '\n') {
         const state = currentToken
-        startToken('newline')
-        startToken(state)
+        await startToken('newline')
+        await startToken(state)
       }
 
       buffer += char
@@ -526,7 +526,7 @@ export default class MessagesActor extends Actor {
 
     // Note: the parser will parse incomplete sequences as if they were complete, for
     //       example, (**hello) will output (<b>hello</b>).
-    startToken(null)
+    await startToken(null)
     return el
   }
 
@@ -561,7 +561,7 @@ export default class MessagesActor extends Actor {
     ))
     el.appendChild(time)
 
-    const contentEl = this.formatMessageText(text)
+    const contentEl = await this.formatMessageText(text)
     contentEl.classList.add('message-content')
     el.appendChild(contentEl)
 
