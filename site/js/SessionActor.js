@@ -88,7 +88,7 @@ export default class SessionActor extends Actor {
       this.sessionIDs = JSON.parse(localStorage.sessionIDs)
     }
 
-    if (typeof this.sessionIDs !== Object) {
+    if (typeof this.sessionIDs !== 'object') {
       this.sessionIDs = {}
     }
 
