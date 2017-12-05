@@ -56,6 +56,16 @@ module.exports.setSetting = async function(settingsDB, categoryID, key, value) {
     }
   }
 
+  if (settingSpec.validationFn) {
+    try {
+      // validationFn should reject to declare the value invalid, with
+      // a string error message to display to the user.
+      await settingSpec.validationFn(value)
+    } catch (error) {
+      return `invalid value - ${error}`
+    }
+  }
+
   await settingsDB.update({_id: categoryID}, {
     $set: {
       [key]: value
