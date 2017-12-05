@@ -227,10 +227,6 @@ body, html, #app {
       resize: none;
       flex-grow: 1; }
 
-  #login-status {
-    font-size: 11px;
-    color: var(--text-grey); }
-
 #messages {
   flex-grow: 1;
 
