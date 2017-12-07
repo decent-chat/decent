@@ -292,7 +292,28 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
         next()
       }
-    ]
+    ],
+
+    requireNameValid: (nameVar, errorFieldName = null) => [
+      async function(request, response, next) {
+        const name = request[middleware.vars][nameVar]
+
+        if (generalValidNameRegex.test(name) === false) {
+          response.status(400).end(JSON.stringify({
+            // Totally cheating here - this is so that it responds with
+            // "username invalid" rather than, e.g., "name invalid", when
+            // the username variable is passed. To make this a little less
+            // evil, it's possible for that word to be passed manually
+            // (as the second argument to requireNameValid).
+            error: `${errorFieldName || nameVar} invalid`
+          }))
+
+          return
+        }
+
+        next()
+      }
+    ],
   }
 
   app.use(bodyParser.json())
@@ -529,17 +550,10 @@ module.exports = async function attachAPI(app, {wss, db}) {
     ...middleware.loadVarFromBody('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.requireNameValid('name'),
 
     async (request, response) => {
       const { name } = request[middleware.vars]
-
-      if (!generalValidNameRegex.test(name)) {
-        response.status(400).end(JSON.stringify({
-          error: 'name invalid'
-        }))
-
-        return
-      }
 
       if (await db.channels.findOne({name})) {
         response.status(500).end(JSON.stringify({
@@ -561,6 +575,34 @@ module.exports = async function attachAPI(app, {wss, db}) {
       response.status(201).end(JSON.stringify({
         success: true,
         channel
+      }))
+    }
+  ])
+
+  app.post('/api/rename-channel', [
+    ...middleware.loadVarFromBody('channelID'),
+    ...middleware.loadVarFromBody('name'),
+    ...middleware.loadVarFromBody('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.requireNameValid('name'),
+    ...middleware.getChannelFromID('channelID', '_'), // To verify the channel exists.
+
+    async (request, response) => {
+      const { channelID, name } = request[middleware.vars]
+
+      if (await db.channels.findOne({name})) {
+        response.status(400).end(JSON.stringify({
+          error: 'channel name already taken'
+        }))
+
+        return
+      }
+
+      await db.channels.update({_id: channelID}, {$set: {name}})
+
+      response.status(200).end(JSON.stringify({
+        success: true
       }))
     }
   ])
@@ -627,17 +669,10 @@ module.exports = async function attachAPI(app, {wss, db}) {
   app.post('/api/register', [
     ...middleware.loadVarFromBody('username'),
     ...middleware.loadVarFromBody('password'),
+    ...middleware.requireNameValid('username'),
 
     async (request, response) => {
       const { username, password } = request[middleware.vars]
-
-      if (!generalValidNameRegex.test(username)) {
-        response.status(400).end(JSON.stringify({
-          error: 'username invalid'
-        }))
-
-        return
-      }
 
       if (await db.users.findOne({username})) {
         response.status(500).end(JSON.stringify({
