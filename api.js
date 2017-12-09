@@ -62,6 +62,14 @@ module.exports = async function attachAPI(app, {wss, db}) {
         .some(session => session._id === socketData.sessionID))
   }
 
+  const markChannelAsRead = async function(userID, channelID) {
+    await db.users.update({_id: userID}, {
+      $set: {
+        [`lastReadChannelDates.${channelID}`]: Date.now()
+      }
+    })
+  }
+
   const loadVarsFromRequestObject = function(object, request, response, next) {
     // TODO: Actually implement the variable system..!
     request[middleware.vars] = {}
@@ -382,6 +390,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
     ...middleware.loadVarFromBody('text'),
     ...middleware.loadVarFromBody('channelID'),
     ...middleware.loadVarFromBody('sessionID'),
+    ...middleware.getChannelFromID('channelID', '_'), // To verify that it exists.
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
 
     async (request, response) => {
@@ -400,6 +409,9 @@ module.exports = async function attachAPI(app, {wss, db}) {
       sendToAllSockets('received chat message', {
         message: await serialize.message(message)
       })
+
+      // Sending a message should also mark the channel as read for that user:
+      await markChannelAsRead(sessionUser._id, channelID)
 
       response.status(201).end(JSON.stringify({
         success: true,
@@ -676,11 +688,8 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
     async (request, response) => {
       const { sessionUser, channelID } = request[middleware.vars]
-      await db.users.update({_id: sessionUser._id}, {
-        $set: {
-          [`lastReadChannelDates.${channelID}`]: Date.now()
-        }
-      })
+
+      await markChannelAsRead(sessionUser._id, channelID)
 
       response.status(200).end(JSON.stringify({
         success: true
