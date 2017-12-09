@@ -114,6 +114,22 @@ module.exports = async function attachAPI(app, {wss, db}) {
     }
   }
 
+  const _loadVarFromObject = (request, response, next, obj, key, required) => {
+    if (required && obj[key] === undefined) {
+      response.status(400).end(JSON.stringify({
+        error: `${key} field missing`
+      }))
+
+      return
+    }
+
+    if (obj[key] !== undefined) {
+      request[middleware.vars][key] = obj[key]
+    }
+
+    next()
+  }
+
   const middleware = {
     vars: Symbol('Middleware variables'),
 
@@ -138,19 +154,18 @@ module.exports = async function attachAPI(app, {wss, db}) {
       ...middleware.verifyVarsExists(),
 
       function(request, response, next) {
-        if (required && request.body[key] === undefined) {
-          response.status(400).end(JSON.stringify({
-            error: `${key} field missing`
-          }))
+        _loadVarFromObject(request, response, next, request.body, key, required)
+      }
+    ],
 
-          return
-        }
+    loadVarFromQuery: (key, required = true) => [
+      // Exactly the same as loadVarFromBody, except grabbing things from the url
+      // query (?a=b&c=d...) instead of the request body.
 
-        if (request.body[key] !== undefined) {
-          request[middleware.vars][key] = request.body[key]
-        }
+      ...middleware.verifyVarsExists(),
 
-        next()
+      function(request, response, next) {
+        _loadVarFromObject(request, response, next, request.query, key, required)
       }
     ],
 
@@ -653,6 +668,51 @@ module.exports = async function attachAPI(app, {wss, db}) {
     }
   ])
 
+  app.post('/api/mark-channel-as-read', [
+    ...middleware.loadVarFromBody('channelID'),
+    ...middleware.loadVarFromBody('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.getChannelFromID('channelID', '_'), // To verify that it exists
+
+    async (request, response) => {
+      const { sessionUser, channelID } = request[middleware.vars]
+      await db.users.update({_id: sessionUser._id}, {
+        $set: {
+          [`lastReadChannelDates.${channelID}`]: Date.now()
+        }
+      })
+
+      response.status(200).end(JSON.stringify({
+        success: true
+      }))
+    }
+  ])
+
+  app.get('/api/channel-is-read', [
+    ...middleware.loadVarFromQuery('channelID'),
+    ...middleware.loadVarFromQuery('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+
+    async (request, response) => {
+      const { channelID, sessionUser } = request[middleware.vars]
+
+      let date = 0
+      const { lastReadChannelDates } = sessionUser
+      if (lastReadChannelDates) {
+        if (channelID in lastReadChannelDates) {
+          date = lastReadChannelDates[channelID]
+        }
+      }
+
+      const cursor = db.messages.ccount({date: {$gt: date}}).limit(200)
+      const count = await cursor.exec()
+
+      response.status(200).end(JSON.stringify({
+        success: true, count
+      }))
+    }
+  ])
+
   app.post('/api/register', [
     ...middleware.loadVarFromBody('username'),
     ...middleware.loadVarFromBody('password'),
@@ -682,9 +742,9 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       const user = await db.users.insert({
         username,
-        passwordHash,
+        passwordHash, salt,
         permissionLevel: 'member',
-        salt
+        lastReadChannelDates: {}
       })
 
       response.status(201).end(JSON.stringify({
