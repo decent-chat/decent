@@ -142,7 +142,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       pinnedMessages = await Promise.all(pinnedMessages.map(serialize.message))
 
-      Object.assign(await serialize.channelShort(c, sessionUser), {
+      return Object.assign(await serialize.channelShort(c, sessionUser), {
         pinnedMessages
       })
     }
@@ -649,14 +649,18 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
   app.get('/api/channel/:channelID', [
     ...middleware.loadVarFromParams('channelID'),
+    ...middleware.loadVarFromQuery('sessionID', false), // Optional - provides more data
     ...middleware.getChannelFromID('channelID', 'channel'),
+    ...middleware.runIfVarExists('sessionID',
+      middleware.getSessionUserFromID('sessionID', 'sessionUser')
+    ),
 
     async (request, response) => {
-      const { channel } = request[middleware.vars]
+      const { channel, sessionUser } = request[middleware.vars]
 
       response.status(200).end(JSON.stringify({
         success: true,
-        channel: await serialize.channelDetail(channel)
+        channel: await serialize.channelDetail(channel, sessionUser)
       }))
     }
   ])
