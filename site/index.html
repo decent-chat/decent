@@ -1,54 +1,28 @@
 <!doctype html>
 
-<link rel="stylesheet" href="styles.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0-alpha2/katex.min.css" integrity="sha384-exe4Ak6B0EoJI0ogGxjJ8rn+RN3ftPnEQrGwX59KTCl5ybGzvHGKjhPKk/KC3abb" crossorigin="anonymous">
+<title>Bantisocial</title>
 
-<div id="app">
-  <aside id="sidebar">
-    <section class="sidebar-section sidebar-section-light" id="server-list">
-      <div class="server server-list-heading-actual">Server list</div>
+<link rel='stylesheet' href='styles.css'>
+<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0-alpha2/katex.min.css' integrity='sha384-exe4Ak6B0EoJI0ogGxjJ8rn+RN3ftPnEQrGwX59KTCl5ybGzvHGKjhPKk/KC3abb' crossorigin='anonymous'>
 
-      <div class="server server-selectable server-list-heading">
-        <div id="server-current">Connecting...</div>
-        <img id="server-list-dropdown-icon" src="img/caret-down.svg">
-      </div>
+<body>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0-alpha2/katex.min.js' integrity='sha384-OMvkZ24ANLwviZR2lVq8ujbE/bUO8IR1FdBrKLQBI14Gq5Xp/lksIccGkmKL8m+h' crossorigin='anonymous'></script>
+  <script src='https://cdn.jsdelivr.net/npm/riot@3.7/riot+compiler.min.js'></script>
 
-      <div class="server server-selectable server-new">
-        + Add new
-      </div>
+  <script src='/tags/message-group.tag' type='riot/tag'></script>
 
-      <!--
-      <div class="server server-selectable server-remove">
-        - Remove
-      </div>
-      -->
-    </section>
+  <script>
+    'use strict'
 
-    <section class="sidebar-section" id="channels-sidebar-section">
-      <div class="sidebar-heading">
-        <b>Channels</b>
-        <button class="btn" id="create-channel">New</button>
-      </div>
-    </section>
-  </aside>
+    // Constants
+    const SECOND = 1000
+    const MINUTE = 60 * SECOND
+    const HOUR   = 60 * MINUTE
+    const DAY    = 24 * HOUR
 
-  <main id="central-pane">
-    <div id="messages"></div>
-    <div id="form-container">
-      <form id="form" action="">
-        <textarea class="input input-bordered mousetrap" id="chat-input" autofocus autocomplete="off" placeholder="Type message..."></textarea>
-        <button class="btn">Send</button>
-      </form>
-
-      <button id="register" class="session-action-btn btn btn-primary">Register</button>
-      <button id="login" class="session-action-btn btn btn-visible">Login</button>
-      <button id="logout" class="session-action-btn btn btn-visible">Logout</button>
-    </div>
-  </main>
-</div>
-
-<script src="js/lib/mousetrap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0-alpha2/katex.min.js" integrity="sha384-OMvkZ24ANLwviZR2lVq8ujbE/bUO8IR1FdBrKLQBI14Gq5Xp/lksIccGkmKL8m+h" crossorigin="anonymous"></script>
-
-<script nomodule src="script-nomodule.js"></script> <!-- for browsers not supporting es6 modules -->
-<script type="module" src="js/index.js"></script>   <!-- for those whomst do -->
+    // Compile Riot tags and mount them to the view
+    riot.compile(() => {
+      const tags = riot.mount('*')
+    })
+  </script>
+</body>
