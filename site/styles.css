@@ -391,6 +391,9 @@ body, html, #app {
       font-weight: bold;
       color: var(--text-red); }
 
+    .message-inline-code {
+      white-space: pre; }
+
 a {
   color: #E080FF;
   text-decoration: none; }
