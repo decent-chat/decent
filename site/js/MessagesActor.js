@@ -519,7 +519,7 @@ export default class MessagesActor extends Actor {
       else if (char === '`' && currentToken !== 'code') { await startToken('code'); continue }
       else if (char === '`' && currentToken === 'code') { await startToken('text'); continue }
 
-      else if (char === '\n') {
+      else if (char === '\n' && currentToken !== 'code') {
         const state = currentToken
         await startToken('newline')
         await startToken(state)

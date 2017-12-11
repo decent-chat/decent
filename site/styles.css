@@ -394,6 +394,9 @@ body, html, #app {
     .message-label {
       color: var(--mute-lighter); }
 
+    .message-inline-code {
+      white-space: pre; }
+
 a {
   color: #E080FF;
   text-decoration: none; }
