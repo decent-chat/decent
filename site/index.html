@@ -3,12 +3,18 @@
 <title>Bantisocial</title>
 
 <link rel='stylesheet' href='styles.css'>
-<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0-alpha2/katex.min.css' integrity='sha384-exe4Ak6B0EoJI0ogGxjJ8rn+RN3ftPnEQrGwX59KTCl5ybGzvHGKjhPKk/KC3abb' crossorigin='anonymous'>
+<link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/katex@0.9.0-alpha2/dist/katex.min.css'>
 
 <body>
-  <script src='https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0-alpha2/katex.min.js' integrity='sha384-OMvkZ24ANLwviZR2lVq8ujbE/bUO8IR1FdBrKLQBI14Gq5Xp/lksIccGkmKL8m+h' crossorigin='anonymous'></script>
-  <script src='https://cdn.jsdelivr.net/npm/riot@3.7/riot+compiler.min.js'></script>
+  <server-sidebar></server-sidebar>
 
+  <div class='modal-page-cover' style='display: none'></div>
+
+  <script src='https://cdn.jsdelivr.net/combine/npm/riot@3/riot+compiler.min.js,npm/dutier@1,npm/dutier-logger@0.0.1,npm/riotcontrol@0.0.3,npm/katex@0.9.0-alpha2'></script>
+
+  <script src='/tags/modal.tag' type='riot/tag'></script>
+  <script src='/tags/fancy-input.tag' type='riot/tag'></script>
+  <script src='/tags/server-sidebar.tag' type='riot/tag'></script>
   <script src='/tags/message-group.tag' type='riot/tag'></script>
 
   <script>
@@ -20,9 +26,58 @@
     const HOUR   = 60 * MINUTE
     const DAY    = 24 * HOUR
 
+    // Utilities
+    function post(serverURL, path, dataObj) {
+      return fetch('//' + serverURL + '/api/' + path, {
+        method: 'post',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dataObj)
+      }).then(res => res.json())
+    }
+
+    function get(serverURL, path) {
+      return fetch('//' + serverURL + '/api/' + path).then(res => res.json())
+    }
+
+    // State
+    class Store {
+      constructor() {
+        riot.observable(this)
+      }
+    }
+
+    RiotControl.addStore(new Store())
+    RiotControl.on('*', console.log)
+
+    RiotControl.on('add_server', url => {
+      const serverSessionIDMap = JSON.parse(localStorage.serverSessionIDMap || '{}')
+
+      if (!serverSessionIDMap[url]) {
+        serverSessionIDMap[url] = null
+      }
+
+      localStorage.serverSessionIDMap = JSON.stringify(serverSessionIDMap)
+    })
+
+    RiotControl.on('switch_server', url => {
+      const serverSessionIDMap = JSON.parse(localStorage.serverSessionIDMap || '{}')
+      const sessionID = serverSessionIDMap[url] || null
+
+      // Defer this a little to allow others to react to the
+      // switch_server event.
+      setTimeout(() => {
+        RiotControl.trigger('session_id_update', sessionID)
+      }, 10)
+    })
+
     // Compile Riot tags and mount them to the view
     riot.compile(() => {
       const tags = riot.mount('*')
+
+      RiotControl.trigger('add_server', 'localhost:3000')
+      RiotControl.trigger('switch_server', 'localhost:3000')
     })
   </script>
 </body>
