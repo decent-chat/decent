@@ -78,16 +78,11 @@ module.exports = async function attachAPI(app, {wss, db}) {
       id: m._id,
       authorUsername: m.authorUsername,
       authorID: m.authorID,
+      text: m.text,
       date: m.date,
+      editDate: m.editDate,
       channelID: m.channelID,
-      revisions: await Promise.all(m.revisions.map(serialize.messageRevision)),
       reactions: m.reactions
-    }),
-
-    messageRevision: async r => ({
-      text: r.text,
-      signature: r.signature,
-      date: r.date
     }),
 
     user: async u => ({
@@ -371,7 +366,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
   app.post('/api/send-message', [
     ...middleware.loadVarFromBody('text'),
     ...middleware.loadVarFromBody('channelID'),
-    ...middleware.loadVarFromBody('signature', false),
     ...middleware.loadVarFromBody('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
 
@@ -381,15 +375,10 @@ module.exports = async function attachAPI(app, {wss, db}) {
       const message = await db.messages.insert({
         authorID: sessionUser._id,
         authorUsername: sessionUser.username,
+        text: request.body.text,
         date: Date.now(),
+        editDate: null,
         channelID: channelID,
-        revisions: [
-          {
-            text: request.body.text,
-            signature: request.body.signature,
-            date: Date.now()
-          }
-        ],
         reactions: {}
       })
 
@@ -517,11 +506,9 @@ module.exports = async function attachAPI(app, {wss, db}) {
       }
 
       const [ numAffected, newMessage ] = await db.messages.update({_id: oldMessage._id}, {
-        $push: {
-          revisions: {
-            text, signature,
-            date: Date.now()
-          }
+        $set: {
+          text,
+          editDate: Date.now()
         }
       }, {
         multi: false,

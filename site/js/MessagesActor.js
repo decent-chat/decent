@@ -88,7 +88,8 @@ export default class MessagesActor extends Actor {
         return
       }
 
-      await this.showMessageRevision(msg.message)
+      // Display newly-edited message.
+      await this.updateMessageContent(msg.message)
     })
   }
 
@@ -225,15 +226,7 @@ export default class MessagesActor extends Actor {
   }
 
   async showMessage(message) {
-    const { revisions, authorID, authorUsername, id: messageID } = message
-
-    if (!revisions || !authorID) {
-      return
-    }
-
-    if (!revisions.length || !revisions[0].text) {
-      return
-    }
+    const { authorID, authorUsername, text, id: messageID, channelID } = message
 
     const getScrollDist = () => messages.scrollHeight - messages.offsetHeight
     let wasScrolledToBottom = (messages.scrollTop > getScrollDist() - 50)
@@ -266,7 +259,7 @@ export default class MessagesActor extends Actor {
     el.classList.add('message')
     el.setAttribute('id', 'message-' + messageID)
     el.dataset.author = authorID
-    el.dataset.source = message.revisions[message.revisions.length - 1].text
+    el.dataset.source = text
     el.appendChild(await this.buildMessageContent(message))
     messageGroupEl.querySelector('.messages').appendChild(el)
 
@@ -288,16 +281,16 @@ export default class MessagesActor extends Actor {
     })
   }
 
-  async showMessageRevision(message, index = undefined) {
+  async updateMessageContent(message) {
     const el = document.getElementById('message-' + message.id)
 
     if (el) {
-      const content = el.querySelector('.message-revision-content')
+      const content = el.querySelector('.message-content')
       if (content) {
         content.remove()
       }
-      el.dataset.source = message.revisions[message.revisions.length - 1].text
-      el.appendChild(await this.buildMessageContent(message, index))
+
+      el.appendChild(await this.buildMessageContent(message))
     }
   }
 
@@ -541,26 +534,12 @@ export default class MessagesActor extends Actor {
     return el
   }
 
-  // Builds the message content elements of a message. If the passed revision index
-  // is set to null, or is greater than the number of revisions, the most recent
-  // revision is used.
-  async buildMessageContent(message, revisionIndex = null) {
-    const { authorUsername, date } = message
-
-    if (!(revisionIndex in message.revisions)) {
-      revisionIndex = message.revisions.length - 1
-    }
-
-    if (revisionIndex < 0) {
-      revisionIndex = 0
-    }
-
-    const revision = message.revisions[revisionIndex]
-
-    const { text, signature } = revision
+  // Builds the message content elements of a message.
+  async buildMessageContent(message) {
+    const { authorUsername, text, date, editDate } = message
 
     const el = document.createElement('div')
-    el.classList.add('message-revision-content')
+    el.classList.add('message-content')
 
     const dateObj = new Date(date)
     const pad = value => value.toString().padStart(2, '0')
@@ -576,37 +555,14 @@ export default class MessagesActor extends Actor {
     contentEl.classList.add('message-content')
     el.appendChild(contentEl)
 
-    if (message.revisions.length > 1) {
-      let label
-      if (message.revisions.length === 2) {
-        label = '(Edited)'
-      } else {
-        label = `(Edited ${message.revisions.length - 1} times)`
-      }
+    if (editDate) {
+      const span = document.createElement('span')
+      span.classList.add('message-label')
+      span.appendChild(document.createTextNode('(Edited)'))
+      span.title = 'Edited at ' + new Date(editDate)
 
-      const a = document.createElement('a')
-      a.href = '#'
-      a.appendChild(document.createTextNode(label))
-
-      el.appendChild(document.createTextNode(' '))
-      el.appendChild(a)
-
-      a.addEventListener('click', async evt => {
-        evt.preventDefault()
-        evt.stopPropagation()
-
-        const index = prompt('View the version at what index? (Leave blank for the latest.)')
-
-        if (index === null) {
-          return
-        }
-
-        if (index.trim().length) {
-          await showMessageRevision(message, index - 1)
-        } else {
-          await showMessageRevision(message)
-        }
-      })
+      contentEl.appendChild(document.createTextNode(' '))
+      contentEl.appendChild(span)
     }
 
     return el
