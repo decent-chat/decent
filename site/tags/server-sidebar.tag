@@ -79,8 +79,8 @@
     <div class='user-info-text' if={ loggedIn }>Logged in as <span class='user-info-name'> { username } </span></div>
     <div class='user-info-text' if={ !loggedIn }>Logged out</div>
 
-    <button class='user-info-button' if={ loggedIn }>Log out</button>
-    <button class='user-info-button' if={ !loggedIn }>Register</button>
+    <button class='user-info-button' if={ loggedIn } onclick={ logout }>Log out</button>
+    <button class='user-info-button' if={ !loggedIn } onclick={ showRegisterModal }>Register</button>
     <button class='user-info-button user-info-button-minor' if={ !loggedIn } onclick={ showLoginModal }>Log in</button>
   </div>
 
@@ -160,6 +160,37 @@
         // Success!!
         RiotControl.trigger('session_id_update', result.sessionID)
       }
+    }
+
+    showRegisterModal(evt) {
+      evt.preventDefault()
+      this.refs.registerModal.open()
+    }
+
+    async submitRegisterModal({ username, password }) {
+      this.loginInProgress = true
+
+      const result = await post(this.currentServerURL, 'register', { username, password })
+
+      if (result.error) {
+        if (result.error === 'username already taken') {
+          throw `Username '${username}' already taken.`
+        } else if (result.error === 'username invalid') {
+          throw `Username '${username}' is invalid`
+        } else if (result.error === 'password must be at least 6 characters long') {
+          throw 'Password must be at least 6 characters long'
+        } else {
+          // Unknown error :/
+          console.error('Unknown error while registering', result.error)
+          throw result.error
+        }
+      } else if (result.success) {
+        // Success!!
+      }
+    }
+
+    logout() {
+      RiotControl.trigger('session_id_update', null)
     }
 
     showAddServerModal(evt) {
