@@ -51,17 +51,11 @@
     RiotControl.addStore(new Store())
     RiotControl.on('*', console.log)
 
-    RiotControl.on('add_server', url => {
-      const serverSessionIDMap = JSON.parse(localStorage.serverSessionIDMap || '{}')
-
-      if (!serverSessionIDMap[url]) {
-        serverSessionIDMap[url] = null
-      }
-
-      localStorage.serverSessionIDMap = JSON.stringify(serverSessionIDMap)
-    })
-
+    let currentServerURL = null
     RiotControl.on('switch_server', url => {
+      currentServerURL = url
+      localStorage.currentServerURL = url
+
       const serverSessionIDMap = JSON.parse(localStorage.serverSessionIDMap || '{}')
       const sessionID = serverSessionIDMap[url] || null
 
@@ -72,12 +66,26 @@
       }, 10)
     })
 
+    RiotControl.on('session_id_update', sessionID => {
+      const serverSessionIDMap = JSON.parse(localStorage.serverSessionIDMap || '{}')
+
+      // Update localStorage sessionID persistence
+      serverSessionIDMap[currentServerURL] = sessionID
+
+      localStorage.serverSessionIDMap = JSON.stringify(serverSessionIDMap)
+    })
+
     // Compile Riot tags and mount them to the view
     riot.compile(() => {
       const tags = riot.mount('*')
 
-      RiotControl.trigger('add_server', 'localhost:3000')
-      RiotControl.trigger('switch_server', 'localhost:3000')
+      const servers = JSON.parse(localStorage.serverSessionIDMap || `{ ${location.host}: null }`)
+
+      for (const serverURL of Object.keys(servers)) {
+        RiotControl.trigger('add_server', serverURL)
+      }
+
+      RiotControl.trigger('switch_server', localStorage.currentServerURL || location.host)
     })
   </script>
 </body>
