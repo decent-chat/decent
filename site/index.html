@@ -79,13 +79,15 @@
     riot.compile(() => {
       const tags = riot.mount('*')
 
-      const servers = JSON.parse(localStorage.serverSessionIDMap || `{ ${location.host}: null }`)
+      const servers = JSON.parse(localStorage.serverSessionIDMap || '{}')
 
       for (const serverURL of Object.keys(servers)) {
         RiotControl.trigger('add_server', serverURL)
       }
 
-      RiotControl.trigger('switch_server', localStorage.currentServerURL || location.host)
+      if (localStorage.currentServerURL) {
+        RiotControl.trigger('switch_server', localStorage.currentServerURL)
+      }
     })
   </script>
 </body>

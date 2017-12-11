@@ -73,7 +73,7 @@
     <div class='sidebar-subtitle-button' onclick={ showAddServerModal }>+ Add</div>
   </div>
 
-  <server-dropdown></server-dropdown>
+  <server-dropdown show={ currentServerURL }></server-dropdown>
 
   <div class='user-info' if={ loggedIn !== '?' }>
     <div class='user-info-text' if={ loggedIn }>Logged in as <span class='user-info-name'> { username } </span></div>
