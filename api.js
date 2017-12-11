@@ -370,7 +370,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
 
     async (request, response) => {
-      const { text, signature, channelID, sessionUser } = request[middleware.vars]
+      const { text, channelID, sessionUser } = request[middleware.vars]
 
       const message = await db.messages.insert({
         authorID: sessionUser._id,
@@ -489,13 +489,12 @@ module.exports = async function attachAPI(app, {wss, db}) {
     ...middleware.loadVarFromBody('sessionID'),
     ...middleware.loadVarFromBody('messageID'),
     ...middleware.loadVarFromBody('text'),
-    ...middleware.loadVarFromBody('signature', false),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.getMessageFromID('messageID', 'oldMessage'),
     ...middleware.requireBeMessageAuthor('oldMessage', 'sessionUser'),
 
     async (request, response) => {
-      const { text, signature, oldMessage, sessionUser: { _id: userID } } = request[middleware.vars]
+      const { text, oldMessage, sessionUser: { _id: userID } } = request[middleware.vars]
 
       if (userID !== oldMessage.authorID) {
         response.status(403).end(JSON.stringify({
