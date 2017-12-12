@@ -20,8 +20,8 @@ const {
 } = require('./settings')
 
 module.exports = async function attachAPI(app, {wss, db}) {
-  // Used to keep track of connected clients and related
-  // data, such as the channelID it is currently viewing.
+  // Used to keep track of connected clients and related data, such as
+  // session IDs.
   const connectedSocketsMap = new Map()
 
   // The olde General Valid Name regex. In the off-chance it's decided that
@@ -118,7 +118,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
       online: await isUserOnline(u._id)
     }),
 
-    channelShort: async (c, sessionUser = null) => {
+    channelBrief: async (c, sessionUser = null) => {
       const obj = {
         id: c._id,
         name: c.name
@@ -142,7 +142,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       pinnedMessages = await Promise.all(pinnedMessages.map(serialize.message))
 
-      return Object.assign(await serialize.channelShort(c, sessionUser), {
+      return Object.assign(await serialize.channelBrief(c, sessionUser), {
         pinnedMessages
       })
     }
@@ -420,7 +420,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
 
     async (request, response) => {
-      const { text, signature, channelID, sessionUser } = request[middleware.vars]
+      const { text, channelID, sessionUser } = request[middleware.vars]
 
       const message = await db.messages.insert({
         authorID: sessionUser._id,
@@ -542,13 +542,12 @@ module.exports = async function attachAPI(app, {wss, db}) {
     ...middleware.loadVarFromBody('sessionID'),
     ...middleware.loadVarFromBody('messageID'),
     ...middleware.loadVarFromBody('text'),
-    ...middleware.loadVarFromBody('signature', false),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.getMessageFromID('messageID', 'oldMessage'),
     ...middleware.requireBeMessageAuthor('oldMessage', 'sessionUser'),
 
     async (request, response) => {
-      const { text, signature, oldMessage, sessionUser: { _id: userID } } = request[middleware.vars]
+      const { text, oldMessage, sessionUser: { _id: userID } } = request[middleware.vars]
 
       if (userID !== oldMessage.authorID) {
         response.status(403).end(JSON.stringify({
@@ -679,7 +678,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
       response.status(200).end(JSON.stringify({
         success: true,
         channels: await Promise.all(channels.map(channel => {
-          return serialize.channelShort(channel, sessionUser)
+          return serialize.channelBrief(channel, sessionUser)
         }))
       }))
     }
@@ -898,7 +897,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
   wss.on('connection', socket => {
     connectedSocketsMap.set(socket, {
-      channelID: null,
       sessionID: null,
       isAlive: true,
     })
@@ -913,15 +911,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       const { evt, data } = messageObj
 
-      if (evt === 'view channel') {
-        if (!data) {
-          return
-        }
-
-        Object.assign(connectedSocketsMap.get(socket), {
-          channelID: data // channelID
-        })
-      } else if (evt === 'pong data') {
+      if (evt === 'pong data') {
         // Not the built-in pong; this event is used for gathering
         // socket-specific data.
 
