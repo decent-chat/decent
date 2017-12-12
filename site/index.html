@@ -103,15 +103,20 @@
       evt.preventDefault()
 
       const hash = parseHash()
-      
+
       if (hash.serverURL) {
         if (hash.serverURL !== currentServerURL) {
           RiotControl.trigger('switch_server', hash.serverURL)
         }
 
-        if (hash.channelName && hash.channelName !== currentChannelName) {
-          currentChannelName = hash.channelName
-          RiotControl.trigger('switch_channel', hash.channelName)
+        if (hash.channelName) {
+          if (hash.channelName !== currentChannelName) {
+            currentChannelName = hash.channelName
+            RiotControl.trigger('switch_channel', hash.channelName)
+          }
+        } else if (currentChannelName !== null) {
+          currentChannelName = null
+          RiotControl.trigger('switch_channel', null)
         }
       } else {
         RiotControl.trigger('switch_server', null)
@@ -156,9 +161,11 @@
       }
 
       if (hash.serverURL) {
+        currentServerURL = hash.serverURL
         RiotControl.trigger('switch_server', hash.serverURL)
         
         if (hash.channelName) {
+          currentChannelName = hash.channelName
           RiotControl.trigger('switch_channel', hash.channelName)
         }
       } else if (localStorage.currentServerURL && localStorage.currentServerURL != 'null') {

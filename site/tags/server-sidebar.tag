@@ -538,6 +538,10 @@
       if (success) {
         this.channels = channels
         this.update()
+
+        if (this.currentChannelName === null) {
+          this.switchToDefaultChannel()
+        }
       }
     }
 
@@ -545,9 +549,19 @@
       window.location.hash = `#/+${currentServerURL}#${item.name}`
     }
 
+    switchToDefaultChannel() {
+      // Default to first channel
+      // TODO: add and use 'default channel' server setting
+      this.selectChannel({ item: this.channels[0] })
+    }
+
     RiotControl.on('switch_channel', channelName => {
       this.currentChannelName = channelName
       this.update()
+
+      if (channelName === null && this.channels.length > 0) {
+        this.switchToDefaultChannel()
+      }
     })
   </script>
 
