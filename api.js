@@ -561,7 +561,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       response.status(201).end(JSON.stringify({
         success: true,
-        channel
+        channelID: channel._id
       }))
     }
   ])
