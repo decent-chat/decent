@@ -540,7 +540,13 @@
         this.update()
 
         if (this.currentChannelName === null) {
-          this.switchToDefaultChannel()
+          const { channelName } = parseHash()
+
+          if (channelName) {
+            RiotControl.trigger('switch_channel', channelName)
+          } else {
+            this.switchToDefaultChannel()
+          }
         }
       }
     }
@@ -552,15 +558,22 @@
     switchToDefaultChannel() {
       // Default to first channel
       // TODO: add and use 'default channel' server setting
-      this.selectChannel({ item: this.channels[0] })
+      if (this.channels.length > 0) {
+        this.selectChannel({ item: this.channels[0] })
+      }
     }
 
     RiotControl.on('switch_channel', channelName => {
-      this.currentChannelName = channelName
-      this.update()
-
       if (channelName === null && this.channels.length > 0) {
         this.switchToDefaultChannel()
+      } else if (!this.channels.find(c => c.name === channelName)) {
+        if (this.channels.length > 0) {
+          console.warn('no channel named', channelName)
+          this.switchToDefaultChannel()
+        }
+      } else {
+        this.currentChannelName = channelName
+        this.update()
       }
     })
   </script>
