@@ -20,8 +20,8 @@ const {
 } = require('./settings')
 
 module.exports = async function attachAPI(app, {wss, db}) {
-  // Used to keep track of connected clients and related
-  // data, such as the channelID it is currently viewing.
+  // Used to keep track of connected clients and related data, such as
+  // session IDs.
   const connectedSocketsMap = new Map()
 
   // The olde General Valid Name regex. In the off-chance it's decided that
@@ -797,7 +797,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
   wss.on('connection', socket => {
     connectedSocketsMap.set(socket, {
-      channelID: null,
       sessionID: null,
       isAlive: true,
     })
@@ -812,15 +811,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       const { evt, data } = messageObj
 
-      if (evt === 'view channel') {
-        if (!data) {
-          return
-        }
-
-        Object.assign(connectedSocketsMap.get(socket), {
-          channelID: data // channelID
-        })
-      } else if (evt === 'pong data') {
+      if (evt === 'pong data') {
         // Not the built-in pong; this event is used for gathering
         // socket-specific data.
 
