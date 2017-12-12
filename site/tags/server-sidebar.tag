@@ -228,7 +228,8 @@
         RiotControl.trigger('add_server', url)
       }
 
-      RiotControl.trigger('switch_server', url)
+      // Switch to the server
+      window.location.hash = '#/+' + url
     }
   </script>
 
@@ -328,7 +329,7 @@
     })
 
     selectOption({ item }) {
-      RiotControl.trigger('switch_server', item.url)
+      window.location.hash = '#/+' + item.url
     }
   </script>
 
