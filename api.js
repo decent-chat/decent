@@ -92,7 +92,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
       online: await isUserOnline(u._id)
     }),
 
-    channelShort: async c => ({
+    channelBrief: async c => ({
       id: c._id,
       name: c.name
     }),
@@ -108,7 +108,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       pinnedMessages = await Promise.all(pinnedMessages.map(serialize.message))
 
-      Object.assign(await serialize.channelShort(c), {
+      Object.assign(await serialize.channelBrief(c), {
         pinnedMessages
       })
     }
@@ -613,7 +613,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
     response.status(200).end(JSON.stringify({
       success: true,
-      channels: await Promise.all(channels.map(serialize.channelShort))
+      channels: await Promise.all(channels.map(serialize.channelBrief))
     }))
   })
 
