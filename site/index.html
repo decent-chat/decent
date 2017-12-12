@@ -37,8 +37,16 @@
       }).then(res => res.json())
     }
 
-    function get(serverURL, path) {
-      return fetch('//' + serverURL + '/api/' + path).then(res => res.json())
+    function get(serverURL, path, query = {}) {
+      const esc = encodeURIComponent
+      const queryString = Object.keys(query).length > 0
+        ? '?' + Object.keys(query)
+          .map(k => esc(k) + '=' + esc(query[k]))
+          .join('&')
+        : ''
+
+      return fetch('//' + serverURL + '/api/' + path + queryString)
+        .then(res => res.json())
     }
 
     function parseHash() {
@@ -79,24 +87,6 @@
       return { serverURL, channelName }
     }
 
-    window.addEventListener('hashchange', evt => {
-      evt.preventDefault()
-
-      const hash = parseHash()
-      console.info('hashchange', hash)
-
-      if (hash.serverURL) {
-        RiotControl.trigger('switch_server', hash.serverURL)
-
-        if (hash.channelName) {
-          // Not yet implemented; TODO
-          RiotControl.trigger('switch_channel', hash.channelName)
-        }
-      } else {
-        RiotControl.trigger('switch_server', null)
-      }
-    })
-
     // State
     class Store {
       constructor() {
@@ -107,7 +97,27 @@
     RiotControl.addStore(new Store())
     RiotControl.on('*', console.log)
 
-    let currentServerURL = null
+    let currentServerURL = null, currentChannelName = null
+
+    window.addEventListener('hashchange', evt => {
+      evt.preventDefault()
+
+      const hash = parseHash()
+      
+      if (hash.serverURL) {
+        if (hash.serverURL !== currentServerURL) {
+          RiotControl.trigger('switch_server', hash.serverURL)
+        }
+
+        if (hash.channelName && hash.channelName !== currentChannelName) {
+          currentChannelName = hash.channelName
+          RiotControl.trigger('switch_channel', hash.channelName)
+        }
+      } else {
+        RiotControl.trigger('switch_server', null)
+      }
+    })
+
     RiotControl.on('switch_server', url => {
       currentServerURL = url
       localStorage.currentServerURL = url
@@ -147,6 +157,10 @@
 
       if (hash.serverURL) {
         RiotControl.trigger('switch_server', hash.serverURL)
+        
+        if (hash.channelName) {
+          RiotControl.trigger('switch_channel', hash.channelName)
+        }
       } else if (localStorage.currentServerURL && localStorage.currentServerURL != 'null') {
         window.location.hash = '#/+' + localStorage.currentServerURL
       } else {

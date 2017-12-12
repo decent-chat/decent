@@ -1,7 +1,7 @@
 <server-sidebar>
 
   <server-section></server-section>
-  <!-- TODO: rest of sidebar -->
+  <channels-section></channels-section>
 
   <style>
     :scope {
@@ -61,6 +61,66 @@
     .subtitle-add-button:hover,
     .subtitle-add-button:focus {
       background: var(--green-a3);
+    }
+
+    .location-list {
+      display: flex;
+      flex-direction: column;
+      margin: 8px 16px;
+    }
+
+    .list-item {
+      display: flex;
+      position: relative;
+      
+      align-items: center;
+      padding: 8px 16px;
+      margin-bottom: 4px;
+
+      font-size: 16px;
+      font-weight: normal;
+      color: var(--gray-100);
+      text-decoration: none;
+
+      border-radius: 4px;
+    }
+
+    .list-item:hover {
+      background: var(--gray-700);
+    }
+
+    .list-item.active {
+      background: var(--blue);
+      color: var(--gray-900);
+    }
+
+    .list-item.notification::after {
+      display: block;
+      content: ' ';
+      
+      position: absolute;
+      top: 9px;
+      left: 18px;
+      width: 6px;
+      height: 6px;
+      
+      border-radius: 99px;
+      background: var(--red);
+      border: 2px solid var(--gray-900);
+    }
+
+    .list-item.notification:hover::after {
+      border-color: var(--gray-700);
+    }
+
+    .list-item.notification.active::after {
+      border-color: var(--blue);
+    }
+
+    .list-break {
+      height: 1px;
+      margin: 4px 0 8px 0;
+      background: var(--gray-700);
     }
   </style>
 
@@ -417,3 +477,99 @@
     }
   </style>
 </server-dropdown>
+
+<channels-section class='sidebar-section'>
+
+  <virtual if={ currentServerURL }>
+    <div class='sidebar-subtitle'>
+      <h4>Channels</h4>
+      <div class='sidebar-subtitle-button' if={ user.permissionLevel === 'admin' } onclick={ showAddChannelModal }>+ Add</div>
+    </div>
+
+    <div class='location-list'>
+      <a each={ channels } class={ getListItemClass(name) } onclick={ selectChannel }> { name } </a>
+    </div>
+  </virtual>
+
+  <script>
+    this.sessionID = null
+    this.user = {}
+
+    this.currentChannelName = null
+    this.currentServerURL = null
+    this.channels = []
+
+    getListItemClass(channelName) {
+      return {
+        'list-item': 1,
+        'active': channelName === this.currentChannelName,
+        // TODO: notification
+      }
+    }
+
+    RiotControl.on('switch_server', serverURL => {
+      this.currentChannelName = null
+      this.currentServerURL = serverURL
+      this.channels = []
+
+      this.loadChannels()
+      this.update()
+    })
+
+    RiotControl.on('session_id_update', async sessionID => {
+      this.sessionID = sessionID
+
+      this.user = {}
+      this.update()
+
+      const sessionObj = sessionID ? await get(this.currentServerURL, 'session/' + sessionID) : { success: false }
+
+      if (sessionObj.user) {
+        this.user = sessionObj.user
+        this.loadChannels() // for unread data
+        this.update()
+      }
+    })
+
+    async loadChannels() {
+      const query = this.sessionID ? { sessionID: this.sessionID } : {}
+      const { success, channels } = await get(this.currentServerURL, 'channel-list', query)
+
+      if (success) {
+        this.channels = channels
+        this.update()
+      }
+    }
+
+    selectChannel({ item }) {
+      window.location.hash = `#/+${currentServerURL}#${item.name}`
+    }
+
+    RiotControl.on('switch_channel', channelName => {
+      this.currentChannelName = channelName
+      this.update()
+    })
+  </script>
+
+  <style>
+    .list-item {
+      cursor: pointer;
+    }
+
+    .list-item::before {
+      display: inline;
+      content: '#';
+
+      margin-right: 8px;
+      margin-left: -4px;
+
+      font-weight: bold;
+      color: var(--gray-500);
+    }
+
+    .list-item.active::before {
+      color: #afceff;
+    }
+  </style>
+
+</channels-section>
