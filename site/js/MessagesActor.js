@@ -128,13 +128,11 @@ export default class MessagesActor extends Actor {
         return
       }
 
-      //const signature = await signText(text)
       const channelID = this.actors.channels.activeChannelID
       const sessionID = this.actors.session.sessionID
 
       const result = await post('send-message', {
         text,
-        //signature,
         channelID,
         sessionID,
       }, this.actors.session.currentServerURL)
@@ -210,8 +208,7 @@ export default class MessagesActor extends Actor {
 
         const result = await post('edit-message', {
           sessionID: this.actors.session.sessionID,
-          text, messageID,
-          //signature: await signText(text)
+          text, messageID
         }, this.actors.session.currentServerURL)
 
         if (result.success) {
