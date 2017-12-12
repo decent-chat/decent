@@ -499,6 +499,9 @@
     this.currentServerURL = null
     this.channels = []
 
+    const getCurrentIndex = () => this.channels
+      .findIndex(c => c.name === this.currentChannelName)
+
     getListItemClass(channelName) {
       return {
         'list-item': 1,
@@ -575,6 +578,34 @@
         this.currentChannelName = channelName
         this.update()
       }
+    })
+
+    Mousetrap.bind('alt+up', () => {
+      if (this.channels.length <= 1) {
+        return
+      }
+
+      const currentIndex = getCurrentIndex()
+      const channelAboveIndex = currentIndex === 0
+        ? this.channels.length - 1
+        : currentIndex - 1
+
+      const channelAbove = this.channels[channelAboveIndex]
+      this.selectChannel({ item: channelAbove })
+    })
+
+    Mousetrap.bind('alt+down', () => {
+      if (this.channels.length <= 1) {
+        return
+      }
+
+      const currentIndex = getCurrentIndex()
+      const channelBelowIndex = currentIndex === this.channels.length - 1
+        ? 0
+        : currentIndex + 1
+
+      const channelBelow = this.channels[channelBelowIndex]
+      this.selectChannel({ item: channelBelow })
     })
   </script>
 
