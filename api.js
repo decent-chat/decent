@@ -62,6 +62,32 @@ module.exports = async function attachAPI(app, {wss, db}) {
         .some(session => session._id === socketData.sessionID))
   }
 
+  const markChannelAsRead = async function(userID, channelID) {
+    await db.users.update({_id: userID}, {
+      $set: {
+        [`lastReadChannelDates.${channelID}`]: Date.now()
+      }
+    })
+  }
+
+  const getUnreadMessageCountInChannel = async function(userObj, channelID) {
+    let date = 0
+    const { lastReadChannelDates } = userObj
+    if (lastReadChannelDates) {
+      if (channelID in lastReadChannelDates) {
+        date = lastReadChannelDates[channelID]
+      }
+    }
+
+    const cursor = db.messages.ccount({
+      date: {$gt: date},
+      channelID
+    }).limit(200)
+    const count = await cursor.exec()
+
+    return count
+  }
+
   const loadVarsFromRequestObject = function(object, request, response, next) {
     // TODO: Actually implement the variable system..!
     request[middleware.vars] = {}
@@ -92,14 +118,22 @@ module.exports = async function attachAPI(app, {wss, db}) {
       online: await isUserOnline(u._id)
     }),
 
-    channelBrief: async c => ({
-      id: c._id,
-      name: c.name
-    }),
+    channelBrief: async (c, sessionUser = null) => {
+      const obj = {
+        id: c._id,
+        name: c.name
+      }
+
+      if (sessionUser) {
+        obj.unreadMessageCount = await getUnreadMessageCountInChannel(sessionUser, c._id)
+      }
+
+      return obj
+    },
 
     // Extra details for a channel - these aren't returned in the channel list API,
     // but are when a specific channel is fetched.
-    channelDetail: async c => {
+    channelDetail: async (c, sessionUser = null) => {
       let pinnedMessages = await Promise.all(c.pinnedMessageIDs.map(id => db.messages.findOne({_id: id})))
 
       // Null messages are filtered out, just in case there's a broken message ID in the
@@ -108,10 +142,26 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       pinnedMessages = await Promise.all(pinnedMessages.map(serialize.message))
 
-      Object.assign(await serialize.channelBrief(c), {
+      return Object.assign(await serialize.channelBrief(c, sessionUser), {
         pinnedMessages
       })
     }
+  }
+
+  const _loadVarFromObject = (request, response, next, obj, key, required) => {
+    if (required && obj[key] === undefined) {
+      response.status(400).end(JSON.stringify({
+        error: `${key} field missing`
+      }))
+
+      return
+    }
+
+    if (obj[key] !== undefined) {
+      request[middleware.vars][key] = obj[key]
+    }
+
+    next()
   }
 
   const middleware = {
@@ -138,19 +188,18 @@ module.exports = async function attachAPI(app, {wss, db}) {
       ...middleware.verifyVarsExists(),
 
       function(request, response, next) {
-        if (required && request.body[key] === undefined) {
-          response.status(400).end(JSON.stringify({
-            error: `${key} field missing`
-          }))
+        _loadVarFromObject(request, response, next, request.body, key, required)
+      }
+    ],
 
-          return
-        }
+    loadVarFromQuery: (key, required = true) => [
+      // Exactly the same as loadVarFromBody, except grabbing things from the url
+      // query (?a=b&c=d...) instead of the request body.
 
-        if (request.body[key] !== undefined) {
-          request[middleware.vars][key] = request.body[key]
-        }
+      ...middleware.verifyVarsExists(),
 
-        next()
+      function(request, response, next) {
+        _loadVarFromObject(request, response, next, request.query, key, required)
       }
     ],
 
@@ -367,6 +416,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
     ...middleware.loadVarFromBody('text'),
     ...middleware.loadVarFromBody('channelID'),
     ...middleware.loadVarFromBody('sessionID'),
+    ...middleware.getChannelFromID('channelID', '_'), // To verify that it exists.
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
 
     async (request, response) => {
@@ -385,6 +435,9 @@ module.exports = async function attachAPI(app, {wss, db}) {
       sendToAllSockets('received chat message', {
         message: await serialize.message(message)
       })
+
+      // Sending a message should also mark the channel as read for that user:
+      await markChannelAsRead(sessionUser._id, channelID)
 
       response.status(201).end(JSON.stringify({
         success: true,
@@ -595,26 +648,41 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
   app.get('/api/channel/:channelID', [
     ...middleware.loadVarFromParams('channelID'),
+    ...middleware.loadVarFromQuery('sessionID', false), // Optional - provides more data
     ...middleware.getChannelFromID('channelID', 'channel'),
+    ...middleware.runIfVarExists('sessionID',
+      middleware.getSessionUserFromID('sessionID', 'sessionUser')
+    ),
 
     async (request, response) => {
-      const { channel } = request[middleware.vars]
+      const { channel, sessionUser } = request[middleware.vars]
 
       response.status(200).end(JSON.stringify({
         success: true,
-        channel: await serialize.channelDetail(channel)
+        channel: await serialize.channelDetail(channel, sessionUser)
       }))
     }
   ])
 
-  app.get('/api/channel-list', async (request, response) => {
-    const channels = await db.channels.find({}, {name: 1})
+  app.get('/api/channel-list', [
+    ...middleware.loadVarFromQuery('sessionID', false), // Optional - provides more data
+    ...middleware.runIfVarExists('sessionID',
+      middleware.getSessionUserFromID('sessionID', 'sessionUser')
+    ),
 
-    response.status(200).end(JSON.stringify({
-      success: true,
-      channels: await Promise.all(channels.map(serialize.channelBrief))
-    }))
-  })
+    async (request, response) => {
+      const { sessionUser } = request[middleware.vars]
+
+      const channels = await db.channels.find({})
+
+      response.status(200).end(JSON.stringify({
+        success: true,
+        channels: await Promise.all(channels.map(channel => {
+          return serialize.channelBrief(channel, sessionUser)
+        }))
+      }))
+    }
+  ])
 
   app.get('/api/channel/:channelID/latest-messages(/before/:beforeMessageID)?', [
     ...middleware.loadVarFromParams('channelID'),
@@ -652,6 +720,39 @@ module.exports = async function attachAPI(app, {wss, db}) {
     }
   ])
 
+  app.post('/api/mark-channel-as-read', [
+    ...middleware.loadVarFromBody('channelID'),
+    ...middleware.loadVarFromBody('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.getChannelFromID('channelID', '_'), // To verify that it exists
+
+    async (request, response) => {
+      const { sessionUser, channelID } = request[middleware.vars]
+
+      await markChannelAsRead(sessionUser._id, channelID)
+
+      response.status(200).end(JSON.stringify({
+        success: true
+      }))
+    }
+  ])
+
+  app.get('/api/channel-is-read', [
+    ...middleware.loadVarFromQuery('channelID'),
+    ...middleware.loadVarFromQuery('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+
+    async (request, response) => {
+      const { channelID, sessionUser } = request[middleware.vars]
+
+      const count = await getUnreadMessageCountInChannel(sessionUser, channelID)
+
+      response.status(200).end(JSON.stringify({
+        success: true, count
+      }))
+    }
+  ])
+
   app.post('/api/register', [
     ...middleware.loadVarFromBody('username'),
     ...middleware.loadVarFromBody('password'),
@@ -681,9 +782,9 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       const user = await db.users.insert({
         username,
-        passwordHash,
+        passwordHash, salt,
         permissionLevel: 'member',
-        salt
+        lastReadChannelDates: {}
       })
 
       response.status(201).end(JSON.stringify({
