@@ -546,7 +546,8 @@
           const { channelName } = parseHash()
 
           if (channelName) {
-            RiotControl.trigger('switch_channel', channelName)
+            this.currentChannelName = channelName
+            this.update()
           } else {
             this.switchToDefaultChannel()
           }
