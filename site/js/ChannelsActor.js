@@ -116,6 +116,14 @@ export default class ChannelsActor extends Actor {
     socket.on('created new channel', () => this.loadChannels())
 
     socket.on('deleted channel', () => this.loadChannels())
+
+    socket.on('renamed channel', msg => {
+      if (typeof msg !== 'object') {
+        return
+      }
+
+      this.renameChannel(msg.channelID, msg.newName)
+    })
   }
 
   getChannelByID(channelID) {
@@ -160,6 +168,7 @@ export default class ChannelsActor extends Actor {
 
     for (const channel of channels) {
       const el = document.createElement('li')
+      el.id = 'channel-list-item-' + channel.id
       el.classList.add('channel')
       el.appendChild(document.createTextNode('#' + channel.name))
 
@@ -176,5 +185,14 @@ export default class ChannelsActor extends Actor {
     }
 
     sidebarEl.appendChild(listEl)
+  }
+
+  renameChannel(channelID, newName) {
+    const el = document.getElementById('channel-list-item-' + channelID)
+
+    if (el) {
+      el.firstChild.remove()
+      el.appendChild(document.createTextNode('#' + newName))
+    }
   }
 }
