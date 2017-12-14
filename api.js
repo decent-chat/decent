@@ -640,6 +640,10 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       await db.channels.update({_id: channelID}, {$set: {name}})
 
+      sendToAllSockets('renamed channel', {
+        channelID, newName: name
+      })
+
       response.status(200).end(JSON.stringify({
         success: true
       }))
