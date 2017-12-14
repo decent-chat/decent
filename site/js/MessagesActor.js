@@ -91,6 +91,14 @@ export default class MessagesActor extends Actor {
       // Display newly-edited message.
       await this.updateMessageContent(msg.message)
     })
+
+    socket.on('deleted chat message', async msg => {
+      if (typeof msg !== 'object') {
+        return
+      }
+
+      this.removeMessageEl(msg.messageID)
+    })
   }
 
   clear() {
@@ -196,20 +204,21 @@ export default class MessagesActor extends Actor {
       })
 
       this.formSubmitOverloadFn = async ({ evt, text }) => {
-        if (text.trim().length === 0) {
-          // TODO Delete message instead!
-          done(false)
-          alert('Deleting messages isn\'t a thing yet sorry')
-
-          return
-        }
+        let result
 
         done(true)
 
-        const result = await post('edit-message', {
-          sessionID: this.actors.session.sessionID,
-          text, messageID
-        }, this.actors.session.currentServerURL)
+        if (text.trim().length === 0) {
+          result = await post('delete-message', {
+            sessionID: this.actors.session.sessionID,
+            messageID
+          }, this.actors.session.currentServerURL)
+        } else {
+          result = await post('edit-message', {
+            sessionID: this.actors.session.sessionID,
+            text, messageID
+          }, this.actors.session.currentServerURL)
+        }
 
         if (result.success) {
           resolve(true)
@@ -288,6 +297,14 @@ export default class MessagesActor extends Actor {
       }
 
       el.appendChild(await this.buildMessageContent(message))
+    }
+  }
+
+  removeMessageEl(messageID) {
+    const el = document.getElementById('message-' + messageID)
+
+    if (el) {
+      el.remove()
     }
   }
 
