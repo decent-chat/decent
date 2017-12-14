@@ -646,6 +646,33 @@ module.exports = async function attachAPI(app, {wss, db}) {
     }
   ])
 
+  app.post('/api/delete-channel', [
+    ...middleware.loadVarFromBody('channelID'),
+    ...middleware.loadVarFromBody('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.getChannelFromID('channelID', '_'), // To verify the channel exists.
+
+    async (request, response) => {
+      const { channelID } = request[middleware.vars]
+
+      // Delete the channel AND any messages contained in it.
+      await Promise.all([
+        db.channels.remove({_id: channelID}),
+        db.messages.remove({channelID}, {multi: true})
+      ])
+
+      // Only send the channel ID, since that's all that's needed.
+      sendToAllSockets('deleted channel', {
+        channelID
+      })
+
+      response.status(200).end(JSON.stringify({
+        success: true
+      }))
+    }
+  ])
+
   app.get('/api/channel/:channelID', [
     ...middleware.loadVarFromParams('channelID'),
     ...middleware.loadVarFromQuery('sessionID', false), // Optional - provides more data
