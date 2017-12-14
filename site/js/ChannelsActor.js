@@ -115,6 +115,8 @@ export default class ChannelsActor extends Actor {
 
     socket.on('created new channel', () => this.loadChannels())
 
+    socket.on('deleted channel', () => this.loadChannels())
+
     socket.on('renamed channel', msg => {
       if (typeof msg !== 'object') {
         return

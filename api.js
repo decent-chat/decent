@@ -573,6 +573,34 @@ module.exports = async function attachAPI(app, {wss, db}) {
     }
   ])
 
+  app.post('/api/delete-message', [
+    ...middleware.loadVarFromBody('sessionID'),
+    ...middleware.loadVarFromBody('messageID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.getMessageFromID('messageID', 'message'),
+
+    async (request, response) => {
+      const { message, sessionUser } = request[middleware.vars]
+
+      if (sessionUser._id !== message.authorID) {
+        if (sessionUser.permissionLevel !== 'admin') {
+          response.status(403).end(JSON.stringify({
+            error: 'you are not the owner of this message'
+          }))
+
+          return
+        }
+      }
+
+      await db.messages.remove({_id: message._id})
+
+      // We don't want to send back the message itself, obviously!
+      sendToAllSockets('deleted chat message', {messageID: message._id})
+
+      response.status(200).end(JSON.stringify({success: true}))
+    }
+  ])
+
   app.get('/api/message/:messageID', [
     ...middleware.loadVarFromParams('messageID'),
     ...middleware.getMessageFromID('messageID', 'message'),
@@ -642,6 +670,33 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       sendToAllSockets('renamed channel', {
         channelID, newName: name
+      })
+
+      response.status(200).end(JSON.stringify({
+        success: true
+      }))
+    }
+  ])
+
+  app.post('/api/delete-channel', [
+    ...middleware.loadVarFromBody('channelID'),
+    ...middleware.loadVarFromBody('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.getChannelFromID('channelID', '_'), // To verify the channel exists.
+
+    async (request, response) => {
+      const { channelID } = request[middleware.vars]
+
+      // Delete the channel AND any messages contained in it.
+      await Promise.all([
+        db.channels.remove({_id: channelID}),
+        db.messages.remove({channelID}, {multi: true})
+      ])
+
+      // Only send the channel ID, since that's all that's needed.
+      sendToAllSockets('deleted channel', {
+        channelID
       })
 
       response.status(200).end(JSON.stringify({
