@@ -13,7 +13,7 @@
 
   <div class='modal-page-cover' style='display: none'></div>
 
-  <script src='https://cdn.jsdelivr.net/combine/npm/riot@3/riot+compiler.min.js,npm/dutier@1,npm/dutier-logger@0.0.1,npm/riotcontrol@0.0.3,npm/katex@0.9.0-alpha2,npm/mousetrap@1.6.1/mousetrap.min.js'></script>
+  <script src='https://cdn.jsdelivr.net/combine/npm/riot@3/riot+compiler.min.js,npm/riotcontrol@0.0.3,npm/katex@0.9.0-alpha2,npm/mousetrap@1.6.1/mousetrap.min.js'></script>
 
   <script src='/tags/modal.tag' type='riot/tag'></script>
   <script src='/tags/fancy-input.tag' type='riot/tag'></script>
@@ -167,7 +167,7 @@
       if (hash.serverURL) {
         currentServerURL = hash.serverURL
         RiotControl.trigger('switch_server', hash.serverURL)
-        
+
         if (hash.channelName) {
           currentChannelName = hash.channelName
           RiotControl.trigger('switch_channel', hash.channelName)
