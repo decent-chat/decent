@@ -15,6 +15,7 @@
   <div class='modal-page-cover' style='display: none'></div>
 
   <script src='https://cdn.jsdelivr.net/combine/npm/riot@3/riot+compiler.min.js,npm/riotcontrol@0.0.3,npm/katex@0.9.0-alpha2,npm/mousetrap@1.6.1/mousetrap.min.js'></script>
+  <script src='/js/websocket.js'></script>
 
   <script src='/tags/modal.tag' type='riot/tag'></script>
   <script src='/tags/fancy-input.tag' type='riot/tag'></script>
@@ -104,9 +105,8 @@
     }
 
     RiotControl.addStore(new Store())
-    RiotControl.on('*', console.log)
 
-    let currentServerURL = null, currentChannelName = null
+    let currentServerURL = null, currentChannelName = null, socket = null
 
     window.addEventListener('hashchange', evt => {
       evt.preventDefault()
@@ -158,6 +158,23 @@
 
       localStorage.serverSessionIDMap = JSON.stringify(serverSessionIDMap)
     })
+
+    // WebSockets
+    RiotControl.on('socket_message', ({ evt, serverURL, socket }) => {
+      // Reply to the ping event.
+      if (evt === 'ping for data') {
+        const serverSessionIDMap = JSON.parse(localStorage.serverSessionIDMap || '{}')
+
+        socket.send(JSON.stringify({
+          evt: 'pong data',
+          data: {
+            sessionID: serverSessionIDMap[serverURL]
+          }
+        }))
+      }
+    })
+
+    ws.init()
 
     // Compile Riot tags and mount them to the view
     riot.compile(() => {
