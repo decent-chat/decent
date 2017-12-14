@@ -12,8 +12,15 @@
 
 const express = require('express')
 const bodyParser = require('body-parser')
+const multer = require('multer')
+const shortid = require('shortid')
 const uuidv4 = require('uuid/v4')
+const fs = require('fs')
+const path = require('path')
+const util = require('util')
 const bcrypt = require('./bcrypt-util')
+
+const mkdir = util.promisify(fs.mkdir)
 
 const {
   serverSettingsID, serverPropertiesID, setSetting,
@@ -373,6 +380,62 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
     next()
   })
+
+  const upload = multer({
+    limits: {
+      files: 1, fileSize: 1e7 // 10 megabytes
+    },
+
+    storage: multer.diskStorage({
+      destination: (req, file, cb) => {
+        const path = '/uploads/' + shortid()
+        const dir = __dirname + path
+
+        req[middleware.vars].path = path
+
+        mkdir(dir)
+          .then(() => cb(null, dir))
+          .catch(error => cb(error))
+      },
+
+      filename: (req, file, cb) => {
+        let ext
+        switch (file.mimetype) {
+          case 'image/gif': ext = 'gif'; break
+          case 'image/jpeg': ext = 'jpeg'; break
+          case 'image/png': ext = 'png'; break
+          default: cb(new Error('invalid MIME type')); return
+        }
+
+        const name = file.originalname || 'image'
+        const basename = path.basename(name, path.extname(name))
+        const filename = `${basename}.${ext}`
+
+        req[middleware.vars].path += '/' + filename
+
+        cb(null, filename)
+      }
+    })
+  })
+  const uploadSingleImage = upload.single('image')
+
+  app.post('/api/upload-image', [
+    ...middleware.loadVarFromQuery('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.requireBeAdmin('sessionUser'),
+    (req, res) => uploadSingleImage(req, res, err => {
+      if (err) {
+        res.status(500).end(JSON.stringify({
+          error: err.message
+        }))
+      } else {
+        const { path } = req[middleware.vars]
+        res.status(200).end(JSON.stringify({
+          success: true, path
+        }))
+      }
+    })
+  ])
 
   app.get('/api/server-settings', [
     async (request, response) => {

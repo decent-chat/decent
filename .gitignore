@@ -1,4 +1,8 @@
 db/*
 !db/.gitkeep
+
+uploads/*
+!uploads/.gitkeep
+
 node_modules
 site/script-nomodule.js

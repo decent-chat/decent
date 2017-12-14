@@ -37,6 +37,7 @@ async function main() {
 
   app.enable('trust proxy')
   app.use(express.static('site'))
+  app.use('/uploads', express.static('uploads'))
   await setupDefaultSettings(db.settings)
   await attachAPI(app, {wss, db})
 
