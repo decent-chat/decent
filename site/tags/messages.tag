@@ -25,8 +25,8 @@
         const lastGroup = groups[groups.length - 1]
         const shouldAppend = lastGroup
           && lastGroup.authorID === msg.authorID // Group by author
-          && lastGroup.date <= Date.now() - HOUR // First message in group < 1 hour ago
-        
+          && lastGroup.messages.length < 20 // Max. 20 messages
+
         if (shouldAppend) {
           lastGroup.messages.push(msg)
         } else {

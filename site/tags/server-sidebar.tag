@@ -72,7 +72,7 @@
     .list-item {
       display: flex;
       position: relative;
-      
+
       align-items: center;
       padding: 8px 16px;
       margin-bottom: 4px;
@@ -97,13 +97,13 @@
     .list-item.notification::after {
       display: block;
       content: ' ';
-      
+
       position: absolute;
       top: 9px;
       left: 18px;
       width: 6px;
       height: 6px;
-      
+
       border-radius: 99px;
       background: var(--red);
       border: 2px solid var(--gray-900);
@@ -183,7 +183,7 @@
 
     RiotControl.on('session_id_update', async sessionID => {
       this.loggedIn = '?'
-      let sessionObj = sessionID ? await get(this.currentServerURL, 'session/' + sessionID) : { success: false }
+      const sessionObj = sessionID ? await get(this.currentServerURL, 'session/' + sessionID) : { success: false }
 
       if (sessionObj.success) {
         this.loggedIn = true

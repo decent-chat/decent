@@ -1,30 +1,31 @@
 <message-group>
 
-  <img class='avatar' src='https://nonfree.news/img/avatar_nanalan.png'>
+  <virtual if={ messages.length !== 0 }>
+    <img class='avatar' src='https://nonfree.news/img/avatar_nanalan.png'>
 
-  <div class='content'>
-    <div class='info'>
-      <div class='username'> { authorUsername } </div>
-      <date class='date' title={ dateObj.toLocaleString() }> { dateString }</date>
+    <div class='content'>
+      <div class='info'>
+        <div class='username'> { authorUsername } </div>
+        <date class='date' title={ dateObj.toLocaleString() }> { dateString }</date>
+      </div>
+
+      <message each={ messages } content={ revisions[0].text }></message>
     </div>
-
-    <message each={ messages } content={ revisions[0].text }></message>
-  </div>
+  </virtual>
 
   <script>
     this.dateObj = new Date(this.date)
     this.dateString = 'Just now'
-    
+
     tick() {
       const ago = Date.now() - this.date
+      const minsAgo = Math.floor(ago / MINUTE)
       let dateString = ''
 
-      if (ago <= MINUTE) {
+      if (minsAgo === 0) {
         dateString = 'Just now'
-      } if (ago <= HOUR / 2) {
+      } else if (ago <= HOUR / 2) {
         // 1 mins - 30 mins ago: mins (6 mins)
-        const minsAgo = Math.floor(ago / MINUTE)
-
         dateString = minsAgo + ' min'
         if (minsAgo !== 1) {
           dateString += 's'
@@ -39,6 +40,9 @@
         const month = months[this.dateObj.getMonth()]
 
         dateString = `${month} ${this.dateObj.getDate()}`
+
+        // We don't need to update again
+        clearInterval(ticker)
       }
 
       this.update({ dateString })
@@ -48,9 +52,9 @@
       this.tick()
     })
 
-    const dater = setInterval(this.tick, MINUTE)
+    const ticker = setInterval(this.tick, MINUTE)
     this.on('unmount', () => {
-      clearInterval(dater)
+      clearInterval(ticker)
     })
   </script>
 

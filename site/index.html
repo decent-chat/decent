@@ -9,6 +9,7 @@
   <server-sidebar></server-sidebar>
   <div id='content' class='main'>
     <messages></messages>
+    <message-editor></message-editor>
   </div>
 
   <div class='modal-page-cover' style='display: none'></div>
@@ -20,15 +21,19 @@
   <script src='/tags/server-sidebar.tag' type='riot/tag'></script>
   <script src='/tags/messages.tag' type='riot/tag'></script>
   <script src='/tags/message-group.tag' type='riot/tag'></script>
+  <script src='/tags/message-editor.tag' type='riot/tag'></script>
 
   <script>
     'use strict'
 
-    // Constants
+    // Time constants
     const SECOND = 1000
     const MINUTE = 60 * SECOND
     const HOUR   = 60 * MINUTE
     const DAY    = 24 * HOUR
+
+    // Keycode constants
+    const KEY_ENTER = 13
 
     // Utilities
     function post(serverURL, path, dataObj) {
