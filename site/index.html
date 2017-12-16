@@ -14,15 +14,10 @@
 
   <div class='modal-page-cover' style='display: none'></div>
 
-  <script src='https://cdn.jsdelivr.net/combine/npm/riot@3/riot+compiler.min.js,npm/riotcontrol@0.0.3,npm/katex@0.9.0-alpha2,npm/mousetrap@1.6.1/mousetrap.min.js'></script>
-  <script src='/js/websocket.js'></script>
+  <script src='https://cdn.jsdelivr.net/combine/npm/riot@3/riot.min.js,npm/riotcontrol@0.0.3,npm/katex@0.9.0-alpha2,npm/mousetrap@1.6.1/mousetrap.min.js'></script>
+  <script src='js/websocket.js'></script>
 
-  <script src='/tags/modal.tag' type='riot/tag'></script>
-  <script src='/tags/form-input.tag' type='riot/tag'></script>
-  <script src='/tags/server-sidebar.tag' type='riot/tag'></script>
-  <script src='/tags/messages.tag' type='riot/tag'></script>
-  <script src='/tags/message-group.tag' type='riot/tag'></script>
-  <script src='/tags/message-editor.tag' type='riot/tag'></script>
+  <script src='tags.js'></script>
 
   <script>
     'use strict'
@@ -177,28 +172,26 @@
     ws.init()
 
     // Compile Riot tags and mount them to the view
-    riot.compile(() => {
-      const tags = riot.mount('*')
-      const hash = parseHash()
-      const servers = JSON.parse(localStorage.serverSessionIDMap || '{}')
+    const tags = riot.mount('*')
+    const hash = parseHash()
+    const servers = JSON.parse(localStorage.serverSessionIDMap || '{}')
 
-      for (const serverURL of Object.keys(servers)) {
-        RiotControl.trigger('add_server', serverURL)
+    for (const serverURL of Object.keys(servers)) {
+      RiotControl.trigger('add_server', serverURL)
+    }
+
+    if (hash.serverURL) {
+      currentServerURL = hash.serverURL
+      RiotControl.trigger('switch_server', hash.serverURL)
+
+      if (hash.channelName) {
+        currentChannelName = hash.channelName
+        RiotControl.trigger('switch_channel', hash.channelName)
       }
-
-      if (hash.serverURL) {
-        currentServerURL = hash.serverURL
-        RiotControl.trigger('switch_server', hash.serverURL)
-
-        if (hash.channelName) {
-          currentChannelName = hash.channelName
-          RiotControl.trigger('switch_channel', hash.channelName)
-        }
-      } else if (localStorage.currentServerURL && localStorage.currentServerURL != 'null') {
-        window.location.hash = '#/+' + localStorage.currentServerURL
-      } else {
-        window.location.hash = '#/'
-      }
-    })
+    } else if (localStorage.currentServerURL && localStorage.currentServerURL != 'null') {
+      window.location.hash = '#/+' + localStorage.currentServerURL
+    } else {
+      window.location.hash = '#/'
+    }
   </script>
 </body>
