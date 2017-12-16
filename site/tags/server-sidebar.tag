@@ -275,9 +275,18 @@
       } catch (err) {
         if (err !== -1) {
           console.warn('Error whilst adding server', err)
-        }
 
-        throw 'Not a bantisocial chat server'
+          // window.fetch() will reject with a TypeError when a network
+          // error is encountered, e.g. "not a url" or some kind of
+          // permissions issue.
+          if (err instanceof TypeError) {
+            throw 'Network error'
+          } else {
+            throw 'Internal error (see JS console)'
+          }
+        } else {
+          throw 'Not a bantisocial chat server'
+        }
       }
 
       if (serverURLs.includes(url)) {
