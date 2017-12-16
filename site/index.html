@@ -1,54 +1,204 @@
 <!doctype html>
 
-<link rel="stylesheet" href="styles.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0-alpha2/katex.min.css" integrity="sha384-exe4Ak6B0EoJI0ogGxjJ8rn+RN3ftPnEQrGwX59KTCl5ybGzvHGKjhPKk/KC3abb" crossorigin="anonymous">
+<title>Bantisocial</title>
 
-<div id="app">
-  <aside id="sidebar">
-    <section class="sidebar-section sidebar-section-light" id="server-list">
-      <div class="server server-list-heading-actual">Server list</div>
+<link rel='stylesheet' href='styles.css'>
+<link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/katex@0.9.0-alpha2/dist/katex.min.css'>
 
-      <div class="server server-selectable server-list-heading">
-        <div id="server-current">Connecting...</div>
-        <img id="server-list-dropdown-icon" src="img/caret-down.svg">
-      </div>
+<body>
+  <server-sidebar></server-sidebar>
+  <div id='content' class='main'>
+    <messages></messages>
+    <message-editor></message-editor>
+  </div>
 
-      <div class="server server-selectable server-new">
-        + Add new
-      </div>
+  <div class='modal-page-cover' style='display: none'></div>
 
-      <!--
-      <div class="server server-selectable server-remove">
-        - Remove
-      </div>
-      -->
-    </section>
+  <script src='https://cdn.jsdelivr.net/combine/npm/riot@3/riot+compiler.min.js,npm/riotcontrol@0.0.3,npm/katex@0.9.0-alpha2,npm/mousetrap@1.6.1/mousetrap.min.js'></script>
+  <script src='/js/websocket.js'></script>
 
-    <section class="sidebar-section" id="channels-sidebar-section">
-      <div class="sidebar-heading">
-        <b>Channels</b>
-        <button class="btn" id="create-channel">New</button>
-      </div>
-    </section>
-  </aside>
+  <script src='/tags/modal.tag' type='riot/tag'></script>
+  <script src='/tags/form-input.tag' type='riot/tag'></script>
+  <script src='/tags/server-sidebar.tag' type='riot/tag'></script>
+  <script src='/tags/messages.tag' type='riot/tag'></script>
+  <script src='/tags/message-group.tag' type='riot/tag'></script>
+  <script src='/tags/message-editor.tag' type='riot/tag'></script>
 
-  <main id="central-pane">
-    <div id="messages"></div>
-    <div id="form-container">
-      <form id="form" action="">
-        <textarea class="input input-bordered mousetrap" id="chat-input" autofocus autocomplete="off" placeholder="Type message..."></textarea>
-        <button class="btn">Send</button>
-      </form>
+  <script>
+    'use strict'
 
-      <button id="register" class="session-action-btn btn btn-primary">Register</button>
-      <button id="login" class="session-action-btn btn btn-visible">Login</button>
-      <button id="logout" class="session-action-btn btn btn-visible">Logout</button>
-    </div>
-  </main>
-</div>
+    // Time constants
+    const SECOND = 1000
+    const MINUTE = 60 * SECOND
+    const HOUR   = 60 * MINUTE
+    const DAY    = 24 * HOUR
 
-<script src="js/lib/mousetrap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0-alpha2/katex.min.js" integrity="sha384-OMvkZ24ANLwviZR2lVq8ujbE/bUO8IR1FdBrKLQBI14Gq5Xp/lksIccGkmKL8m+h" crossorigin="anonymous"></script>
+    // Keycode constants
+    const KEY_ENTER = 13
 
-<script nomodule src="script-nomodule.js"></script> <!-- for browsers not supporting es6 modules -->
-<script type="module" src="js/index.js"></script>   <!-- for those whomst do -->
+    // Utilities
+    function post(serverURL, path, dataObj) {
+      return fetch('//' + serverURL + '/api/' + path, {
+        method: 'post',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dataObj)
+      }).then(res => res.json())
+    }
+
+    function get(serverURL, path, query = {}) {
+      const esc = encodeURIComponent
+      const queryString = Object.keys(query).length > 0
+        ? '?' + Object.keys(query)
+          .map(k => esc(k) + '=' + esc(query[k]))
+          .join('&')
+        : ''
+
+      return fetch('//' + serverURL + '/api/' + path + queryString)
+        .then(res => res.json())
+    }
+
+    function parseHash() {
+      const hash = window.location.hash
+      let state, serverURL = '', channelName = ''
+
+      for (let c = 0; c < hash.length; c++) {
+        const char = hash[c]
+
+        if (!state) {
+          // Should start with '#/'
+          if (c === 0 && char === '#') {
+            continue
+          } else if (c === 1 && char === '/') {
+            state = 'begin_parse'
+            continue
+          }
+
+          return null
+        } else if (state === 'begin_parse') {
+          if (char === '+') {
+            state = 'server_url'
+            continue
+          } else {
+            return { path: hash.substr(c).split('/') }
+          }
+        } else if (state === 'server_url') {
+          if (char === '#') {
+            state = 'channel_name'
+          } else {
+            serverURL += char
+          }
+        } else if (state === 'channel_name') {
+          channelName += char
+        }
+      }
+
+      return { serverURL, channelName }
+    }
+
+    // State
+    class Store {
+      constructor() {
+        riot.observable(this)
+      }
+    }
+
+    RiotControl.addStore(new Store())
+
+    let currentServerURL = null, currentChannelName = null, socket = null
+
+    window.addEventListener('hashchange', evt => {
+      evt.preventDefault()
+
+      const hash = parseHash()
+
+      if (hash.serverURL) {
+        if (hash.serverURL !== currentServerURL) {
+          RiotControl.trigger('switch_server', hash.serverURL)
+        }
+
+        if (hash.channelName) {
+          if (hash.channelName !== currentChannelName) {
+            currentChannelName = hash.channelName
+            RiotControl.trigger('switch_channel', hash.channelName)
+          }
+        } else if (currentChannelName !== null) {
+          currentChannelName = null
+          RiotControl.trigger('switch_channel', null)
+        }
+      } else {
+        RiotControl.trigger('switch_server', null)
+      }
+    })
+
+    RiotControl.on('switch_server', url => {
+      currentServerURL = url
+      localStorage.currentServerURL = url
+
+      if (url === null) {
+        return RiotControl.trigger('session_id_update', null)
+      }
+
+      const serverSessionIDMap = JSON.parse(localStorage.serverSessionIDMap || '{}')
+      const sessionID = serverSessionIDMap[url] || null
+
+      // Defer this a little to allow others to react to the
+      // switch_server event.
+      setTimeout(() => {
+        RiotControl.trigger('session_id_update', sessionID)
+      }, 10)
+    })
+
+    RiotControl.on('session_id_update', sessionID => {
+      const serverSessionIDMap = JSON.parse(localStorage.serverSessionIDMap || '{}')
+
+      // Update localStorage sessionID persistence
+      serverSessionIDMap[currentServerURL] = sessionID
+
+      localStorage.serverSessionIDMap = JSON.stringify(serverSessionIDMap)
+    })
+
+    // WebSockets
+    RiotControl.on('socket_message', ({ evt, serverURL, socket }) => {
+      // Reply to the ping event.
+      if (evt === 'ping for data') {
+        const serverSessionIDMap = JSON.parse(localStorage.serverSessionIDMap || '{}')
+
+        socket.send(JSON.stringify({
+          evt: 'pong data',
+          data: {
+            sessionID: serverSessionIDMap[serverURL]
+          }
+        }))
+      }
+    })
+
+    ws.init()
+
+    // Compile Riot tags and mount them to the view
+    riot.compile(() => {
+      const tags = riot.mount('*')
+      const hash = parseHash()
+      const servers = JSON.parse(localStorage.serverSessionIDMap || '{}')
+
+      for (const serverURL of Object.keys(servers)) {
+        RiotControl.trigger('add_server', serverURL)
+      }
+
+      if (hash.serverURL) {
+        currentServerURL = hash.serverURL
+        RiotControl.trigger('switch_server', hash.serverURL)
+
+        if (hash.channelName) {
+          currentChannelName = hash.channelName
+          RiotControl.trigger('switch_channel', hash.channelName)
+        }
+      } else if (localStorage.currentServerURL && localStorage.currentServerURL != 'null') {
+        window.location.hash = '#/+' + localStorage.currentServerURL
+      } else {
+        window.location.hash = '#/'
+      }
+    })
+  </script>
+</body>

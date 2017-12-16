@@ -11,9 +11,6 @@
     "uuid": "^3.1.0",
     "ws": "^3.3.2"
   },
-  "scripts": {
-    "build": "parcel site/js/index.js site/script-nomodule.js -EM # see nathan/parcel-redux"
-  },
   "name": "bantisocial",
   "version": "0.0.1",
   "description": "Actually free rip-off of Discord",
