@@ -34,6 +34,6 @@
   },
   "homepage": "https://github.com/towerofnix/bantisocial#readme",
   "scripts": {
-    "build": "riot site/tags site/tags.js"
+    "build": "riot --config riot.config.js"
   }
 }
