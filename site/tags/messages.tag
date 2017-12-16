@@ -30,24 +30,29 @@
         return
       }
 
-      const { messages } = await get(serverURL, `channel/${channelID}/latest-messages`)
+      let fetchedServerURL
+      const { messages } = await get(fetchedServerURL = serverURL, `channel/${channelID}/latest-messages`)
       const newMessageGroups = messages.reduce((groups, msg) => {
         const lastGroup = groups[groups.length - 1]
 
         if (shouldAppendMsgToGroup(msg, lastGroup)) {
           lastGroup.messages.push(msg)
+          return groups
         } else {
-          groups.push({
+          return [ ...groups, {
             authorID: msg.authorID,
             authorUsername: msg.authorUsername,
             channelID: msg.channelID,
             date: msg.date,
             messages: [ msg ],
-          })
+          } ]
         }
-
-        return groups
       }, this.messageGroups)
+
+      if (serverURL !== fetchedServerURL) {
+        // We switched servers whilst fetching these messages - discard them.
+        return
+      }
 
       this.messageGroups = newMessageGroups
       this.update()
