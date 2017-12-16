@@ -5,4 +5,4 @@ uploads/*
 !uploads/.gitkeep
 
 node_modules
-site/script-nomodule.js
+site/tags.js
