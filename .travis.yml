@@ -9,4 +9,7 @@ deploy:
   skip_cleanup: true
   github_token: $GITHUB_TOKEN
   on:
-    branch: ghpages
+    # This is the branch to WATCH, not the branch to PUSH TO.
+    # Travis will push to gh-pages (implied by pages) and watch
+    # master for commits.
+    branch: master
