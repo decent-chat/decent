@@ -9,7 +9,7 @@
         <date class='date' title={ dateObj.toLocaleString() }> { dateString }</date>
       </div>
 
-      <message each={ messages } content={ revisions[0].text }></message>
+      <message each={ messages } content={ text }></message>
     </div>
   </virtual>
 
