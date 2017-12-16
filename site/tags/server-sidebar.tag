@@ -146,19 +146,19 @@
 
   <modal ref='loginModal' heading='Log in' subheading={ 'to ' + currentServerURL } submit-btn-text='Log in' cancellable onsubmit={ submitLoginModal }>
     <!-- TODO validation -->
-    <fancy-input label='username' type='text'></fancy-input>
-    <fancy-input label='password' type='password'></fancy-input>
+    <form-input label='username' type='text'></form-input>
+    <form-input label='password' type='password'></form-input>
   </modal>
 
   <modal ref='registerModal' heading='Register' subheading={ 'on ' + currentServerURL } submit-btn-text='Register' cancellable onsubmit={ submitRegisterModal }>
     <!-- TODO validation -->
-    <fancy-input label='username' type='text'></fancy-input>
-    <fancy-input label='password' type='password'></fancy-input>
+    <form-input label='username' type='text'></form-input>
+    <form-input label='password' type='password'></form-input>
   </modal>
 
   <modal ref='addServerModal' heading='Add server' submit-btn-text='Add server' cancellable onsubmit={ submitAddServerModal }>
     <!-- TODO validation -->
-    <fancy-input label='url' type='text'></fancy-input>
+    <form-input label='url' type='text'></form-input>
   </modal>
 
   <script>

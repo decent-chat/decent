@@ -17,12 +17,12 @@
     this.isOpen = false
 
     const getInputs = () => {
-      const inputs = this.tags['fancy-input']
+      const inputs = this.tags['form-input']
 
       if (Array.isArray(inputs)) {
         return inputs
       } else {
-        // For some reason when there's only one fancy-input tag
+        // For some reason when there's only one form-input tag
         // `inputs` is just the element, not an array<element>
         return [ inputs ]
       }

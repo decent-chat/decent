@@ -1,4 +1,4 @@
-<fancy-input>
+<form-input>
   <label> { opts.label } </label>
   <input ref='input' type={ opts.type } placeholder={ opts.placeholder } disabled={ disabled } keydown={ keydown }>
 
@@ -63,4 +63,4 @@
       border-color: var(--blue);
     }
   </style>
-</fancy-input>
+</form-input>
