@@ -259,40 +259,41 @@
     }
 
     async submitAddServerModal({ url }) {
-      try {
-        const res = await fetch('//' + url + '/api/')
-
-        // The status code returned should be 418
-        if (res.status !== 418) {
-          throw -1
-        }
-
-        // We should see { bantisocial: true }
-        const { bantisocial } = await res.json()
-        if (bantisocial !== true) {
-          throw -1
-        }
-      } catch (err) {
-        if (err !== -1) {
-          console.warn('Error whilst adding server', err)
-
-          // window.fetch() will reject with a TypeError when a network
-          // error is encountered, e.g. "not a url" or some kind of
-          // permissions issue.
-          if (err instanceof TypeError) {
-            throw 'Network error'
-          } else {
-            throw 'Internal error (see JS console)'
-          }
-        } else {
-          throw 'Not a bantisocial chat server'
-        }
-      }
-
       if (serverURLs.includes(url)) {
         // This URL is already in the server list, let's just
         // switch to it.
       } else {
+        // Make sure `url` is actually a bantisocial server!
+        try {
+          const res = await fetch('//' + url + '/api/')
+
+          // The status code returned should be 418
+          if (res.status !== 418) {
+            throw -1
+          }
+
+          // We should see { bantisocial: true }
+          const { bantisocial } = await res.json()
+          if (bantisocial !== true) {
+            throw -1
+          }
+        } catch (err) {
+          if (err !== -1) {
+            console.warn('Error whilst adding server', err)
+
+            // window.fetch() will reject with a TypeError when a network
+            // error is encountered, e.g. "not a url" or some kind of
+            // permissions issue.
+            if (err instanceof TypeError) {
+              throw 'Network error'
+            } else {
+              throw 'Internal error (see JS console)'
+            }
+          } else {
+            throw 'Not a bantisocial chat server'
+          }
+        }
+
         // We've passed all checks - let's add the server to the list.
         RiotControl.trigger('add_server', url)
       }
