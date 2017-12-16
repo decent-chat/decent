@@ -314,7 +314,6 @@
       align-items: center;
       padding: 0 16px;
 
-      font-family: 'Noto Sans', sans-serif;
       font-size: 14px;
       font-weight: normal;
       color: var(--gray-300);
@@ -335,7 +334,6 @@
       padding: 4px 8px;
       border-radius: 4px;
       cursor: pointer;
-      font-family: 'Noto Sans', sans-serif;
       font-size: 12px;
       border: none;
     }

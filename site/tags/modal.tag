@@ -179,7 +179,6 @@
       border-radius: 4px;
       border: none;
 
-      font-family: 'Noto Sans', sans-serif;
       font-size: 16px;
       color: var(--gray-900);
 

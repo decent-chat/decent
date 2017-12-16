@@ -49,7 +49,7 @@
       width: 300px;
       padding: 8px 16px;
 
-      font-family: 'Noto Sans', sans-serif;
+      font-family: inherit;
       font-size: 14px;
 
       border: 1px solid var(--gray-500);
