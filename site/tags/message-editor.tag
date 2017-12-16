@@ -121,7 +121,7 @@
       border: none;
       outline: none;
       border-radius: 4px;
-      background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iNTYiIHdpZHRoPSI1NiIgdmVyc2lvbj0iMS4xIiB2aWV3Qm94PSIwIDAgMTQuODE2NjY2IDE0LjgxNjY2NyI+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCAtMjgyLjE4KSI+PHBhdGggZmlsbD0iI2ZmZiIgZD0ibTEyLjE3MSAyODkuNTktOC40NjY3LTMuMTc1IDAuNTI5MTcgMi42NDU4IDQuNzYyNSAwLjUyOTE2LTQuNzYyNSAwLjUyOTE3LTAuNTI5MTcgMi42NDU4eiIvPjwvZz48L3N2Zz4K');
+      background-image: url('/img/send.svg');
       background-size: default;
       background-position: center;
 
