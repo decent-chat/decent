@@ -15,9 +15,7 @@
   "version": "0.0.1",
   "description": "Actually free rip-off of Discord",
   "main": "index.js",
-  "devDependencies": {
-    "riot": "^3.7.4"
-  },
+  "devDependencies": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/towerofnix/bantisocial.git"
