@@ -168,7 +168,7 @@
       right: 16px;
       width: 19px;
       height: 19px;
-      background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMTkuMDMiIHdpZHRoPSIxOS4wMyIgdmVyc2lvbj0iMS4xIiB2aWV3Qm94PSIwIDAgNS4wMzUxMDAxIDUuMDM1MDk3NCI+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTEuNzE1OCAtMjkwLjI1KSIgc3Ryb2tlPSIjY2RkMWQ3IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS13aWR0aD0iLjc5Mzc1IiBmaWxsPSJub25lIj48cGF0aCBkPSJtMi4xMTY3IDI5MC42NSA0LjIzMzMgNC4yMyIvPjxwYXRoIGQ9Im0yLjExNjcgMjk0Ljg4IDQuMjMzMy00LjIzIi8+PC9nPjwvc3ZnPgo=');
+      background: url('/img/x.svg');
       cursor: pointer;
     }
 
