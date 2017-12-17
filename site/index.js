@@ -86,6 +86,10 @@ const sessionUser = new Computed([sessionID], async sid => {
   return result.user
 })
 
+const sessionUsername = new Computed([sessionUser], user => {
+  return user && user.username
+})
+
 // WebSocket event handling and setup /////////////////////////////////////////
 
 function addServer(serverHostname) {
@@ -128,15 +132,13 @@ function addServer(serverHostname) {
 
 const sidebar = document.querySelector('#server-sidebar')
 
-const sessionUsernameSpan = oof.mutable(name => name, 'Unnamed')
+oof.mutable(name => name, sessionUsername)
   .mount('.user-info-name')
 
 sessionUser.onChange(user => {
   if (user) {
     sidebar.classList.add('is-logged-in')
     sidebar.classList.remove('is-logged-out')
-    sessionUsernameSpan.state = user.username
-    sessionUsernameSpan.update()
 
     if (user.permissionLevel === 'admin') {
       sidebar.classList.add('is-admin')
@@ -193,13 +195,8 @@ document.getElementById('create-channel').addEventListener('click', async () => 
 
 // Server list, add server ////////////////////////////////////////////////////
 
-const serverCurrent = oof.mutable(host => host, '(no server)')
+oof.mutable(host => host, activeServerHostname)
   .mount(document.querySelector('.server-dropdown-current'))
-
-activeServerHostname.onChange(hostname => {
-  serverCurrent.state = hostname
-  serverCurrent.update()
-})
 
 const serverDropdown = document.querySelector('.server-dropdown')
 serverDropdown.addEventListener('click', () => {
