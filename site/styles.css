@@ -59,6 +59,13 @@ body {
                                   supported by Chrome and Opera */
 }
 
+#server-sidebar.is-logged-in .logged-in { display: initial; }
+#server-sidebar.is-logged-out .logged-in { display: none; }
+#server-sidebar.is-logged-in .logged-out { display: none; }
+#server-sidebar.is-logged-out .logged-out { display: initial; }
+#server-sidebar.is-admin .admin { display: initial; }
+#server-sidebar:not(.is-admin) .admin { display: none; }
+
 .sidebar-section-server {
   padding-bottom: 16px;
   border-bottom: 1px solid var(--gray-700);
@@ -74,11 +81,6 @@ body {
   font-weight: normal;
   color: var(--gray-300);
 }
-
-.user-info.is-logged-in .logged-in { display: initial; }
-.user-info.is-logged-out .logged-in { display: none; }
-.user-info.is-logged-in .logged-out { display: none; }
-.user-info.is-logged-out .logged-out { display: initial; }
 
 .user-info-text {
   margin-right: auto;

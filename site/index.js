@@ -69,20 +69,27 @@ const sessionUser = new Computed([sessionID], async sid => {
   return result.user
 })
 
-const userInfoDiv = document.querySelector('.user-info')
+const sidebar = document.querySelector('#server-sidebar')
 
 const sessionUsernameSpan = oof.mutable(name => name, 'Unnamed')
   .mount('.user-info-name')
 
 sessionUser.onChange(user => {
   if (user) {
-    userInfoDiv.classList.add('is-logged-in')
-    userInfoDiv.classList.remove('is-logged-out')
+    sidebar.classList.add('is-logged-in')
+    sidebar.classList.remove('is-logged-out')
     sessionUsernameSpan.state = user.username
     sessionUsernameSpan.update()
+
+    if (user.permissionLevel === 'admin') {
+      sidebar.classList.add('is-admin')
+    } else {
+      sidebar.classList.remove('is-admin')
+    }
   } else {
-    userInfoDiv.classList.add('is-logged-out')
-    userInfoDiv.classList.remove('is-logged-in')
+    sidebar.classList.add('is-logged-out')
+    sidebar.classList.remove('is-logged-in')
+    sidebar.classList.remove('is-admin')
   }
 })
 
