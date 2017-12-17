@@ -107,26 +107,30 @@ activeChannelID.onChange(async channelID => {
 
   const { messages } = result
 
-  let group = messageGroupList.getLast()
   for (const message of messages) {
-    const shouldAddToLast = group &&
-      group.authorID === message.authorID &&
-      group.messages.length < 20
-
-    if (shouldAddToLast) {
-      group.messages.append(message)
-    } else {
-      messageGroupList.append(group = {
-        authorID: message.authorID.toString(),
-        authorUsername: message.authorUsername.toString(),
-        date: new Date(message.date),
-        messages: oof.mutableList(message => {
-          return oof('.message', {}, [message.text.toString()])
-        }, [message])
-      })
-    }
+    appendMessage(message)
   }
 })
+
+function appendMessage(message) {
+  const lastGroup = messageGroupList.getLast()
+  const shouldAddToLast = lastGroup &&
+    lastGroup.authorID === message.authorID &&
+    lastGroup.messages.length < 20
+
+  if (shouldAddToLast) {
+    lastGroup.messages.append(message)
+  } else {
+    messageGroupList.append({
+      authorID: message.authorID.toString(),
+      authorUsername: message.authorUsername.toString(),
+      date: new Date(message.date),
+      messages: oof.mutableList(message => {
+        return oof('.message', {}, [message.text.toString()])
+      }, [message])
+    })
+  }
+}
 
 function addServer(serverHostname) {
   serverDict[serverHostname] = new Dictionary({
