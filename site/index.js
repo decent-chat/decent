@@ -317,35 +317,37 @@ const serverList = oof.mutableList(server => {
 serverList.clear()
 
 function addServer(serverHostname) {
-  serverDict[serverHostname] = new Dictionary({
-    sessionID: null
-  })
+  if (Object.keys(serverDict).includes(serverHostname) === false) {
+    serverDict[serverHostname] = new Dictionary({
+      sessionID: null
+    })
 
-  serverList.append({hostname: serverHostname})
+    serverList.append({hostname: serverHostname})
 
-  const socket = ws.connectTo(serverHostname, {
-    onMessage: (evt, data) => {
-      if (evt !== 'ping for data') {
-        console.log('socket:', evt, data)
+    const socket = ws.connectTo(serverHostname, {
+      onMessage: (evt, data) => {
+        if (evt !== 'ping for data') {
+          console.log('socket:', evt, data)
+        }
+
+        if (evt === 'ping for data') {
+          socket.send(JSON.stringify({evt: 'pong data', data: {
+            sessionID: sessionID.value
+          }}))
+        }
+
+        if (evt === 'received chat message' && data && data.message) {
+          appendMessage(data.message)
+        }
+
+        if (evt === 'created new channel' && data && data.channel) {
+          sidebarChannelList.append(data.channel)
+        }
       }
+    })
 
-      if (evt === 'ping for data') {
-        socket.send(JSON.stringify({evt: 'pong data', data: {
-          sessionID: sessionID.value
-        }}))
-      }
-
-      if (evt === 'received chat message' && data && data.message) {
-        appendMessage(data.message)
-      }
-
-      if (evt === 'created new channel' && data && data.channel) {
-        sidebarChannelList.append(data.channel)
-      }
-    }
-  })
-
-  serverDict.socket = socket
+    serverDict[serverHostname].socket = socket
+  }
 
   activeServerHostname.set(serverHostname)
 }
