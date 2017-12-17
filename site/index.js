@@ -148,6 +148,10 @@ function addServer(serverHostname) {
           sessionID: sessionID.value
         }}))
       }
+
+      if (evt === 'received chat message' && data && data.message) {
+        appendMessage(data.message)
+      }
     }
   })
 
@@ -174,3 +178,44 @@ document.getElementById('login').addEventListener('click', async () => {
     }
   }
 })
+
+document.querySelector('#content .message-editor-button')
+  .addEventListener('click', () => sendMessageFromInput())
+
+const messageInput = document.querySelector('#content .message-editor-input')
+messageInput.addEventListener('keydown', evt => {
+  if (evt.keyCode === 13) {
+    evt.preventDefault()
+    sendMessageFromInput()
+  }
+})
+
+async function sendMessageFromInput() {
+  if (sessionID.value === null) {
+    alert('Please sign in before sending a message.')
+    return
+  }
+
+  if (activeChannelID.value === null) {
+    alert('Please join a channel before sending a message.')
+    return
+  }
+
+  const text = messageInput.value
+
+  messageInput.value = ''
+
+  const result = await post('send-message', {
+    sessionID: sessionID.value,
+    channelID: activeChannelID.value,
+    text
+  })
+
+  if (result.success !== true) {
+    if (confirm(
+      'Failed to send message! Recover it?\nError: ' + result.error
+    )) {
+      messageInput.value = text
+    }
+  }
+}
