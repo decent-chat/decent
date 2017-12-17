@@ -3,6 +3,10 @@
 // Utility functions:
 
 function post(path, dataObj) {
+  if (!serverURL.value) {
+    return {error: 'client error - server URL not specified yet'}
+  }
+
   return fetch(serverURL.value + '/api/' + path, {
     method: 'post',
     headers: {
@@ -13,6 +17,10 @@ function post(path, dataObj) {
 }
 
 function get(path, query = {}) {
+  if (!serverURL.value) {
+    return {error: 'client error - server URL not specified yet'}
+  }
+
   const esc = encodeURIComponent
   const queryString = Object.keys(query).length > 0
     ? '?' + Object.keys(query)
@@ -30,7 +38,6 @@ const serverDict = new Dictionary()
 const activeServerHostname = new Value()
 const activeServer = new Reference(serverDict, activeServerHostname)
 const activeChannelID = new Value()
-
 const sessionID = new Reference(activeServer, 'sessionID')
 
 const serverURL = new Computed([activeServerHostname], hostname => {
@@ -38,6 +45,44 @@ const serverURL = new Computed([activeServerHostname], hostname => {
     return '//' + hostname
   } else {
     return null
+  }
+})
+
+const sessionUser = new Computed([sessionID], async sid => {
+  if (sid === null) {
+    return null
+  }
+
+  const result = await get('session/' + sid)
+
+  // Don't set the session user if we changed to a different user while
+  // downloading the session data!
+  if (sessionID.value !== sid) {
+    return sessionUser.value
+  }
+
+  if (result.success !== true) {
+    console.warn('Error fetching session user:', result)
+    return
+  }
+
+  return result.user
+})
+
+const userInfoDiv = document.querySelector('.user-info')
+
+const sessionUsernameSpan = oof.mutable(name => name, 'Unnamed')
+  .mount('.user-info-name')
+
+sessionUser.onChange(user => {
+  if (user) {
+    userInfoDiv.classList.add('is-logged-in')
+    userInfoDiv.classList.remove('is-logged-out')
+    sessionUsernameSpan.state = user.username
+    sessionUsernameSpan.update()
+  } else {
+    userInfoDiv.classList.add('is-logged-out')
+    userInfoDiv.classList.remove('is-logged-in')
   }
 })
 
@@ -164,7 +209,8 @@ addServer('localhost:2999')
 
 document.getElementById('login').addEventListener('click', async () => {
   if (activeServer.value === null) {
-    alert('Excuse me, you aren\'t on a server???')
+    alert('Please select a server before logging in.')
+    return
   }
 
   const username = prompt('Username?')
@@ -177,6 +223,14 @@ document.getElementById('login').addEventListener('click', async () => {
       activeServer.value.sessionID = result.sessionID
     }
   }
+})
+
+document.getElementById('logout').addEventListener('click', async () => {
+  if (activeServer.value === null || sessionID.value === null) {
+    return
+  }
+
+  activeServer.value.sessionID = null
 })
 
 document.querySelector('#content .message-editor-button')
