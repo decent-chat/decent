@@ -30,8 +30,5 @@
   "bugs": {
     "url": "https://github.com/towerofnix/bantisocial/issues"
   },
-  "homepage": "https://github.com/towerofnix/bantisocial#readme",
-  "scripts": {
-    "build": "riot --config riot.config.js"
-  }
+  "homepage": "https://github.com/towerofnix/bantisocial#readme"
 }
