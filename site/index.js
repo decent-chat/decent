@@ -2,9 +2,8 @@
 
 // Utility functions:
 
-function post(path, dataObj, serverHostname = activeServerHostname) {
-  const serverURL = '//' + Changeable.valueOf(serverHostname)
-  return fetch(serverURL + '/api/' + path, {
+function post(path, dataObj) {
+  return fetch(serverURL.value + '/api/' + path, {
     method: 'post',
     headers: {
       'Content-Type': 'application/json'
@@ -13,7 +12,7 @@ function post(path, dataObj, serverHostname = activeServerHostname) {
   }).then(res => res.json())
 }
 
-function get(path, dataObj, serverHostname = activeServerHostname) {
+function get(path, dataObj) {
   const esc = encodeURIComponent
   const queryString = Object.keys(query).length > 0
     ? '?' + Object.keys(query)
@@ -21,9 +20,7 @@ function get(path, dataObj, serverHostname = activeServerHostname) {
       .join('&')
     : ''
 
-  // TODO: This should probably be a computed lol
-  const serverURL = '//' + Changeable.valueOf(serverHostname)
-  return fetch(serverURL + '/api/' + path + queryString)
+  return fetch(serverURL.value + '/api/' + path + queryString)
     .then(res => res.json())
 }
 
@@ -33,6 +30,10 @@ const serverDict = new Dictionary()
 const activeServerHostname = new Value()
 const currentServer = new Reference(serverDict, activeServerHostname)
 const sessionID = new Reference(currentServer, 'sessionID')
+
+const serverURL = new Computed(
+  [activeServerHostname],
+  hostname => '//' + hostname)
 
 sessionID.onChange(id => {
   console.log('New session ID:', id)
