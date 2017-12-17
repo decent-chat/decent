@@ -12,7 +12,7 @@ function post(path, dataObj) {
   }).then(res => res.json())
 }
 
-function get(path, dataObj) {
+function get(path, query = {}) {
   const esc = encodeURIComponent
   const queryString = Object.keys(query).length > 0
     ? '?' + Object.keys(query)
@@ -28,15 +28,41 @@ function get(path, dataObj) {
 
 const serverDict = new Dictionary()
 const activeServerHostname = new Value()
-const currentServer = new Reference(serverDict, activeServerHostname)
-const sessionID = new Reference(currentServer, 'sessionID')
+const activeServer = new Reference(serverDict, activeServerHostname)
 
-const serverURL = new Computed(
-  [activeServerHostname],
-  hostname => '//' + hostname)
+const sessionID = new Reference(activeServer, 'sessionID')
 
-sessionID.onChange(id => {
-  console.log('New session ID:', id)
+const serverURL = new Computed([activeServerHostname], hostname => {
+  if (hostname) {
+    return '//' + hostname
+  } else {
+    return null
+  }
+})
+
+const serverChannels = new Computed([serverURL], async url => {
+  if (url) {
+    return (await get('channel-list')).channels
+  } else {
+    return []
+  }
+})
+
+const sidebarChannelList = oof.mutableList(channel => {
+  return oof('a.list-item.list-item-channel', {
+    href: '#'
+  }, [channel.name])
+    .on('click', () => {
+      console.log('View channel', channel.id)
+    })
+}).mount('#sidebar-channel-list')
+
+serverChannels.onChange(channels => {
+  sidebarChannelList.clear()
+
+  for (const channel of channels) {
+    sidebarChannelList.append(channel)
+  }
 })
 
 function addServer(serverHostname) {
@@ -50,7 +76,7 @@ function addServer(serverHostname) {
 addServer('localhost:2999')
 
 document.getElementById('login').addEventListener('click', async () => {
-  if (currentServer.value === null) {
+  if (activeServer.value === null) {
     alert('Excuse me, you aren\'t on a server???')
   }
 
@@ -61,7 +87,7 @@ document.getElementById('login').addEventListener('click', async () => {
     const result = await post('login', {username, password})
 
     if (result.success === true) {
-      currentServer.value.sessionID = result.sessionID
+      activeServer.value.sessionID = result.sessionID
     }
   }
 })
