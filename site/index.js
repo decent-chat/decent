@@ -1,6 +1,6 @@
 'use strict'
 
-// Utility functions:
+// Utility functions //////////////////////////////////////////////////////////
 
 async function fetchHelper(path, fetchConfig = {}) {
   if (!serverURL.value) {
@@ -54,7 +54,7 @@ function get(path, query = {}) {
   return fetchHelper(path + queryString)
 }
 
-// The actual client code:
+// General client state ///////////////////////////////////////////////////////
 
 const serverDict = new Dictionary()
 const activeServerHostname = new Value()
@@ -86,6 +86,46 @@ const sessionUser = new Computed([sessionID], async sid => {
   return result.user
 })
 
+// WebSocket event handling and setup /////////////////////////////////////////
+
+function addServer(serverHostname) {
+  if (Object.keys(serverDict).includes(serverHostname) === false) {
+    serverDict[serverHostname] = new Dictionary({
+      sessionID: null
+    })
+
+    serverList.append({hostname: serverHostname})
+
+    const socket = ws.connectTo(serverHostname, {
+      onMessage: (evt, data) => {
+        if (evt !== 'ping for data') {
+          console.log('socket:', evt, data)
+        }
+
+        if (evt === 'ping for data') {
+          socket.send(JSON.stringify({evt: 'pong data', data: {
+            sessionID: sessionID.value
+          }}))
+        }
+
+        if (evt === 'received chat message' && data && data.message) {
+          appendMessage(data.message)
+        }
+
+        if (evt === 'created new channel' && data && data.channel) {
+          sidebarChannelList.append(data.channel)
+        }
+      }
+    })
+
+    serverDict[serverHostname].socket = socket
+  }
+
+  activeServerHostname.set(serverHostname)
+}
+
+// Session user info //////////////////////////////////////////////////////////
+
 const sidebar = document.querySelector('#server-sidebar')
 
 const sessionUsernameSpan = oof.mutable(name => name, 'Unnamed')
@@ -110,6 +150,8 @@ sessionUser.onChange(user => {
   }
 })
 
+// Channel list, add channel //////////////////////////////////////////////////
+
 const sidebarChannelList = oof.mutableList(channel => {
   return oof('a.list-item.list-item-channel', {
     href: '#'
@@ -133,6 +175,55 @@ serverURL.onChange(async url => {
     sidebarChannelList.append(channel)
   }
 })
+
+document.getElementById('create-channel').addEventListener('click', async () => {
+  if (!sessionUser.value || sessionUser.value.permissionLevel !== 'admin') {
+    alert('You must be a server admin to create a channel.')
+    return
+  }
+
+  const name = prompt('Channel name?')
+
+  if (name) {
+    await post('create-channel', {
+      name, sessionID: sessionID.value
+    })
+  }
+})
+
+// Server list, add server ////////////////////////////////////////////////////
+
+const serverCurrent = oof.mutable(host => host, '(no server)')
+  .mount(document.querySelector('.server-dropdown-current'))
+
+activeServerHostname.onChange(hostname => {
+  serverCurrent.state = hostname
+  serverCurrent.update()
+})
+
+const serverDropdown = document.querySelector('.server-dropdown')
+serverDropdown.addEventListener('click', () => {
+  serverDropdown.classList.toggle('open')
+})
+
+const serverList = oof.mutableList(server => {
+  return oof('.server-dropdown-option', {}, [server.hostname])
+    .on('click', () => {
+      activeServerHostname.set(server.hostname)
+    })
+}).mount(serverDropdown.querySelector('.server-dropdown-panel'))
+
+serverList.clear()
+
+document.getElementById('add-server').addEventListener('click', () => {
+  const host = prompt('Host URL?')
+
+  if (host) {
+    addServer(host)
+  }
+})
+
+// Message groups /////////////////////////////////////////////////////////////
 
 const messageGroupList = oof.mutableList(messageGroup => {
   const el = oof('.message-group', {}, [
@@ -195,6 +286,51 @@ function appendMessage(message) {
   }
 }
 
+// Sending messages ///////////////////////////////////////////////////////////
+
+document.querySelector('#content .message-editor-button')
+  .addEventListener('click', () => sendMessageFromInput())
+
+const messageInput = document.querySelector('#content .message-editor-input')
+messageInput.addEventListener('keydown', evt => {
+  if (evt.keyCode === 13) {
+    evt.preventDefault()
+    sendMessageFromInput()
+  }
+})
+
+async function sendMessageFromInput() {
+  if (!sessionID.value) {
+    alert('Please sign in before sending a message.')
+    return
+  }
+
+  if (!activeChannelID.value) {
+    alert('Please join a channel before sending a message.')
+    return
+  }
+
+  const text = messageInput.value
+
+  messageInput.value = ''
+
+  try {
+    await post('send-message', {
+      sessionID: sessionID.value,
+      channelID: activeChannelID.value,
+      text
+    })
+  } catch(error) {
+    if (confirm(
+      'Failed to send message! Recover it?\nError: ' + error.message
+    )) {
+      messageInput.value = text
+    }
+  }
+}
+
+// Login, logout, register ////////////////////////////////////////////////////
+
 document.getElementById('login').addEventListener('click', async () => {
   if (!activeServer.value) {
     alert('Please select a server before logging in.')
@@ -241,127 +377,7 @@ document.getElementById('register').addEventListener('click', async () => {
   }
 })
 
-document.querySelector('#content .message-editor-button')
-  .addEventListener('click', () => sendMessageFromInput())
-
-const messageInput = document.querySelector('#content .message-editor-input')
-messageInput.addEventListener('keydown', evt => {
-  if (evt.keyCode === 13) {
-    evt.preventDefault()
-    sendMessageFromInput()
-  }
-})
-
-async function sendMessageFromInput() {
-  if (!sessionID.value) {
-    alert('Please sign in before sending a message.')
-    return
-  }
-
-  if (!activeChannelID.value) {
-    alert('Please join a channel before sending a message.')
-    return
-  }
-
-  const text = messageInput.value
-
-  messageInput.value = ''
-
-  try {
-    await post('send-message', {
-      sessionID: sessionID.value,
-      channelID: activeChannelID.value,
-      text
-    })
-  } catch(error) {
-    if (confirm(
-      'Failed to send message! Recover it?\nError: ' + error.message
-    )) {
-      messageInput.value = text
-    }
-  }
-}
-
-document.getElementById('create-channel').addEventListener('click', async () => {
-  if (!sessionUser.value || sessionUser.value.permissionLevel !== 'admin') {
-    alert('You must be a server admin to create a channel.')
-    return
-  }
-
-  const name = prompt('Channel name?')
-
-  if (name) {
-    await post('create-channel', {
-      name, sessionID: sessionID.value
-    })
-  }
-})
-
-const serverCurrent = oof.mutable(host => host, '(no server)')
-  .mount(document.querySelector('.server-dropdown-current'))
-
-activeServerHostname.onChange(hostname => {
-  serverCurrent.state = hostname
-  serverCurrent.update()
-})
-
-const serverDropdown = document.querySelector('.server-dropdown')
-serverDropdown.addEventListener('click', () => {
-  serverDropdown.classList.toggle('open')
-})
-
-const serverList = oof.mutableList(server => {
-  return oof('.server-dropdown-option', {}, [server.hostname])
-    .on('click', () => {
-      activeServerHostname.set(server.hostname)
-    })
-}).mount(serverDropdown.querySelector('.server-dropdown-panel'))
-
-serverList.clear()
-
-function addServer(serverHostname) {
-  if (Object.keys(serverDict).includes(serverHostname) === false) {
-    serverDict[serverHostname] = new Dictionary({
-      sessionID: null
-    })
-
-    serverList.append({hostname: serverHostname})
-
-    const socket = ws.connectTo(serverHostname, {
-      onMessage: (evt, data) => {
-        if (evt !== 'ping for data') {
-          console.log('socket:', evt, data)
-        }
-
-        if (evt === 'ping for data') {
-          socket.send(JSON.stringify({evt: 'pong data', data: {
-            sessionID: sessionID.value
-          }}))
-        }
-
-        if (evt === 'received chat message' && data && data.message) {
-          appendMessage(data.message)
-        }
-
-        if (evt === 'created new channel' && data && data.channel) {
-          sidebarChannelList.append(data.channel)
-        }
-      }
-    })
-
-    serverDict[serverHostname].socket = socket
-  }
-
-  activeServerHostname.set(serverHostname)
-}
-
-document.getElementById('add-server').addEventListener('click', () => {
-  const host = prompt('Host URL?')
-
-  if (host) {
-    addServer(host)
-  }
-})
+// Final initialization ///////////////////////////////////////////////////////
 
 if (!location.hostname.endsWith('.github.io')) {
   addServer(location.host) // .host includes the port!
