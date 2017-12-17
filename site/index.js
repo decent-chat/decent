@@ -183,40 +183,6 @@ function appendMessage(message) {
   }
 }
 
-function addServer(serverHostname) {
-  serverDict[serverHostname] = new Dictionary({
-    sessionID: null
-  })
-
-  const socket = ws.connectTo(serverHostname, {
-    onMessage: (evt, data) => {
-      if (evt !== 'ping for data') {
-        console.log('socket:', evt, data)
-      }
-
-      if (evt === 'ping for data') {
-        socket.send(JSON.stringify({evt: 'pong data', data: {
-          sessionID: sessionID.value
-        }}))
-      }
-
-      if (evt === 'received chat message' && data && data.message) {
-        appendMessage(data.message)
-      }
-
-      if (evt === 'created new channel' && data && data.channel) {
-        sidebarChannelList.append(data.channel)
-      }
-    }
-  })
-
-  serverDict.socket = socket
-
-  activeServerHostname.set(serverHostname)
-}
-
-addServer('localhost:2999')
-
 document.getElementById('login').addEventListener('click', async () => {
   if (!activeServer.value) {
     alert('Please select a server before logging in.')
@@ -316,3 +282,71 @@ document.getElementById('create-channel').addEventListener('click', async () => 
     })
   }
 })
+
+const serverCurrent = oof.mutable(host => host, '(no server)')
+  .mount(document.querySelector('.server-dropdown-current'))
+
+activeServerHostname.onChange(hostname => {
+  serverCurrent.state = hostname
+  serverCurrent.update()
+})
+
+const serverDropdown = document.querySelector('.server-dropdown')
+serverDropdown.addEventListener('click', () => {
+  serverDropdown.classList.toggle('open')
+})
+
+const serverList = oof.mutableList(server => {
+  return oof('.server-dropdown-option', {}, [server.hostname])
+    .on('click', () => {
+      activeServerHostname.set(server.hostname)
+    })
+}).mount(serverDropdown.querySelector('.server-dropdown-panel'))
+
+serverList.clear()
+
+function addServer(serverHostname) {
+  serverDict[serverHostname] = new Dictionary({
+    sessionID: null
+  })
+
+  serverList.append({hostname: serverHostname})
+
+  const socket = ws.connectTo(serverHostname, {
+    onMessage: (evt, data) => {
+      if (evt !== 'ping for data') {
+        console.log('socket:', evt, data)
+      }
+
+      if (evt === 'ping for data') {
+        socket.send(JSON.stringify({evt: 'pong data', data: {
+          sessionID: sessionID.value
+        }}))
+      }
+
+      if (evt === 'received chat message' && data && data.message) {
+        appendMessage(data.message)
+      }
+
+      if (evt === 'created new channel' && data && data.channel) {
+        sidebarChannelList.append(data.channel)
+      }
+    }
+  })
+
+  serverDict.socket = socket
+
+  activeServerHostname.set(serverHostname)
+}
+
+document.getElementById('add-server').addEventListener('click', () => {
+  const host = prompt('Host URL?')
+
+  if (host) {
+    addServer(host)
+  }
+})
+
+if (!location.hostname.endsWith('.github.io')) {
+  addServer(location.host) // .host includes the port!
+}
