@@ -75,6 +75,11 @@ body {
   color: var(--gray-300);
 }
 
+.user-info.is-logged-in .logged-in { display: initial; }
+.user-info.is-logged-out .logged-in { display: none; }
+.user-info.is-logged-in .logged-out { display: none; }
+.user-info.is-logged-out .logged-out { display: initial; }
+
 .user-info-text {
   margin-right: auto;
 }
