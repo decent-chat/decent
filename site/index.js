@@ -29,6 +29,7 @@ function get(path, query = {}) {
 const serverDict = new Dictionary()
 const activeServerHostname = new Value()
 const activeServer = new Reference(serverDict, activeServerHostname)
+const activeChannelID = new Value()
 
 const sessionID = new Reference(activeServer, 'sessionID')
 
@@ -53,7 +54,7 @@ const sidebarChannelList = oof.mutableList(channel => {
     href: '#'
   }, [channel.name])
     .on('click', () => {
-      console.log('View channel', channel.id)
+      activeChannelID.set(channel.id)
     })
 }).mount('#sidebar-channel-list')
 
@@ -62,6 +63,68 @@ serverChannels.onChange(channels => {
 
   for (const channel of channels) {
     sidebarChannelList.append(channel)
+  }
+})
+
+const messageGroupList = oof.mutableList(messageGroup => {
+  const el = oof('.message-group', {}, [
+    oof('img.message-group-icon', {
+      src: 'https://cdn2.scratch.mit.edu/get_image/user/907223_90x90.png'
+    }),
+    oof('.message-group-content', {}, [
+      oof('.message-group-info', {}, [
+        oof('.message-group-name', {}, [messageGroup.authorUsername]),
+        oof('time.message-group-date', {}, [messageGroup.date.toString()])
+      ]),
+      oof('.message-group-messages')
+    ])
+  ])
+
+  messageGroup.messages.mount(el.querySelector('.message-group-messages'))
+
+  return el
+}).mount('#content > .messages')
+
+activeChannelID.onChange(async channelID => {
+  messageGroupList.clear()
+
+  const result = await get(`channel/${channelID}/latest-messages`)
+
+  // Cancel if the user changed the selected channel while we were downloading
+  // the latest messages.
+  if (activeChannelID.value !== channelID) {
+    return
+  }
+
+  if (result.success !== true) {
+    console.warn('Error fetching latest messages:', result)
+    return
+  }
+
+  // Clear the list again, just in case the user double-clicked, which would
+  // cause duplicate messages to show up.
+  messageGroupList.clear()
+
+  const { messages } = result
+
+  let group = messageGroupList.getLast()
+  for (const message of messages) {
+    const shouldAddToLast = group &&
+      group.authorID === message.authorID &&
+      group.messages.length < 20
+
+    if (shouldAddToLast) {
+      group.messages.append(message)
+    } else {
+      messageGroupList.append(group = {
+        authorID: message.authorID.toString(),
+        authorUsername: message.authorUsername.toString(),
+        date: new Date(message.date),
+        messages: oof.mutableList(message => {
+          return oof('.message', {}, [message.text.toString()])
+        }, [message])
+      })
+    }
   }
 })
 
