@@ -2,25 +2,37 @@
 
 // Utility functions:
 
-function post(path, dataObj) {
+async function fetchHelper(path, fetchConfig = {}) {
   if (!serverURL.value) {
     return {error: 'client error - server URL not specified yet'}
   }
 
-  return fetch(serverURL.value + '/api/' + path, {
+  const base = serverURL.value
+
+  const result =
+    await fetch(base + '/api/' + path, fetchConfig)
+    .then(res => res.json())
+
+  // There's no way we can gracefully stop the above caller, so
+  // we'll just throw an error.
+  if (serverURL.value !== base) {
+    throw new Error('Changed server while fetching ' + path)
+  }
+
+  return result
+}
+
+function post(path, dataObj) {
+  return fetchHelper(path, {
     method: 'post',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(dataObj)
-  }).then(res => res.json())
+  })
 }
 
 function get(path, query = {}) {
-  if (!serverURL.value) {
-    return {error: 'client error - server URL not specified yet'}
-  }
-
   const esc = encodeURIComponent
   const queryString = Object.keys(query).length > 0
     ? '?' + Object.keys(query)
@@ -28,8 +40,7 @@ function get(path, query = {}) {
       .join('&')
     : ''
 
-  return fetch(serverURL.value + '/api/' + path + queryString)
-    .then(res => res.json())
+  return fetchHelper(path + queryString)
 }
 
 // The actual client code:
