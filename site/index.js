@@ -318,6 +318,7 @@ async function sendMessageFromInput() {
       text
     })
   } catch(error) {
+    console.error(error)
     if (confirm(
       'Failed to send message! Recover it?\nError: ' + error.message
     )) {
@@ -339,9 +340,10 @@ document.getElementById('login').addEventListener('click', async () => {
 
   if (username && password) {
     try {
-      await post('login', {username, password})
+      const result = await post('login', {username, password})
       activeServer.value.sessionID = result.sessionID
     } catch (error) {
+      console.error(error)
       alert('Error logging in: ' + error.message)
     }
   }
@@ -369,6 +371,7 @@ document.getElementById('register').addEventListener('click', async () => {
       const result = await post('register', {username, password})
       alert(`Account ${username} successfully registered! Please click on the login button.`)
     } catch (error) {
+      console.error(error)
       alert('Error registering: ' + error.message)
     }
   }
