@@ -24,7 +24,8 @@ You will need:
 ### Installing/running
 
 ```
-$ git clone https://github.com/towerofnix/bantisocial.git
+# Note --recursive! That's important.
+$ git clone --recursive https://github.com/towerofnix/bantisocial.git
 $ cd bantisocial
 $ npm install
 $ node .
