@@ -93,14 +93,6 @@ sessionUser.onChange(user => {
   }
 })
 
-const serverChannels = new Computed([serverURL], async url => {
-  if (url) {
-    return (await get('channel-list')).channels
-  } else {
-    return []
-  }
-})
-
 const sidebarChannelList = oof.mutableList(channel => {
   return oof('a.list-item.list-item-channel', {
     href: '#'
@@ -110,7 +102,14 @@ const sidebarChannelList = oof.mutableList(channel => {
     })
 }).mount('#sidebar-channel-list')
 
-serverChannels.onChange(channels => {
+serverURL.onChange(async url => {
+  let channels
+  if (url) {
+    channels = (await get('channel-list')).channels
+  } else {
+    channels = []
+  }
+
   sidebarChannelList.clear()
 
   for (const channel of channels) {
@@ -203,6 +202,10 @@ function addServer(serverHostname) {
 
       if (evt === 'received chat message' && data && data.message) {
         appendMessage(data.message)
+      }
+
+      if (evt === 'created new channel' && data && data.channel) {
+        sidebarChannelList.append(data.channel)
       }
     }
   })
@@ -298,3 +301,18 @@ async function sendMessageFromInput() {
     }
   }
 }
+
+document.getElementById('create-channel').addEventListener('click', async () => {
+  if (!sessionUser.value || sessionUser.value.permissionLevel !== 'admin') {
+    alert('You must be a server admin to create a channel.')
+    return
+  }
+
+  const name = prompt('Channel name?')
+
+  if (name) {
+    await post('create-channel', {
+      name, sessionID: sessionID.value
+    })
+  }
+})
