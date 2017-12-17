@@ -208,7 +208,7 @@ function addServer(serverHostname) {
 addServer('localhost:2999')
 
 document.getElementById('login').addEventListener('click', async () => {
-  if (activeServer.value === null) {
+  if (!activeServer.value) {
     alert('Please select a server before logging in.')
     return
   }
@@ -226,11 +226,29 @@ document.getElementById('login').addEventListener('click', async () => {
 })
 
 document.getElementById('logout').addEventListener('click', async () => {
-  if (activeServer.value === null || sessionID.value === null) {
+  if (!activeServer.value || !sessionID.value) {
     return
   }
 
   activeServer.value.sessionID = null
+})
+
+document.getElementById('register').addEventListener('click', async () => {
+  if (!activeServer.value) {
+    alert('Please select a server before registering.')
+    return
+  }
+
+  const username = prompt('Username?')
+  const password = prompt('Password? (PLEASE be careful not to use a sensitive password if you are on an HTTP connection.)')
+
+  if (username && password) {
+    const result = await post('register', {username, password})
+
+    if (result.success === true) {
+      alert(`Account ${username} successfully registered! Please click on the login button.`)
+    }
+  }
 })
 
 document.querySelector('#content .message-editor-button')
@@ -245,12 +263,12 @@ messageInput.addEventListener('keydown', evt => {
 })
 
 async function sendMessageFromInput() {
-  if (sessionID.value === null) {
+  if (!sessionID.value) {
     alert('Please sign in before sending a message.')
     return
   }
 
-  if (activeChannelID.value === null) {
+  if (!activeChannelID.value) {
     alert('Please join a channel before sending a message.')
     return
   }
