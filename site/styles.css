@@ -1,7 +1,6 @@
 /****************************************
 **************** GENERAL ****************
 ****************************************/
-@import url('https://fonts.googleapis.com/css?family=Noto+Sans:400,700');
 
 :root {
   /* Colors */
@@ -20,6 +19,8 @@
   --green-a3: rgba(38, 165, 39, 0.3); /* --green with alpha of 0.3 */
 
   --red: #f43259;
+
+  --font-stack: system-ui, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, Lato, 'Helvetica Neue', sans-serif;
 }
 
 * {
@@ -68,7 +69,7 @@ body {
   align-items: center;
   padding: 0 16px;
 
-  font-family: 'Noto Sans', sans-serif;
+  font-family: var(--font-stack);
   font-size: 14px;
   font-weight: normal;
   color: var(--gray-300);
@@ -89,7 +90,7 @@ body {
   padding: 4px 8px;
   border-radius: 4px;
   cursor: pointer;
-  font-family: 'Noto Sans', sans-serif;
+  font-family: var(--font-stack);
   font-size: 12px;
   border: none;
 }
@@ -127,7 +128,7 @@ body {
 }
 
 .sidebar-subtitle h4 {
-  font-family: 'Noto Sans', sans-serif;
+  font-family: var(--font-stack);
   font-size: 14px;
   font-weight: bold;
   text-transform: uppercase;
@@ -140,7 +141,7 @@ body {
   margin-left: auto;
   padding: 4px 8px;
 
-  font-family: 'Noto Sans', sans-serif;
+  font-family: var(--font-stack);
   font-size: 12px;
   color: var(--green);
 
@@ -170,7 +171,7 @@ body {
 }
 
 .server-dropdown-current {
-  font-family: 'Noto Sans', sans-serif;
+  font-family: var(--font-stack);
   font-weight: normal;
   color: var(--gray-100);
 }
@@ -208,7 +209,7 @@ body {
 .server-dropdown-option {
   padding: 8px 16px;
 
-  font-family: 'Noto Sans', sans-serif;
+  font-family: var(--font-stack);
   font-weight: normal;
   color: var(--gray-100);
   border-radius: 4px;
@@ -261,7 +262,7 @@ body {
   padding: 8px 16px;
   margin-bottom: 4px;
 
-  font-family: 'Noto Sans', sans-serif;
+  font-family: var(--font-stack);
   font-size: 16px;
   font-weight: normal;
   color: var(--gray-100);
@@ -362,7 +363,7 @@ body {
   align-items: flex-start;
   margin-bottom: 16px;
 
-  font-family: 'Noto Sans', sans-serif;
+  font-family: var(--font-stack);
   font-size: 16px;
   font-weight: normal;
   color: var(--gray-100);
@@ -444,7 +445,7 @@ body {
   max-height: 400px;
   overflow-y: auto;
 
-  font-family: 'Noto Sans', sans-serif;
+  font-family: var(--font-stack);
   font-size: 16px;
   font-weight: normal;
   color: var(--gray-100);
@@ -509,7 +510,7 @@ body {
   flex-grow: 1;
   height: 52px;
 
-  font-family: 'Noto Sans', sans-serif;
+  font-family: var(--font-stack);
   color: var(--gray-100);
 
   background: var(--gray-700);
@@ -602,7 +603,7 @@ body {
 }
 
 .user-list-item-name {
-  font-family: 'Noto Sans', sans-serif;
+  font-family: var(--font-stack);
   font-size: 16px;
   font-weight: normal;
   color: var(--gray-100);
@@ -687,7 +688,7 @@ body {
   padding-bottom: 16px;
   background: var(--gray-700);
 
-  font-family: 'Noto Sans', sans-serif;
+  font-family: var(--font-stack);
   font-size: 24px;
   font-weight: normal;
   color: var(--gray-100);
@@ -741,7 +742,7 @@ body {
 
 .styledInput label {
   display: block;
-  font-family: 'Noto Sans', sans-serif;
+  font-family: var(--font-stack);
   color: var(--gray-300);
   font-weight: bold;
   font-size: 14px;
@@ -753,7 +754,7 @@ body {
   width: 300px;
   padding: 8px 16px;
 
-  font-family: 'Noto Sans', sans-serif;
+  font-family: var(--font-stack);
   font-size: 14px;
 
   border: 1px solid var(--gray-500);
@@ -771,7 +772,7 @@ body {
   border-radius: 4px;
   border: none;
 
-  font-family: 'Noto Sans', sans-serif;
+  font-family: var(--font-stack);
   font-size: 16px;
   color: var(--gray-900);
 
