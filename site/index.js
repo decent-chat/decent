@@ -4,7 +4,9 @@
 
 async function fetchHelper(path, fetchConfig = {}) {
   if (!serverURL.value) {
-    return {error: 'client error - server URL not specified yet'}
+    throw new Error({
+      error: 'client error - server URL not specified yet'
+    })
   }
 
   const base = serverURL.value
@@ -16,7 +18,16 @@ async function fetchHelper(path, fetchConfig = {}) {
   // There's no way we can gracefully stop the above caller, so
   // we'll just throw an error.
   if (serverURL.value !== base) {
-    throw new Error('Changed server while fetching ' + path)
+    const error = 'client error - changed server while fetching'
+    throw Object.assign(
+      new Error(error + ' ' + path),
+      {data: {error, path}})
+  }
+
+  if (result.error) {
+    throw Object.assign(
+      new Error(result.error),
+      {data: result})
   }
 
   return result
@@ -70,11 +81,6 @@ const sessionUser = new Computed([sessionID], async sid => {
   // downloading the session data!
   if (sessionID.value !== sid) {
     return sessionUser.value
-  }
-
-  if (result.success !== true) {
-    console.warn('Error fetching session user:', result)
-    return
   }
 
   return result.user
@@ -158,11 +164,6 @@ activeChannelID.onChange(async channelID => {
     return
   }
 
-  if (result.success !== true) {
-    console.warn('Error fetching latest messages:', result)
-    return
-  }
-
   // Clear the list again, just in case the user double-clicked, which would
   // cause duplicate messages to show up.
   messageGroupList.clear()
@@ -204,10 +205,11 @@ document.getElementById('login').addEventListener('click', async () => {
   const password = prompt('Password? (Insert speel about DON\'T SEND SENSITIVE PASSWORDS OVER HTTP here)')
 
   if (username && password) {
-    const result = await post('login', {username, password})
-
-    if (result.success === true) {
+    try {
+      await post('login', {username, password})
       activeServer.value.sessionID = result.sessionID
+    } catch (error) {
+      alert('Error logging in: ' + error.message)
     }
   }
 })
@@ -230,10 +232,11 @@ document.getElementById('register').addEventListener('click', async () => {
   const password = prompt('Password? (PLEASE be careful not to use a sensitive password if you are on an HTTP connection.)')
 
   if (username && password) {
-    const result = await post('register', {username, password})
-
-    if (result.success === true) {
+    try {
+      const result = await post('register', {username, password})
       alert(`Account ${username} successfully registered! Please click on the login button.`)
+    } catch (error) {
+      alert('Error registering: ' + error.message)
     }
   }
 })
@@ -264,15 +267,15 @@ async function sendMessageFromInput() {
 
   messageInput.value = ''
 
-  const result = await post('send-message', {
-    sessionID: sessionID.value,
-    channelID: activeChannelID.value,
-    text
-  })
-
-  if (result.success !== true) {
+  try {
+    await post('send-message', {
+      sessionID: sessionID.value,
+      channelID: activeChannelID.value,
+      text
+    })
+  } catch(error) {
     if (confirm(
-      'Failed to send message! Recover it?\nError: ' + result.error
+      'Failed to send message! Recover it?\nError: ' + error.message
     )) {
       messageInput.value = text
     }
