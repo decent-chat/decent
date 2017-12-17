@@ -264,6 +264,13 @@ activeChannelID.onChange(async channelID => {
 })
 
 function appendMessage(message) {
+  // Check if we're scrolled to the bottom. We need to know that to decide whether
+  // or not to scroll down after appending this message (which we do to keep up
+  // with chat). There's a threshold so you don't have to be scrolled to *exactly*
+  // the bottom of the element.
+  const el = document.querySelector('#content .messages')
+  const wasScrolledToBottom = el.scrollTop > el.scrollHeight - el.offsetHeight - 25
+
   const lastGroup = messageGroupList.getLast()
   const shouldAddToLast = lastGroup &&
     lastGroup.authorID === message.authorID &&
@@ -280,6 +287,10 @@ function appendMessage(message) {
         return oof('.message', {}, [message.text.toString()])
       }, [message])
     })
+  }
+
+  if (wasScrolledToBottom) {
+    el.scrollTop = el.scrollHeight
   }
 }
 
