@@ -137,6 +137,22 @@ function addServer(serverHostname) {
     sessionID: null
   })
 
+  const socket = ws.connectTo(serverHostname, {
+    onMessage: (evt, data) => {
+      if (evt !== 'ping for data') {
+        console.log('socket:', evt, data)
+      }
+
+      if (evt === 'ping for data') {
+        socket.send(JSON.stringify({evt: 'pong data', data: {
+          sessionID: sessionID.value
+        }}))
+      }
+    }
+  })
+
+  serverDict.socket = socket
+
   activeServerHostname.set(serverHostname)
 }
 

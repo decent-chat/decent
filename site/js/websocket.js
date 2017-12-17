@@ -3,17 +3,18 @@
 const ws = {
   pool: new Map(), // String serverURL -> WebSocket | 'reconnecting' | 'closed'
 
-  init() {
-    RiotControl.on('switch_server', serverURL => ws.connectTo(serverURL))
-  },
-
-  connectTo(serverURL, reuseExisting = true) {
+  connectTo(serverURL, {
+    reuseExisting = true,
+    onOpen = () => {},
+    onMessage = (evt, data) => {},
+    onClose = evt => {},
+  } = {}) {
     const pool = ws.pool
 
     if (pool.get(serverURL)) {
       if (reuseExisting) {
         // We already have a WebSocket connected to this
-        // server, so we can just ignore it.
+        // server, so we can just use that one.
         return pool.get(serverURL)
       } else {
         pool.get(serverURL).close()
@@ -27,13 +28,13 @@ const ws = {
     const socket = new WebSocket('ws://' + serverURL)
 
     socket.addEventListener('open', () => {
-      RiotControl.trigger('socket_open', { serverURL, socket })
+      onOpen()
     })
 
     socket.addEventListener('message', event => {
       const { evt, data } = JSON.parse(event.data)
 
-      RiotControl.trigger('socket_message', { serverURL, socket, evt, data })
+      onMessage(evt, data)
     })
 
     socket.addEventListener('close', evt => {
@@ -44,7 +45,7 @@ const ws = {
         ws.tryReconnect(serverURL)
       }
 
-      RiotControl.trigger('socket_close', { serverURL, socket, evt })
+      onClose(evt)
     })
 
     pool.set(serverURL, socket)
@@ -65,10 +66,10 @@ const ws = {
         console.info('Re-established WebSocket connection', { serverURL })
       } catch (error) {
         console.error('Could not re-establish WebSocket connection', { serverURL, error })
-        setTimeout(doReconnect(n + 1), n * SECOND) // Retry after n seconds.
+        setTimeout(doReconnect(n + 1), n * 1000) // Retry after n seconds.
       }
     }
 
-    setTimeout(doReconnect(2), 2 * SECOND)
+    setTimeout(doReconnect(2), 2000)
   },
 }
