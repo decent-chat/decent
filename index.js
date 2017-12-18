@@ -44,7 +44,7 @@ async function main() {
   const port = parseInt(process.argv[2]) || 3000
   await new Promise(resolve => httpServer.listen(port, resolve))
 
-  console.log(`bantisocial - listening on port ${port} (try "license" or "help" for info)`)
+  console.log(`decent - listening on port ${port} (try "license" or "help" for info)`)
 
   const rl = readline.createInterface({
     input: process.stdin,
@@ -65,7 +65,7 @@ async function main() {
         case '?': {
           console.log(fixWS`
             This is the administrator command line interface for
-            the bantisocial chat system. This is NOT a text-based
+            the Decent chat system. This is NOT a text-based
             interface for chatting; use an actual client for that.
             Commands:
             - license: shows license information (hint: it's GPL 3.0!)
@@ -83,7 +83,7 @@ async function main() {
 
         case 'license': {
           console.log(fixWS`
-            bantisocial - actually free rip-off of Discord
+            Decent - the decentralized chat system that's absolutely okay
 
             This program is free software: you can redistribute it and/or modify
             it under the terms of the GNU General Public License as published by

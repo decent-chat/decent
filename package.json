@@ -11,24 +11,24 @@
     "uuid": "^3.1.0",
     "ws": "^3.3.2"
   },
-  "name": "bantisocial",
+  "name": "decent",
   "version": "0.0.1",
-  "description": "Actually free rip-off of Discord",
+  "description": "The decentralized chat system that's absolutely okay",
   "main": "index.js",
   "devDependencies": {},
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/towerofnix/bantisocial.git"
+    "url": "git+https://github.com/towerofnix/decent.git"
   },
   "keywords": [
     "chat",
     "chat-system",
     "social"
   ],
-  "author": "Some dummies who want more than 50 custom emotes",
+  "author": "Multiple contributors",
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/towerofnix/bantisocial/issues"
+    "url": "https://github.com/towerofnix/decent/issues"
   },
-  "homepage": "https://github.com/towerofnix/bantisocial#readme"
+  "homepage": "https://github.com/towerofnix/decent#readme"
 }
