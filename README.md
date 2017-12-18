@@ -4,9 +4,7 @@
   <strong> The decentralized chat system that's absolutely okay </strong>
 </div>
 
-## It's time to ditch Discord and Slack.
-
-Decent is a [decentralized](#decentralized), [open source](#open-source), and even [tolerable](#tolerable), chat system [for hipsters](#110-hipster). It's free, as in freedom _and_ beer :beer:
+Decent is a [decentralized](#decentralized), [open source](#open-source), and even [tolerable](#tolerable) chat system [for hipsters](#110-hipster). It's free, as in freedom _and_ beer :beer: :tada:
 
 <div align='center'>
   <h3>
