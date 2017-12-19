@@ -13,7 +13,7 @@ const storage = {
     const valueJSON = JSON.stringify(value)
 
     localStorage.setItem(key, valueJSON)
-    console.log('storage', key, '=', value)
+    console.log('stored', { key, value })
   },
 }
 
