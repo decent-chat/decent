@@ -20,6 +20,7 @@ content.use((state, emitter) => {
   state.messages = null
   state.sessionID = null
   state.ws = null
+  state.fetchingOlderMessages = false
 
   let messagesContainer = document.querySelector('.messages')
   const getScrollDist = () => messagesContainer.scrollHeight - messagesContainer.offsetHeight
@@ -96,6 +97,7 @@ content.use((state, emitter) => {
         // fetch latest messages
         const { messages } = await get(state.host, `channel/${channel.id}/latest-messages`)
         state.messages = messages
+        state.fetchingOlderMessages = false
 
         // scroll to bottom afterwards
         setTimeout(() => {
