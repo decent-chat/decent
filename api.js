@@ -34,7 +34,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
   // The olde General Valid Name regex. In the off-chance it's decided that
   // emojis should be allowed (or whatever) in channel/user/etc names, this
   // regex can be updated.
-  const generalValidNameRegex = /^[a-zA-Z0-9_-]+$/g
+  const isNameValid = name => /^[a-zA-Z0-9_-]+$/g.test(name)
 
   const sendToAllSockets = function(evt, data) {
     for (const socket of connectedSocketsMap.keys()) {
@@ -346,10 +346,10 @@ module.exports = async function attachAPI(app, {wss, db}) {
     ],
 
     requireNameValid: (nameVar, errorFieldName = null) => [
-      async function(request, response, next) {
+      function(request, response, next) {
         const name = request[middleware.vars][nameVar]
 
-        if (generalValidNameRegex.test(name) === false) {
+        if (isNameValid(name) === false) {
           response.status(400).end(JSON.stringify({
             // Totally cheating here - this is so that it responds with
             // "username invalid" rather than, e.g., "name invalid", when
