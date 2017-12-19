@@ -1,6 +1,6 @@
 const html = require('choo/html')
 const history = require('../util/history')
-const { prompt } = require('../util/modal')
+const Modal = require('../util/modal')
 
 // template for user info
 const userInfo = require('./user-info')
@@ -43,7 +43,7 @@ module.exports = (state, emit) => {
 
   // adds a server URL
   async function addServer() {
-    const { host } = await prompt({
+    const modal = new Modal({
       title: 'Add server',
 
       inputs: {
@@ -54,16 +54,13 @@ module.exports = (state, emit) => {
       },
 
       button: 'Add',
-    }).catch(err => {
-      if (err === 'modal closed') return {}
-      else throw err
     })
 
-    if (!host || host.trim().length === 0) {
-      return
-    }
+    modal.on('submit', ({ host }) => {
+      modal.close()
 
-    emit('add server', host)
+      emit('add server', host)
+    })
   }
 
   // toggles the server dropdown
