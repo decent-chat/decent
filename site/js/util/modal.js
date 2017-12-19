@@ -1,9 +1,9 @@
-// pretty modals. replaces window.prompt and friends
+// pretty Modal class. replaces window.prompt and friends
 
+const Nanobus = require('nanobus')
 const html = require('choo/html')
-const raw = require('choo/html/raw')
 
-const input = (name, i, j) => {
+const constructStyledInput = (name, i, j) => {
   const id = `modal-input-${name}`
 
   return html`<div class='styledInput'>
@@ -12,88 +12,113 @@ const input = (name, i, j) => {
   </div>`
 }
 
-const prompt = opts => new Promise((resolve, reject) => {
-  // construct content
-  const content = html`<div class='modal-content'></div>`
+class Modal extends Nanobus {
+  constructor(opts) {
+    super('modal')
 
-  // add inputs to content
-  let j = 1
-  for (const [ name, i ] of Object.entries(opts.inputs)) {
-    content.appendChild(input(name, i, j++))
-  }
+    const content = html`<div class='modal-content'></div>`
 
-  // add submit button to content
-  const btn = html`<input type='submit' class='styledButton' value=${opts.button || 'Submit'} onclick=${submit} tabindex=${j}>`
-  content.appendChild(btn)
+    // add inputs to content
+    let j = 1
+    this.styledInputs = []
+    for (const [ name, i ] of Object.entries(opts.inputs)) {
+      const inputEl = constructStyledInput(name, i, j++)
 
-  // add error element
-  if (opts.error) {
-    const errorEl = html`<div class='modal-error'>${opts.error}</div>`
-    content.prepend(errorEl)
-  }
-
-  // construct modal element
-  const el = html`<div class='modal'>
-    <div class='modal-close-button' onclick=${close}></div>
-    <div class='modal-header'>${opts.title} <span class="modal-header-subtitle">${opts.subtitle || ''}</span></div>
-    ${content}
-  </div>`
-
-  // append modal to document
-  document.body.appendChild(el)
-
-  // darken page cover
-  const pageCover = document.querySelector('.modal-page-cover')
-  pageCover.onclick = close // close on click
-  pageCover.classList.add('visible')
-
-  function submit(evt) {
-    evt.preventDefault()
-
-    // get input values
-    const inputValues = {}
-    for (const name of Object.keys(opts.inputs)) {
-      const id = `modal-input-${name}`
-      const inputEl = document.getElementById(id)
-
-      inputValues[name] = inputEl.value
+      this.styledInputs.push({ name, el: inputEl })
+      content.appendChild(inputEl)
     }
 
-    // resolve promise
-    if (opts.closeOnSubmit === false) {
-      resolve({
-        data: inputValues,
+    // hitting return on an input element should focus
+    // the next, or submit the modal if it is last
+    for (let i = 0; i < this.styledInputs.length; i++) {
+      const { name, el } = this.styledInputs[i]
+      const next = this.styledInputs[i + 1]
+      const input = el.querySelector('input')
 
-        close() {
-          el.remove()
-          pageCover.classList.remove('visible')
-        },
+      input.addEventListener('keypress', evt => {
+        // listen for enter/return keypress
+        if (evt.which === 13) {
+          evt.preventDefault()
 
-        // the fact that prompt uses a Promise means we can't re-resolve it. this is bad,
-        // especially for when closeOnSubmit is true. TODO figure out a solution for this!
-        //
-        // this should probably use choo to keep its state. this function was hastilly written
-        // at 3am, so it's probably not going to be the *most* well-designed ;)
+          // if there's a next input, focus it
+          // otherwise, submit this modal
+          if (next) {
+            next.el.querySelector('input').focus()
+          } else {
+            this.submit()
+          }
+        }
       })
-    } else {
-      // hide page cover & modal el
-      el.remove()
-      pageCover.classList.remove('visible')
-
-      resolve(inputValues)
     }
+
+    // add submit button to content
+    const btn = html`<input type='submit' class='styledButton' value=${opts.button || 'Submit'} onclick=${this.submit.bind(this)} tabindex=${j}>`
+    content.appendChild(btn)
+
+    // add error element
+    // TODO style this better! this is a feature PJ's codepen didn't have
+    this.errorEl = html`<div class='modal-error'></div>`
+    content.prepend(this.errorEl)
+
+    // construct #modal element
+    this.el = html`<div class='modal'>
+      <div class='modal-close-button' onclick=${this.close.bind(this)}></div>
+      <div class='modal-header'>${opts.title} <span class="modal-header-subtitle">${opts.subtitle || ''}</span></div>
+      ${content}
+    </div>`
+
+    // darken page cover
+    const pageCover = document.querySelector('.modal-page-cover')
+    pageCover.onclick = this.close.bind(this) // close on click
+    pageCover.classList.add('visible')
+
+    // show the modal
+    this.visible = true
+    document.body.insertBefore(this.el, pageCover)
+    this.focus()
+
+    this.opts = opts
   }
 
-  function close(evt) {
-    evt.preventDefault()
+  focus() {
+    // focus on the FIRST input
+    // tabindex is set so people can then use tab to select the next one
+    this.styledInputs[0].el.querySelector('input').focus()
+  }
 
-    // hide page cover & modal el
-    el.remove()
+  get values() {
+    // map of input id to its current value
+    const map = {} // we _would_ use a Map here but then you can't destructure it
+
+    for (const { name, el } of this.styledInputs) {
+      map[name] = el.querySelector('input').value
+    }
+
+    return map
+  }
+
+  showError(message) {
+    // display an error message
+    this.errorEl.innerText = message
+  }
+
+  submit() {
+    // submit the modal -- don't close it
+    // this only means emitting the 'submit' event
+    this.emit('submit', this.values)
+  }
+
+  close() {
+    // close the modal
+    this.visible = false
+    this.el.remove()
+
+    // darken page cover
+    const pageCover = document.querySelector('.modal-page-cover')
     pageCover.classList.remove('visible')
 
-    // reject promise
-    reject('modal closed')
+    this.emit('close')
   }
-})
+}
 
-module.exports = { prompt }
+module.exports = Modal
