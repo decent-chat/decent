@@ -51,7 +51,9 @@ Object.assign(history, {
 
       // did the channel change? note this may not actually be
       // a channel and may just be 'settings' or something, but
-      // for the purpose of routing we'll still call it a 'channel'
+      // for the purpose of routing we'll still call it a 'channel'.
+      //
+      // note that the 'content' element refers to this as a 'page'.
       if (newChannel !== oldChannel) {
         history.emit('channel update', newChannel)
       }

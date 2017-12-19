@@ -18,6 +18,7 @@
   "devDependencies": {
     "browserify": "^14.5.0",
     "choo": "^6.6.0",
+    "mrk.js": "^1.0.1",
     "nanobus": "^4.3.1",
     "watchify": "^3.9.0"
   },
