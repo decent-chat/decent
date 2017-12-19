@@ -244,6 +244,7 @@ body {
   color: var(--gray-100);
   text-decoration: none;
 
+  cursor: pointer;
   border-radius: 4px;
 }
 .list-item:hover {

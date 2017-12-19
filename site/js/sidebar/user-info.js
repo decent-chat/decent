@@ -42,6 +42,8 @@ const userInfo = (state, emit) => {
     })
 
     modal.on('submit', async ({ username, password }) => {
+      modal.disable()
+
       try {
         const { sessionID, user } = await post(host, 'register', { username, password })
 
@@ -64,6 +66,8 @@ const userInfo = (state, emit) => {
           console.error(error)
           modal.showError('Internal error')
         }
+
+        modal.disable(false) // enable
       }
     })
   }

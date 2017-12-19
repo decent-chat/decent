@@ -80,6 +80,13 @@ class Modal extends Nanobus {
     this.opts = opts
   }
 
+  disable(state = true) {
+    // disable all inputs
+    for (const { name, el } of this.styledInputs) {
+      el.querySelector('input').disabled = !!state
+    }
+  }
+
   focus() {
     // focus on the FIRST input
     // tabindex is set so people can then use tab to select the next one
