@@ -73,7 +73,8 @@ module.exports = (state, emit) => {
       console.log('added server', host)
 
       // switch to it
-      emit('switch server', length - 1)    })
+      emit('switch server', length - 1)
+    })
   }
 
   // toggles the server dropdown
