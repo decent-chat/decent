@@ -1,124 +1,14 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
-    <title>Bantisocial</title>
-    <link rel="stylesheet" href="styles.css">
+    <meta charset='utf-8'>
+    <title>Decent</title>
+    <link rel='stylesheet' href='/styles.css'>
+    <script src='/decent.js'></script>
   </head>
+
   <body>
-    <div id="server-sidebar" class="is-logged-out">
-      <div class="sidebar-section sidebar-section-server">
-        <div class="sidebar-subtitle">
-          <h4>Server</h4>
-          <button id="add-server" class="sidebar-subtitle-button">+ Add</button>
-        </div>
-        <div class="server-dropdown">
-          <div class="server-dropdown-current">servername.com</div>
-          <div class="server-dropdown-panel">
-            <div class="server-dropdown-option">itswedmydud.es</div>
-            <div class="server-dropdown-option active">servername.com</div>
-            <div class="server-dropdown-option">pulljosh.com</div>
-            <div class="server-dropdown-option">battleforthenet.com</div>
-          </div>
-        </div>
-        <div class="user-info">
-          <div class="user-info-text logged-in">Logged in as <a href="#" class="user-info-name">PullJosh</a></div>
-          <div class="user-info-text logged-out">Logged out</div>
-          <button id="logout" class="user-info-button logged-in">Log out</button>
-          <button id="register" class="user-info-button logged-out">Register</button>
-          <button id="login" class="user-info-button user-info-button-minor logged-out">Log in</button>
-        </div>
-      </div>
-      <div class="sidebar-section">
-        <div class="sidebar-subtitle">
-          <h4>Channels</h4>
-          <div id="create-channel" class="sidebar-subtitle-button admin">+ Add</div>
-        </div>
-        <div id="sidebar-channel-list" class="location-list"></div>
-      </div>
-
-      <!--
-      <div class="sidebar-section">
-        <div class="sidebar-subtitle"><h4>Server Settings</h4></div>
-        <div class="location-list">
-          <a href="#" class="list-item list-item-settings">General</a>
-          <a href="#" class="list-item list-item-settings">Users</a>
-          <a href="#" class="list-item list-item-settings">Permissions</a>
-          <a href="#" class="list-item list-item-settings">Security</a>
-        </div>
-      </div>
-      <div class="sidebar-section">
-        <div class="sidebar-subtitle"><h4>Account Settings</h4></div>
-        <div class="location-list">
-          <a href="#" class="list-item list-item-settings">General</a>
-          <a href="#" class="list-item list-item-settings">Users</a>
-          <a href="#" class="list-item list-item-settings">Permissions</a>
-        </div>
-      </div>
-      -->
-
-    </div>
-    <div id="content" class="main">
-      <div class="messages"></div>
-      <div class="message-editor">
-        <textarea class="message-editor-input" placeholder="Enter a message..."></textarea>
-        <button class="message-editor-button">Send</button>
-      </div>
-    </div>
-    <div id="user-sidebar">
-      <div class="tab-buttons">
-        <div class="tab-button active">Users</div>
-        <!--
-        <div class="tab-button">Mentions</div>
-        <div class="tab-button">Pins</div>
-        -->
-      </div>
-      <div class="tabs">
-        <div class="tab-content">
-            <div class="user-list">
-              <div class="user-list-item status-online">
-                <div class="user-list-item-icon">
-                  <img src="https://cdn2.scratch.mit.edu/get_image/user/907223_90x90.png">
-                </div>
-                <div class="user-list-item-name">PullJosh</div>
-              </div>
-              <div class="user-list-item status-online">
-                <div class="user-list-item-icon">
-                  <img src="https://cdn2.scratch.mit.edu/get_image/user/default_90x90.png">
-                </div>
-                <div class="user-list-item-name">Jeff</div>
-              </div>
-              <div class="user-list-item status-offline">
-                <div class="user-list-item-icon">
-                  <img src="https://www.explainxkcd.com/wiki/images/4/46/Cueball.png">
-                </div>
-                <div class="user-list-item-name">Randall Munroe</div>
-              </div>
-            </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal">
-      <div class="modal-close-button"></div>
-      <div class="modal-header">Log in <span class="modal-header-subtitle">to servername.com</span></div>
-      <div class="modal-content">
-        <div class="styledInput">
-          <label for="username">Username:</label>
-          <input type="text" id="username" placeholder="Username for servername.com">
-        </div>
-        <div class="styledInput">
-          <label for="password">Password:</label>
-          <input type="password" id="password" placeholder="Password for servername.com">
-        </div>
-        <input type="submit" class="styledButton" value="Log in">
-      </div>
-    </div>
-    <div class="modal-page-cover"><!-- Darkens background behind modal --></div>
-
-    <script src="js/websocket.js"></script>
-    <script src="oof/oof.js"></script>
-    <script src="oof/state.js"></script>
-    <script src="index.js"></script>
+    <div id='sidebar'></div>
+    <div class='modal-page-cover'></div>
   </body>
 </html>

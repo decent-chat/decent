@@ -5,4 +5,4 @@ uploads/*
 !uploads/.gitkeep
 
 node_modules
-site/tags.js
+site/decent.js

@@ -69,6 +69,7 @@ You will need:
 $ git clone --recursive https://github.com/towerofnix/decent.git
 $ cd decent
 $ npm install
+$ npm run build
 $ node .
 # open http://localhost:3000
 ```
