@@ -823,21 +823,39 @@ module.exports = async function attachAPI(app, {wss, db}) {
     }
   ])
 
-  app.get('/api/channel/:channelID/latest-messages(/before/:beforeMessageID)?', [
+  app.get('/api/channel/:channelID/latest-messages', [
     ...middleware.loadVarFromParams('channelID'),
-    ...middleware.loadVarFromParams('beforeMessageID'),
+    ...middleware.loadVarFromQuery('before', false),
+    ...middleware.loadVarFromQuery('after', false),
     ...middleware.getChannelFromID('channelID', '_'), // Just to make sure the channel exists
-    ...middleware.runIfVarExists('beforeMessageID',
-      middleware.getMessageFromID('beforeMessageID', 'beforeMessage')
+    ...middleware.runIfVarExists('before',
+      middleware.getMessageFromID('before', 'beforeMessage')
+    ),
+    ...middleware.runIfVarExists('after',
+      middleware.getMessageFromID('after', 'afterMessage')
     ),
 
     async (request, response) => {
-      const { channelID, beforeMessage } = request[middleware.vars]
+      const { channelID, beforeMessage, afterMessage } = request[middleware.vars]
 
       const query = {channelID}
-      if (beforeMessage) {
-        query.date = {$lt: beforeMessage.date}
+
+      if (beforeMessage || afterMessage) {
+        query.date = {}
+
+        if (beforeMessage) {
+          query.date.$lt = beforeMessage.date
+        }
+
+        if (afterMessage) {
+          query.date.$gt = afterMessage.date
+        }
       }
+
+      // We sort the messages by NEWEST date ({date: -1}), so that we're returned
+      // the newest messages, but then we reverse the array, so that the actual
+      // data returned from the API is sorted by oldest first. (This is so that
+      // appending message elements is easier.)
 
       // TODO: If there is more than 50, show that somehow.
       // TODO: Store 50 as a constant somewhere?
@@ -846,11 +864,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
       cursor.limit(50)
       const messages = await cursor.exec()
       messages.reverse()
-
-      // We sort the messages by NEWEST date ({date: -1}), so that we're returned
-      // the newest messages, but then we reverse the array, so that the actual
-      // data returned from the API is sorted by oldest first. (This is so that
-      // appending message elements is easier.)
 
       response.status(200).end(JSON.stringify({
         success: true,
