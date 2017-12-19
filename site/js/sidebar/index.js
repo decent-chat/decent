@@ -6,6 +6,7 @@ const html = require('choo/html')
 const history = require('../util/history')
 const storage = require('../util/storage')
 const { get } = require('../util/api')
+const Ws = require('../util/ws')
 
 // initialize choo
 const sidebar = choo()
@@ -33,6 +34,16 @@ sidebar.use((state, emitter) => {
 
     const server = state.servers[state.activeServer]
     if (server) storage.set('session id: ' + server.host, id)
+
+    // update socket's session id too
+    const activeServer = state.servers[state.activeServer]
+
+    if (activeServer) {
+      const { host } = activeServer
+      const ws = new Ws(host) // gets current Ws connection if it exists
+
+      ws.sessionID = id
+    }
   })
 
   history.on('session update', user => {
@@ -42,44 +53,16 @@ sidebar.use((state, emitter) => {
     emitter.emit('render')
   })
 
-  emitter.on('add server', host => {
-    // add the server
-    const length = state.servers.push({
-      host,
-      active: false,
-    })
-
-    // update storage
-    storage.set('servers', state.servers.map(s => s.host))
-
-    console.log('added server', host)
-
-    // switch to it
-    emitter.emit('switch server', length - 1)
-  })
-
-  emitter.on('toggle server dropdown', () => {
-    state.serverDropdownOpen = !state.serverDropdownOpen
-
-    // re-render
-    emitter.emit('render')
-  })
-
   emitter.on('switch server', index => {
+    if (state.activeServer === index) return // we're already on this server
+
     const server = state.servers[index]
 
     // will cause 'navigate', and thus a switch
     history.push(`/${server.host}`)
   })
 
-  history.on('navigate', switchServerBasedOnRoute)
-
-  // switch to a server based on current URL
-  switchServerBasedOnRoute()
-
-  async function switchServerBasedOnRoute() {
-    const [ host ] = history.path()
-
+  history.on('host update', async host => {
     // deactivate the currently active server, if any
     const activeServer = state.servers[state.activeServer]
     if (activeServer) activeServer.active = false
@@ -142,7 +125,7 @@ sidebar.use((state, emitter) => {
         history.replace(`/${location.host}`)
       }
     }
-  }
+  })
 })
 
 // import sections

@@ -1,5 +1,7 @@
 const html = require('choo/html')
+
 const history = require('../util/history')
+const storage = require('../util/storage')
 const Modal = require('../util/modal')
 
 // template for user info
@@ -59,12 +61,25 @@ module.exports = (state, emit) => {
     modal.on('submit', ({ host }) => {
       modal.close()
 
-      emit('add server', host)
-    })
+      // add the server
+      const length = state.servers.push({
+        host,
+        active: false,
+      })
+
+      // update storage
+      storage.set('servers', state.servers.map(s => s.host))
+
+      console.log('added server', host)
+
+      // switch to it
+      emit('switch server', length - 1)    })
   }
 
   // toggles the server dropdown
   function toggleDropdown() {
-    emit('toggle server dropdown')
+    state.serverDropdownOpen = !state.serverDropdownOpen
+
+    emit('render')
   }
 }
