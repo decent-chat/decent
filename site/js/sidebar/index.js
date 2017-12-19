@@ -76,10 +76,12 @@ sidebar.use((state, emitter) => {
     if (activeServer) activeServer.active = false
 
     // remove websocket channellist-related event listeners
+    // and forget the old server's websocket connection
     if (state.ws) {
       state.ws.removeListener('created new channel', fetchChannelList)
-      state.ws.removeListener('renamed channel', fetchChannelList)
+      state.ws.removeListener('renamed channel', handleChannelRenamed)
       state.ws.removeListener('deleted channel', fetchChannelList)
+      state.ws = null
     }
 
     if (host) {
@@ -108,7 +110,7 @@ sidebar.use((state, emitter) => {
       // listen for channellist-related events on websocket
       state.ws = new Ws(host)
       state.ws.on('created new channel', fetchChannelList)
-      state.ws.on('renamed channel', fetchChannelList)
+      state.ws.on('renamed channel', handleChannelRenamed)
       state.ws.on('deleted channel', fetchChannelList)
 
       // load session ID from storage
@@ -206,10 +208,23 @@ sidebar.use((state, emitter) => {
       const activeChannel = channels
         .find(c => c.name === state.activeChannelName.substr(1)) // activeChannelName includes the '#'
 
+      if (!activeChannel) return
+
       state.activeChannelID = activeChannel.id
     }
 
     emitter.emit('render')
+  }
+
+  async function handleChannelRenamed({ channelID, newName }) {
+    await fetchChannelList()
+
+    // if we were currently viewing the renamed channel, update window.location
+    if (state.activeChannelID === channelID) {
+      const { host } = state.servers[state.activeServer]
+
+      history.replace(`/${host}/#${newName}`)
+    }
   }
 })
 

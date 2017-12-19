@@ -9,25 +9,33 @@ const pool = new Map() // host -> Ws
 // Ws is just nanobus wrapping a WebSocket
 class Ws extends Nanobus {
   constructor(host) {
-    if (pool.get(host)) {
+    super()
+
+    if (pool.has(host)) {
       // we already have a Ws connected to this server,
       // so we can just use that one
-      return pool.get(host)
+      const parent = pool.get(host)
+
+      this.socket = parent.socket
+      parent.on('open', () => this.socket = parent.socket)
+
+      parent.on('*', (evt, t, data) => {
+        this.emit(evt, data)
+      })
+    } else {
+      pool.set(host, this) // add to pool
+
+      // respond to 'ping for data' event
+      this.sessionID = null // handled by sidebar
+      this.on('ping for data', () => {
+        if (this.sessionID) {
+          this.send('pong data', { sessionID: this.sessionID })
+        }
+      })
+
+      // connect
+      this.connectTo(host)
     }
-
-    super(host)
-    pool.set(host, this) // add to pool
-
-    // respond to 'ping for data' event
-    this.sessionID = null // handled by sidebar
-    this.on('ping for data', () => {
-      if (this.sessionID) {
-        this.send('pong data', { sessionID: this.sessionID })
-      }
-    })
-
-    // connect
-    this.connectTo(host)
   }
 
   connectTo(host) {
@@ -47,6 +55,8 @@ class Ws extends Nanobus {
 
         this.socket.addEventListener('message', event => {
           const { evt, data } = JSON.parse(event.data)
+
+          console.debug('socket:', evt, data)
 
           // pass socket messages over to this nanobus
           this.emit(evt, data)

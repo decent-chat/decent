@@ -1398,6 +1398,10 @@ module-deps@^4.0.8:
     through2 "^2.0.0"
     xtend "^4.0.0"
 
+mrk.js@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/mrk.js/-/mrk.js-1.0.1.tgz#78ea17efa6ef0f5855c07d61fef8c254bfc61adc"
+
 ms@2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.0.0.tgz#5608aeadfc00be6c2901df5f9861788de0d597c8"

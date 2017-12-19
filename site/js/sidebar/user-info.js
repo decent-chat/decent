@@ -45,11 +45,7 @@ const userInfo = (state, emit) => {
       modal.disable()
 
       try {
-        const { sessionID, user } = await post(host, 'register', { username, password })
-
-        // globally broadcast this state change
-        history.emit('session id update', sessionID)
-        history.emit('session update', user)
+        await post(host, 'register', { username, password })
 
         // close the modal
         modal.close()
