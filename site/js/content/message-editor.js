@@ -4,8 +4,7 @@ const api = require('../util/api')
 module.exports = (state, emit) => {
   const textarea = html`<textarea
     class='message-editor-input'
-    placeholder='Enter a message...'
-    onkeydown=${onkeydown}>
+    placeholder='Enter a message...'>
   </textarea>`
 
   async function send() {
@@ -21,7 +20,7 @@ module.exports = (state, emit) => {
     })
   }
 
-  function onkeydown(evt) {
+  textarea.addEventListener('keydown', evt => {
     const key = evt.which
 
     // enter
@@ -35,7 +34,7 @@ module.exports = (state, emit) => {
         send()
       }
     }
-  }
+  })
 
   if (state.sessionID !== null) {
     const editor = html`<div class='message-editor'>
