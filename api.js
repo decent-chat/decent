@@ -1071,9 +1071,14 @@ module.exports = async function attachAPI(app, {wss, db}) {
           return
         }
 
-        const { sessionID } = data
+        let { sessionID } = data
 
-        if (!sessionID) {
+        // sessionID should be either a string or null.
+        // (We *should* also assert that it's a valid session ID [if not,
+        // clear], but that would mean making an API request every time
+        // a socket responds with pong data, which could be a little
+        // expensive.)
+        if (typeof sessionID !== 'string' && sessionID !== null) {
           return
         }
 
