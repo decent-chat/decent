@@ -97,7 +97,7 @@ content.use((state, emitter) => {
         // fetch latest messages
         const { messages } = await get(state.host, `channel/${channel.id}/latest-messages`)
         state.messages = messages
-        state.fetchingOlderMessages = false
+        state.scrolledToBeginning = false
 
         // scroll to bottom afterwards
         setTimeout(() => {
@@ -131,6 +131,16 @@ setInterval(updateTimes, 60 * 1000) // every minute
 
 // create template
 const tmpl = (state, emit) => {
+  // We don't ever want to process more than one scroll at once, so we don't
+  // actually handle scroll events unless this variable is false (and it's set
+  // to true while we're dealing with an event). Do note that this isn't
+  // stored on the state - rather, it's a variable. But why? Well, you'd never
+  // guess it - THE ENTIRE WORLD EXPLODES when we store it on state. The tl;dr
+  // of the unwritten formal explanation is that, for whatever unknown reason,
+  // during consecutive scroll events, we can see variable changes but not
+  // changes on the state object.
+  let processingScroll = false
+
   if (state.page === 'channel') {
     if (state.channel && state.messages !== null) {
       const messageGroups = groupMessages(state.messages)
@@ -170,32 +180,46 @@ const tmpl = (state, emit) => {
   }
 
   async function onscroll(evt) {
-    if (state.fetchingOlderMessages === true) return
+    if (processingScroll === true) return
 
-    const messagesEl = document.querySelector('.messages')
-    const scrolledToTop = messagesEl.scrollTop < 50
-    const beforeMessageID = state.messages[0].id
+    processingScroll = true
 
-    if (!scrolledToTop) return
+    try {
+      if (state.scrolledToBeginning === true) return
 
-    state.fetchingOlderMessages = true
+      const messagesEl = document.querySelector('.messages')
+      const scrolledToTop = messagesEl.scrollTop < 50
+      const beforeMessageID = state.messages[0].id
 
-    // fetch older messages
-    const { messages: oldMessages } = await get(state.host, `channel/${state.channel.id}/latest-messages`, {
-      before: beforeMessageID,
-    })
+      if (!scrolledToTop) return
 
-    if (oldMessages.length) {
-      state.messages = [ ...oldMessages, ...state.messages ]
-      state.fetchingOlderMessages = false // note we don't set this to true if there are no older messages, since we never need to scrollback again
+      // fetch older messages
+      const { messages: oldMessages } = await get(state.host, `channel/${state.channel.id}/latest-messages`, {
+        before: beforeMessageID,
+      })
 
-      emit('render')
+      if (oldMessages.length) {
+        state.messages = [ ...oldMessages, ...state.messages ]
+        state.fetchingOlderMessages = false // note we don't set this to true if there are no older messages, since we never need to scrollback again
 
-      setTimeout(() => {
-        const beforeMessageEl = messagesEl.querySelector('#msg-' + beforeMessageID)
+        emit('render')
 
-        beforeMessageEl.scrollIntoView({ behaviour: 'instant' })
-      }, 25)
+        setTimeout(() => {
+          const beforeMessageEl = messagesEl.querySelector('#msg-' + beforeMessageID)
+
+          beforeMessageEl.scrollIntoView({ behaviour: 'instant' })
+        }, 25)
+      } else {
+        // No past messages means we've scrolled to the beginning, so we set
+        // this flag, which will stop all this code handling scrollback from
+        // happening again (until we move to a different channel).
+        state.scrolledToBeginning = true
+      }
+    } finally {
+      // Regardless of whether there were any errors in the above code, we're
+      // definitely done processing this scroll event, so we'll set that flag
+      // to false.
+      processingScroll = false
     }
   }
 }
