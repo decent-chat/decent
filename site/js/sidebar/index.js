@@ -227,7 +227,6 @@ sidebar.use((state, emitter) => {
   }
 
   async function pongData() {
-    console.log('hey-ho', state.sessionID)
     state.ws.send('pong data', {
       sessionID: state.sessionID // Could be null, of course.
     })
