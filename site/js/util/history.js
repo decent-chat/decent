@@ -71,7 +71,7 @@ history.on('navigate', history.emitPathChanges)
 // popstate is emitted when the user hits the back button
 // in the browser chrome. i.e. history.go(-1)
 window.addEventListener('popstate', event => {
-  history.emit('navigate', event.state.path.substr(1))
+  history.emit('navigate', /*event.state.path.substr(1)*/ location.hash.substr(2))
 })
 
 module.exports = history
