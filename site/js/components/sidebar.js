@@ -166,7 +166,7 @@ const store = (state, emitter) => {
       try {
         const { success } = await api.post(state.params.host, 'create-channel', {
           name: channelName.trim(),
-          sessionID: state.sessionID,
+          sessionID: state.session.id,
         })
 
         modal.close()
