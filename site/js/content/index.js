@@ -36,10 +36,11 @@ content.use((state, emitter) => {
       emitter.emit('render')
 
       // autoscroll after we render if we were scrolled to the bottom beforehand
-      if (wasScrolledToBottom)
-      setTimeout(() => {
-        messagesContainer.scrollTop = getScrollDist()
-      }, 25)
+      if (wasScrolledToBottom) {
+        setTimeout(() => {
+          messagesContainer.scrollTop = getScrollDist()
+        }, 25)
+      }
     }
   }
 

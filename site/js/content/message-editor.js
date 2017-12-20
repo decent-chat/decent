@@ -42,15 +42,15 @@ module.exports = (state, emit) => {
       <button class='message-editor-button' onclick=${send}>Send</button>
     </div>`
 
-    editor.isSameNode = (a) => {
-      // classname will be different between this state & not logged in
-      // we don't really need to morph this dom element very much
-      if (editor.className === a.className) return true
+    // We only want to replace the editor element if it's changed to being
+    // logged out (at which point the actual content will have changed, so
+    // replacing it is necessary).
+    editor.isSameNode = a => {
+      return a.classList.contains('logged-out')
     }
 
     return editor
   } else {
-    // not logged in
     return html`<div class='message-editor not-logged-in'>
       You must be logged in to send messages
     </div>`
