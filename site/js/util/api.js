@@ -1,12 +1,19 @@
 // wrapper around window.fetch
 
-async function fetchHelper(host, path, fetchConfig = {}) {
+async function fetchHelper(state, path, fetchConfig = {}) {
   // Quick guarding, just in case e.g. host is fetched from a variable
   // whose value is undefined.
-  if (!host) throw new Error('No host argument given')
+  if (!state) throw new Error('No state/host argument given')
   if (!path) throw new Error('No path argument given')
 
-  const result = await fetch('//' + host + '/api/' + path, fetchConfig)
+  let secure = false, host = state
+  if (typeof state === 'object') {
+    secure = state.secure
+    host = state.params.host
+  }
+
+  const protocol = secure ? 'https://' : '//'
+  const result = await fetch(protocol + host + '/api/' + path, fetchConfig)
     .then(res => res.json())
 
   // if we get an error object, throw
@@ -21,7 +28,7 @@ async function fetchHelper(host, path, fetchConfig = {}) {
 }
 
 module.exports = {
-  get(host, path, query = {}) {
+  get(state, path, query = {}) {
     const esc = encodeURIComponent
     const queryString = Object.keys(query).length > 0
       ? '?' + Object.keys(query)
@@ -29,11 +36,11 @@ module.exports = {
         .join('&')
       : ''
 
-    return fetchHelper(host, path + queryString)
+    return fetchHelper(state, path + queryString)
   },
 
-  post(host, path, data = {}) {
-    return fetchHelper(host, path, {
+  post(state, path, data = {}) {
+    return fetchHelper(state, path, {
       method: 'post',
       headers: {
         'Content-Type': 'application/json'

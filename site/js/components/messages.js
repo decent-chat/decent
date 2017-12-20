@@ -45,7 +45,7 @@ const groupMessages = (msgs, startingGroups = []) => {
 const store = (state, emitter) => {
   const reset = () => state.messages = {
     // array of message objects
-    list: [],
+    list: null,
 
     // cached array of message groups
     groupsCached: [],
@@ -67,6 +67,8 @@ const store = (state, emitter) => {
 
     // oldest message in list
     get oldest() {
+      if (!state.messages.list) return null
+
       return state.messages.list[0] || null
     },
 
@@ -132,14 +134,14 @@ const store = (state, emitter) => {
     // fetch messages before the oldest message we have. if we don't have an oldest message (i.e. list.length == 0)
     // then we will just fetch the latest messages via no `before` parameter
     const { oldest, oldestGroupEl: oldestGroupElBefore } = state.messages
-    const { messages } = await api.get(state.params.host, `channel/${state.params.channel}/latest-messages`, oldest ? {
+    const { messages } = await api.get(state, `channel/${state.params.channel}/latest-messages`, oldest ? {
       before: oldest.id,
     } : {})
 
     if (messages.length) {
       state.messages.fetching = false
       state.messages.handleScroll = false
-      state.messages.list = [ ...messages, ...state.messages.list ]
+      state.messages.list = [ ...messages, ...(state.messages.list || []) ]
       state.messages.groupsCached = groupMessages(state.messages.list)
 
       // render the new messages!
@@ -166,10 +168,17 @@ const store = (state, emitter) => {
       // this flag which will stop all this code handling scrollback from
       // happening again (until we move to a different channel)
       state.messages.fetchedAll = true
+
+      if (!state.messages.list) {
+        state.messages.list = []
+        state.messages.groupsCached = []
+        emitter.emit('render')
+      }
     }
   })
 
   // when the url changes, load the new channel
+  // FIXME: don't assume that the channel actually changed
   emitter.on('route', () => {
     emitter.emit('messages.reset')
 
@@ -180,6 +189,8 @@ const store = (state, emitter) => {
 
   // event: new message
   emitter.on('ws.receivedchatmessage', ({ message }) => {
+    if (message.channelID !== state.params.channel) return
+
     const groups = state.messages.groupsCached
     const atBottom = state.messages.isScrolledToBottom()
 
@@ -204,6 +215,8 @@ const store = (state, emitter) => {
   // event: edit message
   // TODO test this
   emitter.on('ws.editedchatmessage', ({ message: msg }) => {
+    if (msg.channelID !== state.params.channel) return
+
     // optimization :tada:
     const msgInList = state.messages.list.find(m => m.id === msg.id)
     const msgInGroup = state.messages.groupsCached[msgInList.group].messages.find(m => m.id === msg.id)
@@ -231,17 +244,10 @@ const component = (state, emit) => {
     }
   }
 
-  if (messages.length === 0) {
-    if (fetching) {
-      // loading
-      return html`<div class=${prefix}>
-        Loading...
-      </div>`
-    } else {
-      // not loading, but no messages
-      // probably initial render
-      return html`<div class=${prefix}></div>`
-    }
+  if (messages === null) {
+    return html`<div class=${prefix}>
+      Loading...
+    </div>`
   } else {
     const groups = state.messages.groupsCached
 
