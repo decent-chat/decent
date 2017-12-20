@@ -1,5 +1,5 @@
 // import utils
-const Ws = require('./util/ws')
+const WS = require('./util/ws')
 const history = require('./util/history')
 const storage = require('./util/storage')
 const api = require('./util/api')
@@ -14,7 +14,7 @@ content.mount('#content')
 
 // publish these, for debugging/experimenting
 Object.assign(window, {
-  util: {Ws, history, storage, api},
+  util: {WS, history, storage, api},
   sidebar, content
 })
 

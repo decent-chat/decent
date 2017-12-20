@@ -6,7 +6,7 @@ const html = require('choo/html')
 const history = require('../util/history')
 const storage = require('../util/storage')
 const { get } = require('../util/api')
-const Ws = require('../util/ws')
+const WS = require('../util/ws')
 
 // initialize choo
 const sidebar = choo()
@@ -45,7 +45,7 @@ sidebar.use((state, emitter) => {
 
     if (activeServer) {
       const { host } = activeServer
-      const ws = new Ws(host) // gets current Ws connection if it exists
+      const ws = new WS(host) // gets current WS connection if it exists
     }
 
     // fetch channel list
@@ -110,7 +110,7 @@ sidebar.use((state, emitter) => {
       state.channels = [] // will fetch due to session update
 
       // listen for channellist-related events on websocket
-      state.ws = new Ws(host)
+      state.ws = new WS(host)
       state.ws.on('created new channel', fetchChannelList)
       state.ws.on('renamed channel', handleChannelRenamed)
       state.ws.on('deleted channel', fetchChannelList)
