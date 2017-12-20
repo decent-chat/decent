@@ -41,6 +41,15 @@ async function main() {
   await setupDefaultSettings(db.settings)
   await attachAPI(app, {wss, db})
 
+  // We return index.html rather than a 404, because 404s are handled by
+  // the client - which also does routing.
+  //
+  // This means we can't use gh-pages, but that doesn't really matter
+  // all that much :)
+  app.get('*', (request, response) => {
+    response.sendFile(__dirname + '/site/index.html')
+  })
+
   const port = parseInt(process.argv[2]) || 3000
   await new Promise(resolve => httpServer.listen(port, resolve))
 
