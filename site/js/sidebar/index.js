@@ -73,6 +73,10 @@ sidebar.use((state, emitter) => {
     const activeServer = state.servers[state.activeServer]
     if (activeServer) activeServer.active = false
 
+    state.activeServer = null
+    state.activeChannelID = null
+    state.activeChannelName = null
+
     // remove websocket channellist-related event listeners
     // and forget the old server's websocket connection
     if (state.ws) {
@@ -159,6 +163,7 @@ sidebar.use((state, emitter) => {
       const firstChannel = state.channels[0]
 
       if (!firstChannel) return // abort if there are no channels
+                                // i.e. defer to when fetchChanneList finishes
 
       history.replace(`/${host}/#${firstChannel.name}`)
 
@@ -200,16 +205,13 @@ sidebar.use((state, emitter) => {
     // [ { id, name, ?unreadMessageCount } ]
     state.channels = channels
 
-    // if we have an active channel name but no active channel id, it means
     // the 'channel update' history event was emitted BEFORE we were able
-    // to fetch the channel list - let's set the active channel id
-    if (state.activeChannelName && !state.activeChannelID) {
-      const activeChannel = channels
-        .find(c => c.name === state.activeChannelName.substr(1)) // activeChannelName includes the '#'
+    // to fetch the channel list, so we'll view the default channel (first) now
+    // instead.
+    if (!history.path()[1]) {
+      const firstChannel = channels[0]
 
-      if (!activeChannel) return
-
-      state.activeChannelID = activeChannel.id
+      history.replace(`/${history.path()[0]}/#${firstChannel.name}`)
     }
 
     emitter.emit('render')

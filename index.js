@@ -41,12 +41,6 @@ async function main() {
   await setupDefaultSettings(db.settings)
   await attachAPI(app, {wss, db})
 
-  // Any other route points to index.html.
-  // The client uses pushState-based routing, so this is required!
-  app.get('*', (request, response) => {
-    response.sendFile(__dirname + '/site/index.html')
-  })
-
   const port = parseInt(process.argv[2]) || 3000
   await new Promise(resolve => httpServer.listen(port, resolve))
 

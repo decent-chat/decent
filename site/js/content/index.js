@@ -78,7 +78,7 @@ content.use((state, emitter) => {
   })
 
   history.on('channel update', async page => {
-    if (page.startsWith('#')) {
+    if (page && page.startsWith('#')) {
       // a channel page
       state.page = 'channel'
       state.channel = null // loading...
@@ -116,6 +116,7 @@ content.use((state, emitter) => {
       state.page = page
       state.channel = null
       state.channelName = null
+      state.messages = null
     }
 
     emitter.emit('render')
