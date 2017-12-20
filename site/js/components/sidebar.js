@@ -123,7 +123,7 @@ const store = (state, emitter) => {
         // fetch user data using this sessionID
         try {
           emitter.emit('render') // render no channels
-          const { user } = await api.get(state.params.host, 'session/' + sessionID)
+          const { user } = await api.get(state, 'session/' + sessionID)
 
           state.session = { id: sessionID, user }
           emitter.emit('login')
@@ -148,7 +148,7 @@ const store = (state, emitter) => {
   // fetch the channel list from the server
   emitter.on('sidebar.fetchchannels', async () => {
     const data = state.session ? { sessionID: state.session.id } : {}
-    const { channels } = await api.get(state.params.host, 'channel-list', data)
+    const { channels } = await api.get(state, 'channel-list', data)
 
     state.sidebar.channels = channels
     emitter.emit('render')
@@ -170,7 +170,7 @@ const store = (state, emitter) => {
       modal.disable()
 
       try {
-        const { success } = await api.post(state.params.host, 'create-channel', {
+        const { success } = await api.post(state, 'create-channel', {
           name: channelName.trim(),
           sessionID: state.session.id,
         })
@@ -243,7 +243,7 @@ const store = (state, emitter) => {
       modal.disable()
 
       try {
-        await api.post(state.params.host, 'register', { username, password })
+        await api.post(state, 'register', { username, password })
 
         // close the modal
         modal.close()
@@ -288,8 +288,8 @@ const store = (state, emitter) => {
 
     modal.on('submit', async ({ username, password }) => {
       try {
-        const { sessionID } = await api.post(state.params.host, 'login', { username, password })
-        const { user } = await api.get(state.params.host, 'session/' + sessionID)
+        const { sessionID } = await api.post(state, 'login', { username, password })
+        const { user } = await api.get(state, 'session/' + sessionID)
 
         state.session = { id: sessionID, user }
         storage.set('sessionID@' + state.params.host, sessionID)

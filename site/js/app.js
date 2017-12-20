@@ -20,6 +20,7 @@ app.use(devtools())
 app.use((state, emitter) => {
   state.session = null // { id, user }
   state.ws = null // WS
+  state.secure = false
 
   // emit 'navigate' immediately after page load
   emitter.on('DOMContentLoaded', () => {
@@ -37,6 +38,9 @@ app.use((state, emitter) => {
     if (state.ws && state.ws.host === state.params.host) return // host has not changed
 
     state.ws = new util.WS(state.params.host)
+
+    state.ws.on('open', () => state.secure = state.ws.secure)
+
     state.ws.on('*', (evt, timestamp, data) => {
       if (evt === 'ping for data') return
 
@@ -76,7 +80,7 @@ app.use(sidebar.store)
       ${sidebar.component(state, emit)}
       <main>
         ${messages.component(state, emit)}
-        ${state.messages.list.length ? messageEditor.component(state, emit) : html`<span></span>`}
+        ${state.messages.list !== null ? messageEditor.component(state, emit) : html`<span></span>`}
       </main>
     </div>`
   })

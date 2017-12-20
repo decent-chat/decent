@@ -14,7 +14,7 @@ const component = (state, emit) => {
     if (text.length === 0) return
     textarea.value = ''
 
-    await api.post(state.params.host, 'send-message', {
+    await api.post(state, 'send-message', {
       text,
       channelID: state.params.channel,
       sessionID: state.session.id,

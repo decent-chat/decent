@@ -34,6 +34,7 @@ class WS extends Nanobus {
     return new Promise((resolve, reject) => {
       api.get(host, 'should-use-secure').then(({ useSecure }) => {
         const uri = (useSecure ? 'wss://' : 'ws://') + host
+        this.secure = useSecure
 
         this.socket = new WebSocket(uri)
 
