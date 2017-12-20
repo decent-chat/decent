@@ -154,7 +154,7 @@ const store = (state, emitter) => {
     emitter.emit('render')
   })
 
-  // create a channel & switch to it
+  // create a channel
   emitter.on('sidebar.createchannel', () => {
     const modal = new Modal({
       title: 'Create channel',
@@ -176,7 +176,6 @@ const store = (state, emitter) => {
         })
 
         modal.close()
-        emitter.emit('sidebar.switchchannel', channelName.trim())
       } catch (error) {
         if (error.message === 'name invalid') {
           modal.showError('Invalid name - can only contain a-z, 0-9,\nunderscores, and dashes')
