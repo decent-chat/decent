@@ -14,7 +14,7 @@ content.mount('#content')
 
 // publish these, for debugging/experimenting
 Object.assign(window, {
-  Ws, history, storage, api,
+  util: {Ws, history, storage, api},
   sidebar, content
 })
 
