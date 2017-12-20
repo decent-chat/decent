@@ -24,16 +24,6 @@ class Ws extends Nanobus {
       })
     } else {
       pool.set(host, this) // add to pool
-
-      // respond to 'ping for data' event
-      this.sessionID = null // handled by sidebar
-      this.on('ping for data', () => {
-        if (this.sessionID) {
-          this.send('pong data', { sessionID: this.sessionID })
-        }
-      })
-
-      // connect
       this.connectTo(host)
     }
   }
