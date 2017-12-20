@@ -6,7 +6,7 @@ const html = require('choo/html')
 const history = require('../util/history')
 const storage = require('../util/storage')
 const { get } = require('../util/api')
-const Ws = require('../util/ws')
+const WS = require('../util/ws')
 
 // initialize choo
 const content = choo()
@@ -71,7 +71,7 @@ content.use((state, emitter) => {
 
     if (host) {
       // establish/use websocket
-      state.ws = new Ws(host)
+      state.ws = new WS(host)
       state.ws.on('received chat message', handleNewMessage)
       state.ws.on('edited chat message', handleEditMessage)
     }

@@ -4,15 +4,15 @@ const api = require('./api')
 // we keep a pool of connected websockets so
 // we don't end up initiating 100 connects to the
 // same server
-const pool = new Map() // host -> Ws
+const pool = new Map() // host -> WS
 
-// Ws is just nanobus wrapping a WebSocket
-class Ws extends Nanobus {
+// WS is just nanobus wrapping a WebSocket
+class WS extends Nanobus {
   constructor(host) {
     super()
 
     if (pool.has(host)) {
-      // we already have a Ws connected to this server,
+      // we already have a WS connected to this server,
       // so we can just use that one
       const parent = pool.get(host)
 
@@ -94,4 +94,4 @@ class Ws extends Nanobus {
   }
 }
 
-module.exports = Ws
+module.exports = WS
