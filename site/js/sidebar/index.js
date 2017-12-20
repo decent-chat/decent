@@ -173,6 +173,8 @@ sidebar.use((state, emitter) => {
     state.activeChannelName = channelName  // used by fetchChannelList (note, includes '#')
     console.log('switched to channel/page:', channelName)
 
+    console.log(channelName)
+
     if (!channelName.startsWith('#')) {
       // not a channel, probably a settings page or something
       // (note: they haven't been implemented yet)
@@ -211,7 +213,7 @@ sidebar.use((state, emitter) => {
     if (!history.path()[1]) {
       const firstChannel = channels[0]
 
-      history.replace(`/${history.path()[0]}/#${firstChannel.name}`)
+      history.replace(`/${host}/#${firstChannel.name}`)
     }
 
     emitter.emit('render')
