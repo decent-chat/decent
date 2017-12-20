@@ -69,7 +69,7 @@ class Modal extends Nanobus {
 
     // darken page cover
     const pageCover = document.querySelector('.modal-page-cover')
-    pageCover.onclick = this.close.bind(this) // close on click
+    pageCover.onclick = () => this.close() // close on click
     pageCover.classList.add('visible')
 
     // show the modal
