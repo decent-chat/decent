@@ -1,6 +1,11 @@
 // wrapper around window.fetch
 
 async function fetchHelper(host, path, fetchConfig = {}) {
+  // Quick guarding, just in case e.g. host is fetched from a variable
+  // whose value is undefined.
+  if (!host) throw new Error('No host argument given')
+  if (!path) throw new Error('No path argument given')
+
   const result = await fetch('//' + host + '/api/' + path, fetchConfig)
     .then(res => res.json())
 
