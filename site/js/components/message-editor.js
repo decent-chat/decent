@@ -47,7 +47,7 @@ const component = (state, emit) => {
     // logged out (at which point the actual content will have changed, so
     // replacing it is necessary).
     editor.isSameNode = a => {
-      return a.classList === editor.classList
+      return a.className === editor.className
     }
 
     return editor
