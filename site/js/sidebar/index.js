@@ -154,26 +154,11 @@ sidebar.use((state, emitter) => {
 
   history.on('channel update', channelName => {
     if (!channelName) {
-      const [ host ] = history.path()
-
-      // if we're not actually on a server, abort
-      if (!host) return
-
-      // first channel is default channel, redirect there
-      const firstChannel = state.channels[0]
-
-      if (!firstChannel) return // abort if there are no channels
-                                // i.e. defer to when fetchChanneList finishes
-
-      history.replace(`/${host}/#${firstChannel.name}`)
-
       return
     }
 
     state.activeChannelName = channelName  // used by fetchChannelList (note, includes '#')
     console.log('switched to channel/page:', channelName)
-
-    console.log(channelName)
 
     if (!channelName.startsWith('#')) {
       // not a channel, probably a settings page or something
@@ -190,6 +175,7 @@ sidebar.use((state, emitter) => {
     if (!channel) {
       // we haven't fetched the channel list yet - we'll deal with activation there
       // see fetchChannelList
+      console.warn('channel list not fetched yet but active channel =', channelName)
       return
     }
 
@@ -207,13 +193,12 @@ sidebar.use((state, emitter) => {
     // [ { id, name, ?unreadMessageCount } ]
     state.channels = channels
 
-    // the 'channel update' history event was emitted BEFORE we were able
-    // to fetch the channel list, so we'll view the default channel (first) now
-    // instead.
-    if (!history.path()[1]) {
-      const firstChannel = channels[0]
+    // update activeChannelID
+    const [ , page ] = history.path()
+    if (page && page.startsWith('#')) {
+      const activeChannel = channels.find(name => page.substr(1))
 
-      history.replace(`/${host}/#${firstChannel.name}`)
+      state.activeChannelID = activeChannel.id
     }
 
     emitter.emit('render')
