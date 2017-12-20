@@ -11,6 +11,8 @@ class WS extends Nanobus {
   constructor(host) {
     super()
 
+    this.host = host
+
     if (pool.has(host)) {
       // we already have a WS connected to this server,
       // so we can just use that one
@@ -37,16 +39,12 @@ class WS extends Nanobus {
 
         // listen for events on the socket
         this.socket.addEventListener('open', event => {
-          console.info('connected websocket', { host })
-
           this.emit('open', event)
           resolve(event)
         })
 
         this.socket.addEventListener('message', event => {
           const { evt, data } = JSON.parse(event.data)
-
-          console.debug('socket:', evt, data)
 
           // pass socket messages over to this nanobus
           this.emit(evt, data)

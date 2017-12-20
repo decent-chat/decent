@@ -40,5 +40,7 @@ module.exports = {
       },
       body: JSON.stringify(data)
     })
-  }
+  },
+
+  sleep: ms => new Promise(resolve => setTimeout(resolve, ms)),
 }

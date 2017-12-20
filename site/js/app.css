@@ -1,0 +1,61 @@
+body {
+  margin: 0;
+  padding: 0;
+
+  font-size: 16px;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, Lato, 'Helvetica Neue', sans-serif;
+
+  --gray-900: #fff;
+  --gray-700: #eaedf2;
+  --gray-500: #cdd1d7;
+  --gray-300: #a3a8af;
+  --gray-100: #2d323a;
+
+  --blue: #337df4;
+  --blue-a2: rgba(51, 125, 244, 0.2); /* --blue with alpha of 0.2 */
+  --blue-a3: rgba(51, 125, 244, 0.3); /* --blue with alpha of 0.3 */
+
+  --green: #26a527;
+  --green-a2: rgba(38, 165, 39, 0.2); /* --green with alpha of 0.2 */
+  --green-a3: rgba(38, 165, 39, 0.3); /* --green with alpha of 0.3 */
+
+  --red: #f43259;
+}
+
+:host {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+
+  color: var(--gray-100);
+  background: var(--gray-900);
+
+  & > main {
+    display: flex;
+    flex-direction: column;
+
+    flex: 12 0 0;
+    height: 100vh;
+    overflow-y: hidden;
+
+    background: var(--gray-700);
+  }
+}
+
+@keyframes wiggle {
+  0%, 50%, 100% {
+    transform: translateZ(0);
+  }
+
+  15%, 23%, 31% {
+    transform: scale(1.03) rotate(-4deg) translateZ(0);
+  }
+
+  19%, 27%, 35% {
+    transform: scale(1.03) rotate(4deg) translateZ(0);
+  }
+}
+
+.wiggle {
+  animation: 3s infinite normal wiggle;
+}

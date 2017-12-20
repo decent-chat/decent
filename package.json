@@ -18,9 +18,14 @@
   "devDependencies": {
     "browserify": "^14.5.0",
     "choo": "^6.6.0",
+    "choo-devtools": "^2.3.0",
+    "css-extract": "^1.2.0",
     "mrk.js": "^1.0.1",
     "nanobus": "^4.3.1",
-    "watchify": "^3.9.0"
+    "sheetify": "^6.2.0",
+    "sheetify-nested": "^1.0.2",
+    "watchify": "^3.9.0",
+    "yo-yoify": "^4.2.0"
   },
   "repository": {
     "type": "git",
@@ -38,7 +43,7 @@
   },
   "homepage": "https://github.com/towerofnix/decent#readme",
   "scripts": {
-    "build": "browserify site/js/index.js -o site/decent.js -d",
-    "watch": "watchify site/js/index.js -o site/decent.js -d"
+    "build": "browserify site/js/app.js -o site/decent.js -d -g yo-yoify -t [ sheetify -u sheetify-nested ] -p [ css-extract -o site/decent.css ]",
+    "watch": "watchify site/js/app.js -o site/decent.js -d -g yo-yoify -t [ sheetify -u sheetify-nested ] -p [ css-extract -o site/decent.css ] -v"
   }
 }

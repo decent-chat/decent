@@ -1,0 +1,33 @@
+:host {
+  display: flex;
+
+  align-items: flex-start;
+  margin-bottom: 16px;
+
+  color: var(--gray-100);
+
+  & .icon {
+    width: 48px;
+    height: 48px;
+
+    margin-right: 16px;
+    border-radius: 4px;
+  }
+
+  & .info {
+    margin-bottom: 4px;
+  }
+
+  & .username {
+    display: inline-block;
+    margin-right: 4px;
+
+    font-weight: bold;
+    text-align: right;
+  }
+
+  & time {
+    display: inline-block;
+    color: var(--gray-300);
+  }
+}
