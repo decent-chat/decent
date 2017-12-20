@@ -111,27 +111,33 @@ const store = (state, emitter) => {
     if (state.params.host !== state.sidebar.hostCached && state.params.host) {
       state.sidebar.hostCached = state.params.host
 
-      emitter.emit('sidebar.fetchchannels')
-
       if (!state.sidebar.servers.includes(state.params.host)) {
         state.sidebar.servers.push(state.params.host)
         storage.set('servers', state.sidebar.servers)
       }
 
+      state.sidebar.channels = null
+
       const sessionID = storage.get('sessionID@' + state.params.host)
       if (sessionID) {
         // fetch user data using this sessionID
         try {
+          emitter.emit('render') // render no channels
           const { user } = await api.get(state.params.host, 'session/' + sessionID)
 
           state.session = { id: sessionID, user }
           emitter.emit('login')
         } catch (error) {
+          state.session = null
           console.warn(error)
         }
+      } else {
+        state.session = null
       }
-    } else {
-      state.channels = null
+
+      emitter.emit('sidebar.fetchchannels')
+    } else if (!state.params.host) {
+      state.sidebar.channels = null
     }
 
     emitter.emit('render')
