@@ -5,7 +5,7 @@ module.exports = (state, emit) => {
   const textarea = html`<textarea
     class='message-editor-input'
     placeholder='Enter a message...'
-    onkeyup=${keyup}>
+    onkeydown=${onkeydown}>
   </textarea>`
 
   async function send() {
@@ -21,19 +21,12 @@ module.exports = (state, emit) => {
     })
   }
 
-  state.shift = false
-
-  textarea.addEventListener('keydown', evt => {
+  function onkeydown(evt) {
     const key = evt.which
-
-    // shift
-    if (key === 16) {
-      state.shift = true
-    }
 
     // enter
     if (key === 13) {
-      if (state.shift) {
+      if (evt.shiftKey) {
         // if shift is down, enter a newline
         // this is default behaviour
       } else {
@@ -41,15 +34,6 @@ module.exports = (state, emit) => {
         evt.preventDefault()
         send()
       }
-    }
-  })
-
-  function keyup(evt) {
-    const key = evt.which
-
-    // shift
-    if (key === 16) {
-      state.shift = false
     }
   }
 
