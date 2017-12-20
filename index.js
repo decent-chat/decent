@@ -35,6 +35,12 @@ async function main() {
 
   await Promise.all(Object.values(db).map(d => d.loadDatabase()))
 
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*')
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
+    next()
+  })
+
   app.enable('trust proxy')
   app.use(express.static('site'))
   app.use('/uploads', express.static('uploads'))
