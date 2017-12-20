@@ -120,7 +120,7 @@ class Modal extends Nanobus {
     this.visible = false
     this.el.remove()
 
-    // darken page cover
+    // un-darken page cover
     const pageCover = document.querySelector('.modal-page-cover')
     pageCover.classList.remove('visible')
 
