@@ -69,12 +69,12 @@ content.use((state, emitter) => {
       state.ws.removeListener('edited chat message', handleEditMessage)
     }
 
-    // establish/use websocket
-    state.ws = new Ws(host)
-
-    // listen for events
-    state.ws.on('received chat message', handleNewMessage)
-    state.ws.on('edited chat message', handleEditMessage)
+    if (host) {
+      // establish/use websocket
+      state.ws = new Ws(host)
+      state.ws.on('received chat message', handleNewMessage)
+      state.ws.on('edited chat message', handleEditMessage)
+    }
   })
 
   history.on('channel update', async page => {
