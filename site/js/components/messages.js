@@ -85,7 +85,7 @@ const store = (state, emitter) => {
       const currentY = m.scrollTop
       const difference = targetY - currentY
 
-      return difference < 50
+      return difference < 200
     },
 
     // oldest message-group element
@@ -99,11 +99,11 @@ const store = (state, emitter) => {
     },
 
     // scroll to message smoothly
-    scrollToMsg({ id }) {
+    scrollToMsg({ id }, smooth = true) {
       const el = document.querySelector('#msg-' + id)
 
       el.scrollIntoView({
-        behavior: 'smooth',
+        behavior: smooth ? 'smooth' : 'instant', // auto?
         block: 'center',
       })
     },
@@ -205,7 +205,7 @@ const store = (state, emitter) => {
         const el = state.messages.newestGroupEl
 
         el.scrollIntoView({
-          behavior: 'smooth',
+          behavior: 'instant',
           block: 'end',
         })
       }
