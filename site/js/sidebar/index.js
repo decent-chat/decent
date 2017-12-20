@@ -46,8 +46,6 @@ sidebar.use((state, emitter) => {
     if (activeServer) {
       const { host } = activeServer
       const ws = new Ws(host) // gets current Ws connection if it exists
-
-      ws.sessionID = id
     }
 
     // fetch channel list
@@ -112,6 +110,7 @@ sidebar.use((state, emitter) => {
       state.ws.on('created new channel', fetchChannelList)
       state.ws.on('renamed channel', handleChannelRenamed)
       state.ws.on('deleted channel', fetchChannelList)
+      state.ws.on('ping for data', pongData)
 
       // load session ID from storage
       const sessionID = storage.get('session id: ' + host) || null
@@ -225,6 +224,13 @@ sidebar.use((state, emitter) => {
 
       history.replace(`/${host}/#${newName}`)
     }
+  }
+
+  async function pongData() {
+    console.log('hey-ho', state.sessionID)
+    state.ws.send('pong data', {
+      sessionID: state.sessionID // Could be null, of course.
+    })
   }
 })
 
