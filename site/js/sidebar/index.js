@@ -6,7 +6,7 @@ const html = require('choo/html')
 const history = require('../util/history')
 const storage = require('../util/storage')
 const { get } = require('../util/api')
-const Ws = require('../util/ws')
+const WS = require('../util/ws')
 
 // initialize choo
 const sidebar = choo()
@@ -45,7 +45,7 @@ sidebar.use((state, emitter) => {
 
     if (activeServer) {
       const { host } = activeServer
-      const ws = new Ws(host) // gets current Ws connection if it exists
+      const ws = new WS(host) // gets current WS connection if it exists
     }
 
     // fetch channel list
@@ -72,6 +72,10 @@ sidebar.use((state, emitter) => {
     // deactivate the currently active server, if any
     const activeServer = state.servers[state.activeServer]
     if (activeServer) activeServer.active = false
+
+    state.activeServer = null
+    state.activeChannelID = null
+    state.activeChannelName = null
 
     // remove websocket channellist-related event listeners
     // and forget the old server's websocket connection
@@ -106,7 +110,7 @@ sidebar.use((state, emitter) => {
       state.channels = [] // will fetch due to session update
 
       // listen for channellist-related events on websocket
-      state.ws = new Ws(host)
+      state.ws = new WS(host)
       state.ws.on('created new channel', fetchChannelList)
       state.ws.on('renamed channel', handleChannelRenamed)
       state.ws.on('deleted channel', fetchChannelList)
@@ -150,18 +154,6 @@ sidebar.use((state, emitter) => {
 
   history.on('channel update', channelName => {
     if (!channelName) {
-      const [ host ] = history.path()
-
-      // if we're not actually on a server, abort
-      if (!host) return
-
-      // first channel is default channel, redirect there
-      const firstChannel = state.channels[0]
-
-      if (!firstChannel) return // abort if there are no channels
-
-      history.replace(`/${host}/#${firstChannel.name}`)
-
       return
     }
 
@@ -183,6 +175,7 @@ sidebar.use((state, emitter) => {
     if (!channel) {
       // we haven't fetched the channel list yet - we'll deal with activation there
       // see fetchChannelList
+      console.warn('channel list not fetched yet but active channel =', channelName)
       return
     }
 
@@ -200,14 +193,10 @@ sidebar.use((state, emitter) => {
     // [ { id, name, ?unreadMessageCount } ]
     state.channels = channels
 
-    // if we have an active channel name but no active channel id, it means
-    // the 'channel update' history event was emitted BEFORE we were able
-    // to fetch the channel list - let's set the active channel id
-    if (state.activeChannelName && !state.activeChannelID) {
-      const activeChannel = channels
-        .find(c => c.name === state.activeChannelName.substr(1)) // activeChannelName includes the '#'
-
-      if (!activeChannel) return
+    // update activeChannelID
+    const [ , page ] = history.path()
+    if (page && page.startsWith('#')) {
+      const activeChannel = channels.find(name => page.substr(1))
 
       state.activeChannelID = activeChannel.id
     }

@@ -8,18 +8,18 @@ let oldPathString
 Object.assign(history, {
   // push new path
   push(path) {
-    window.history.pushState({ path }, '', path)
+    window.history.pushState({ path }, '', '/#' + path)
     history.emit('navigate', path.substr(1))
   },
 
   // replace current path
   replace(path) {
-    window.history.replaceState({ path }, '', path)
+    window.history.replaceState({ path }, '', '/#' + path)
     history.emit('navigate', path.substr(1))
   },
 
   get pathString() {
-    return (location.pathname + location.hash).substr(1)
+    return location.hash.substr(2) || '' // remove "#/" prefix
   },
 
   // parse current path
@@ -35,10 +35,10 @@ Object.assign(history, {
   },
 
   // emit more high-level events than just 'navigate'
-  // looks for changes to /:host/:channel
+  // looks for changes to /#/:host/:channel
   emitPathChanges(path) {
     const [ newHost, newChannel ] = history.path(path)
-    const [ oldHost, oldChannel ] = history.path(oldPathString || Math.random().toString())
+    const [ oldHost, oldChannel ] = history.path(oldPathString || '!/!')
 
     oldPathString = path || history.pathString
 
@@ -46,7 +46,8 @@ Object.assign(history, {
     setTimeout(() => {
       // did the host change?
       if (newHost !== oldHost) {
-        history.emit('host update', newHost)
+        console.log('host update', newHost || null)
+        history.emit('host update', newHost || null)
       }
 
       // did the channel change? note this may not actually be
@@ -55,7 +56,8 @@ Object.assign(history, {
       //
       // note that the 'content' element refers to this as a 'page'.
       if (newChannel !== oldChannel) {
-        history.emit('channel update', newChannel)
+        console.log('page update', newChannel || null)
+        history.emit('channel update', newChannel || null)
       }
     }, 25)
   },
@@ -69,7 +71,7 @@ history.on('navigate', history.emitPathChanges)
 // popstate is emitted when the user hits the back button
 // in the browser chrome. i.e. history.go(-1)
 window.addEventListener('popstate', event => {
-  history.emit('navigate', event.state.path.substr(1))
+  history.emit('navigate', /*event.state.path.substr(1)*/ location.hash.substr(2))
 })
 
 module.exports = history
