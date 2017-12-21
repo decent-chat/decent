@@ -22,7 +22,7 @@ const component = (state, emit) => {
       statusEl.innerText = 'Saving...'
 
       try {
-        const { avatarURL } = await api.post(state.params.host, 'account-settings', {
+        const { avatarURL } = await api.post(state, 'account-settings', {
           email,
           sessionID: state.session.id,
         })
