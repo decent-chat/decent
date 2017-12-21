@@ -52,7 +52,7 @@ module.exports = {
     })
   },
 
-  postRaw(state, path, body = '') {
+  postRaw(state, path, body) {
     if (!body) return Promise.reject(new Error('Body not provided'))
 
     return fetchHelper(state, path, {
