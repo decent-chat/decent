@@ -436,10 +436,11 @@ module.exports = async function attachAPI(app, {wss, db}) {
   })
   const uploadSingleImage = upload.single('image')
 
+  // TODO: delete old images
   app.post('/api/upload-image', [
     ...middleware.loadVarFromQuery('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-    ...middleware.requireBeAdmin('sessionUser'),
+    //...middleware.requireBeAdmin('sessionUser'),
     (req, res) => uploadSingleImage(req, res, err => {
       if (err) {
         res.status(500).end(JSON.stringify({
