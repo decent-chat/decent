@@ -4,6 +4,28 @@ const raw = require('choo/html/raw')
 const html = require('choo/html')
 const mrk = require('mrk.js')
 
+mrk.patterns.image = ({ read, readUntil }, meta) => {
+  if (read(2) !== '![') return
+
+  // All characters up to `]` are the alt text
+  const alt = readUntil(']')
+
+  if (read(2) !== '](') return
+
+  // All characters up to `)` are the image src
+  const src = readUntil(')')
+
+  // Set metadata
+  meta({ alt, src })
+
+  return read() === ')'
+}
+
+mrk.htmlify.image = ({ metadata: { alt, src } }) =>
+  `<a href='${mrk.escapeHTML(src)}' target='_blank' class='image'>
+    <img src='${mrk.escapeHTML(src)}' alt='${mrk.escapeHTML(alt)}'s/>
+  </a>`
+
 // TODO add mrk patterns for channelrefs and mentions
 
 // returns 3-character month name from a Date

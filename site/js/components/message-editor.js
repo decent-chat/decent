@@ -37,10 +37,51 @@ const component = (state, emit) => {
     }
   })
 
+  const progressBar = html`<div class='progress-bar'></div>`
+
+  textarea.addEventListener('paste', async evt => {
+    if (!evt.clipboardData) return
+    if (progressBar.classList.contains('moving')) return
+
+    const img = evt.clipboardData.files[0]
+
+    if (!img || img.type.indexOf('image') === -1) return
+
+    evt.preventDefault()
+
+    // upload the image file
+    const formData = new FormData()
+    formData.append('image', img)
+
+    progressBar.style.width = '60%'
+    progressBar.classList.add('moving')
+
+    try {
+      const { path } = await api.postRaw(state, 'upload-image?sessionID=' + state.session.id, formData)
+
+      progressBar.style.width = '90%'
+
+      // send a message with the image in it
+      await api.post(state, 'send-message', {
+        text: `![](${state.secure ? 'https' : 'http'}://${state.params.host}${path})`,
+        channelID: state.params.channel,
+        sessionID: state.session.id,
+      })
+
+      progressBar.style.width = '100%'
+      await api.sleep(500)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      progressBar.classList.remove('moving')
+    }
+  })
+
   if (state.session) {
     const editor = html`<div class=${prefix}>
       ${textarea}
       <button onclick=${send}>Send</button>
+      ${progressBar}
     </div>`
 
     // we only want to morph the editor element if it's changed to being
