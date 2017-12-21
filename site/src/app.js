@@ -31,7 +31,8 @@ app.use((state, emitter) => {
   // emit 'route' after state.route/state.params changes
   // different to 'navigate', which fires beforehand
   emitter.prependListener('navigate', () => {
-    setTimeout(() => emitter.emit('route'), 25) // X
+    // this is a hack. see https://github.com/choojs/choo/pull/553
+    setTimeout(() => emitter.emit('route'), 25)
   })
 
   // get websocket connection whenever host changes

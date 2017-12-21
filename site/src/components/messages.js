@@ -250,7 +250,8 @@ const component = (state, emit) => {
 
     const y = state.messages.oldestY = state.messages.oldestGroupEl.getBoundingClientRect().y
 
-    // if y is positive then s c r o l l b a c k
+    // if y is positive, we've scolled above the top group - so we need
+    // to fetch older messages and display 'em
     if (y > 0) {
       emit('messages.fetch')
     }
