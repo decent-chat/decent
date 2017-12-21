@@ -345,7 +345,10 @@ const component = (state, emit) => {
       ${state.params.host ? (() => {
         if (state.session) {
           return html`<div class='session'>
-            <div class='text'>Logged in as <a class='username'>${state.session.user.username}</a></div>
+            <div class='text'>
+              Logged in as
+              <a class='username' onclick=${() => emit('pushState', `/servers/${state.params.host}/account`)}>${state.session.user.username}</a>
+            </div>
 
             <button onclick=${() => emit('sidebar.logout')}>Logout</button>
           </div>`

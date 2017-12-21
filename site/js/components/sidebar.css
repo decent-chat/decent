@@ -201,7 +201,10 @@
 
         & > .username {
           color: var(--gray-100);
-          text-decoration: none;
+          cursor: pointer;
+          text-decoration: underline;
+
+          margin-left: 5px;
         }
       }
 

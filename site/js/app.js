@@ -11,6 +11,7 @@ Object.assign(window, { util }) // publish util for debugging/experimenting
 const messages = require('./components/messages')
 const messageEditor = require('./components/message-editor')
 const sidebar = require('./components/sidebar')
+const accountSettings = require('./components/account-settings')
 
 // create app
 const app = choo()
@@ -81,6 +82,16 @@ app.use(sidebar.store)
       <main>
         ${messages.component(state, emit)}
         ${state.messages.list !== null ? messageEditor.component(state, emit) : html`<span></span>`}
+      </main>
+    </div>`
+  })
+
+  // server account settings page
+  app.route('/servers/:host/account', (state, emit) => {
+    return html`<div class=${prefix}>
+      ${sidebar.component(state, emit)}
+      <main>
+        ${accountSettings.component(state, emit)}
       </main>
     </div>`
   })

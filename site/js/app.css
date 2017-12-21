@@ -59,3 +59,94 @@ body {
 .wiggle {
   animation: 3s infinite normal wiggle;
 }
+
+.page {
+  padding: 36px;
+  height: 100%;
+  overflow-y: auto;
+
+  & > h1 {
+    margin-top: 0;
+
+    font-size: 32px;
+    color: var(--gray-100);
+
+    letter-spacing: -1px;
+
+    & > .subtitle {
+      color: var(--gray-300);
+      font-size: 24px;
+    }
+  }
+}
+
+.styled-input {
+  margin-bottom: 16px;
+
+  & label {
+    display: block;
+    color: var(--gray-300);
+
+    font-weight: bold;
+    font-size: 16px;
+
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    margin-left: 13px;
+
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+       -moz-user-select: none;
+            user-select: none;
+  }
+
+  & input {
+    width: 280px;
+    padding: 13px 16px;
+
+    font-family: inherit;
+    font-size: 18px;
+
+    color: var(--gray-100);
+    background: var(--gray-900);
+
+    border: 0;
+    border-bottom: 1px solid var(--gray-500);
+    &:focus { border-color: var(--blue); }
+
+    &[disabled] {
+      cursor: not-allowed;
+      background: var(--gray-700);
+      opacity: .8;
+    }
+  }
+}
+
+.styled-button {
+  padding: 10px 16px;
+  margin-left: 3px;
+
+  background: var(--blue);
+  border-radius: 4px;
+  border: none;
+
+  font-size: 14px;
+  color: var(--gray-900);
+
+  cursor: pointer;
+
+  &.no-bg {
+    color: var(--blue);
+    background: transparent;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+a:any-link.link {
+  color: var(--blue);
+  text-decoration: underline;
+}
+
