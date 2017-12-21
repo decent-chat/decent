@@ -132,13 +132,21 @@ module.exports = async function attachAPI(app, {wss, db}) {
       reactions: m.reactions
     }),
 
-    user: async u => ({
-      id: u._id,
-      username: u.username,
-      avatarURL: emailToAvatarURL(u.email || u._id),
-      permissionLevel: u.permissionLevel,
-      online: await isUserOnline(u._id)
-    }),
+    user: async (u, sessionUser = null) => {
+      const obj = {
+        id: u._id,
+        username: u.username,
+        avatarURL: emailToAvatarURL(u.email || u._id),
+        permissionLevel: u.permissionLevel,
+        online: await isUserOnline(u._id)
+      }
+
+      if (sessionUser && sessionUser._id === u._id) {
+        obj.email = u.email || null
+      }
+
+      return obj
+    },
 
     channelBrief: async (c, sessionUser = null) => {
       const obj = {
@@ -1078,11 +1086,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
         return
       }
 
-      const serializedUser = await serialize.user(user)
-
-      // We will also provide the stored email address, but only
-      // because this IS the user and it is therefore safe to give it away.
-      Object.assign(serializedUser, { email: user.email || null })
+      const serializedUser = await serialize.user(user, user)
 
       response.status(200).end(JSON.stringify({
         success: true,
