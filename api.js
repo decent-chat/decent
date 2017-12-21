@@ -53,7 +53,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
   }
 
   const emailToAvatarURL = memoize(email =>
-    `http://cdn.libravatar.org/avatar/${email ? md5(email) : ''}?d=retro`)
+    `https://seccdn.libravatar.org/avatar/${email ? md5(email) : ''}?d=retro`)
 
   const getUserBySessionID = async function(sessionID) {
     const session = await db.sessions.findOne({_id: sessionID})
