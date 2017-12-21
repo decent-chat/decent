@@ -215,8 +215,9 @@ const store = (state, emitter) => {
           // if the message has an image in it, wait for the image to load,
           // then scroll down to it
           img.addEventListener('load', () => {
-            setTimeout(() =>
-              state.messages.scrollToMsg(message), 25)
+            setTimeout(() => {
+              state.messages.scrollToMsg(message)
+            }, 25)
           })
         }
       }
