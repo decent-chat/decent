@@ -22,20 +22,24 @@ const component = (state, emit) => {
       statusEl.innerText = 'Saving...'
 
       try {
-        await api.post(state.params.host, 'account-settings', {
+        const { avatarURL } = await api.post(state.params.host, 'account-settings', {
           email,
           sessionID: state.session.id,
         })
 
-        state.session.user.email = email
+        Object.assign(state.session.user, {
+          email, avatarURL,
+        })
+
+        emit('render')
+        setTimeout(() => {
+          statusEl.innerText = 'Saved'
+        }, 25)
       } catch (error) {
         statusEl.innerText = 'Error!'
         console.error(error)
       }
     }
-
-    // go back
-    history.go(-1)
   }
 
   return html`<div class='page ${prefix}'>

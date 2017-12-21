@@ -1002,6 +1002,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       response.status(200).end(JSON.stringify({
         success: true,
+        avatarURL: emailToAvatarURL(email),
       }))
     }
   ])
