@@ -19,6 +19,8 @@ const fs = require('fs')
 const path = require('path')
 const util = require('util')
 const bcrypt = require('./bcrypt-util')
+const crypto = require('crypto')
+const memoize = require('memoizee')
 
 const mkdir = util.promisify(fs.mkdir)
 
@@ -41,6 +43,17 @@ module.exports = async function attachAPI(app, {wss, db}) {
       socket.send(JSON.stringify({ evt, data }))
     }
   }
+
+  const md5 = string => {
+    if (!string) {
+      throw 'md5() was not passed ' + string
+    }
+
+    return crypto.createHash('md5').update(string).digest('hex')
+  }
+
+  const emailToAvatarURL = memoize(email =>
+    `https://seccdn.libravatar.org/avatar/${email ? md5(email) : ''}?d=retro`)
 
   const getUserBySessionID = async function(sessionID) {
     const session = await db.sessions.findOne({_id: sessionID})
@@ -111,6 +124,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
       id: m._id,
       authorUsername: m.authorUsername,
       authorID: m.authorID,
+      authorAvatarURL: emailToAvatarURL(m.authorEmail || m.authorID),
       text: m.text,
       date: m.date,
       editDate: m.editDate,
@@ -118,12 +132,21 @@ module.exports = async function attachAPI(app, {wss, db}) {
       reactions: m.reactions
     }),
 
-    user: async u => ({
-      id: u._id,
-      username: u.username,
-      permissionLevel: u.permissionLevel,
-      online: await isUserOnline(u._id)
-    }),
+    user: async (u, sessionUser = null) => {
+      const obj = {
+        id: u._id,
+        username: u.username,
+        avatarURL: emailToAvatarURL(u.email || u._id),
+        permissionLevel: u.permissionLevel,
+        online: await isUserOnline(u._id)
+      }
+
+      if (sessionUser && sessionUser._id === u._id) {
+        obj.email = u.email || null
+      }
+
+      return obj
+    },
 
     channelBrief: async (c, sessionUser = null) => {
       const obj = {
@@ -505,6 +528,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
       const message = await db.messages.insert({
         authorID: sessionUser._id,
         authorUsername: sessionUser.username,
+        authorEmail: sessionUser.email,
         text: request.body.text,
         date: Date.now(),
         editDate: null,
@@ -935,6 +959,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
       const user = await db.users.insert({
         username,
         passwordHash, salt,
+        email: null,
         permissionLevel: 'member',
         lastReadChannelDates: {}
       })
@@ -965,6 +990,27 @@ module.exports = async function attachAPI(app, {wss, db}) {
       response.status(200).end(JSON.stringify({
         success: true,
         user: await serialize.user(user)
+      }))
+    }
+  ])
+
+  app.post('/api/account-settings', [
+    ...middleware.loadVarFromBody('email'),
+    ...middleware.loadVarFromBody('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'user'),
+
+    async (request, response) => {
+      const { email, user } = request[middleware.vars]
+
+      await db.users.update({ _id: user._id }, {
+        $set: {
+          email,
+        }
+      })
+
+      response.status(200).end(JSON.stringify({
+        success: true,
+        avatarURL: emailToAvatarURL(email),
       }))
     }
   ])
@@ -1040,9 +1086,11 @@ module.exports = async function attachAPI(app, {wss, db}) {
         return
       }
 
+      const serializedUser = await serialize.user(user, user)
+
       response.status(200).end(JSON.stringify({
         success: true,
-        user: await serialize.user(user)
+        user: serializedUser,
       }))
     }
   ])
