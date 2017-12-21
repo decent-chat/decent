@@ -3,13 +3,15 @@
 async function fetchHelper(state, path, fetchConfig = {}) {
   // Quick guarding, just in case e.g. host is fetched from a variable
   // whose value is undefined.
-  if (!state) throw new Error('No state/host argument given')
+  if (!state) throw new Error('No state argument given')
   if (!path) throw new Error('No path argument given')
 
   let secure = false, host = state
   if (typeof state === 'object') {
     secure = state.secure
     host = state.params.host
+  } else {
+    console.warn('Host string provided, not state object')
   }
 
   const protocol = secure ? 'https://' : '//'
