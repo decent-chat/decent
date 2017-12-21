@@ -12,6 +12,7 @@ async function fetchHelper(state, path, fetchConfig = {}) {
     host = state.params.host
   } else {
     console.warn('Host string provided, not state object')
+    console.trace()
   }
 
   const protocol = secure ? 'https://' : '//'
