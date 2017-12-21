@@ -444,7 +444,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
         const filename = `${basename}.${ext}`
 
         req[middleware.vars].path += '/' + filename
-
         cb(null, filename)
       }
     })
