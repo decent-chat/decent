@@ -117,6 +117,7 @@ const store = (state, emitter) => {
       }
 
       state.sidebar.channels = null
+      state.secure = false
 
       const sessionID = storage.get('sessionID@' + state.params.host)
       if (sessionID) {
