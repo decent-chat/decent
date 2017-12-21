@@ -34,7 +34,7 @@ const groupMessages = (msgs, startingGroups = []) => {
       })
     } else {
       // add this message to the last group
-      msg.group = groups.length
+      msg.group = groups.length - 1
       group.messages.push(msg)
       group.id = 'msg-group-' + msg.date // having an id makes nanomorph go quicker
     }
@@ -225,7 +225,6 @@ const store = (state, emitter) => {
   })
 
   // event: edit message
-  // TODO test this
   emitter.on('ws.editedchatmessage', ({ message: msg }) => {
     if (msg.channelID !== state.params.channel) return
 
