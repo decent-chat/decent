@@ -44,7 +44,7 @@
   },
   "homepage": "https://github.com/towerofnix/decent#readme",
   "scripts": {
-    "build": "browserify site/js/app.js -o site/decent.js -g yo-yoify -t [ sheetify -u sheetify-nested ] -p [ css-extract -o site/decent.css ]",
-    "watch": "watchify site/js/app.js -o site/decent.js -d -t [ sheetify -u sheetify-nested ] -p [ css-extract -o site/decent.css ] -v"
+    "build": "browserify site/src/app.js -o site/decent.js -g yo-yoify -t [ sheetify -u sheetify-nested ] -p [ css-extract -o site/decent.css ]",
+    "watch": "watchify site/src/app.js -o site/decent.js -d -t [ sheetify -u sheetify-nested ] -p [ css-extract -o site/decent.css ] -v"
   }
 }
