@@ -28,6 +28,7 @@ const groupMessages = (msgs, startingGroups = []) => {
       groups.push({
         authorID: msg.authorID,
         authorUsername: msg.authorUsername,
+        authorAvatarURL: msg.authorAvatarURL,
         messages: [ msg ],
         id: 'msg-group-' + msg.date,
       })

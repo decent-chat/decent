@@ -68,8 +68,6 @@ const updateTimes = () => {
 }
 
 const component = (state, emit, group) => {
-  const avatarURL = 'https://seccdn.libravatar.org/avatar/md5-hash-of-author-email' // TODO
-
   function timeEl(date) {
     const { needsUpdate, string } = stringifyDate(date)
 
@@ -81,7 +79,7 @@ const component = (state, emit, group) => {
   }
 
   return html`<div class=${prefix} id=${group.id}>
-    <img class='icon' src=${avatarURL}/>
+    <img class='icon' src=${group.authorAvatarURL}/>
     <div class='content'>
       <div class='info'>
         <div class='username'>${group.authorUsername}</div>
