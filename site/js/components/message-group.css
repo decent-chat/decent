@@ -30,4 +30,13 @@
     display: inline-block;
     color: var(--gray-300);
   }
+
+  & .message {
+    .image {
+      img {
+        max-height: 400px;
+        max-width: 100%;
+      }
+    }
+  }
 }

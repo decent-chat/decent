@@ -6,6 +6,8 @@
   flex-shrink: 0;
   padding: 16px;
 
+  position: relative;
+
   &.logged-out {
     color: var(--gray-300);
   }
@@ -47,5 +49,21 @@
     background-position: center;
 
     cursor: pointer;
+  }
+
+  & > .progress-bar {
+    position: absolute;
+    right: 0;
+    left: 0;
+    bottom: 0;
+
+    width: 0;
+    height: 4px;
+    &:not(.moving) { width: 0 !important; }
+
+    transition: width 500ms, background 200ms;
+
+    background: transparent;
+    &.moving { background: var(--blue); }
   }
 }

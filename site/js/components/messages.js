@@ -100,13 +100,13 @@ const store = (state, emitter) => {
     },
 
     // scroll to message smoothly
-    scrollToMsg({ id }, smooth = true) {
+    scrollToMsg({ id }, opts = {}) {
       const el = document.querySelector('#msg-' + id)
 
-      el.scrollIntoView({
-        behavior: smooth ? 'smooth' : 'instant', // auto?
+      el.scrollIntoView(Object.assign({
+        behavior: 'instant',
         block: 'center',
-      })
+      }, opts))
     },
   }
 
@@ -159,7 +159,7 @@ const store = (state, emitter) => {
           state.messages.el.scrollTop -= distance
         } else {
           // scroll to bottom (initial render)
-          state.messages.newestGroupEl.scrollIntoView({ behaviour: 'instant' })
+          state.messages.scrollToMsg(messages[messages.length - 1])
         }
 
         state.messages.handleScroll = true
@@ -209,6 +209,17 @@ const store = (state, emitter) => {
           behavior: 'instant',
           block: 'end',
         })
+
+        let img
+        if (img = el.querySelector('.image:last-of-type img')) {
+          // if the message has an image in it, wait for the image to load,
+          // then scroll down to it
+          img.addEventListener('load', () => {
+            setTimeout(() => {
+              state.messages.scrollToMsg(message)
+            }, 25)
+          })
+        }
       }
     }, 25)
   })
