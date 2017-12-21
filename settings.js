@@ -27,7 +27,7 @@ module.exports.setupDefaultSettings = async function(settingsDB) {
   // don't overwrite any fields already there.
 
   for (const [settingsCategoryID, configSpec] of Object.entries(defaultSettings)) {
-    const originalSettingsDoc = settingsDB.findOne({_id: settingsCategoryID})
+    const originalSettingsDoc = await settingsDB.findOne({_id: settingsCategoryID})
 
     const query = {$set: {}}
 
