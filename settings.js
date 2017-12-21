@@ -8,7 +8,7 @@ const defaultSettings = {
   // anyone can view them by GETting the same endpoint.
   [serverSettingsID]: {
     // The name of the server.
-    name: {value: 'Unnamed bantisocial server'}
+    name: {value: 'Unnamed Decent chat server'}
   },
 
   // Server properties - these settings don't do anything until the server is
