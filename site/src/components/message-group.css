@@ -43,4 +43,29 @@
       }
     }
   }
+
+  & a:any-link {
+    color: var(--blue);
+  }
+
+  & .channel-ref {
+    display: inline-block;
+
+    padding: 4px 6px;
+    margin: 4px;
+
+    border-radius: 6px;
+
+    background: var(--green-a2);
+    color: var(--green);
+    &:hover { background: var(--green-a3); }
+
+    cursor: pointer;
+
+    &[data-server=''] {
+      background: var(--blue-a2);
+      color: var(--blue);
+      &:hover { background: var(--blue-a3); }
+    }
+  }
 }

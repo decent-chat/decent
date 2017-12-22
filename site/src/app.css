@@ -150,3 +150,5 @@ a:any-link.link {
   text-decoration: underline;
 }
 
+::-moz-selection { background: #b3d4fc; }
+::selection { background: #b3d4fc; }

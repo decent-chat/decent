@@ -92,6 +92,18 @@ const component = (state, emit, group) => {
 
         el.isSameNode = k => k.id === el.id
 
+        for (const ref of el.querySelectorAll('a.channel-ref')) {
+          const { server, channel } = ref.dataset
+
+          ref.onclick = () => {
+            if (channel) {
+              emit('pushState',  `/servers/${server || state.params.host}?c=${channel}`)
+            } else {
+              emit('pushState',  `/servers/${server}`)
+            }
+          }
+        }
+
         return el
       })}
     </div>

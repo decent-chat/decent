@@ -160,7 +160,7 @@ const store = (state, emitter) => {
           state.messages.el.scrollTop -= distance
         } else {
           // scroll to bottom (initial render)
-          state.messages.scrollToMsg(messages[messages.length - 1])
+          state.messages.el.scrollTop = state.messages.el.scrollHeight + 999
         }
 
         state.messages.handleScroll = true

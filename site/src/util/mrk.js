@@ -64,6 +64,36 @@ Object.assign(mrk.patterns, {
 
     return true
   },
+
+  channelref({ read, readUntil, look }, meta) {
+    let server = ''
+    if (look() === '+') {
+      read()
+
+      let c
+      while (c = look()) {
+        if (c === '#' || c === ' ' || c === '') break
+        server += read()
+      }
+    }
+
+    let channel = ''
+    if (look() === '#') {
+      read()
+
+      let c
+      while (c = look()) {
+        if (c === ' ' || c === '') break
+        channel += read()
+      }
+    }
+
+    if (!channel && !server) return false
+
+    meta({ server, channel })
+
+    return true
+  },
 })
 
 Object.assign(mrk.htmlify, {
@@ -79,6 +109,12 @@ Object.assign(mrk.htmlify, {
   codeblock({ metadata }) {
     return `<pre><code class='codeblock language-${mrk.escapeHTML(metadata.lang).replace(/ /g, '-')}'>${mrk.escapeHTML(metadata.code)}</code></pre>`
   },
+
+  channelref({ metadata, text }) {
+    return `<a class='channel-ref' data-server='${mrk.escapeHTML(metadata.server)}' data-channel='${mrk.escapeHTML(metadata.channel)}'>
+      ${mrk.escapeHTML(text)}
+    </a>`
+  }
 })
 
 module.exports = mrk
