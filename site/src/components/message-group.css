@@ -31,6 +31,10 @@
     color: var(--gray-300);
   }
 
+  & .content {
+    width: calc(100% - 48px - 16px);
+  }
+
   & .message {
     .image {
       img {

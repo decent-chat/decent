@@ -2,31 +2,7 @@
 const css = require('sheetify')
 const raw = require('choo/html/raw')
 const html = require('choo/html')
-const mrk = require('mrk.js')
-
-mrk.patterns.image = ({ read, readUntil }, meta) => {
-  if (read(2) !== '![') return
-
-  // All characters up to `]` are the alt text
-  const alt = readUntil(']')
-
-  if (read(2) !== '](') return
-
-  // All characters up to `)` are the image src
-  const src = readUntil(')')
-
-  // Set metadata
-  meta({ alt, src })
-
-  return read() === ')'
-}
-
-mrk.htmlify.image = ({ metadata: { alt, src } }) =>
-  `<a href='${mrk.escapeHTML(src)}' target='_blank' class='image'>
-    <img src='${mrk.escapeHTML(src)}' alt='${mrk.escapeHTML(alt)}'s/>
-  </a>`
-
-// TODO add mrk patterns for channelrefs and mentions
+const mrk = require('../util/mrk')
 
 // returns 3-character month name from a Date
 const month = d => [ 'Jan', 'Feb',' Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' ][d.getMonth()]
@@ -70,6 +46,7 @@ const stringifyDate = date => {
   }
 }
 
+css('prismjs/themes/prism.css')
 const prefix = css('./message-group.css')
 
 // times are updated outside of choo because we don't need to
@@ -108,9 +85,15 @@ const component = (state, emit, group) => {
         ${timeEl(group.messages[0].date)}
       </div>
 
-      ${group.messages.map(msg => html`<div class='message' id=${'msg-' + msg.id}>
-        ${raw(mrk(msg.text).html())}
-      </div>`)}
+      ${group.messages.map(msg => {
+        const el = html`<div class='message' id=${'msg-' + msg.id}>
+          ${raw(mrk(msg.text).html())}
+        </div>`
+
+        el.isSameNode = k => k.id === el.id
+
+        return el
+      })}
     </div>
   </div>`
 }

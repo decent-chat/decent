@@ -1,5 +1,8 @@
 :host {
   padding: 16px;
+
+  word-wrap: break-word;
+  overflow-x: hidden;
   overflow-y: auto;
 
   &.has-messages {
