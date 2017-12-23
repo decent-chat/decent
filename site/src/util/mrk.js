@@ -97,6 +97,14 @@ Object.assign(mrk.patterns, {
 })
 
 Object.assign(mrk.htmlify, {
+  link: ({ metadata }) => `<a target='_blank' rel='noopener noreferrer' href='${mrk.escapeHTML(metadata.href).replace('javascript:', '')}'>
+    ${mrk.escapeHTML(metadata.name)}
+  </a>`,
+
+  autolink: ({ text }) => `<a target='_blank' rel='noopener noreferrer' href='${mrk.escapeHTML(text)}'>
+    ${mrk.escapeHTML(text)}
+  </a>`,
+
   image({ metadata }) {
     const src = mrk.escapeHTML(metadata.src)
     const alt = mrk.escapeHTML(metadata.alt)
