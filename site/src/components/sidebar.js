@@ -139,6 +139,10 @@ const store = (state, emitter) => {
       emitter.emit('sidebar.fetchchannels')
     } else if (!state.params.host) {
       state.sidebar.channels = null
+    } else if (state.query && state.query.c) {
+      const channel = state.sidebar.channels.find(c => c.name === state.query.c)
+
+      emitter.emit('replaceState', `/servers/${state.params.host}/channels/${channel.id}`)
     }
 
     emitter.emit('render')
@@ -153,6 +157,14 @@ const store = (state, emitter) => {
 
     state.sidebar.channels = channels
     emitter.emit('render')
+
+    // if ?c is present, go to that channel by name
+    if (state.query && state.query.c) {
+      const channel = channels.find(c => c.name === state.query.c)
+      console.log(channel)
+
+      emitter.emit('replaceState', `/servers/${state.params.host}/channels/${channel.id}`)
+    }
   })
 
   // create a channel
