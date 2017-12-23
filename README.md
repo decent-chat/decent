@@ -50,7 +50,9 @@ Plus, when you do convert someone to the marginally improved world of decentrali
 
 If you're just a hipster that wants to join a Decent server... there aren't any, yet, as far as we know. Being part of the team behind [Nonfree News](https://nonfree.news), we're planning to start up a Decent-backed Nonfree News chat service in the near future, so look out for that.
 
-Most Decent servers will serve a copy of the Decent web client located in this repository, so you can use that to access servers (any client can connect to any Decent server, regardless of origin). Alternatively, there are a few custom clients in the works by other people. We'll update this if any actually surface!
+Most Decent servers will serve a copy of the Decent web client located in this repository, so you can use that to access servers (any client can connect to any Decent server, regardless of origin). Alternatively, custom clients exist:
+
+* [Weechat](https://github.com/TheInitializer/weecent/)
 
 If you're someone who wants to **run your own Decent server**, read the following:
 
