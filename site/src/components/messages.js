@@ -83,6 +83,8 @@ const store = (state, emitter) => {
     isScrolledToBottom() {
       const m = state.messages.el
 
+      if (!m) return true
+
       const targetY = m.scrollHeight - m.clientHeight
       const currentY = m.scrollTop
       const difference = targetY - currentY
@@ -264,6 +266,13 @@ const component = (state, emit) => {
     if (y > 0) {
       emit('messages.fetch')
     }
+  }
+
+  if (state.messages.isScrolledToBottom()) {
+    // scroll to bottom after re-render
+    setTimeout(() => {
+      state.messages.el.scrollTop = state.messages.el.scrollHeight + 999
+    }, 50)
   }
 
   if (messages === null) {

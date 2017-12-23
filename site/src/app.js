@@ -43,7 +43,10 @@ app.use((state, emitter) => {
     state.secure = false
     state.ws = new util.WS(state.params.host)
 
-    state.ws.on('open', () => state.secure = state.ws.secure)
+    state.ws.on('open', () => {
+      state.secure = state.ws.secure
+      emitter.emit('emotes.fetch')
+    })
 
     state.ws.on('*', (evt, timestamp, data) => {
       if (evt === 'ping for data') return
