@@ -40,6 +40,7 @@ app.use((state, emitter) => {
   emitter.prependListener('route', () => {
     if (state.ws && state.ws.host === state.params.host) return // host has not changed
 
+    state.secure = false
     state.ws = new util.WS(state.params.host)
 
     state.ws.on('open', () => state.secure = state.ws.secure)

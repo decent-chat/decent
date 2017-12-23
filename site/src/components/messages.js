@@ -3,6 +3,7 @@ const css = require('sheetify')
 const html = require('choo/html')
 const api = require('../util/api')
 const messageGroup = require('./message-group')
+const prism = require('prismjs')
 
 // groups messages where:
 //  * the messages have the same author
@@ -159,10 +160,13 @@ const store = (state, emitter) => {
           state.messages.el.scrollTop -= distance
         } else {
           // scroll to bottom (initial render)
-          state.messages.scrollToMsg(messages[messages.length - 1])
+          state.messages.el.scrollTop = state.messages.el.scrollHeight + 999
         }
 
         state.messages.handleScroll = true
+
+        // highlight code blocks
+        prism.highlightAllUnder(state.messages.el)
       }, 25)
     } else {
       // no past messages means we've scrolled to the beginning, so we set
@@ -205,6 +209,8 @@ const store = (state, emitter) => {
       if (atBottom) {
         const el = state.messages.newestGroupEl
 
+        prism.highlightAllUnder(el)
+
         el.scrollIntoView({
           behavior: 'instant',
           block: 'end',
@@ -236,6 +242,10 @@ const store = (state, emitter) => {
     Object.assign(msgInList, msg)
 
     emitter.emit('render')
+
+    setTimeout(() => {
+      prism.highlightAllUnder(document.querySelector('#msg-' + msg.id))
+    }, 25)
   })
 }
 
