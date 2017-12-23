@@ -11,7 +11,7 @@ const constructStyledInput = (name, i, j) => {
 
   return html`<div class='styled-input'>
     <label for=${id}>${i.label}</label>
-    <input id=${id} type=${i.type || 'text'} placeholder=${i.placeholder || ''} tabindex=${j}/>
+    <input id=${id} type=${i.type || 'text'} placeholder=${i.placeholder || ''} tabindex=${j} accept=${i.accept || '*'}/>
   </div>`
 }
 
@@ -100,7 +100,13 @@ class Modal extends Nanobus {
     const map = {} // we _would_ use a Map here but then you can't destructure it
 
     for (const { name, el } of this.styledInputs) {
-      map[name] = el.querySelector('input').value
+      const input = el.querySelector('input')
+
+      if (input.type === 'file') {
+        map[name] = input.files[0]
+      } else {
+        map[name] = input.value
+      }
     }
 
     return map

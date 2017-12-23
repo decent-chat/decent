@@ -1,0 +1,29 @@
+:host {
+  table, th, td {
+    border: 1px solid var(--gray-500);
+    border-collapse: collapse;
+
+    background: var(--gray-900);
+  }
+
+  th, td {
+    padding: 0 14px;
+  }
+
+  td:nth-child(2) {
+    min-width: 100px;
+  }
+
+  button {
+    margin-left: 0;
+  }
+
+  tr {
+    height: 50px;
+    text-align: center;
+  }
+
+  button.add {
+    margin-top: 20px;
+  }
+}
