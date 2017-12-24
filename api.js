@@ -396,7 +396,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
     res.sendFile(__dirname + '/site/index.html')
   })
 
-  app.use('/api/*', async (request, response, next) => {
+  app.use(['/api/*', '/api'], async (request, response, next) => {
     response.header('Content-Type', 'application/json')
     response.header('Access-Control-Allow-Origin', '*')
     response.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
@@ -416,7 +416,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       // For people viewing the API manually for whatever reason to have
       // something to reference, we provide some info about the server itself.
-      message: `This is a Decent chat server. See the repo for details`,
+      message: `This is a Decent chat server. See the repo for details.`,
       repository: 'https://github.com/towerofnix/decent',
     }))
   })
