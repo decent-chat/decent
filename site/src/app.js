@@ -49,10 +49,14 @@ app.use((state, emitter) => {
     })
 
     state.ws.on('*', (evt, timestamp, data) => {
-      if (evt === 'ping for data') return
-
-      // emit websocket events
-      emitter.emit('ws.' + evt.replace(/ /g, ''), data)
+      if (evt === 'ping for data') {
+        state.ws.send('pong data', {
+          sessionID: state.session ? state.session.id : null
+        })
+      } else {
+        // emit websocket events
+        emitter.emit('ws.' + evt.replace(/ /g, ''), data)
+      }
     })
   })
 })
