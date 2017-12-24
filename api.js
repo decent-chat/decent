@@ -409,8 +409,8 @@ module.exports = async function attachAPI(app, {wss, db}) {
     next()
   })
 
-  // Don't let users who aren't verified (permissionLevel unauthorized)
-  // do anything with the API. TODO: Be able to disable this!
+  // Don't let users who aren't verified (authorized false) interact with
+  // most API endpoints. TODO: Be able to disable this!
   app.use('/api', [
     ...middleware.verifyVarsExists(),
 
