@@ -152,17 +152,19 @@ const store = (state, emitter) => {
 
   // fetch the channel list from the server
   emitter.on('sidebar.fetchchannels', async () => {
-    const data = state.session ? { sessionID: state.session.id } : {}
-    const { channels } = await api.get(state, 'channel-list', data)
+    if (state.serverRequiresAuthorization && state.session === null) {
+      state.sidebar.channels = []
+    } else {
+      const data = state.session ? { sessionID: state.session.id } : {}
+      const { channels } = await api.get(state, 'channel-list', data)
+      state.sidebar.channels = channels
+    }
 
-    state.sidebar.channels = channels
     emitter.emit('render')
 
     // if ?c is present, go to that channel by name
     if (state.query && state.query.c) {
       const channel = channels.find(c => c.name === state.query.c)
-      console.log(channel)
-
       emitter.emit('replaceState', `/servers/${state.params.host}/channels/${channel.id}`)
     }
   })
@@ -329,8 +331,13 @@ const store = (state, emitter) => {
   emitter.on('sidebar.logout', () => {
     state.session = null
     storage.set('sessionID@' + state.params.host, null)
+    emitter.emit('logout')
     emitter.emit('render')
   })
+
+  // fetch channels after logging in/out
+  emitter.on('login', () => emitter.emit('sidebar.fetchchannels'))
+  emitter.on('logout', () => emitter.emit('sidebar.fetchchannels'))
 }
 
 const component = (state, emit) => {

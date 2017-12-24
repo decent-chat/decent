@@ -205,6 +205,17 @@ const store = (state, emitter) => {
     }
   })
 
+  // after logging out, consider all messages gone, if the server requires
+  // authentication - after all, they wouldn't be visible to somebody just
+  // opening the page (while logged out)
+  emitter.on('logout', () => {
+    if (state.serverRequiresAuthorization && state.params.channel) {
+      state.messages.list = []
+      state.messages.groupsCached = []
+      emitter.emit('render')
+    }
+  })
+
   // event: new message
   emitter.on('ws.receivedchatmessage', ({ message }) => {
     if (message.channelID !== state.params.channel) return
@@ -269,6 +280,11 @@ const component = (state, emit) => {
 
   const handleScroll = evt => {
     if (!state.messages.handleScroll) return
+
+    // the scroll event happens when the messages container is cleared,
+    // too, at which point oldestGroupEl won't be set, so we don't do
+    // anything in that case
+    if (!state.messages.oldestGroupEl) return
 
     const y = state.messages.oldestY = state.messages.oldestGroupEl.getBoundingClientRect().y
 
