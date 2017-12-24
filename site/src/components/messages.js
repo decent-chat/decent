@@ -132,6 +132,11 @@ const store = (state, emitter) => {
     // and fetch even more as we'll run into edge cases
     if (state.messages.fetching) return
 
+    // if the server requires authorization and we aren't logged in,
+    // we obviously won't get anything back from the server, so don't
+    // try to fetch
+    if (state.serverRequiresAuthorization && state.session === null) return
+
     state.messages.fetching = true
     emitter.emit('render')
 
@@ -189,6 +194,12 @@ const store = (state, emitter) => {
   emitter.on('route', () => {
     emitter.emit('messages.reset')
 
+    if (state.params.channel) {
+      emitter.emit('messages.fetch')
+    }
+  })
+
+  emitter.on('login', () => {
     if (state.params.channel) {
       emitter.emit('messages.fetch')
     }
@@ -276,9 +287,9 @@ const component = (state, emit) => {
   }
 
   if (messages === null) {
-    return html`<div class=${prefix}>
-      Loading...
-    </div>`
+    return html`<div class=${prefix}>Messages not loaded.</div>`
+  } else if (state.messages.fetching) {
+    return html`<div class=${prefix}>Loading...</div>`
   } else {
     const groups = state.messages.groupsCached
 

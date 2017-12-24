@@ -38,9 +38,14 @@ module.exports = async function attachAPI(app, {wss, db}) {
   // regex can be updated.
   const isNameValid = name => /^[a-zA-Z0-9_-]+$/g.test(name)
 
-  const sendToAllSockets = function(evt, data) {
-    for (const socket of connectedSocketsMap.keys()) {
-      socket.send(JSON.stringify({ evt, data }))
+  const sendToAllSockets = function(evt, data, sendToUnauthorized = false) {
+    for (const [ socket, socketData ] of connectedSocketsMap.entries()) {
+      // Only send data to authorized sockets - those are sockets who've been
+      // verified as having logged in as an actual member (and not an
+      // unauthorized user).
+      if (sendToUnauthorized || socketData.authorized === true) {
+        socket.send(JSON.stringify({ evt, data }))
+      }
     }
   }
 
@@ -403,6 +408,80 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
     next()
   })
+
+  // Don't let users who aren't verified (permissionLevel unauthorized)
+  // do anything with the API. TODO: Be able to disable this!
+  app.use('/api', [
+    ...middleware.verifyVarsExists(),
+
+    // Users should still be able to log in, though, obviously - otherwise,
+    // they'll never have a session ID (and tied user) for the server to
+    // check! (By the way, Express automatically gets rid of the "/api/"
+    // part, so we can just check for /login instead of /api/login.)
+    // A couple other endpoints also don't make sense to verify, so we skip
+    // those.
+    (request, response, next) => {
+      if ([
+        '/login', '/register',
+        '/should-use-secure',
+        '/' // "This is a Decent server..."
+      ].includes(request.path) === false) {
+        request[middleware.vars].shouldVerify = true
+      }
+
+      next()
+    },
+
+    ...middleware.runIfVarExists('shouldVerify', [
+      (request, response, next) => {
+        // First we check the POST body for the session ID (if it's a POST
+        // request). If we don't find anything, we check the query URL.
+        // If we still don't find a session ID, we'll say none was given
+        // and prevent the user from proceeding.
+        let sessionID
+        if (request.method === 'POST' && 'sessionID' in request.body) {
+          sessionID = request.body.sessionID
+        } else if ('sessionID' in request.query) {
+          sessionID = request.query.sessionID
+        } else if ('sessionID' in request.params) {
+          sessionID = request.params.sessionID
+        } else {
+          // No session ID given - just quit here.
+          response.status(403).end(JSON.stringify({
+            error: 'missing sessionID field - not authorized to access API'
+          }))
+          return
+        }
+
+        // We'll save the session ID as a middleware-var so we can use it
+        // in the upcoming requests.
+        Object.assign(request[middleware.vars], {sessionID})
+
+        next()
+      },
+
+      // No need to rewrite the wheel - we have a fancy way of guessing where
+      // we might get the session ID, but we can use it just like we always
+      // do (with our normal middleware functions).
+      ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+
+      (request, response, next) => {
+        // Now that we have the session user, we can actually check if the user
+        // is authorized. For now, we just check if the user's permission
+        // level is "admin" or "member", but in the future (TODO) we should have
+        // a more sophisticated (and not hard-coded!) setup for permissions.
+        const { sessionUser } = request[middleware.vars]
+
+        if (sessionUser.authorized === true) {
+          next()
+        } else {
+          response.status(403).end(JSON.stringify({
+            error: 'not authorized to access API yet - admin action required'
+          }))
+        }
+      }
+    ])
+  ])
 
   app.get('/api/', (request, response) => {
     // We use HTTP 418 (I'm a teapot) unironically here because
@@ -961,6 +1040,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
         passwordHash, salt,
         email: null,
         permissionLevel: 'member',
+        authorized: false,
         lastReadChannelDates: {}
       })
 
@@ -1096,12 +1176,15 @@ module.exports = async function attachAPI(app, {wss, db}) {
   ])
 
   wss.on('connection', socket => {
-    connectedSocketsMap.set(socket, {
+    const socketData = {
       sessionID: null,
+      authorized: false,
       isAlive: true,
-    })
+    }
 
-    socket.on('message', message => {
+    connectedSocketsMap.set(socket, socketData)
+
+    socket.on('message', async message => {
       let messageObj
       try {
         messageObj = JSON.parse(message)
@@ -1114,25 +1197,35 @@ module.exports = async function attachAPI(app, {wss, db}) {
       if (evt === 'pong data') {
         // Not the built-in pong; this event is used for gathering
         // socket-specific data.
-
         if (!data) {
           return
         }
 
-        let { sessionID } = data
+        const { sessionID } = data
 
-        // sessionID should be either a string or null.
-        // (We *should* also assert that it's a valid session ID [if not,
-        // clear], but that would mean making an API request every time
-        // a socket responds with pong data, which could be a little
-        // expensive.)
+        // sessionID should be either a string or null. We'll make sure that
+        // the session ID actually exists, but only when it's changed.
         if (typeof sessionID !== 'string' && sessionID !== null) {
           return
         }
 
-        Object.assign(connectedSocketsMap.get(socket), {
-          sessionID
-        })
+        if (sessionID !== socketData.sessionID) {
+          const user = await getUserBySessionID(sessionID)
+
+          if (!user) {
+            socketData.sessionID = null
+            socketData.authorized = false
+            return
+          }
+
+          socketData.sessionID = sessionID
+
+          if (user.authorized === true) {
+            socketData.authorized = true
+          } else {
+            socketData.authorized = false
+          }
+        }
       }
     })
 

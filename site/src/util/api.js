@@ -22,7 +22,7 @@ async function fetchHelper(state, path, fetchConfig = {}) {
   // if we get an error object, throw
   if (result.error) {
     // { message, data }
-    throw Object.assign(new Error(result.error), {
+    throw Object.assign(new Error(result.error + ` (to path ${path})`), {
       data: result,
     })
   }
@@ -32,6 +32,12 @@ async function fetchHelper(state, path, fetchConfig = {}) {
 
 module.exports = {
   get(state, path, query = {}) {
+    // Set the session ID if it's set on the state, but only if not already
+    // set by the passed query.
+    if (state.session && !query.sessionID) {
+      query.sessionID = state.session.id
+    }
+
     const esc = encodeURIComponent
     const queryString = Object.keys(query).length > 0
       ? '?' + Object.keys(query)
@@ -43,6 +49,12 @@ module.exports = {
   },
 
   post(state, path, data = {}) {
+    // As with get, set the session ID if it's on the state and issing
+    // from the data object.
+    if (state.session && !data.sessionID) {
+      data.sessionID = state.session.id
+    }
+
     return fetchHelper(state, path, {
       method: 'post',
       headers: {

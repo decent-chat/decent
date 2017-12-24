@@ -23,6 +23,7 @@ app.use((state, emitter) => {
   state.session = null // { id, user }
   state.ws = null // WS
   state.secure = false
+  state.serverRequiresAuthorization = true // TODO: Fetch from API
 
   // emit 'navigate' immediately after page load
   emitter.on('DOMContentLoaded', () => {

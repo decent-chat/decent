@@ -124,7 +124,7 @@ const store = (state, emitter) => {
         // fetch user data using this sessionID
         try {
           emitter.emit('render') // render no channels
-          const { user } = await api.get(state, 'session/' + sessionID)
+          const { user } = await api.get(state, 'session/' + sessionID, {sessionID})
 
           state.session = { id: sessionID, user }
           emitter.emit('login')
@@ -301,7 +301,7 @@ const store = (state, emitter) => {
     modal.on('submit', async ({ username, password }) => {
       try {
         const { sessionID } = await api.post(state, 'login', { username, password })
-        const { user } = await api.get(state, 'session/' + sessionID)
+        const { user } = await api.get(state, 'session/' + sessionID, {sessionID})
 
         state.session = { id: sessionID, user }
         storage.set('sessionID@' + state.params.host, sessionID)
