@@ -1,4 +1,3 @@
-// sidebar component
 const html = require('choo/html')
 const css = require('sheetify')
 const { api } = require('../util')

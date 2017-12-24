@@ -68,4 +68,16 @@
       &:hover { background: var(--blue-a3); }
     }
   }
+
+  /* this css is stolen from discord */
+  & .emote {
+    min-height: 22px;
+    min-width: 22px;
+
+    object-fit: contain;
+    width: 1rem;
+
+    margin: 0 .05em 0 .1em;
+    vertical-align: -.4em;
+  }
 }

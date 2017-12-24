@@ -67,6 +67,11 @@ const updateTimes = () => {
 }
 
 const component = (state, emit, group) => {
+  if (state.emotes.list === null) {
+    // emotes haven't been loaded yet, so we won't render anything until that's done
+    return html`<div></div>`
+  }
+
   function timeEl(date) {
     const { needsUpdate, string } = stringifyDate(date)
 
@@ -87,7 +92,7 @@ const component = (state, emit, group) => {
 
       ${group.messages.map(msg => {
         const el = html`<div class='message' id=${'msg-' + msg.id}>
-          ${raw(mrk(msg.text).html())}
+          ${raw(mrk(state)(msg.text).html())}
         </div>`
 
         el.isSameNode = k => k.id === el.id

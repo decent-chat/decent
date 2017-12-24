@@ -146,7 +146,7 @@
           color: var(--gray-500);
         }
 
-        &.settings::before {
+        &.setting::before {
           display: inline-block;
           content: ' ';
 

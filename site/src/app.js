@@ -12,6 +12,7 @@ const messages = require('./components/messages')
 const messageEditor = require('./components/message-editor')
 const sidebar = require('./components/sidebar')
 const accountSettings = require('./components/account-settings')
+const srvSettings = { emotes: require('./components/srv-settings/emotes') }
 
 // create app
 const app = choo()
@@ -42,7 +43,10 @@ app.use((state, emitter) => {
     state.secure = false
     state.ws = new util.WS(state.params.host)
 
-    state.ws.on('open', () => state.secure = state.ws.secure)
+    state.ws.on('open', () => {
+      state.secure = state.ws.secure
+      emitter.emit('emotes.fetch')
+    })
 
     state.ws.on('*', (evt, timestamp, data) => {
       if (evt === 'ping for data') return
@@ -56,21 +60,34 @@ app.use((state, emitter) => {
 app.use(messages.store)
 app.use(sidebar.store)
 
+for (const [ name, s ] of Object.entries(srvSettings)) {
+  if (s.store) {
+    app.use(s.store)
+  }
+}
+
 // declare routes
 {
   const prefix = css('./app.css')
 
+  const notFound = (state, emit) => html`<div class=${prefix}>
+    ${sidebar.component(state, emit)}
+    <main>
+      <div class='page'>
+        <h3> Not found </h3>
+      </div>
+    </main>
+  </div>`
+
   // 404 (TODO: make prettier)
   app.route('*', (state, emit) => {
-    return html`<div class=${prefix}>
-      <main>
-        <h1>Not found</h1>
-      </main>
-    </div>`
+    return notFound(state, emit)
   })
 
   // no server
   app.route('/', (state, emit) => {
+    state.session = null
+
     return html`<div class=${prefix}>
       ${sidebar.component(state, emit)}
       <main></main>
@@ -94,6 +111,20 @@ app.use(sidebar.store)
       ${sidebar.component(state, emit)}
       <main>
         ${accountSettings.component(state, emit)}
+      </main>
+    </div>`
+  })
+
+  // server settings (admins only) page
+  app.route('/servers/:host/settings/:setting', (state, emit) => {
+    if (!state.session || state.session.user.permissionLevel !== 'admin' || !srvSettings[state.params.setting]) {
+      return notFound(state, emit)
+    }
+
+    return html`<div class=${prefix}>
+      ${sidebar.component(state, emit)}
+      <main>
+        ${srvSettings[state.params.setting].component(state, emit)}
       </main>
     </div>`
   })

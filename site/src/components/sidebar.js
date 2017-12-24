@@ -396,8 +396,26 @@ const component = (state, emit) => {
           </a>`
         })}
       </div>
-    </section>
-    ` : html`<span></span>`}
+    </section>` : html`<span></span>`}
+
+    ${state.session && state.session.user.permissionLevel === 'admin' ? html`<section>
+      <div class='subtitle'>
+        <h4>Server settings</h4>
+      </div>
+
+      <div class='list'>
+        ${[ 'Emotes' ].map(name => {
+          const id = name.toLowerCase()
+
+          return html`<a
+            class='item setting ${(state.params.setting || null) === id ? 'active' : ''}'
+            onclick=${() => emit('pushState', `/servers/${state.params.host}/settings/${id}`)}>
+
+            ${name}
+          </a>`
+        })}
+      </div>
+    </section>` : html`<span></span>`}
   </aside>`
 }
 
