@@ -44,32 +44,39 @@ app.use((state, emitter) => {
   })
 
   // get websocket connection whenever host changes
-  emitter.prependListener('route', () => {
-    if (state.ws && state.ws.host === state.params.host) return // host has not changed
-
-    state.serverRequiresAuthorization = true
-    api.get(state, 'require-authorization').then(res => {
-      state.serverRequiresAuthorization = res.serverRequiresAuthorization
-    })
-
-    state.secure = false
-    state.ws = new util.WS(state.params.host)
-
-    state.ws.on('open', () => {
-      state.secure = state.ws.secure
-      emitter.emit('emotes.fetch')
-    })
-
-    state.ws.on('*', (evt, timestamp, data) => {
-      if (evt === 'ping for data') {
-        state.ws.send('pong data', {
-          sessionID: state.session ? state.session.id : null
-        })
-      } else {
-        // emit websocket events
-        emitter.emit('ws.' + evt.replace(/ /g, ''), data)
+  emitter.on('route', async () => {
+    handleHostChange: {
+      if (state.ws && state.ws.host === state.params.host) {
+        break handleHostChange
       }
-    })
+
+      state.serverRequiresAuthorization = (
+        await api.get(state, 'require-authorization')
+      ).serverRequiresAuthorization
+
+      state.secure = (
+        await api.get(state, 'should-use-secure')
+      ).useSecure
+
+      state.ws = new util.WS(state.params.host)
+
+      state.ws.on('*', (evt, timestamp, data) => {
+        if (evt === 'ping for data') {
+          state.ws.send('pong data', {
+            sessionID: state.session ? state.session.id : null
+          })
+        } else {
+          // emit websocket events
+          emitter.emit('ws.' + evt.replace(/ /g, ''), data)
+        }
+      })
+
+      // wait for the WebSocket to connect, because a bunch of things
+      // basically don't function without it
+      await new Promise(resolve => state.ws.once('open', resolve))
+    }
+
+    emitter.emit('routeready')
   })
 })
 

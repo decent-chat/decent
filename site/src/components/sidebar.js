@@ -107,7 +107,7 @@ const store = (state, emitter) => {
   //   our server list; if not, add it
   // * load sessionID from storage for this server if possible
   // * fetch channel list
-  emitter.on('route', async () => {
+  emitter.on('routeready', async () => {
     if (state.params.host !== state.sidebar.hostCached && state.params.host) {
       state.sidebar.hostCached = state.params.host
 

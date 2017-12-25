@@ -191,7 +191,7 @@ const store = (state, emitter) => {
 
   // when the url changes, load the new channel
   // FIXME: don't assume that the channel actually changed
-  emitter.on('route', () => {
+  emitter.on('routeready', () => {
     emitter.emit('messages.reset')
 
     if (state.params.channel) {
