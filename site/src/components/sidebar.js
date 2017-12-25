@@ -409,7 +409,9 @@ const component = (state, emit) => {
 
     ${// isAuthorized will be set to false *only* when logged in but NOT
       // authorized. Otherwise, it'll be set to null.
-      state.sessionAuthorized !== false && state.sidebar.channels !== null ? html`<section>
+      state.sessionAuthorized !== false &&
+        state.sidebar.channels !== null &&
+        (!state.serverRequiresAuthorization || state.sessionAuthorized) ? html`<section>
       <div class='subtitle'>
         <h4>Channels</h4>
         ${state.session && state.session.user.permissionLevel === 'admin'
