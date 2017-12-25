@@ -76,8 +76,66 @@ const component = (state, emit) => {
     </div>`
   }
 
+  const makeUserRow = (user, actionTD) => {
+    const row = html`<tr data-userid=${user.id}>
+      <td>
+        <img width='32' height='32' src=${user.avatarURL}/>
+      </td>
+
+      <td>
+        ${user.username} <span class='${prefix} user-id'>(ID: ${user.id})</span>
+      </td>
+
+      ${actionTD}
+    </tr>`
+
+    row.isSameNode = el => el.dataset && el.dataset.userid === user.id
+
+    return row
+  }
+
+  const makeUserRows = (list, makeActionTD) => {
+    const sortedList = list.slice(0).sort((a, b) => {
+      const an = a.username || '', bn = b.username || ''
+      console.log(an, bn)
+      return an > bn ? 1 : an < bn ? -1 : 0
+    })
+
+    return sortedList.map(user => makeUserRow(user, makeActionTD(user)))
+  }
+
+  const authorizedRows = makeUserRows(state.authorizedUsers.authorizedList,
+    user => html`
+      <td>
+        <button>Remove</button>
+      </td>
+    `
+  )
+
+  const unauthorizedRows = makeUserRows(state.authorizedUsers.unauthorizedList,
+    user => html`
+      <td>
+        <button>Authorize</button>
+      </td>
+    `
+  )
+
   return html`<div class='page ${prefix}'>
     <h1>Authorized users <span class='subtitle'>on ${state.params.host}</span></h1>
+
+    <table>
+      <tbody>
+        ${authorizedRows}
+      </tbody>
+    </table>
+
+    <h2>Unauthorized users</h2>
+
+    <table>
+      <tbody>
+        ${unauthorizedRows}
+      </tbody>
+    </table>
 
     <h2>Authorization message</h2>
 

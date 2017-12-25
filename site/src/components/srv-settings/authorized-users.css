@@ -1,1 +1,5 @@
-:host {}
+:host {
+  .user-id {
+    color: var(--gray-300);
+  }
+}
