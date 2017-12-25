@@ -303,6 +303,25 @@ module.exports = async function attachAPI(app, {wss, db}) {
       }
     ],
 
+    getUserFromID: (userIDVar, userVar) => [
+      async function(request, response, next) {
+        const userID = request[middleware.vars][userIDVar]
+        const user = await db.users.findOne({_id: userID})
+
+        if (!user) {
+          response.status(404).end(JSON.stringify({
+            error: 'user not found'
+          }))
+
+          return
+        }
+
+        request[middleware.vars][userVar] = user
+
+        next()
+      }
+    ],
+
     getMessageFromID: (messageIDVar, messageVar) => [
       async function(request, response, next) {
         const messageID = request[middleware.vars][messageIDVar]
@@ -1236,6 +1255,54 @@ module.exports = async function attachAPI(app, {wss, db}) {
         userAuthorized: user.authorized || false,
 
         authorizationMessage
+      }))
+    }
+  ])
+
+  const authUserMiddleware = [
+    ...middleware.loadVarFromBody('userID'),
+    ...middleware.loadVarFromBody('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.getUserFromID('userID', '_')
+  ]
+
+  app.post('/api/authorize-user', [
+    ...authUserMiddleware,
+
+    async function(request, response) {
+      const { userID } = request[middleware.vars]
+
+      await db.users.update({_id: userID}, {
+        $set: {authorized: true}
+      })
+
+      response.status(200).end(JSON.stringify({
+        success: true
+      }))
+    }
+  ])
+
+  app.post('/api/deauthorize-user', [
+    ...authUserMiddleware,
+
+    async function(request, response) {
+      const { userID, sessionUser } = request[middleware.vars]
+
+      if (sessionUser._id === userID) {
+        response.status(400).end(JSON.stringify({
+          error: 'you cannot deauthorize yourself'
+        }))
+
+        return
+      }
+
+      await db.users.update({_id: userID}, {
+        $set: {authorized: false}
+      })
+
+      response.status(200).end(JSON.stringify({
+        success: true
       }))
     }
   ])

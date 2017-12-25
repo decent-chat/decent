@@ -61,6 +61,22 @@ const store = (state, emitter) => {
 
     emitter.emit('render')
   })
+
+  emitter.on('authorizedUsers.authorizeUser', async userID => {
+    await api.post(state, 'authorize-user', {
+      userID, sessionID: state.session.id
+    })
+
+    emitter.emit('authorizedUsers.fetch')
+  })
+
+  emitter.on('authorizedUsers.deauthorizeUser', async userID => {
+    await api.post(state, 'deauthorize-user', {
+      userID, sessionID: state.session.id
+    })
+
+    emitter.emit('authorizedUsers.fetch')
+  })
 }
 
 const component = (state, emit) => {
@@ -97,7 +113,6 @@ const component = (state, emit) => {
   const makeUserRows = (list, makeActionTD) => {
     const sortedList = list.slice(0).sort((a, b) => {
       const an = a.username || '', bn = b.username || ''
-      console.log(an, bn)
       return an > bn ? 1 : an < bn ? -1 : 0
     })
 
@@ -107,7 +122,10 @@ const component = (state, emit) => {
   const authorizedRows = makeUserRows(state.authorizedUsers.authorizedList,
     user => html`
       <td>
-        <button>Remove</button>
+        <button
+          class='styled-button no-bg red'
+          onclick=${() => emit('authorizedUsers.deauthorizeUser', user.id)}
+        >Remove</button>
       </td>
     `
   )
@@ -115,7 +133,10 @@ const component = (state, emit) => {
   const unauthorizedRows = makeUserRows(state.authorizedUsers.unauthorizedList,
     user => html`
       <td>
-        <button>Authorize</button>
+        <button
+          class='styled-button no-bg blue'
+          onclick=${() => emit('authorizedUsers.authorizeUser', user.id)}
+        >Authorize</button>
       </td>
     `
   )
@@ -132,6 +153,11 @@ const component = (state, emit) => {
   return html`<div class='page ${prefix}'>
     <h1>Authorized users <span class='subtitle'>on ${state.params.host}</span></h1>
 
+    <p>
+      De-authorize users below. They won't be able to read or send messages,
+      view channels, etc. until authorized again.
+    </p>
+
     <table>
       <tbody>
         ${authorizedRows}
@@ -139,6 +165,11 @@ const component = (state, emit) => {
     </table>
 
     <h2>Unauthorized users</h2>
+
+    <p>
+      Authorize users below. These users currently can't read or send messages.
+      Once you've authorized them, they will be able to.
+    </p>
 
     <table>
       <tbody>
