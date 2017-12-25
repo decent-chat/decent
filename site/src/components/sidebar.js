@@ -324,6 +324,7 @@ const store = (state, emitter) => {
   // logout
   emitter.on('sidebar.logout', () => {
     state.session = null
+    state.sessionAuthorized = null
     storage.set('sessionID@' + state.params.host, null)
     emitter.emit('logout')
     emitter.emit('render')
