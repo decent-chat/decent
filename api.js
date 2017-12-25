@@ -148,6 +148,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       if (sessionUser && sessionUser._id === u._id) {
         obj.email = u.email || null
+        obj.authorized = u.authorized || false
       }
 
       return obj
@@ -425,11 +426,16 @@ module.exports = async function attachAPI(app, {wss, db}) {
       // set to require authorization!
       const { requireAuthorization } = await db.settings.findOne({_id: serverPropertiesID})
 
-      if (requireAuthorization === 'on' && [
-        '/login', '/register',
-        '/should-use-secure', '/require-authorization',
-        '/' // "This is a Decent server..."
-      ].includes(request.path) === false) {
+      if (requireAuthorization === 'on' && !(
+        [
+          '/login', '/register',
+          '/should-use-secure', '/require-authorization',
+          '/' // "This is a Decent server..."
+        ].includes(request.path) ||
+
+        // /session/:sessionID should work.
+        request.path.startsWith('/session/')
+      )) {
         request[middleware.vars].shouldVerify = true
       }
 

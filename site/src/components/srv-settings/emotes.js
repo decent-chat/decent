@@ -13,7 +13,7 @@ const store = (state, emitter) => {
   reset()
 
   emitter.on('emotes.fetch', async () => {
-    if (state.serverRequiresAuthorization && state.session === null) return
+    if (!state.sessionAuthorized) return
 
     state.emotes.fetching = true
 

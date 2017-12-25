@@ -124,10 +124,7 @@ const store = (state, emitter) => {
         // fetch user data using this sessionID
         try {
           emitter.emit('render') // render no channels
-          const { user } = await api.get(state, 'session/' + sessionID, {sessionID})
-
-          state.session = { id: sessionID, user }
-          emitter.emit('login')
+          loadSessionID(sessionID)
         } catch (error) {
           state.session = null
           console.warn(error)
@@ -152,12 +149,12 @@ const store = (state, emitter) => {
 
   // fetch the channel list from the server
   emitter.on('sidebar.fetchchannels', async () => {
-    if (state.serverRequiresAuthorization && state.session === null) {
-      state.sidebar.channels = []
-    } else {
+    if (state.sessionAuthorized) {
       const data = state.session ? { sessionID: state.session.id } : {}
       const { channels } = await api.get(state, 'channel-list', data)
       state.sidebar.channels = channels
+    } else {
+      state.sidebar.channels = []
     }
 
     emitter.emit('render')
@@ -303,11 +300,8 @@ const store = (state, emitter) => {
     modal.on('submit', async ({ username, password }) => {
       try {
         const { sessionID } = await api.post(state, 'login', { username, password })
-        const { user } = await api.get(state, 'session/' + sessionID, {sessionID})
-
-        state.session = { id: sessionID, user }
+        await loadSessionID(sessionID)
         storage.set('sessionID@' + state.params.host, sessionID)
-        emitter.emit('login')
         emitter.emit('render')
 
         // close the modal
@@ -338,6 +332,30 @@ const store = (state, emitter) => {
   // fetch channels after logging in/out
   emitter.on('login', () => emitter.emit('sidebar.fetchchannels'))
   emitter.on('logout', () => emitter.emit('sidebar.fetchchannels'))
+
+  async function loadSessionID(sessionID) {
+    const result = await api.get(state, 'session/' + sessionID, {sessionID})
+    if (result.user) {
+      state.session = { id: sessionID, user: result.user }
+
+      // If the server requires authorization, we'll set the sessionAuthorized
+      // state value to whether or not the logged in user is authorized (which
+      // is a property on that user object). If the server doesn't require
+      // authorization, we'll just set sessionAuthorized to true, since
+      // acting as though we're authorized is what we want.
+      if (state.serverRequiresAuthorization) {
+        state.sessionAuthorized = result.user.authorized
+      } else {
+        state.sessionAuthorized = true
+      }
+
+      emitter.emit('login')
+    } else {
+      state.session = null
+      state.sessionAuthorized = null
+      emitter.emit('logout')
+    }
+  }
 }
 
 const component = (state, emit) => {

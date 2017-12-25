@@ -132,10 +132,10 @@ const store = (state, emitter) => {
     // and fetch even more as we'll run into edge cases
     if (state.messages.fetching) return
 
-    // if the server requires authorization and we aren't logged in,
+    // if the server requires authorization and we aren't authorized,
     // we obviously won't get anything back from the server, so don't
     // try to fetch
-    if (state.serverRequiresAuthorization && state.session === null) return
+    if (!state.sessionAuthorized) return
 
     state.messages.fetching = true
     emitter.emit('render')
