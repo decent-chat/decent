@@ -32,8 +32,8 @@ const store = (state, emitter) => {
     // will automatically add it, But Whatever
     const result = await api.get(state, 'user-list', {sessionID: api.sessionID})
 
-    state.authorizedUsers.authorizedList = state.users
-    state.authorizedUsers.unauthorizedList = state.unauthorizedUsers
+    state.authorizedUsers.authorizedList = result.users
+    state.authorizedUsers.unauthorizedList = result.unauthorizedUsers
     state.authorizedUsers.fetching = false
     state.authorizedUsers.fetched = true
     emitter.emit('render')
