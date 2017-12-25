@@ -304,8 +304,6 @@ const component = (state, emit) => {
 
   if (messages === null) {
     return html`<div class=${prefix}>Messages not loaded.</div>`
-  } else if (state.messages.fetching) {
-    return html`<div class=${prefix}>Loading...</div>`
   } else {
     const groups = state.messages.groupsCached
 
