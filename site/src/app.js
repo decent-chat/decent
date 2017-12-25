@@ -5,7 +5,10 @@ const css = require('sheetify')
 
 // import util
 const util = require('./util')
-Object.assign(window, { util }) // publish util for debugging/experimenting
+const { api } = util
+
+// publish util for debugging/experimenting
+Object.assign(window, { util })
 
 // import root-level components
 const messages = require('./components/messages')
@@ -23,7 +26,10 @@ app.use((state, emitter) => {
   state.session = null // { id, user }
   state.ws = null // WS
   state.secure = false
-  state.serverRequiresAuthorization = true // TODO: Fetch from API
+  state.serverRequiresAuthorization = false
+
+  // publish state for debugging/experimenting as well
+  window.state = state
 
   // emit 'navigate' immediately after page load
   emitter.on('DOMContentLoaded', () => {
@@ -40,6 +46,11 @@ app.use((state, emitter) => {
   // get websocket connection whenever host changes
   emitter.prependListener('route', () => {
     if (state.ws && state.ws.host === state.params.host) return // host has not changed
+
+    state.serverRequiresAuthorization = true
+    api.get(state, 'require-authorization').then(res => {
+      state.serverRequiresAuthorization = res.serverRequiresAuthorization
+    })
 
     state.secure = false
     state.ws = new util.WS(state.params.host)

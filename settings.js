@@ -43,7 +43,13 @@ const defaultSettings = {
     // HTTPS enforcement - whether or not to secure anything and everything sent
     // between the server and client (including web sockets). This is not actually
     // implemented yet.
-    https: {value: 'off', possibleValues: ['on', 'off']}
+    https: {value: 'off', possibleValues: ['on', 'off']},
+
+    // Authorization required - whether or not users will need to be authorized
+    // before they can interact with the server (or view its messages). Anyone
+    // can still register, but an admin must mark the user as authorized before
+    // they will be able to send or receive any information to/from the server.
+    requireAuthorization: {value: 'off', possibleValues: ['on', 'off']}
   }
 }
 

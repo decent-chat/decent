@@ -13,6 +13,8 @@ const store = (state, emitter) => {
   reset()
 
   emitter.on('emotes.fetch', async () => {
+    if (state.serverRequiresAuthorization && state.session === null) return
+
     state.emotes.fetching = true
 
     const { emotes } = await api.get(state, 'server-settings')
@@ -20,6 +22,14 @@ const store = (state, emitter) => {
     state.emotes.list = emotes
     state.emotes.fetching = false
     emitter.emit('render')
+  })
+
+  // if the server requires authorization, fetch emotes after logging in,
+  // because they won't have been set while logged out
+  emitter.on('login', async () => {
+    if (state.serverRequiresAuthorization) {
+      emitter.emit('emotes.fetch')
+    }
   })
 }
 

@@ -410,7 +410,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
   })
 
   // Don't let users who aren't verified (authorized false) interact with
-  // most API endpoints. TODO: Be able to disable this!
+  // most API endpoints.
   app.use('/api', [
     ...middleware.verifyVarsExists(),
 
@@ -420,10 +420,14 @@ module.exports = async function attachAPI(app, {wss, db}) {
     // part, so we can just check for /login instead of /api/login.)
     // A couple other endpoints also don't make sense to verify, so we skip
     // those.
-    (request, response, next) => {
-      if ([
+    async (request, response, next) => {
+      // Although, of course, we should only do any of this if the server is
+      // set to require authorization!
+      const { requireAuthorization } = await db.settings.findOne({_id: serverPropertiesID})
+
+      if (requireAuthorization === 'on' && [
         '/login', '/register',
-        '/should-use-secure',
+        '/should-use-secure', '/require-authorization',
         '/' // "This is a Decent server..."
       ].includes(request.path) === false) {
         request[middleware.vars].shouldVerify = true
@@ -590,6 +594,16 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       response.status(200).end(JSON.stringify({
         useSecure: https === 'on' ? true : false
+      }))
+    }
+  ])
+
+  app.get('/api/require-authorization', [
+    async (request, response) => {
+      const { requireAuthorization } = await db.settings.findOne({_id: serverPropertiesID})
+
+      response.status(200).end(JSON.stringify({
+        serverRequiresAuthorization: requireAuthorization === 'on' ? true : false
       }))
     }
   ])
