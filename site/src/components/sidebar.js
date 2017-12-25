@@ -344,7 +344,12 @@ const store = (state, emitter) => {
       // authorization, we'll just set sessionAuthorized to true, since
       // acting as though we're authorized is what we want.
       if (state.serverRequiresAuthorization) {
-        state.sessionAuthorized = result.user.authorized
+        if (result.userAuthorized) {
+          state.sessionAuthorized = true
+        } else {
+          state.sessionAuthorized = false
+          state.authorizationMessage = result.authorizationMessage
+        }
       } else {
         state.sessionAuthorized = true
       }
@@ -401,7 +406,9 @@ const component = (state, emit) => {
       })() : html`<span></span>`}
     </section>
 
-    ${state.sidebar.channels !== null ? html`<section>
+    ${// isAuthorized will be set to false *only* when logged in but NOT
+      // authorized. Otherwise, it'll be set to null.
+      state.sessionAuthorized !== false && state.sidebar.channels !== null ? html`<section>
       <div class='subtitle'>
         <h4>Channels</h4>
         ${state.session && state.session.user.permissionLevel === 'admin'
@@ -420,6 +427,15 @@ const component = (state, emit) => {
             ${channel.name}
           </a>`
         })}
+      </div>
+    </section>` : html`<span></span>`}
+
+    ${state.sessionAuthorized === false ? html`<section>
+      <div class='subtitle'>
+        <h4>Unauthorized</h4>
+      </div>
+      <div class='content'>
+        <p>${state.authorizationMessage}</p>
       </div>
     </section>` : html`<span></span>`}
 

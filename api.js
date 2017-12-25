@@ -1219,9 +1219,23 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       const serializedUser = await serialize.user(user, user)
 
+      let authorizationMessage
+      if (user.authorized === false) {
+        authorizationMessage = (
+          await db.settings.findOne({_id: serverSettingsID})
+        ).authorizationMessage
+      }
+
       response.status(200).end(JSON.stringify({
         success: true,
         user: serializedUser,
+
+        // This is redundant since it's already stored on the user, but it's
+        // nice to have anyways - it makes the "authorization message" property
+        // seem less out of place.
+        userAuthorized: user.authorized || false,
+
+        authorizationMessage
       }))
     }
   ])
