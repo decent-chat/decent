@@ -1109,14 +1109,45 @@ module.exports = async function attachAPI(app, {wss, db}) {
     }
   ])
 
-  app.get('/api/user-list', async (request, response) => {
-    const users = await db.users.find({})
+  app.get('/api/user-list', [
+    ...middleware.loadVarFromQuery('sessionID'),
+    ...middleware.runIfVarExists('sessionID',
+      middleware.getSessionUserFromID('sessionID', 'sessionUser')
+    ),
 
-    response.status(200).end(JSON.stringify({
-      success: true,
-      users: await Promise.all(users.map(serialize.user))
-    }))
-  })
+    async (request, response) => {
+      const { sessionUser } = request[middleware.vars]
+      const isAdmin = sessionUser && sessionUser.permissionLevel === 'admin'
+
+      const [ authorizedUsers, unauthorizedUsers ] = await Promise.all([
+        db.users.find({authorized: true}),
+
+        // Unauthorized users - anyone where authorized is false,
+        // or authorized just isn't set at all (e.g. an old database).
+        isAdmin
+          ? db.users.find({$or: [
+            {authorized: false},
+            {authorized: {$exists: false}}
+          ]})
+          : Promise.resolve(null)
+      ])
+
+      const result = {
+        success: true,
+        users: await Promise.all(authorizedUsers.map(serialize.user))
+      }
+
+      // Respond the unauthorized users in a separate field, but only if the
+      // session user is an admin.
+      if (isAdmin) {
+        result.unauthorizedUsers = await Promise.all(
+          unauthorizedUsers.map(serialize.user)
+        )
+      }
+
+      response.status(200).end(JSON.stringify(result))
+    }
+  ])
 
   app.get('/api/username-available/:username', [
     ...middleware.loadVarFromParams('username'),
