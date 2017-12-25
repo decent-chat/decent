@@ -15,7 +15,10 @@ const messages = require('./components/messages')
 const messageEditor = require('./components/message-editor')
 const sidebar = require('./components/sidebar')
 const accountSettings = require('./components/account-settings')
-const srvSettings = { emotes: require('./components/srv-settings/emotes') }
+const srvSettings = {
+  emotes: require('./components/srv-settings/emotes'),
+  authorizedUsers: require('./components/srv-settings/authorized-users'),
+}
 
 // create app
 const app = choo()

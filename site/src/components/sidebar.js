@@ -411,8 +411,11 @@ const component = (state, emit) => {
       </div>
 
       <div class='list'>
-        ${[ 'Emotes' ].map(name => {
-          const id = name.toLowerCase()
+        ${[ 'Emotes', 'Authorized Users' ].map(name => {
+          const id = {
+            'Emotes': 'emotes',
+            'Authorized Users': 'authorizedUsers'
+          }[name]
 
           return html`<a
             class='item setting ${(state.params.setting || null) === id ? 'active' : ''}'
