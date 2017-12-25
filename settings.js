@@ -37,7 +37,7 @@ const defaultSettings = {
 
     // Authorization message displayed to users who are logged in but not
     // authorized to participate in the server. Must be less than 800
-    // characters long.
+    // characters long, and supports Markdown.
     authorizationMessage: {
       value: 'Unauthorized - contact this server\'s webmaster to authorize your account for interacting with the server.',
       validationFn: string => {

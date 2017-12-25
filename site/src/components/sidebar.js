@@ -1,6 +1,8 @@
 // sidebar component
 const html = require('choo/html')
+const raw = require('choo/html/raw')
 const css = require('sheetify')
+const mrk = require('../util/mrk')
 const { Modal, api, storage } = require('../util')
 
 const prefix = css('./sidebar.css')
@@ -438,7 +440,7 @@ const component = (state, emit) => {
         <h4>Unauthorized</h4>
       </div>
       <div class='content'>
-        <p>${state.authorizationMessage}</p>
+        <p>${raw(mrk(state)(state.authorizationMessage).html())}</p>
       </div>
     </section>` : html`<span></span>`}
 

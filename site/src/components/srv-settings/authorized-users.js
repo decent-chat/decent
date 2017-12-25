@@ -28,14 +28,37 @@ const store = (state, emitter) => {
 
     state.authorizedUsers.fetching = true
 
-    // technically passing sessionID here is redundant, since api.get
-    // will automatically add it, But Whatever
-    const result = await api.get(state, 'user-list', {sessionID: api.sessionID})
+    {
+      // technically passing sessionID here is redundant, since api.get
+      // will automatically add it, But Whatever
+      const result = await api.get(state, 'user-list', {sessionID: api.sessionID})
 
-    state.authorizedUsers.authorizedList = result.users
-    state.authorizedUsers.unauthorizedList = result.unauthorizedUsers
+      state.authorizedUsers.authorizedList = result.users
+      state.authorizedUsers.unauthorizedList = result.unauthorizedUsers
+    }
+
+    {
+      const result = await api.get(state, 'server-settings')
+
+      state.authorizedUsers.authorizationMessage = result.authorizationMessage
+    }
+
     state.authorizedUsers.fetching = false
     state.authorizedUsers.fetched = true
+    emitter.emit('render')
+  })
+
+  emitter.on('authorizedUsers.saveMessage', async () => {
+    const authorizationMessage = document.getElementById(`${prefix}message`).value
+
+    console.log(authorizationMessage)
+
+    await api.post(state, 'server-settings', {
+      patch: {
+        authorizationMessage
+      }
+    })
+
     emitter.emit('render')
   })
 }
@@ -56,7 +79,16 @@ const component = (state, emit) => {
   return html`<div class='page ${prefix}'>
     <h1>Authorized users <span class='subtitle'>on ${state.params.host}</span></h1>
 
-    Hello!! Wow, look at all these users.
+    <h2>Authorization message</h2>
+
+    <p>Must be under 800 characters; may contain basic markdown formatting.</p>
+
+    <p><textarea
+      id='${prefix}message'
+      placeholder='Authorization message'
+    >${state.authorizedUsers.authorizationMessage}</textarea></p>
+
+    <p><button onclick=${() => emit('authorizedUsers.saveMessage')}>Save</button></p>
   </div>`
 }
 
