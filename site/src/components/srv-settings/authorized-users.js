@@ -120,6 +120,15 @@ const component = (state, emit) => {
     `
   )
 
+  const textarea = html`
+    <textarea
+      id='${prefix}message'
+      placeholder='Authorization message'
+    >${state.authorizedUsers.authorizationMessage}</textarea>
+  `
+
+  textarea.isSameNode = el => el.id === textarea.id
+
   return html`<div class='page ${prefix}'>
     <h1>Authorized users <span class='subtitle'>on ${state.params.host}</span></h1>
 
@@ -139,12 +148,11 @@ const component = (state, emit) => {
 
     <h2>Authorization message</h2>
 
+    <p>This is shown to users who have registered and logged in, but aren't authorized.</p>
+
     <p>Must be under 800 characters; may contain basic markdown formatting.</p>
 
-    <p><textarea
-      id='${prefix}message'
-      placeholder='Authorization message'
-    >${state.authorizedUsers.authorizationMessage}</textarea></p>
+    <p>${textarea}</p>
 
     <p><button onclick=${() => emit('authorizedUsers.saveMessage')}>Save</button></p>
   </div>`
