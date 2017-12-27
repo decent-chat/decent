@@ -54,7 +54,7 @@ app.use((state, emitter) => {
       }
 
       state.serverRequiresAuthorization = (
-        await api.get(state, 'require-authorization')
+        await api.get(state, 'should-use-authorization')
       ).serverRequiresAuthorization
 
       state.secure = (
@@ -144,6 +144,11 @@ for (const [ name, s ] of Object.entries(srvSettings)) {
   // server settings (admins only) page
   app.route('/servers/:host/settings/:setting', (state, emit) => {
     if (!state.session || state.session.user.permissionLevel !== 'admin' || !srvSettings[state.params.setting]) {
+      return notFound(state, emit)
+    }
+
+    // only show authorized users page on servers which require authorization
+    if (state.params.setting === 'authorizedUsers' && !state.serverRequiresAuthorization) {
       return notFound(state, emit)
     }
 

@@ -450,7 +450,10 @@ const component = (state, emit) => {
       </div>
 
       <div class='list'>
-        ${[ 'Emotes', 'Authorized Users' ].map(name => {
+        ${[
+          'Emotes',
+          state.serverRequiresAuthorization ? 'Authorized Users' : null
+        ].filter(Boolean).map(name => {
           const id = {
             'Emotes': 'emotes',
             'Authorized Users': 'authorizedUsers'
