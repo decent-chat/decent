@@ -510,8 +510,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
           sessionID = request.body.sessionID
         } else if ('sessionID' in request.query) {
           sessionID = request.query.sessionID
-        } else if ('sessionID' in request.params) {
-          sessionID = request.params.sessionID
         } else {
           // No session ID given - just quit here.
           response.status(403).end(JSON.stringify({
