@@ -103,7 +103,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
     const user = await db.users.findOne({_id: userID})
 
-    return user ? user.authorized : false
+    return user && user.authorized ? true : false
   }
 
   const markChannelAsRead = async function(userID, channelID) {
@@ -1285,7 +1285,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
       const serializedUser = await serialize.user(user, user)
 
       let authorizationMessage
-      if (user.authorized === false) {
+      if (await isUserAuthorized(user._id) === false) {
         authorizationMessage = (
           await db.settings.findOne({_id: serverSettingsID})
         ).authorizationMessage
