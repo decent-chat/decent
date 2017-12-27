@@ -55,7 +55,7 @@ app.use((state, emitter) => {
 
       state.serverRequiresAuthorization = (
         await api.get(state, 'should-use-authorization')
-      ).serverRequiresAuthorization
+      ).useAuthorization
 
       state.secure = (
         await api.get(state, 'should-use-secure')

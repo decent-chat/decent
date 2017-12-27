@@ -662,7 +662,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
   app.get('/api/should-use-authorization', [
     async (request, response) => {
       response.status(200).end(JSON.stringify({
-        serverRequiresAuthorization: await shouldUseAuthorization()
+        useAuthorization: await shouldUseAuthorization()
       }))
     }
   ])
