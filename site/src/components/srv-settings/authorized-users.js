@@ -51,8 +51,6 @@ const store = (state, emitter) => {
   emitter.on('authorizedUsers.saveMessage', async () => {
     const authorizationMessage = document.getElementById(`${prefix}message`).value
 
-    console.log(authorizationMessage)
-
     await api.post(state, 'server-settings', {
       patch: {
         authorizationMessage
@@ -145,6 +143,7 @@ const component = (state, emit) => {
     <textarea
       id='${prefix}message'
       placeholder='Authorization message'
+      maxlength='800'
     >${state.authorizedUsers.authorizationMessage}</textarea>
   `
 
