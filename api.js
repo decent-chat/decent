@@ -167,7 +167,10 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       if (sessionUser && sessionUser._id === u._id) {
         obj.email = u.email || null
-        obj.authorized = u.authorized || false
+
+        if (await shouldUseAuthorization()) {
+          obj.authorized = u.authorized || false
+        }
       }
 
       return obj
@@ -1284,11 +1287,14 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       const serializedUser = await serialize.user(user, user)
 
-      let authorizationMessage
-      if (await isUserAuthorized(user._id) === false) {
-        authorizationMessage = (
-          await db.settings.findOne({_id: serverSettingsID})
-        ).authorizationMessage
+      let authorizationMessage, userAuthorized
+      if (await shouldUseAuthorization()) {
+        userAuthorized = await isUserAuthorized(user._id)
+        if (userAuthorized) {
+          authorizationMessage = (
+            await db.settings.findOne({_id: serverSettingsID})
+          ).authorizationMessage
+        }
       }
 
       response.status(200).end(JSON.stringify({
@@ -1298,8 +1304,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
         // This is redundant since it's already stored on the user, but it's
         // nice to have anyways - it makes the "authorization message" property
         // seem less out of place.
-        userAuthorized: user.authorized || false,
-
+        userAuthorized,
         authorizationMessage
       }))
     }
