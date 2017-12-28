@@ -40,7 +40,7 @@ Returns a simple object `{useSecure}`, where `useSecure` is a boolean specifying
 
 ### GET `/api/should-use-authorization`
 
-Returns an object `{useAuthorization}`, where `useAuthorization` is a boolean specifying whether or not to use [authorization](#authorization).
+Returns an object `{useAuthorization, authorizationMessage}`, where `useAuthorization` is a boolean specifying whether or not to use [authorization](#authorization). If the server does require authorization, `authorizationMessage` (a message [specific to the server](#list-of-server-settings)) is passed.
 
 ### POST `/api/send-message`
 
@@ -184,8 +184,6 @@ Attempts to log in as a user, creating a new session. Returns `{success: true, s
   * `sessionID`: (via URL path) the session ID to fetch. The session must exist.
 
 Returns `{success: true, user}` if successful, where `user` is a [user object](#user-object) of the user which the session represents. This endpoint is useful when grabbing information about the logged in user (e.g. at the startup of a client program, which may display the logged in user's username in a status bar). Does not require [authorization](#authorization).
-
-If authorization is enabled, the extra field `userAuthorized` (a boolean specifying whether the session's user is authorized or not) is given, as well as `authorizationMessage` (a message [specific to the server](#list-of-server-settings)) if the user is not authorized.
 
 
 ## WebSocket events
