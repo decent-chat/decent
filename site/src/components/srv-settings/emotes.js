@@ -168,7 +168,6 @@ const component = (state, emit) => {
     </table>
 
     <div class='submit'>
-      <span class='status'></span>
       <button class='styled-button add' onclick=${addEmote}>Add</button>
     </div>
   </div>`
