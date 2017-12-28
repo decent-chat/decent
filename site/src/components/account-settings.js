@@ -22,6 +22,8 @@ const store = (state, emitter) => {
       sessionID: state.session.id
     })
 
+    sessions.sort((a, b) => b.dateCreated - a.dateCreated)
+
     state.accountSettings.sessionList = sessions
     state.accountSettings.fetchingSessions = false
     emitter.emit('render')
