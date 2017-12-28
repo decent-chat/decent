@@ -148,6 +148,15 @@ module.exports = async function attachAPI(app, {wss, db}) {
       return obj
     },
 
+    sessionBrief: async s => ({
+      id: s._id,
+      dateCreated: s.dateCreated
+    }),
+
+    sessionDetail: async s => Object.assign(await serialize.sessionBrief(s), {
+      user: await getUserBySessionID(s._id)
+    }),
+
     channelBrief: async (c, sessionUser = null) => {
       const obj = {
         id: c._id,
@@ -1056,7 +1065,8 @@ module.exports = async function attachAPI(app, {wss, db}) {
       if (await bcrypt.compare(password, passwordHash)) {
         const session = await db.sessions.insert({
           _id: uuidv4(),
-          userID: user._id
+          userID: user._id,
+          dateCreated: Date.now()
         })
 
         response.status(200).end(JSON.stringify({
@@ -1135,7 +1145,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       response.status(200).end(JSON.stringify({
         success: true,
-        sessionIDs: sessions.map(s => s._id)
+        sessions: await Promise.all(sessions.map(serialize.sessionBrief))
       }))
     }
   ])
