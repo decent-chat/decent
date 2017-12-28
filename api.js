@@ -1288,7 +1288,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
       let authorizationMessage, userAuthorized
       if (await shouldUseAuthorization()) {
         userAuthorized = await isUserAuthorized(user._id)
-        if (userAuthorized) {
+        if (!userAuthorized) {
           authorizationMessage = (
             await db.settings.findOne({_id: serverSettingsID})
           ).authorizationMessage
