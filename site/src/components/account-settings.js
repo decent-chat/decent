@@ -9,11 +9,19 @@ const store = (state, emitter) => {
   const reset = () => state.accountSettings = {
     sessionList: null,
     fetchingSessions: false,
+    oldRoute: '/',
   }
 
   reset()
 
   emitter.on('login', () => reset())
+
+  emitter.on('route', () => {
+    if (state.accountSettings.oldRoute !== state.route) {
+      state.accountSettings.oldRoute = state.route
+      emitter.emit('accountSettings.fetchSessions')
+    }
+  })
 
   emitter.on('accountSettings.fetchSessions', async () => {
     state.accountSettings.fetchingSessions = true
@@ -48,8 +56,6 @@ const store = (state, emitter) => {
       emitter.emit('sidebar.logout')
     }
   })
-
-  reset()
 }
 
 const component = (state, emit) => {
