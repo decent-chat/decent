@@ -31,9 +31,9 @@
     border-radius: 4px;
     outline: none;
     border: 1px solid var(--gray-500);
-   }
+  }
 
-   & > button {
+  & > button {
     width: 58px;
     height: 58px;
 

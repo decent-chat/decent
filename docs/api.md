@@ -1,10 +1,14 @@
 <h1 align='center'> 🎈 Decent API documentation </h1>
 
-The project's API is publicly available to anybody with access to the actual server on which it is hosted. [HTTP endpoints](#http-endpoints) provide virtually all methods of interaction from the client towards the server, while [WebSocket events](#websocket-events) let the server send messages to the client. Common data received from the server (such as users or messages) always follows [particular formats](#objects). General information which doesn't particularly fit anywhere else can be found in the appendix-esque section [Etc](#etc), and any questions one might have can be posted to the [issue tracker](https://github.com/towerofnix/decent/issues).
+The project's API is publicly available to anybody with access to the actual server on which it is hosted. [HTTP endpoints](#http-endpoints) provide virtually all methods of interaction from the client towards the server, while [WebSocket events](#websocket-events) let the server send messages to the client. Common data received from the server (such as users or messages) always follows [particular formats](#objects). It would be wise to understand and expect [authorization](#authorization) to be required. General information which doesn't particularly fit anywhere else can be found in the appendix-esque section [Etc](#etc), and any questions one might have can be posted to the [issue tracker](https://github.com/towerofnix/decent/issues).
 
 ## HTTP endpoints
 
 These are all the paths (think: URLs, `/api/user/:userID`) which can be fetched with plain old HTTP requests. All POST endpoints expect bodies encoded in **JSON**, and every endpoint will respond with a stringified JSON object.
+
+### GET `/api`
+
+Returns `{decent: true, message, repository}`, where `message` and `repository` are hard-coded strings for Humans to read. Also returns the status code [`418`](https://en.wikipedia.org/wiki/Hyper_Text_Coffee_Pot_Control_Protocol). Use this endpoint to verify that a given hostname is actually a Decent server. Does not require [authorization](#authorization).
 
 ### GET `/api/server-settings`
 
@@ -28,11 +32,15 @@ Takes the parameter `patch` and overwrites each of the specified properties acco
   * `sessionID`: (via data; string) the user's session ID. Must be valid.
   * `email`: (via data; string/null) the new email address of the user.
 
-Returns `{success: true, avatarURL}`, where `avatarURL` is a string URL (usually pointing to Libravatar) to be used as the user's profile picture.
+Returns `{success: true, avatarURL}`, where `avatarURL` is a string URL (usually pointing to [Libravatar](https://www.libravatar.org/)) to be used as the user's profile picture.
 
 ### GET `/api/should-use-secure`
 
 Returns a simple object `{useSecure}`, where `useSecure` is a boolean specifying whether or not to use WebSocket Secure and HTTPS (instead of normal WebSockets and HTTP). Of course, this assumes that HTTPS is properly set up on the host. Whether this returns true or false can be changed via the server command line (see `help` and view information on "set").
+
+### GET `/api/should-use-authorization`
+
+Returns an object `{useAuthorization, authorizationMessage}`, where `useAuthorization` is a boolean specifying whether or not to use [authorization](#authorization). If the server does require authorization, `authorizationMessage` (a message [specific to the server](#list-of-server-settings)) is passed.
 
 ### POST `/api/send-message`
 
@@ -126,7 +134,23 @@ Returns `{success: true, messages}`, where messages is an array of the 50 most r
   * `username`: (via body; string) the username to use. The username must not already be taken, and must be a [valid name](#valid-names).
   * `password`: (via body; string) the password to use. The password must be at least 6 characters long.
 
-Registers a new user. The given password is passed to `/api/register` as a plain string, and is stored in the database as a bcrypt-hashed and salted string (and not in any plain text form). Returns `{success: true, user}` if successful, where `user` is the new user as a [user object](#user-object).
+Registers a new user. The given password is passed to `/api/register` as a plain string, and is stored in the database as a bcrypt-hashed and salted string (and not in any plain text form). Returns `{success: true, user}` if successful, where `user` is the new user as a [user object](#user-object). Does not require [authorization](#authorization).
+
+### POST `/api/authorize-user`
+
+- Parameters:
+  * `userID`: (via data; string) the unique ID of the user to be authorized.
+  * `sessionID`: (via data; string) the session ID of the user who is requesting this endpoint. **The requesting user must be an admin.**
+
+[Authorizes](#authorization) the given user. Returns `{success: true}` if successful. Doesn't do anything (returns an error) if authorization is disabled.
+
+### POST `/api/deauthorize-user`
+
+- Parameters:
+  * `userID`: (via data; string) the unique ID of the user to be deauthorized. This must not be the requesting user (you can't deauthorize yourself).
+  * `sessionID`: (via data; string) the session ID of the user who is requesting this endpoint. **The requesting user must be an admin.**
+
+[Deauthorizes](#authorization) the given user. Returns `{success: true}` if successful. Doesn't do anything (returns an error) if authorization is disabled.
 
 ### GET `/api/user/:userID`
 
@@ -152,14 +176,14 @@ Returns `{available}`, where `available` is a boolean set to whether or not the 
   * `username`: (via body; string) the username to log in as. There must be a user with this name.
   * `password`: (via body; string) the password to use. This must (when hashed) match the user's password.
 
-Attempts to log in as a user, creating a new session. Returns `{success: true, sessionID}` if successful, where `sessionID` is the ID of the newly-created session.
+Attempts to log in as a user, creating a new session. Returns `{success: true, sessionID}` if successful, where `sessionID` is the ID of the newly-created session. Does not require [authorization](#authorization).
 
 ### GET `/api/session/:sessionID`
 
 - Parameters:
   * `sessionID`: (via URL path) the session ID to fetch. The session must exist.
 
-Returns `{success: true, user}` if successful, where `user` is a [user object](#user-object) of the user which the session represents. This endpoint is useful when grabbing information about the logged in user (e.g. at the startup of a client program, which may display the logged in user's username in a status bar).
+Returns `{success: true, user}` if successful, where `user` is a [user object](#user-object) of the user which the session represents. This endpoint is useful when grabbing information about the logged in user (e.g. at the startup of a client program, which may display the logged in user's username in a status bar). Does not require [authorization](#authorization).
 
 
 ## WebSocket events
@@ -230,6 +254,7 @@ A member of the server. (Every server has its own unique database of members; a 
 If the endpoint took a session ID (e.g. /api/session/:sessionID), the user object of **the current user** will also contain:
 
 * `email`: (string/null) the email address of the user.
+* `authorized`: (boolean) whether or not the user is [authorized](#authorization) (if authorization is enabled).
 
 ### Channel Object
 
@@ -250,6 +275,29 @@ Some endpoints return further information when a session ID is given (e.g. `/api
 
 
 ## Etc.
+
+### Authorization
+
+Authorization is a simple form of privacy which prevents clients from interacting with the server API without being authorized to do so (usually manually, by a human). This limits interaction to specific users, which may be wanted so that the server is "private". It should be noted that **enabling authorization does not encrypt messages or user data**; it simply limits who can access that data via the API.
+
+Authorization is a server property and can only be enabled via the actual command line:
+
+```
+> set requireAuthorization on|off
+```
+
+When authorization is enabled for the first time, only admins will be verified. When a user is made to be an admin through the command line (`make-admin`), they will also be authorized. Users can then be authorized via the [`authorize-user`](#post-apiauthorize-user) endpoint (in the official client, there's a dedicated settings page for this). Users can be deauthorized using [`deauthorize-user`](#post-apideauthorize-user).
+
+When a request is made to the API of a server which requires authorization, the server searches for a session ID given in the request. (First it checks for a `sessionID` field in POST data; if that's not found, it checks the `?sessionID` query field.) If no session ID is found, or the session ID is for a user who isn't authorized, the request is immediately ended with status code 403 and an error. Otherwise, the request is processed as normal.
+
+What the above *basically* means is that you should always send `sessionID` (either in the POST body or the URL query), or else servers with authorization enabled won't let you do much of anything.
+
+Note that some endpoints do not require authorization:
+
+* [`GET /api`](#get-api)
+* [`POST /api/login`](#post-apilogin)
+* [`POST /api/register`](#post-apiregister)
+* [`GET /api/session/:sessionID`](#get-apisessionsessionid)
 
 ### Dates
 

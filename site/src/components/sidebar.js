@@ -1,6 +1,8 @@
 // sidebar component
 const html = require('choo/html')
+const raw = require('choo/html/raw')
 const css = require('sheetify')
+const mrk = require('../util/mrk')
 const { Modal, api, storage } = require('../util')
 
 const prefix = css('./sidebar.css')
@@ -107,7 +109,7 @@ const store = (state, emitter) => {
   //   our server list; if not, add it
   // * load sessionID from storage for this server if possible
   // * fetch channel list
-  emitter.on('route', async () => {
+  emitter.on('routeready', async () => {
     if (state.params.host !== state.sidebar.hostCached && state.params.host) {
       state.sidebar.hostCached = state.params.host
 
@@ -124,10 +126,7 @@ const store = (state, emitter) => {
         // fetch user data using this sessionID
         try {
           emitter.emit('render') // render no channels
-          const { user } = await api.get(state, 'session/' + sessionID)
-
-          state.session = { id: sessionID, user }
-          emitter.emit('login')
+          loadSessionID(sessionID)
         } catch (error) {
           state.session = null
           console.warn(error)
@@ -152,17 +151,19 @@ const store = (state, emitter) => {
 
   // fetch the channel list from the server
   emitter.on('sidebar.fetchchannels', async () => {
-    const data = state.session ? { sessionID: state.session.id } : {}
-    const { channels } = await api.get(state, 'channel-list', data)
+    if (state.sessionAuthorized) {
+      const data = state.session ? { sessionID: state.session.id } : {}
+      const { channels } = await api.get(state, 'channel-list', data)
+      state.sidebar.channels = channels
+    } else {
+      state.sidebar.channels = []
+    }
 
-    state.sidebar.channels = channels
     emitter.emit('render')
 
     // if ?c is present, go to that channel by name
     if (state.query && state.query.c) {
       const channel = channels.find(c => c.name === state.query.c)
-      console.log(channel)
-
       emitter.emit('replaceState', `/servers/${state.params.host}/channels/${channel.id}`)
     }
   })
@@ -301,11 +302,8 @@ const store = (state, emitter) => {
     modal.on('submit', async ({ username, password }) => {
       try {
         const { sessionID } = await api.post(state, 'login', { username, password })
-        const { user } = await api.get(state, 'session/' + sessionID)
-
-        state.session = { id: sessionID, user }
+        await loadSessionID(sessionID)
         storage.set('sessionID@' + state.params.host, sessionID)
-        emitter.emit('login')
         emitter.emit('render')
 
         // close the modal
@@ -328,9 +326,39 @@ const store = (state, emitter) => {
   // logout
   emitter.on('sidebar.logout', () => {
     state.session = null
+    state.sessionAuthorized = null
     storage.set('sessionID@' + state.params.host, null)
+    emitter.emit('logout')
     emitter.emit('render')
   })
+
+  // fetch channels after logging in/out
+  emitter.on('login', () => emitter.emit('sidebar.fetchchannels'))
+  emitter.on('logout', () => emitter.emit('sidebar.fetchchannels'))
+
+  async function loadSessionID(sessionID) {
+    const result = await api.get(state, 'session/' + sessionID, {sessionID})
+    if (result.user) {
+      state.session = { id: sessionID, user: result.user }
+
+      // If the server requires authorization, we'll set the sessionAuthorized
+      // state value to whether or not the logged in user is authorized (which
+      // is a property on that user object). If the server doesn't require
+      // authorization, we'll just set sessionAuthorized to true, since
+      // acting as though we're authorized is what we want.
+      if (state.serverRequiresAuthorization) {
+        state.sessionAuthorized = result.user.authorized
+      } else {
+        state.sessionAuthorized = true
+      }
+
+      emitter.emit('login')
+    } else {
+      state.session = null
+      state.sessionAuthorized = null
+      emitter.emit('logout')
+    }
+  }
 }
 
 const component = (state, emit) => {
@@ -376,7 +404,11 @@ const component = (state, emit) => {
       })() : html`<span></span>`}
     </section>
 
-    ${state.sidebar.channels !== null ? html`<section>
+    ${// isAuthorized will be set to false *only* when logged in but NOT
+      // authorized. Otherwise, it'll be set to null.
+      state.sessionAuthorized !== false &&
+        state.sidebar.channels !== null &&
+        (!state.serverRequiresAuthorization || state.sessionAuthorized) ? html`<section>
       <div class='subtitle'>
         <h4>Channels</h4>
         ${state.session && state.session.user.permissionLevel === 'admin'
@@ -398,14 +430,29 @@ const component = (state, emit) => {
       </div>
     </section>` : html`<span></span>`}
 
+    ${state.sessionAuthorized === false ? html`<section>
+      <div class='subtitle'>
+        <h4>Unauthorized</h4>
+      </div>
+      <div class='content'>
+        <p>${raw(mrk(state)(state.authorizationMessage).html())}</p>
+      </div>
+    </section>` : html`<span></span>`}
+
     ${state.session && state.session.user.permissionLevel === 'admin' ? html`<section>
       <div class='subtitle'>
         <h4>Server settings</h4>
       </div>
 
       <div class='list'>
-        ${[ 'Emotes' ].map(name => {
-          const id = name.toLowerCase()
+        ${[
+          'Emotes',
+          state.serverRequiresAuthorization ? 'Authorized Users' : null
+        ].filter(Boolean).map(name => {
+          const id = {
+            'Emotes': 'emotes',
+            'Authorized Users': 'authorizedUsers'
+          }[name]
 
           return html`<a
             class='item setting ${(state.params.setting || null) === id ? 'active' : ''}'

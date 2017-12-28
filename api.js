@@ -38,9 +38,14 @@ module.exports = async function attachAPI(app, {wss, db}) {
   // regex can be updated.
   const isNameValid = name => /^[a-zA-Z0-9_-]+$/g.test(name)
 
-  const sendToAllSockets = function(evt, data) {
-    for (const socket of connectedSocketsMap.keys()) {
-      socket.send(JSON.stringify({ evt, data }))
+  const sendToAllSockets = function(evt, data, sendToUnauthorized = false) {
+    for (const [ socket, socketData ] of connectedSocketsMap.entries()) {
+      // Only send data to authorized sockets - those are sockets who've been
+      // verified as having logged in as an actual member (and not an
+      // unauthorized user).
+      if (sendToUnauthorized || socketData.authorized === true) {
+        socket.send(JSON.stringify({ evt, data }))
+      }
     }
   }
 
@@ -71,6 +76,12 @@ module.exports = async function attachAPI(app, {wss, db}) {
     return user
   }
 
+  const shouldUseAuthorization = async function() {
+    const { requireAuthorization } = await db.settings.findOne({_id: serverPropertiesID})
+
+    return requireAuthorization === 'on'
+  }
+
   const isUserOnline = async function(userID) {
     // Simple logic: a user is online iff there is at least one socket whose
     // session belongs to that user.
@@ -80,6 +91,19 @@ module.exports = async function attachAPI(app, {wss, db}) {
     return Array.from(connectedSocketsMap.values())
       .some(socketData => sessions
         .some(session => session._id === socketData.sessionID))
+  }
+
+  const isUserAuthorized = async function(userID) {
+    // Checks if a user is authorized. If authorization is disabled, this will
+    // always return true (even if the "authorized" field is set to false).
+
+    if (await shouldUseAuthorization() === false) {
+      return true
+    }
+
+    const user = await db.users.findOne({_id: userID})
+
+    return user && user.authorized ? true : false
   }
 
   const markChannelAsRead = async function(userID, channelID) {
@@ -143,6 +167,10 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       if (sessionUser && sessionUser._id === u._id) {
         obj.email = u.email || null
+
+        if (await shouldUseAuthorization()) {
+          obj.authorized = u.authorized || false
+        }
       }
 
       return obj
@@ -259,6 +287,22 @@ module.exports = async function attachAPI(app, {wss, db}) {
       })
     ),
 
+    runIfCondition: (conditionFn, runIfSo, runIfNot = []) => (
+      runIfSo.map(callback => async (request, response, next) => {
+        if (await conditionFn()) {
+          callback(request, response, next)
+        } else {
+          next()
+        }
+      }).concat(runIfNot.map(callback => async (request, response, next) => {
+        if (!await conditionFn()) {
+          callback(request, rseponse, next)
+        } else {
+          next()
+        }
+      }))
+    ),
+
     getSessionUserFromID: (sessionIDVar, sessionUserVar) => [
       async function(request, response, next) {
         const sessionID = request[middleware.vars][sessionIDVar]
@@ -282,6 +326,25 @@ module.exports = async function attachAPI(app, {wss, db}) {
       async function(request, response, next) {
         const username = request[middleware.vars][usernameVar]
         const user = await db.users.findOne({username})
+
+        if (!user) {
+          response.status(404).end(JSON.stringify({
+            error: 'user not found'
+          }))
+
+          return
+        }
+
+        request[middleware.vars][userVar] = user
+
+        next()
+      }
+    ],
+
+    getUserFromID: (userIDVar, userVar) => [
+      async function(request, response, next) {
+        const userID = request[middleware.vars][userIDVar]
+        const user = await db.users.findOne({_id: userID})
 
         if (!user) {
           response.status(404).end(JSON.stringify({
@@ -404,6 +467,87 @@ module.exports = async function attachAPI(app, {wss, db}) {
     next()
   })
 
+  // Don't let users who aren't verified (authorized false) interact with
+  // most API endpoints.
+  app.use('/api', [
+    ...middleware.verifyVarsExists(),
+
+    // Users should still be able to log in, though, obviously - otherwise,
+    // they'll never have a session ID (and tied user) for the server to
+    // check! (By the way, Express automatically gets rid of the "/api/"
+    // part, so we can just check for /login instead of /api/login.)
+    // A couple other endpoints also don't make sense to verify, so we skip
+    // those.
+    async (request, response, next) => {
+      // Although, of course, we should only do any of this if the server is
+      // set to require authorization!
+      const { requireAuthorization } = await db.settings.findOne({_id: serverPropertiesID})
+
+      if (requireAuthorization === 'on' && !(
+        [
+          '/login', '/register',
+          '/should-use-secure', '/should-use-authorization',
+          '/' // "This is a Decent server..."
+        ].includes(request.path) ||
+
+        // /session/:sessionID should work.
+        request.path.startsWith('/session/')
+      )) {
+        request[middleware.vars].shouldVerify = true
+      }
+
+      next()
+    },
+
+    ...middleware.runIfVarExists('shouldVerify', [
+      (request, response, next) => {
+        // First we check the POST body for the session ID (if it's a POST
+        // request). If we don't find anything, we check the query URL.
+        // If we still don't find a session ID, we'll say none was given
+        // and prevent the user from proceeding.
+        let sessionID
+        if (request.method === 'POST' && 'sessionID' in request.body) {
+          sessionID = request.body.sessionID
+        } else if ('sessionID' in request.query) {
+          sessionID = request.query.sessionID
+        } else {
+          // No session ID given - just quit here.
+          response.status(403).end(JSON.stringify({
+            error: 'missing sessionID field - not authorized to access API'
+          }))
+          return
+        }
+
+        // We'll save the session ID as a middleware-var so we can use it
+        // in the upcoming requests.
+        Object.assign(request[middleware.vars], {sessionID})
+
+        next()
+      },
+
+      // No need to rewrite the wheel - we have a fancy way of guessing where
+      // we might get the session ID, but we can use it just like we always
+      // do (with our normal middleware functions).
+      ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+
+      (request, response, next) => {
+        // Now that we have the session user, we can actually check if the user
+        // is authorized. For now, we just check if the user's permission
+        // level is "admin" or "member", but in the future (TODO) we should have
+        // a more sophisticated (and not hard-coded!) setup for permissions.
+        const { sessionUser } = request[middleware.vars]
+
+        if (sessionUser.authorized === true) {
+          next()
+        } else {
+          response.status(403).end(JSON.stringify({
+            error: 'not authorized to access API yet - admin action required'
+          }))
+        }
+      }
+    ])
+  ])
+
   app.get('/api/', (request, response) => {
     // We use HTTP 418 (I'm a teapot) unironically here because
     // no other /api/ is likely to return it, so it can be a quick
@@ -511,6 +655,24 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       response.status(200).end(JSON.stringify({
         useSecure: https === 'on' ? true : false
+      }))
+    }
+  ])
+
+  app.get('/api/should-use-authorization', [
+    async (request, response) => {
+      const useAuthorization = await shouldUseAuthorization()
+
+      let authorizationMessage
+      if (useAuthorization) {
+        authorizationMessage = (
+          await db.settings.findOne({_id: serverSettingsID})
+        ).authorizationMessage
+      }
+
+      response.status(200).end(JSON.stringify({
+        useAuthorization: await shouldUseAuthorization(),
+        authorizationMessage
       }))
     }
   ])
@@ -961,6 +1123,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
         passwordHash, salt,
         email: null,
         permissionLevel: 'member',
+        authorized: false,
         lastReadChannelDates: {}
       })
 
@@ -1015,14 +1178,58 @@ module.exports = async function attachAPI(app, {wss, db}) {
     }
   ])
 
-  app.get('/api/user-list', async (request, response) => {
-    const users = await db.users.find({})
+  app.get('/api/user-list', [
+    ...middleware.runIfCondition(() => shouldUseAuthorization, [
+      ...middleware.loadVarFromQuery('sessionID', false),
+      ...middleware.runIfVarExists('sessionID',
+        middleware.getSessionUserFromID('sessionID', 'sessionUser')
+      ),
 
-    response.status(200).end(JSON.stringify({
-      success: true,
-      users: await Promise.all(users.map(serialize.user))
-    }))
-  })
+      async (request, response) => {
+        const { sessionUser } = request[middleware.vars]
+        const isAdmin = sessionUser && sessionUser.permissionLevel === 'admin'
+
+        const [ authorizedUsers, unauthorizedUsers ] = await Promise.all([
+          db.users.find({authorized: true}),
+
+          // Unauthorized users - anyone where authorized is false,
+          // or authorized just isn't set at all (e.g. an old database).
+          isAdmin
+            ? db.users.find({$or: [
+              {authorized: false},
+              {authorized: {$exists: false}}
+            ]})
+            : Promise.resolve(null)
+        ])
+
+        const result = {
+          success: true,
+          users: await Promise.all(authorizedUsers.map(serialize.user))
+        }
+
+        // Respond the unauthorized users in a separate field, but only if the
+        // session user is an admin.
+        if (isAdmin) {
+          result.unauthorizedUsers = await Promise.all(
+            unauthorizedUsers.map(serialize.user)
+          )
+        }
+
+        response.status(200).end(JSON.stringify(result))
+      }
+    ], [
+      // If authorization is disabled we can take a far simpler route - just
+      // return every user.
+      async (request, response) => {
+        const users = await db.users.find({})
+
+        response.status(200).end(JSON.stringify({
+          success: true,
+          users: await Promise.all(users.map(serialize.user))
+        }))
+      }
+    ])
+  ])
 
   app.get('/api/username-available/:username', [
     ...middleware.loadVarFromParams('username'),
@@ -1090,18 +1297,79 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       response.status(200).end(JSON.stringify({
         success: true,
-        user: serializedUser,
+        user: serializedUser
+      }))
+    }
+  ])
+
+  const authUserMiddleware = [
+    async function(request, response, next) {
+      if (await shouldUseAuthorization()) {
+        next()
+      } else {
+        response.status(400).end(JSON.stringify({
+          error: 'authorization is not enabled'
+        }))
+      }
+    },
+
+    ...middleware.loadVarFromBody('userID'),
+    ...middleware.loadVarFromBody('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.getUserFromID('userID', '_')
+  ]
+
+  app.post('/api/authorize-user', [
+    ...authUserMiddleware,
+
+    async function(request, response) {
+      const { userID } = request[middleware.vars]
+
+      await db.users.update({_id: userID}, {
+        $set: {authorized: true}
+      })
+
+      response.status(200).end(JSON.stringify({
+        success: true
+      }))
+    }
+  ])
+
+  app.post('/api/deauthorize-user', [
+    ...authUserMiddleware,
+
+    async function(request, response) {
+      const { userID, sessionUser } = request[middleware.vars]
+
+      if (sessionUser._id === userID) {
+        response.status(400).end(JSON.stringify({
+          error: 'you cannot deauthorize yourself'
+        }))
+
+        return
+      }
+
+      await db.users.update({_id: userID}, {
+        $set: {authorized: false}
+      })
+
+      response.status(200).end(JSON.stringify({
+        success: true
       }))
     }
   ])
 
   wss.on('connection', socket => {
-    connectedSocketsMap.set(socket, {
+    const socketData = {
       sessionID: null,
+      authorized: false,
       isAlive: true,
-    })
+    }
 
-    socket.on('message', message => {
+    connectedSocketsMap.set(socket, socketData)
+
+    socket.on('message', async message => {
       let messageObj
       try {
         messageObj = JSON.parse(message)
@@ -1114,25 +1382,39 @@ module.exports = async function attachAPI(app, {wss, db}) {
       if (evt === 'pong data') {
         // Not the built-in pong; this event is used for gathering
         // socket-specific data.
-
         if (!data) {
           return
         }
 
-        let { sessionID } = data
+        const { sessionID } = data
 
-        // sessionID should be either a string or null.
-        // (We *should* also assert that it's a valid session ID [if not,
-        // clear], but that would mean making an API request every time
-        // a socket responds with pong data, which could be a little
-        // expensive.)
+        // sessionID should be either a string or null. We'll make sure that
+        // the session ID actually exists, but only when it's changed.
         if (typeof sessionID !== 'string' && sessionID !== null) {
           return
         }
 
-        Object.assign(connectedSocketsMap.get(socket), {
-          sessionID
-        })
+        if (sessionID !== socketData.sessionID) {
+          socketData.sessionID = sessionID
+
+          if (await shouldUseAuthorization()) {
+            const user = await getUserBySessionID(sessionID)
+
+            if (!user) {
+              socketData.sessionID = null
+              socketData.authorized = false
+              return
+            }
+
+            if (user.authorized === true) {
+              socketData.authorized = true
+            } else {
+              socketData.authorized = false
+            }
+          } else {
+            socketData.authorized = true
+          }
+        }
       }
     })
 

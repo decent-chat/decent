@@ -186,6 +186,18 @@
       }
     }
 
+    & > .content {
+      color: var(--gray-300);
+
+      font-size: 14px;
+      padding: 0 16px;
+
+      -webkit-touch-callout: default;
+        -webkit-user-select: text;
+           -moz-user-select: text;
+                user-select: text;
+    }
+
     & > .session {
       display: flex;
       align-items: center;
