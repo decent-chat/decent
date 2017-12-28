@@ -1,5 +1,23 @@
 :host {
   .user-id {
     color: var(--gray-300);
+    float: right;
+
+    > span {
+      font-family: monospace;
+    }
+  }
+
+  table {
+    line-height: 3;
+
+    img {
+      vertical-align: -10px;
+      margin: 0 -5px;
+    }
+
+    td:nth-child(2) {
+      min-width: 300px;
+    }
   }
 }

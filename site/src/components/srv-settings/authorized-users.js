@@ -97,7 +97,7 @@ const component = (state, emit) => {
       </td>
 
       <td>
-        ${user.username} <span class='${prefix} user-id'>(ID: ${user.id})</span>
+        ${user.username} <span class='${prefix} user-id'>(ID: <span>${user.id}</span>)</span>
       </td>
 
       ${actionTD}
@@ -123,7 +123,7 @@ const component = (state, emit) => {
         <button
           class='styled-button no-bg red'
           onclick=${() => emit('authorizedUsers.deauthorizeUser', user.id)}
-        >Remove</button>
+        >Deauthorize</button>
       </td>
     `
   )
