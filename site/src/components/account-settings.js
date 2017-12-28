@@ -1,8 +1,30 @@
 const html = require('choo/html')
 const css = require('sheetify')
 const { api } = require('../util')
+const { timeAgo } = require('../util/date')
 
 const prefix = css('./account-settings.css')
+
+const store = (state, emitter) => {
+  const reset = () => state.accountSettings = {
+    sessionList: null,
+    fetchingSessions: false,
+  }
+
+  emitter.on('accountSettings.fetchSessions', async () => {
+    state.accountSettings.fetchingSessions = true
+
+    const { sessions } = await api.get(state, 'user-session-list', {
+      sessionID: state.session.id
+    })
+
+    state.accountSettings.sessionList = sessions
+    state.accountSettings.fetchingSessions = false
+    emitter.emit('render')
+  })
+
+  reset()
+}
 
 const component = (state, emit) => {
   if (!state.session) {
@@ -41,6 +63,43 @@ const component = (state, emit) => {
     }
   }
 
+  let sessionRows
+
+  if (state.accountSettings.sessionList === null) {
+    if (!state.accountSettings.fetchingSessions) {
+      emit('accountSettings.fetchSessions')
+    }
+  } else {
+    sessionRows = state.accountSettings.sessionList.map(session => {
+      const deleteSession = async () => {
+        state.accountSettings.sessionList = state.accountSettings.sessionList.filter(
+          s => s.id !== session.id
+        )
+
+        await api.post(state, 'delete-sessions', {
+          sessionIDs: [session.id]
+        })
+      }
+
+      const row = html`
+        <tr data-sessionid=${session.id}>
+          <td>
+            Created ${timeAgo(session.dateCreated).string} ago
+            ${session.id === state.session.id ? '(Current)' : ''}
+          </td>
+          <td>
+            <span class='session-id'>${session.id}</span>
+          </td>
+          <td><button class='styled-button no-bg red' onclick=${deleteSession}>Delete</button></td>
+        </tr>
+      `
+
+      row.isSameNode = el => el.dataset && el.dataset.sessionid === session.id
+
+      return row
+    })
+  }
+
   return html`<div class='page ${prefix}'>
     <h1>Account settings <span class='subtitle'>for ${state.params.host}</span></h1>
 
@@ -69,7 +128,21 @@ const component = (state, emit) => {
       <span class='status'></span>
       <button class='styled-button save' onclick=${save}>Save</button>
     </div>
+
+    <h2>Login sessions</h2>
+    ${state.accountSettings.fetching ? html`
+      <p>Loading sessions...</p>
+    ` : html`
+      <div>
+        <p><button class='styled-button red' onclick=${() => alert('not implemented')}>Delete all login sessions</button></p>
+        <table>
+          <tbody>
+            ${sessionRows}
+          </tbody>
+        </table>
+      </div>
+    `}
   </div>`
 }
 
-module.exports = { component, prefix }
+module.exports = { store, component, prefix }
