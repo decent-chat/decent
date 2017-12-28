@@ -144,6 +144,7 @@ const component = (state, emit) => {
       id='${prefix}message'
       placeholder='Authorization message'
       maxlength='800'
+      class='styled-textarea'
     >${state.authorizedUsers.authorizationMessage}</textarea>
   `
 
@@ -184,7 +185,7 @@ const component = (state, emit) => {
 
     <p>${textarea}</p>
 
-    <p><button onclick=${() => emit('authorizedUsers.saveMessage')}>Save</button></p>
+    <p><button class='styled-button' onclick=${() => emit('authorizedUsers.saveMessage')}>Save message</button></p>
   </div>`
 }
 

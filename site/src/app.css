@@ -147,6 +147,31 @@ body {
   }
 }
 
+.styled-textarea {
+  width: 90%;
+  max-width: 600px;
+  padding: 13px 16px;
+
+  min-height: 160px;
+  resize: vertical;
+
+  font-family: inherit;
+  font-size: 18px;
+
+  color: var(--gray-100);
+  background: var(--gray-900);
+
+  border: 0;
+  border-bottom: 1px solid var(--gray-500);
+  &:focus { border-color: var(--blue); }
+
+  &[disabled] {
+    cursor: not-allowed;
+    background: var(--gray-700);
+    opacity: .8;
+  }
+}
+
 a:any-link.link {
   color: var(--blue);
   text-decoration: underline;
