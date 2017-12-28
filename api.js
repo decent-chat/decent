@@ -1310,7 +1310,9 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
   const authUserMiddleware = [
     async function(request, response, next) {
-      if (await shouldUseAuthorization() === false) {
+      if (await shouldUseAuthorization()) {
+        next()
+      } else {
         response.status(400).end(JSON.stringify({
           error: 'authorization is not enabled'
         }))
