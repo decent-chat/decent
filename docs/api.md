@@ -40,7 +40,7 @@ Returns a simple object `{useSecure}`, where `useSecure` is a boolean specifying
 
 ### GET `/api/should-use-authorization`
 
-Returns an object `{useAuthorization}`, where `useAuthorization` is a boolean specifying whether or not to use [authorization](#authorization).
+Returns an object `{useAuthorization, authorizationMessage}`, where `useAuthorization` is a boolean specifying whether or not to use [authorization](#authorization). If the server does require authorization, `authorizationMessage` (a message [specific to the server](#list-of-server-settings)) is passed.
 
 ### POST `/api/send-message`
 
@@ -147,7 +147,7 @@ Registers a new user. The given password is passed to `/api/register` as a plain
 ### POST `/api/deauthorize-user`
 
 - Parameters:
-  * `userID`: (via data; string) the unique ID of the user to be deauthorized.
+  * `userID`: (via data; string) the unique ID of the user to be deauthorized. This must not be the requesting user (you can't deauthorize yourself).
   * `sessionID`: (via data; string) the session ID of the user who is requesting this endpoint. **The requesting user must be an admin.**
 
 [Deauthorizes](#authorization) the given user. Returns `{success: true}` if successful. Doesn't do anything (returns an error) if authorization is disabled.
@@ -184,8 +184,6 @@ Attempts to log in as a user, creating a new session. Returns `{success: true, s
   * `sessionID`: (via URL path) the session ID to fetch. The session must exist.
 
 Returns `{success: true, user}` if successful, where `user` is a [user object](#user-object) of the user which the session represents. This endpoint is useful when grabbing information about the logged in user (e.g. at the startup of a client program, which may display the logged in user's username in a status bar). Does not require [authorization](#authorization).
-
-If authorization is enabled, the extra field `userAuthorized` (a boolean specifying whether the session's user is authorized or not) is given, as well as `authorizationMessage` (a message [specific to the server](#list-of-server-settings)) if the user is not authorized.
 
 ### POST `/api/delete-sessions`
 
@@ -314,7 +312,7 @@ Authorization is a server property and can only be enabled via the actual comman
 > set requireAuthorization on|off
 ```
 
-When authorization is enabled for the first time, only admins will be verified. When a user is made to be an admin through the command line (`make-admin`), they will also be authorized. (If you're using an old database, you can authorize existing admins by running `make-admin` again.) Users can then be authorized via the [`authorize-user`](#post-apiauthorize-user) endpoint (in the official client, there's a dedicated settings page for this). Users can be deauthorized using [`deauthorize-user`](#post-apideauthorize-user).
+When authorization is enabled for the first time, only admins will be verified. When a user is made to be an admin through the command line (`make-admin`), they will also be authorized. Users can then be authorized via the [`authorize-user`](#post-apiauthorize-user) endpoint (in the official client, there's a dedicated settings page for this). Users can be deauthorized using [`deauthorize-user`](#post-apideauthorize-user).
 
 When a request is made to the API of a server which requires authorization, the server searches for a session ID given in the request. (First it checks for a `sessionID` field in POST data; if that's not found, it checks the `?sessionID` query field.) If no session ID is found, or the session ID is for a user who isn't authorized, the request is immediately ended with status code 403 and an error. Otherwise, the request is processed as normal.
 

@@ -692,8 +692,18 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
   app.get('/api/should-use-authorization', [
     async (request, response) => {
+      const useAuthorization = await shouldUseAuthorization()
+
+      let authorizationMessage
+      if (useAuthorization) {
+        authorizationMessage = (
+          await db.settings.findOne({_id: serverSettingsID})
+        ).authorizationMessage
+      }
+
       response.status(200).end(JSON.stringify({
-        useAuthorization: await shouldUseAuthorization()
+        useAuthorization: await shouldUseAuthorization(),
+        authorizationMessage
       }))
     }
   ])

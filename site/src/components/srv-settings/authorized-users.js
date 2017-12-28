@@ -132,6 +132,9 @@ const component = (state, emit) => {
       <td>
         <button
           class='styled-button no-bg red'
+          disabled=${user.id === state.session.user.id}
+          title=${user.id === state.session.user.id
+            ? 'You can\'t deauthorize yourself.' : ''}
           onclick=${() => emit('authorizedUsers.deauthorizeUser', user.id)}
         >Deauthorize</button>
       </td>
