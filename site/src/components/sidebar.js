@@ -353,7 +353,6 @@ const store = (state, emitter) => {
       // authorization, we'll just set sessionAuthorized to true, since
       // acting as though we're authorized is what we want.
       if (state.serverRequiresAuthorization) {
-        console.log(session)
         state.sessionAuthorized = session.user.authorized
       } else {
         state.sessionAuthorized = true
