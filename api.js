@@ -184,25 +184,8 @@ module.exports = async function attachAPI(app, {wss, db}) {
     sessionDetail: async s => {
       const user = await getUserBySessionID(s._id)
 
-      let authorizationMessage, userAuthorized
-      if (await shouldUseAuthorization()) {
-        userAuthorized = await isUserAuthorized(user._id)
-        if (!userAuthorized) {
-          authorizationMessage = (
-            await db.settings.findOne({_id: serverSettingsID})
-          ).authorizationMessage
-        }
-      }
-
       return Object.assign(await serialize.sessionBrief(s), {
-        user: await serialize.user(user),
-
-        // This is redundant since it's already stored on the user, but it's
-        // nice to have anyways - it makes the authorizationMessage property
-        // seem less out of place.
-        userAuthorized,
-
-        authorizationMessage
+        user: await serialize.user(user, user)
       })
     },
 
