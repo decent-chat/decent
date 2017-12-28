@@ -1095,6 +1095,51 @@ module.exports = async function attachAPI(app, {wss, db}) {
     }
   ])
 
+  app.post('/api/delete-sessions', [
+    ...middleware.loadVarFromBody('sessionIDs'),
+
+    // No verification ("are you the owner of this session ID" etc), because
+    // if you know the session ID, you obviously have power over it!
+
+    async (request, response) => {
+      const { sessionIDs } = request[middleware.vars]
+
+      if (Array.isArray(sessionIDs) === false) {
+        response.status(400).end(JSON.stringify({
+          error: 'expected sessionIDs to be an array'
+        }))
+      } else if (sessionIDs.find(x => typeof x !== 'string')) {
+        respones.status(400).end(JSON.stringify({
+          error: 'expected sessionIDs to be an array of strings'
+        }))
+      } else {
+        await Promise.all(sessionIDs.map(
+          sid => db.sessions.remove({_id: sid})
+        ))
+
+        response.status(200).end(JSON.stringify({
+          success: true
+        }))
+      }
+    }
+  ])
+
+  app.get('/api/user-session-list', [
+    ...middleware.loadVarFromQuery('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+
+    async (request, response) => {
+      const { sessionUser } = request[middleware.vars]
+
+      const sessions = await db.sessions.find({userID: sessionUser._id})
+
+      response.status(200).end(JSON.stringify({
+        success: true,
+        sessionIDs: sessions.map(s => s._id)
+      }))
+    }
+  ])
+
   wss.on('connection', socket => {
     connectedSocketsMap.set(socket, {
       sessionID: null,

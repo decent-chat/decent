@@ -326,7 +326,13 @@ const store = (state, emitter) => {
   })
 
   // logout
-  emitter.on('sidebar.logout', () => {
+  emitter.on('sidebar.logout', async () => {
+    if (state.session) {
+      await api.post(state, 'delete-sessions', {
+        sessionIDs: [state.session.id]
+      })
+    }
+
     state.session = null
     storage.set('sessionID@' + state.params.host, null)
     emitter.emit('render')
