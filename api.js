@@ -1232,4 +1232,19 @@ module.exports = async function attachAPI(app, {wss, db}) {
       }
     }
   }, 10 * 1000) // Every 10s.
+
+  const pruneOldSessions = async function() {
+    // Remove old sessions - any that are at least 30 days old.
+
+    const maximumLifetime = 30 * 24 * 60 * 60 * 1000
+
+    await db.sessions.remove({
+      $where: function() {
+        return Date.now() - this.dateCreated > maximumLifetime
+      }
+    }, {multi: true})
+  }
+
+  setInterval(pruneOldSessions, 5 * 60 * 1000) // Every 5min.
+  pruneOldSessions()
 }
