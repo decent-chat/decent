@@ -11,6 +11,10 @@ const store = (state, emitter) => {
     fetchingSessions: false,
   }
 
+  reset()
+
+  emitter.on('login', () => reset())
+
   emitter.on('accountSettings.fetchSessions', async () => {
     state.accountSettings.fetchingSessions = true
 
@@ -21,6 +25,26 @@ const store = (state, emitter) => {
     state.accountSettings.sessionList = sessions
     state.accountSettings.fetchingSessions = false
     emitter.emit('render')
+  })
+
+  emitter.on('accountSettings.deleteAllSessions', async () => {
+    if (confirm(
+      'Are you sure? Deleting all sessions will log you out ' +
+      '(but you can log back in after).'
+    )) {
+      // fetch the list again, just to be up to date - deleting all sessions
+      // should delete ALL sessions, not just the ones that existed when the
+      // settings page was opened
+      const { sessions } = await api.get(state, 'user-session-list', {
+        sessionID: state.session.id
+      })
+
+      await api.post(state, 'delete-sessions', {
+        sessionIDs: sessions.map(session => session.id)
+      })
+
+      emitter.emit('sidebar.logout')
+    }
   })
 
   reset()
@@ -72,6 +96,15 @@ const component = (state, emit) => {
   } else {
     sessionRows = state.accountSettings.sessionList.map(session => {
       const deleteSession = async () => {
+        if (session.id === state.session.id) {
+          if (!confirm(
+            'Are you sure? Deleting this session will log you out ' +
+            '(since it\'s the one you\'re currently logged in with).'
+          )) {
+            return
+          }
+        }
+
         state.accountSettings.sessionList = state.accountSettings.sessionList.filter(
           s => s.id !== session.id
         )
@@ -79,12 +112,18 @@ const component = (state, emit) => {
         await api.post(state, 'delete-sessions', {
           sessionIDs: [session.id]
         })
+
+        if (session.id === state.session.id) {
+          emit('sidebar.logout')
+        } else {
+          emit('render')
+        }
       }
 
       const row = html`
         <tr data-sessionid=${session.id}>
           <td>
-            Created ${timeAgo(session.dateCreated).string} ago
+            Created: ${timeAgo(session.dateCreated).string}
             ${session.id === state.session.id ? '(Current)' : ''}
           </td>
           <td>
@@ -134,7 +173,10 @@ const component = (state, emit) => {
       <p>Loading sessions...</p>
     ` : html`
       <div>
-        <p><button class='styled-button red' onclick=${() => alert('not implemented')}>Delete all login sessions</button></p>
+        <p><button
+          class='styled-button red'
+          onclick=${() => emit('accountSettings.deleteAllSessions')}
+        >Delete all login sessions</button></p>
         <table>
           <tbody>
             ${sessionRows}
