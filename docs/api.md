@@ -147,7 +147,7 @@ Registers a new user. The given password is passed to `/api/register` as a plain
 ### POST `/api/deauthorize-user`
 
 - Parameters:
-  * `userID`: (via data; string) the unique ID of the user to be deauthorized.
+  * `userID`: (via data; string) the unique ID of the user to be deauthorized. This must not be the requesting user (you can't deauthorize yourself).
   * `sessionID`: (via data; string) the session ID of the user who is requesting this endpoint. **The requesting user must be an admin.**
 
 [Deauthorizes](#authorization) the given user. Returns `{success: true}` if successful. Doesn't do anything (returns an error) if authorization is disabled.
