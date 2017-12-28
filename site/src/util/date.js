@@ -38,6 +38,4 @@ module.exports.timeAgo = function(date) {
   if (ago > day) {
     return { needsUpdate: true, string: s('day', Math.round(ago / day)) }
   }
-
-  console.log('uhhh', date)
 }
