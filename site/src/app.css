@@ -124,7 +124,8 @@ body {
 
 .styled-button {
   padding: 10px 16px;
-  margin-left: 3px;
+  &:not(:first-child) { margin-left: 3px; }
+  &:not(:last-child) { margin-right: 3px; }
 
   background: var(--blue);
   border-radius: 4px;
