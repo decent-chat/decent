@@ -181,9 +181,30 @@ module.exports = async function attachAPI(app, {wss, db}) {
       dateCreated: s.dateCreated
     }),
 
-    sessionDetail: async s => Object.assign(await serialize.sessionBrief(s), {
-      user: await getUserBySessionID(s._id)
-    }),
+    sessionDetail: async s => {
+      const user = await getUserBySessionID(s._id)
+
+      let authorizationMessage, userAuthorized
+      if (await shouldUseAuthorization()) {
+        userAuthorized = await isUserAuthorized(user._id)
+        if (!userAuthorized) {
+          authorizationMessage = (
+            await db.settings.findOne({_id: serverSettingsID})
+          ).authorizationMessage
+        }
+      }
+
+      return Object.assign(await serialize.sessionBrief(s), {
+        user: await serialize.user(user),
+
+        // This is redundant since it's already stored on the user, but it's
+        // nice to have anyways - it makes the authorizationMessage property
+        // seem less out of place.
+        userAuthorized,
+
+        authorizationMessage
+      })
+    },
 
     channelBrief: async (c, sessionUser = null) => {
       const obj = {
@@ -495,6 +516,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
       if (requireAuthorization === 'on' && !(
         [
           '/login', '/register',
+          '/delete-sessions', '/user-session-list',
           '/should-use-secure', '/should-use-authorization',
           '/' // "This is a Decent server..."
         ].includes(request.path) ||
@@ -1283,9 +1305,10 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
     async (request, response) => {
       const { sessionID } = request[middleware.vars]
-      const user = await getUserBySessionID(sessionID)
 
-      if (!user) {
+      const session = await db.sessions.findOne({_id: sessionID})
+
+      if (!session) {
         response.status(404).end(JSON.stringify({
           error: 'session not found'
         }))
@@ -1293,27 +1316,9 @@ module.exports = async function attachAPI(app, {wss, db}) {
         return
       }
 
-      const serializedUser = await serialize.user(user, user)
-
-      let authorizationMessage, userAuthorized
-      if (await shouldUseAuthorization()) {
-        userAuthorized = await isUserAuthorized(user._id)
-        if (!userAuthorized) {
-          authorizationMessage = (
-            await db.settings.findOne({_id: serverSettingsID})
-          ).authorizationMessage
-        }
-      }
-
       response.status(200).end(JSON.stringify({
         success: true,
-        user: serializedUser,
-
-        // This is redundant since it's already stored on the user, but it's
-        // nice to have anyways - it makes the "authorization message" property
-        // seem less out of place.
-        userAuthorized,
-        authorizationMessage
+        session: await serialize.sessionDetail(session)
       }))
     }
   ])
