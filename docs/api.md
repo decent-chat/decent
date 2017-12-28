@@ -288,7 +288,7 @@ Authorization is a server property and can only be enabled via the actual comman
 > set requireAuthorization on|off
 ```
 
-When authorization is enabled for the first time, only admins will be verified. When a user is made to be an admin through the command line (`make-admin`), they will also be authorized. (If you're using an old database, you can authorize existing admins by running `make-admin` again.) Users can then be authorized via the [`authorize-user`](#post-apiauthorize-user) endpoint (in the official client, there's a dedicated settings page for this). Users can be deauthorized using [`deauthorize-user`](#post-apideauthorize-user).
+When authorization is enabled for the first time, only admins will be verified. When a user is made to be an admin through the command line (`make-admin`), they will also be authorized. Users can then be authorized via the [`authorize-user`](#post-apiauthorize-user) endpoint (in the official client, there's a dedicated settings page for this). Users can be deauthorized using [`deauthorize-user`](#post-apideauthorize-user).
 
 When a request is made to the API of a server which requires authorization, the server searches for a session ID given in the request. (First it checks for a `sessionID` field in POST data; if that's not found, it checks the `?sessionID` query field.) If no session ID is found, or the session ID is for a user who isn't authorized, the request is immediately ended with status code 403 and an error. Otherwise, the request is processed as normal.
 
