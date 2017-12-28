@@ -324,7 +324,13 @@ const store = (state, emitter) => {
   })
 
   // logout
-  emitter.on('sidebar.logout', () => {
+  emitter.on('sidebar.logout', async () => {
+    if (state.session) {
+      await api.post(state, 'delete-sessions', {
+        sessionIDs: [state.session.id]
+      })
+    }
+
     state.session = null
     state.sessionAuthorized = null
     storage.set('sessionID@' + state.params.host, null)
@@ -337,9 +343,9 @@ const store = (state, emitter) => {
   emitter.on('logout', () => emitter.emit('sidebar.fetchchannels'))
 
   async function loadSessionID(sessionID) {
-    const result = await api.get(state, 'session/' + sessionID, {sessionID})
-    if (result.user) {
-      state.session = { id: sessionID, user: result.user }
+    const { session } = await api.get(state, 'session/' + sessionID, {sessionID})
+    if (session.user) {
+      state.session = { id: sessionID, user: session.user }
 
       // If the server requires authorization, we'll set the sessionAuthorized
       // state value to whether or not the logged in user is authorized (which
@@ -347,7 +353,7 @@ const store = (state, emitter) => {
       // authorization, we'll just set sessionAuthorized to true, since
       // acting as though we're authorized is what we want.
       if (state.serverRequiresAuthorization) {
-        state.sessionAuthorized = result.user.authorized
+        state.sessionAuthorized = session.user.authorized
       } else {
         state.sessionAuthorized = true
       }

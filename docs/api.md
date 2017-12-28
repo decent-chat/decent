@@ -185,6 +185,19 @@ Attempts to log in as a user, creating a new session. Returns `{success: true, s
 
 Returns `{success: true, user}` if successful, where `user` is a [user object](#user-object) of the user which the session represents. This endpoint is useful when grabbing information about the logged in user (e.g. at the startup of a client program, which may display the logged in user's username in a status bar). Does not require [authorization](#authorization).
 
+### POST `/api/delete-sessions`
+
+- Parameters:
+  * `sessionIDs`: (via body; array of strings) the IDs of the sessions to be deleted.
+
+Deletes the given sessions (using their IDs will no longer work). Passing just one session ID is fine. Returns `{success: true}` if successful.
+
+### GET `/api/user-session-list`
+
+- Parameters:
+  * `sessionID`: (via body; string) the session ID to use. The session must exist.
+
+Returns `{success: true, sessions}` if successful, where `sessions` is an array of [(brief) session objects](#session-object). All sessions which are logged into the same user as the given session (via `sessionID`) are returned.
 
 ## WebSocket events
 
@@ -272,6 +285,19 @@ Some endpoints return a more detailed channel object. (Particularly, `/api/chann
 Some endpoints return further information when a session ID is given (e.g. `/api/channel-list?sessionID=..`). This information is specific to the particular logged in user, and includes the following:
 
 * `unreadMessageCount`: (number) the number of "unread" messages, capped at 200. Unread messages are simply messages which were sent more recently than the last time the channel was marked as read. (Channels are marked as read whenever the user sends a message, and can also be set manually/by the client using the `/api/mark-channel-as-read` endpoint.)
+
+### Session Object
+
+A login session. As with [channel objects](#channel-object), there are two variants of sessions; brief and detailed ones.
+
+All returned session objects have these properties:
+
+* `id`: (string) the ID of the session. This is a unique string in [version 4 UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_4_%28random%29), and is used to access and act as the account that the session was created for.
+* `dateCreated`: (number) the date the session was [created](#post-apilogin).
+
+Detailed sessions also have these properties:
+
+* `user`: ([user](#user-object)) the user that the session was created for.
 
 
 ## Etc.

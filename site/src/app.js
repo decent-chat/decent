@@ -91,6 +91,7 @@ app.use((state, emitter) => {
 
 app.use(messages.store)
 app.use(sidebar.store)
+app.use(accountSettings.store)
 
 for (const [ name, s ] of Object.entries(srvSettings)) {
   if (s.store) {

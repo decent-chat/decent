@@ -176,6 +176,19 @@ module.exports = async function attachAPI(app, {wss, db}) {
       return obj
     },
 
+    sessionBrief: async s => ({
+      id: s._id,
+      dateCreated: s.dateCreated
+    }),
+
+    sessionDetail: async s => {
+      const user = await getUserBySessionID(s._id)
+
+      return Object.assign(await serialize.sessionBrief(s), {
+        user: await serialize.user(user, user)
+      })
+    },
+
     channelBrief: async (c, sessionUser = null) => {
       const obj = {
         id: c._id,
@@ -486,6 +499,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
       if (requireAuthorization === 'on' && !(
         [
           '/login', '/register',
+          '/delete-sessions', '/user-session-list',
           '/should-use-secure', '/should-use-authorization',
           '/' // "This is a Decent server..."
         ].includes(request.path) ||
@@ -1263,7 +1277,8 @@ module.exports = async function attachAPI(app, {wss, db}) {
       if (await bcrypt.compare(password, passwordHash)) {
         const session = await db.sessions.insert({
           _id: uuidv4(),
-          userID: user._id
+          userID: user._id,
+          dateCreated: Date.now()
         })
 
         response.status(200).end(JSON.stringify({
@@ -1283,9 +1298,10 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
     async (request, response) => {
       const { sessionID } = request[middleware.vars]
-      const user = await getUserBySessionID(sessionID)
 
-      if (!user) {
+      const session = await db.sessions.findOne({_id: sessionID})
+
+      if (!session) {
         response.status(404).end(JSON.stringify({
           error: 'session not found'
         }))
@@ -1293,11 +1309,9 @@ module.exports = async function attachAPI(app, {wss, db}) {
         return
       }
 
-      const serializedUser = await serialize.user(user, user)
-
       response.status(200).end(JSON.stringify({
         success: true,
-        user: serializedUser
+        session: await serialize.sessionDetail(session)
       }))
     }
   ])
@@ -1356,6 +1370,51 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       response.status(200).end(JSON.stringify({
         success: true
+      }))
+    }
+  ])
+
+  app.post('/api/delete-sessions', [
+    ...middleware.loadVarFromBody('sessionIDs'),
+
+    // No verification ("are you the owner of this session ID" etc), because
+    // if you know the session ID, you obviously have power over it!
+
+    async (request, response) => {
+      const { sessionIDs } = request[middleware.vars]
+
+      if (Array.isArray(sessionIDs) === false) {
+        response.status(400).end(JSON.stringify({
+          error: 'expected sessionIDs to be an array'
+        }))
+      } else if (sessionIDs.find(x => typeof x !== 'string')) {
+        respones.status(400).end(JSON.stringify({
+          error: 'expected sessionIDs to be an array of strings'
+        }))
+      } else {
+        await Promise.all(sessionIDs.map(
+          sid => db.sessions.remove({_id: sid})
+        ))
+
+        response.status(200).end(JSON.stringify({
+          success: true
+        }))
+      }
+    }
+  ])
+
+  app.get('/api/user-session-list', [
+    ...middleware.loadVarFromQuery('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+
+    async (request, response) => {
+      const { sessionUser } = request[middleware.vars]
+
+      const sessions = await db.sessions.find({userID: sessionUser._id})
+
+      response.status(200).end(JSON.stringify({
+        success: true,
+        sessions: await Promise.all(sessions.map(serialize.sessionBrief))
       }))
     }
   ])
@@ -1459,4 +1518,19 @@ module.exports = async function attachAPI(app, {wss, db}) {
       }
     }
   }, 10 * 1000) // Every 10s.
+
+  const pruneOldSessions = async function() {
+    // Remove old sessions - any that are at least 30 days old.
+
+    const maximumLifetime = 30 * 24 * 60 * 60 * 1000
+
+    await db.sessions.remove({
+      $where: function() {
+        return Date.now() - this.dateCreated > maximumLifetime
+      }
+    }, {multi: true})
+  }
+
+  setInterval(pruneOldSessions, 5 * 60 * 1000) // Every 5min.
+  pruneOldSessions()
 }

@@ -147,6 +147,10 @@ body {
       text-decoration: underline;
     }
   }
+
+  &:not(.no-bg) {
+    &.red { background-color: var(--red); color: white; }
+  }
 }
 
 .styled-textarea {

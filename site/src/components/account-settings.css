@@ -60,6 +60,7 @@
     margin-top: 80px;
     margin-left: auto;
     margin-right: 0;
+    margin-bottom: 20px;
     float: right;
 
     & > .status {
@@ -71,7 +72,25 @@
       padding: 14px 24px;
 
       font-size: 18px;
-      background: var(--red);
+      background: var(--green);
+    }
+  }
+
+  h2 {
+    clear: right;
+    border-top: 1px solid var(--gray-300);
+    padding-top: 4px;
+  }
+
+  .session-id {
+    color: var(--gray-300);
+    font-family: monospace;
+    white-space: nowrap;
+    filter: blur(6px);
+
+    &:hover {
+      filter: blur(0);
+      transition: filter 2s;
     }
   }
 }
