@@ -12,6 +12,9 @@ const store = (state, emitter) => {
 
     fetching: false,
     fetched: false,
+
+    // true once save is pressed; false when the textarea is changed
+    authMessageSaved: false,
   }
 
   reset()
@@ -57,6 +60,8 @@ const store = (state, emitter) => {
       }
     })
 
+    state.authorizedUsers.authMessageSaved = true
+
     emitter.emit('render')
   })
 
@@ -74,6 +79,11 @@ const store = (state, emitter) => {
     })
 
     emitter.emit('authorizedUsers.fetch')
+  })
+
+  emitter.on('authorizedUsers.textareaChanged', value => {
+    state.authorizedUsers.authMessageSaved = false
+    emitter.emit('render')
   })
 }
 
@@ -139,12 +149,22 @@ const component = (state, emit) => {
     `
   )
 
+  const considerEmittingChanged = () => {
+    if (state.authorizedUsers.authMessageSaved === true) {
+      if (state.authorizedUsers.authorizationMessage !== textarea.value) {
+        emit('authorizedUsers.textareaChanged')
+      }
+    }
+  }
+
   const textarea = html`
     <textarea
       id='${prefix}message'
       placeholder='Authorization message'
       maxlength='800'
       class='styled-textarea'
+      onchange=${considerEmittingChanged}
+      onkeyup=${considerEmittingChanged}
     >${state.authorizedUsers.authorizationMessage}</textarea>
   `
 
@@ -185,7 +205,10 @@ const component = (state, emit) => {
 
     <p>${textarea}</p>
 
-    <p><button class='styled-button' onclick=${() => emit('authorizedUsers.saveMessage')}>Save message</button></p>
+    <p>
+      <button class='styled-button' onclick=${() => emit('authorizedUsers.saveMessage')}>Save message</button>
+      ${state.authorizedUsers.authMessageSaved ? html`<span class='status'>Saved.</span>` : ''}
+    </p>
   </div>`
 }
 
