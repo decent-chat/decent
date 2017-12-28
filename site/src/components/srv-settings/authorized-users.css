@@ -2,6 +2,7 @@
   .user-id {
     color: var(--gray-300);
     float: right;
+    margin-left: 10px;
 
     > span {
       font-family: monospace;
