@@ -85,5 +85,12 @@
   .session-id {
     color: var(--gray-300);
     font-family: monospace;
+    white-space: nowrap;
+    filter: blur(6px);
+
+    &:hover {
+      filter: blur(0);
+      transition: filter 2s;
+    }
   }
 }

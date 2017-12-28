@@ -175,6 +175,9 @@ const component = (state, emit) => {
       <p>Loading sessions...</p>
     ` : html`
       <div>
+        <p>
+          These are your login sessions. <strong>The blurred-out codes should <em>never</em> be shared - they give <em>anybody</em> full access to your account.</strong> Old login sessions (any older than 30 days) are automatically deleted, so you'll need to login roughly once a month (if you're not the type to log out every time).
+        </p>
         <p><button
           class='styled-button red'
           onclick=${() => emit('accountSettings.deleteAllSessions')}
