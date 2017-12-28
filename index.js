@@ -84,7 +84,8 @@ async function main() {
             interface for chatting; use an actual client for that.
             Commands:
             - license: shows license information (hint: it's GPL 3.0!)
-            - make-admin: makes an already-registered user an admin.
+            - make-admin: makes an already-registered user an admin and
+              authorizes them as a member of the server.
             - get-property: shows a server property.
             - set-property: sets a server property.
               ("-property" can be omitted from both of these, and
@@ -196,7 +197,8 @@ async function main() {
 
           await db.users.update({username}, {
             $set: {
-              permissionLevel: 'admin'
+              permissionLevel: 'admin',
+              authorized: true
             }
           })
 

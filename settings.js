@@ -33,6 +33,22 @@ const defaultSettings = {
           seen.push(emote.shortcode)
         }
       }
+    },
+
+    // Authorization message displayed to users who are logged in but not
+    // authorized to participate in the server. Must be less than 800
+    // characters long, and supports Markdown.
+    authorizationMessage: {
+      value: 'Unauthorized - contact this server\'s webmaster to authorize your account for interacting with the server.',
+      validationFn: string => {
+        if (typeof string !== 'string') {
+          throw 'not a string'
+        }
+
+        if (string.length > 800) {
+          throw 'greater than 800 characters long'
+        }
+      }
     }
   },
 
@@ -43,7 +59,13 @@ const defaultSettings = {
     // HTTPS enforcement - whether or not to secure anything and everything sent
     // between the server and client (including web sockets). This is not actually
     // implemented yet.
-    https: {value: 'off', possibleValues: ['on', 'off']}
+    https: {value: 'off', possibleValues: ['on', 'off']},
+
+    // Authorization required - whether or not users will need to be authorized
+    // before they can interact with the server (or view its messages). Anyone
+    // can still register, but an admin must mark the user as authorized before
+    // they will be able to send or receive any information to/from the server.
+    requireAuthorization: {value: 'off', possibleValues: ['on', 'off']}
   }
 }
 

@@ -5,14 +5,20 @@ const css = require('sheetify')
 
 // import util
 const util = require('./util')
-Object.assign(window, { util }) // publish util for debugging/experimenting
+const { api } = util
+
+// publish util for debugging/experimenting
+Object.assign(window, { util })
 
 // import root-level components
 const messages = require('./components/messages')
 const messageEditor = require('./components/message-editor')
 const sidebar = require('./components/sidebar')
 const accountSettings = require('./components/account-settings')
-const srvSettings = { emotes: require('./components/srv-settings/emotes') }
+const srvSettings = {
+  emotes: require('./components/srv-settings/emotes'),
+  authorizedUsers: require('./components/srv-settings/authorized-users'),
+}
 
 // create app
 const app = choo()
@@ -23,6 +29,10 @@ app.use((state, emitter) => {
   state.session = null // { id, user }
   state.ws = null // WS
   state.secure = false
+  state.serverRequiresAuthorization = false
+
+  // publish state for debugging/experimenting as well
+  window.state = state
 
   // emit 'navigate' immediately after page load
   emitter.on('DOMContentLoaded', () => {
@@ -37,23 +47,39 @@ app.use((state, emitter) => {
   })
 
   // get websocket connection whenever host changes
-  emitter.prependListener('route', () => {
-    if (state.ws && state.ws.host === state.params.host) return // host has not changed
+  emitter.on('route', async () => {
+    handleHostChange: {
+      if (state.ws && state.ws.host === state.params.host) {
+        break handleHostChange
+      }
 
-    state.secure = false
-    state.ws = new util.WS(state.params.host)
+      state.serverRequiresAuthorization = (
+        await api.get(state, 'should-use-authorization')
+      ).useAuthorization
 
-    state.ws.on('open', () => {
-      state.secure = state.ws.secure
-      emitter.emit('emotes.fetch')
-    })
+      state.secure = (
+        await api.get(state, 'should-use-secure')
+      ).useSecure
 
-    state.ws.on('*', (evt, timestamp, data) => {
-      if (evt === 'ping for data') return
+      state.ws = new util.WS(state.params.host)
 
-      // emit websocket events
-      emitter.emit('ws.' + evt.replace(/ /g, ''), data)
-    })
+      state.ws.on('*', (evt, timestamp, data) => {
+        if (evt === 'ping for data') {
+          state.ws.send('pong data', {
+            sessionID: state.session ? state.session.id : null
+          })
+        } else {
+          // emit websocket events
+          emitter.emit('ws.' + evt.replace(/ /g, ''), data)
+        }
+      })
+
+      // wait for the WebSocket to connect, because a bunch of things
+      // basically don't function without it
+      await new Promise(resolve => state.ws.once('open', resolve))
+    }
+
+    emitter.emit('routeready')
   })
 })
 
@@ -119,6 +145,11 @@ for (const [ name, s ] of Object.entries(srvSettings)) {
   // server settings (admins only) page
   app.route('/servers/:host/settings/:setting', (state, emit) => {
     if (!state.session || state.session.user.permissionLevel !== 'admin' || !srvSettings[state.params.setting]) {
+      return notFound(state, emit)
+    }
+
+    // only show authorized users page on servers which require authorization
+    if (state.params.setting === 'authorizedUsers' && !state.serverRequiresAuthorization) {
       return notFound(state, emit)
     }
 

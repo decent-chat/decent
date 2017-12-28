@@ -132,6 +132,11 @@ const store = (state, emitter) => {
     // and fetch even more as we'll run into edge cases
     if (state.messages.fetching) return
 
+    // if the server requires authorization and we aren't authorized,
+    // we obviously won't get anything back from the server, so don't
+    // try to fetch
+    if (!state.sessionAuthorized) return
+
     state.messages.fetching = true
     emitter.emit('render')
 
@@ -186,11 +191,28 @@ const store = (state, emitter) => {
 
   // when the url changes, load the new channel
   // FIXME: don't assume that the channel actually changed
-  emitter.on('route', () => {
+  emitter.on('routeready', () => {
     emitter.emit('messages.reset')
 
     if (state.params.channel) {
       emitter.emit('messages.fetch')
+    }
+  })
+
+  emitter.on('login', () => {
+    if (state.params.channel) {
+      emitter.emit('messages.fetch')
+    }
+  })
+
+  // after logging out, consider all messages gone, if the server requires
+  // authentication - after all, they wouldn't be visible to somebody just
+  // opening the page (while logged out)
+  emitter.on('logout', () => {
+    if (state.serverRequiresAuthorization && state.params.channel) {
+      state.messages.list = []
+      state.messages.groupsCached = []
+      emitter.emit('render')
     }
   })
 
@@ -259,6 +281,11 @@ const component = (state, emit) => {
   const handleScroll = evt => {
     if (!state.messages.handleScroll) return
 
+    // the scroll event happens when the messages container is cleared,
+    // too, at which point oldestGroupEl won't be set, so we don't do
+    // anything in that case
+    if (!state.messages.oldestGroupEl) return
+
     const y = state.messages.oldestY = state.messages.oldestGroupEl.getBoundingClientRect().y
 
     // if y is positive, we've scolled above the top group - so we need
@@ -276,9 +303,7 @@ const component = (state, emit) => {
   }
 
   if (messages === null) {
-    return html`<div class=${prefix}>
-      Loading...
-    </div>`
+    return html`<div class=${prefix}>Messages not loaded.</div>`
   } else {
     const groups = state.messages.groupsCached
 
