@@ -12,7 +12,7 @@ Decent is a [decentralized](#decentralized), [open source](#open-source), and ev
     <span> | </span>
     <a href='#how'> How </a>
     <span> | </span>
-    <a href='https://github.com/towerofnix/decent/wiki'> API Docs </a>
+    <a href='https://towerofnix.github.io/decent/api.html'> API Docs </a>
   </h3>
 </div>
 
