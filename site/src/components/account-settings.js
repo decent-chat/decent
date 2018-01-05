@@ -10,6 +10,7 @@ const store = (state, emitter) => {
     sessionList: null,
     fetchingSessions: false,
     oldRoute: '/',
+    shouldFetchSessionsAgain: false,
   }
 
   reset()
@@ -18,8 +19,11 @@ const store = (state, emitter) => {
 
   emitter.on('route', () => {
     if (state.accountSettings.oldRoute !== state.route) {
+      // since the route is different, we consider the session list "outdated"
+      // and set a flag to fetch it again the next time the account settings
+      // component is rendered
+      state.accountSettings.shouldFetchSessionsAgain = true
       state.accountSettings.oldRoute = state.route
-      emitter.emit('accountSettings.fetchSessions')
     }
   })
 
@@ -97,7 +101,8 @@ const component = (state, emit) => {
 
   let sessionRows
 
-  if (state.accountSettings.sessionList === null) {
+  if (state.accountSettings.sessionList === null || state.accountSettings.shouldFetchSessionsAgain) {
+    state.accountSettings.shouldFetchSessionsAgain = false
     if (!state.accountSettings.fetchingSessions) {
       emit('accountSettings.fetchSessions')
     }
