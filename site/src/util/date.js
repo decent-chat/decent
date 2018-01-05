@@ -32,7 +32,7 @@ module.exports.timeAgo = function(date) {
 
   if (ago > week) {
     const d = new Date(date)
-    return { needsUpdate: false, string: month(d) + d.getDate() }
+    return { needsUpdate: false, string: `${month(d)} ${d.getDate()}` }
   }
 
   if (ago > day) {
