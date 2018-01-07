@@ -31,6 +31,20 @@ app.use((state, emitter) => {
   state.secure = false
   state.serverRequiresAuthorization = false
 
+  Object.defineProperty(state, 'sessionAuthorized', {
+    get: function() {
+      if (state.serverRequiresAuthorization) {
+        return state._sessionAuthorized
+      } else {
+        return true
+      }
+    },
+
+    set: function(value) {
+      state._sessionAuthorized = value
+    }
+  })
+
   // publish state for debugging/experimenting as well
   window.state = state
 
