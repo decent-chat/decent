@@ -1,16 +1,18 @@
 <h1 align='center'> 🎈 Decent API documentation </h1>
 
-The project's API is publicly available to anybody with access to the actual server on which it is hosted. [HTTP endpoints](#http-endpoints) provide virtually all methods of interaction from the client towards the server, while [WebSocket events](#websocket-events) let the server send messages to the client. Common data received from the server (such as users or messages) always follows [particular formats](#objects). It would be wise to understand and expect [authorization](#authorization) to be required. General information which doesn't particularly fit anywhere else can be found in the appendix-esque section [Etc](#etc), and any questions one might have can be posted to the [issue tracker](https://github.com/towerofnix/decent/issues).
+The project's API is publically available to anybody with access to the actual server on which it is hosted. [HTTP endpoints](#http-endpoints) provide virtually all methods of interaction from the client towards the server, while [WebSocket events](#websocket-events) let the server send messages to the client. Common data received from the server (such as users or messages) always follows [particular formats](#objects). It would be wise to understand and expect [authorization](#authorization) to be required. All endpoints, unless s General information which doesn't particularly fit anywhere else can be found in the appendix-esque section [Etc](#etc), and any questions one might have can be posted to the [issue tracker](https://github.com/towerofnix/decent/issues).
 
 ## HTTP endpoints
 
 These are all the paths (think: URLs, `/api/user/:userID`) which can be fetched with plain old HTTP requests. All POST endpoints expect bodies encoded in **JSON**, and every endpoint will respond with a stringified JSON object.
 
+If [authorization](#authorization) is required by the server, **all endpoints will require [authentication](#authentication) unless otherwise stated**. TL;DR: pass your session ID as the `X-Session-ID` header, as `sessionID` in POST data, or as `sessionID` in the URL query string.
+
 ### GET `/api`
 
 - [Authentication](#authentication): never required.
 
-Returns `{decent: true, message, repository}`, where `message` and `repository` are hard-coded strings for Humans to read. Also returns the status code [`418`](https://en.wikipedia.org/wiki/Hyper_Text_Coffee_Pot_Control_Protocol). Use this endpoint to verify that a given hostname is actually a Decent server
+Returns `{decent: true, message, repository}`, where `message` and `repository` are hard-coded strings for Humans to read. Also returns the status code [`418`](https://en.wikipedia.org/wiki/Hyper_Text_Coffee_Pot_Control_Protocol). Use this endpoint to verify that a given hostname is actually a Decent server.
 
 ### GET `/api/server-settings`
 
@@ -38,9 +40,13 @@ Returns `{success: true, avatarURL}`, where `avatarURL` is a string URL (usually
 
 ### GET `/api/should-use-secure`
 
+- [Authentication](#authentication): never required.
+
 Returns a simple object `{useSecure}`, where `useSecure` is a boolean specifying whether or not to use WebSocket Secure and HTTPS (instead of normal WebSockets and HTTP). Of course, this assumes that HTTPS is properly set up on the host. Whether this returns true or false can be changed via the server command line (see `help` and view information on "set").
 
 ### GET `/api/should-use-authorization`
+
+- [Authentication](#authentication): never required.
 
 Returns an object `{useAuthorization, authorizationMessage}`, where `useAuthorization` is a boolean specifying whether or not to use [authorization](#authorization). If the server does require authorization, `authorizationMessage` (a message [specific to the server](#list-of-server-settings)) is passed.
 
