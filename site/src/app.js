@@ -97,6 +97,8 @@ app.use((state, emitter) => {
       // wait for the WebSocket to connect, because a bunch of things
       // basically don't function without it
       await new Promise(resolve => state.ws.once('open', resolve))
+
+      emitter.emit('emotes.fetch')
     }
 
     emitter.emit('routeready')
