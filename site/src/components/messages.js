@@ -57,7 +57,7 @@ const store = (state, emitter) => {
 
     // true if we've fetched all messages up to the beginning
     // of the channel. used for scrollback
-    fetchedAll: false,
+    scrolledToBeginning: false,
 
     // the oldest message el's y coordinate relative to this component
     // used for scrollback
@@ -123,10 +123,10 @@ const store = (state, emitter) => {
 
   // load more messages from the past - used for scrollback
   // and also initial loading
-  emitter.on('messages.fetch', async () => {
+  emitter.on('messages.fetcholdermessages', async () => {
     // no need to fetch more - we've already fetched every
     // message in this channel!
-    if (state.messages.fetchedAll) return
+    if (state.messages.scrolledToBeginning) return
 
     // if we're currently fetching messages, don't try
     // and fetch even more as we'll run into edge cases
@@ -179,7 +179,7 @@ const store = (state, emitter) => {
       // no past messages means we've scrolled to the beginning, so we set
       // this flag which will stop all this code handling scrollback from
       // happening again (until we move to a different channel)
-      state.messages.fetchedAll = true
+      state.messages.scrolledToBeginning = true
 
       if (!state.messages.list) {
         state.messages.list = []
@@ -195,13 +195,13 @@ const store = (state, emitter) => {
     emitter.emit('messages.reset')
 
     if (state.params.channel) {
-      emitter.emit('messages.fetch')
+      emitter.emit('messages.fetcholdermessages')
     }
   })
 
   emitter.on('login', () => {
     if (state.params.channel) {
-      emitter.emit('messages.fetch')
+      emitter.emit('messages.fetcholdermessages')
     }
   })
 
@@ -291,7 +291,7 @@ const component = (state, emit) => {
     // if y is positive, we've scolled above the top group - so we need
     // to fetch older messages and display 'em
     if (y > 0) {
-      emit('messages.fetch')
+      emit('messages.fetcholdermessages')
     }
   }
 
