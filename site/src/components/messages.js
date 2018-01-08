@@ -200,7 +200,7 @@ const store = (state, emitter) => {
   })
 
   emitter.on('login', () => {
-    if (state.params.channel) {
+    if (state.serverRequiresAuthorization && state.params.channel) {
       emitter.emit('messages.fetcholdermessages')
     }
   })
