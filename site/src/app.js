@@ -81,7 +81,7 @@ app.use((state, emitter) => {
         await api.get(state, 'should-use-secure')
       ).useSecure
 
-      state.ws = new util.WS(state.params.host)
+      state.ws = new util.WS(state.params.host, state.secure)
 
       state.ws.on('*', (evt, timestamp, data) => {
         if (evt === 'ping for data') {
