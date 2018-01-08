@@ -1,5 +1,4 @@
 const Nanobus = require('nanobus')
-const api = require('./api')
 
 // we keep a pool of connected websockets so
 // we don't end up initiating 100 connects to the
@@ -30,36 +29,34 @@ class WS extends Nanobus {
     }
   }
 
-  connectTo(host) {
+  connectTo(host, useSecure) {
     return new Promise((resolve, reject) => {
-      api.get(host, 'should-use-secure').then(({ useSecure }) => {
-        const uri = (useSecure ? 'wss://' : 'ws://') + host
-        this.secure = useSecure
+      const uri = (useSecure ? 'wss://' : 'ws://') + host
+      this.secure = useSecure
 
-        this.socket = new WebSocket(uri)
+      this.socket = new WebSocket(uri)
 
-        // listen for events on the socket
-        this.socket.addEventListener('open', event => {
-          this.emit('open', event)
-          resolve(event)
-        })
+      // listen for events on the socket
+      this.socket.addEventListener('open', event => {
+        this.emit('open', event)
+        resolve(event)
+      })
 
-        this.socket.addEventListener('message', event => {
-          const { evt, data } = JSON.parse(event.data)
+      this.socket.addEventListener('message', event => {
+        const { evt, data } = JSON.parse(event.data)
 
-          // pass socket messages over to this nanobus
-          this.emit(evt, data)
-        })
+        // pass socket messages over to this nanobus
+        this.emit(evt, data)
+      })
 
-        this.socket.addEventListener('close', event => {
-          if (!event.wasClean) {
-            // try to reconnect
-            this.tryReconnect(host)
-          }
+      this.socket.addEventListener('close', event => {
+        if (!event.wasClean) {
+          // try to reconnect
+          this.tryReconnect(host)
+        }
 
-          this.emit('close', event)
-        })
-      }).catch(reject)
+        this.emit('close', event)
+      })
     })
   }
 
