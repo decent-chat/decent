@@ -74,6 +74,13 @@ const store = (state, emitter) => {
       return state.messages.list[0] || null
     },
 
+    // newest message in list
+    get newest() {
+      if (!state.messages.list) return null
+
+      return state.messages.list[state.messages.list.length - 1] || null
+    },
+
     // this component's element
     get el() {
       return document.querySelector('.' + prefix)
@@ -123,7 +130,11 @@ const store = (state, emitter) => {
 
   // load more messages from the past - used for scrollback
   // and also initial loading
-  emitter.on('messages.fetcholdermessages', async () => {
+  emitter.on('messages.fetch', async direction => {
+    if (!['older', 'newer'].includes(direction)) {
+      throw new Error('Expected "older" or "newer" for messages.fetch(direction)')
+    }
+
     // no need to fetch more - we've already fetched every
     // message in this channel!
     if (state.messages.scrolledToBeginning) return
@@ -142,9 +153,10 @@ const store = (state, emitter) => {
 
     // fetch messages before the oldest message we have. if we don't have an oldest message (i.e. list.length == 0)
     // then we will just fetch the latest messages via no `before` parameter
-    const { oldest, oldestGroupEl: oldestGroupElBefore } = state.messages
+    const { oldest, newest, oldestGroupEl: oldestGroupElBefore } = state.messages
     const { messages } = await api.get(state, `channel/${state.params.channel}/latest-messages`, oldest ? {
-      before: oldest.id,
+      before: direction === 'older' ? oldest.id : undefined,
+      after: direction === 'newer' ? newest.id : undefined
     } : {})
 
     if (messages.length) {
@@ -159,15 +171,20 @@ const store = (state, emitter) => {
 
       // note: there is currently no way to run something after the render executes - see choojs/choo#612
       setTimeout(() => {
-        if (oldest) {
-          // keep relative scroll position after scrollback
-          const distance = state.messages.oldestY
+        // adjust scroll position, but only if fetching older messages
+        // (fetching newer messages just means appending messages, which
+        // won't have an effect on scroll position)
+        if (direction === 'older') {
+          if (oldest) {
+            // keep relative scroll position after scrollback
+            const distance = state.messages.oldestY
 
-          oldestGroupElBefore.scrollIntoView({ behaviour: 'instant' })
-          state.messages.el.scrollTop -= distance
-        } else {
-          // scroll to bottom (initial render)
-          state.messages.el.scrollTop = state.messages.el.scrollHeight + 999
+            oldestGroupElBefore.scrollIntoView({ behaviour: 'instant' })
+            state.messages.el.scrollTop -= distance
+          } else {
+            // scroll to bottom (initial render)
+            state.messages.el.scrollTop = state.messages.el.scrollHeight + 999
+          }
         }
 
         state.messages.handleScroll = true
@@ -195,13 +212,13 @@ const store = (state, emitter) => {
     emitter.emit('messages.reset')
 
     if (state.params.channel) {
-      emitter.emit('messages.fetcholdermessages')
+      emitter.emit('messages.fetch', 'older')
     }
   })
 
   emitter.on('login', () => {
     if (state.serverRequiresAuthorization && state.params.channel) {
-      emitter.emit('messages.fetcholdermessages')
+      emitter.emit('messages.fetch', 'older')
     }
   })
 
@@ -291,7 +308,7 @@ const component = (state, emit) => {
     // if y is positive, we've scolled above the top group - so we need
     // to fetch older messages and display 'em
     if (y > 0) {
-      emit('messages.fetcholdermessages')
+      emit('messages.fetch', 'older')
     }
   }
 
