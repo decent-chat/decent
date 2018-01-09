@@ -244,11 +244,11 @@ const store = (state, emitter) => {
     const messagesAPI = `channel/${state.params.channel}/latest-messages`
 
     const { messages: oldMessages } = await api.get(
-      state, `${messagesAPI}?before=${messageID}&limit=${context / 2}`
+      state, messagesAPI, { before: messageID, limit: context / 2 }
     )
 
     const { messages: newMessages } = await api.get(
-      state, `${messagesAPI}?after=${messageID}&limit=${context - oldMessages.length}`
+      state, messagesAPI, { after: messageID, limit: context - oldMessages.length }
     )
 
     const jumpMessage = await api.get(
