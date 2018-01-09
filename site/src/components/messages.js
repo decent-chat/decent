@@ -198,7 +198,7 @@ const store = (state, emitter) => {
             // keep relative scroll position after scrollback
             const distance = state.messages.oldestY
 
-            oldestGroupElBefore.scrollIntoView({ behaviour: 'instant' })
+            oldestGroupElBefore.scrollIntoView({ behavior: 'instant' })
             state.messages.el.scrollTop -= distance
           } else {
             // scroll to bottom (initial render)
