@@ -173,10 +173,11 @@ const store = (state, emitter) => {
       : direction === 'older' ? { before: messageID } : { after: messageID }
     )
 
+    state.messages.fetching = false
+
     if (messages.length) {
       const { oldestGroupEl: oldestGroupElBefore } = state.messages
 
-      state.messages.fetching = false
       state.messages.handleScroll = false
       state.messages.list = [
         ...(direction === 'older' ? messages : []),
@@ -208,7 +209,7 @@ const store = (state, emitter) => {
 
         state.messages.handleScroll = true
 
-        emitter.emit('messagse.fetchcomplete')
+        emitter.emit('messages.fetchcomplete')
       }, 25)
     } else {
       // no past messages means we've scrolled to the beginning, so we set
@@ -261,6 +262,7 @@ const store = (state, emitter) => {
     // chunks of the "timeline")
     state.messages.fetching = false
     state.messages.handleScroll = false
+    state.messages.scrolledToBeginning = false
     state.messages.list = [...oldMessages, jumpMessage, ...newMessages]
     state.messages.groupsCached = groupMessages(state.messages.list)
     emitter.emit('render')
@@ -389,6 +391,11 @@ const component = (state, emit) => {
     // to fetch older messages and display 'em
     if (y > 0) {
       emit('messages.fetch', 'older')
+    }
+
+    // if we are nearly scrolled to the bottom, fetch *newer* messages
+    if (evt.target.scrollTop > evt.target.scrollHeight - evt.target.offsetHeight - 25) {
+      emit('messages.fetch', 'newer')
     }
   }
 
