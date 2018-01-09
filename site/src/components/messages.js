@@ -130,7 +130,7 @@ const store = (state, emitter) => {
 
   // load more messages from the past - used for scrollback
   // and also initial loading
-  emitter.on('messages.fetch', async direction => {
+  emitter.on('messages.fetch', async (direction, messageID = null) => {
     if (!['older', 'newer'].includes(direction)) {
       throw new Error('Expected "older" or "newer" for messages.fetch(direction)')
     }
@@ -148,18 +148,34 @@ const store = (state, emitter) => {
     // try to fetch
     if (!state.sessionAuthorized) return
 
+    const { oldest, newest } = state.messages
+
+    if (messageID === null) {
+      if (direction === 'older') {
+        if (oldest) {
+          messageID = oldest.id
+        }
+      } else {
+        if (newest) {
+          messageID = newest.id
+        }
+      }
+    }
+
     state.messages.fetching = true
     emitter.emit('render')
 
     // fetch messages before the oldest message we have. if we don't have an oldest message (i.e. list.length == 0)
     // then we will just fetch the latest messages via no `before` parameter
-    const { oldest, newest, oldestGroupEl: oldestGroupElBefore } = state.messages
-    const { messages } = await api.get(state, `channel/${state.params.channel}/latest-messages`, oldest ? {
-      before: direction === 'older' ? oldest.id : undefined,
-      after: direction === 'newer' ? newest.id : undefined
-    } : {})
+    const { messages } = await api.get(state, `channel/${state.params.channel}/latest-messages`,
+      messageID === null
+      ? {}
+      : direction === 'older' ? { before: messageID } : { after: messageID }
+    )
 
     if (messages.length) {
+      const { oldestGroupEl: oldestGroupElBefore } = state.messages
+
       state.messages.fetching = false
       state.messages.handleScroll = false
       state.messages.list = [ ...messages, ...(state.messages.list || []) ]
