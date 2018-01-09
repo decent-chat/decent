@@ -178,7 +178,11 @@ const store = (state, emitter) => {
 
       state.messages.fetching = false
       state.messages.handleScroll = false
-      state.messages.list = [ ...messages, ...(state.messages.list || []) ]
+      state.messages.list = [
+        ...(direction === 'older' ? messages : []),
+        ...(state.messages.list || []),
+        ...(direction === 'newer' ? messages : [])
+      ]
       state.messages.groupsCached = groupMessages(state.messages.list)
 
       // render the new messages!
