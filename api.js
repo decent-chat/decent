@@ -1053,6 +1053,12 @@ module.exports = async function attachAPI(app, {wss, db}) {
         }
       }
 
+      const sort = {date: -1}
+
+      if (afterMessage && !beforeMessage) {
+        sort.date = +1
+      }
+
       // We sort the messages by NEWEST date ({date: -1}), so that we're returned
       // the newest messages, but then we reverse the array, so that the actual
       // data returned from the API is sorted by oldest first. (This is so that
@@ -1061,10 +1067,12 @@ module.exports = async function attachAPI(app, {wss, db}) {
       // TODO: If there is more than 50, show that somehow.
       // TODO: Store 50 as a constant somewhere?
       const cursor = db.messages.cfind(query)
-      cursor.sort({date: -1})
+      cursor.sort(sort)
       cursor.limit(limit ? Math.max(1, Math.min(50, parseInt(limit))) : 50)
       const messages = await cursor.exec()
-      messages.reverse()
+      if (sort.date === -1) {
+        messages.reverse()
+      }
 
       response.status(200).end(JSON.stringify({
         success: true,
