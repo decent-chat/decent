@@ -1027,6 +1027,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
     ...middleware.loadVarFromParams('channelID'),
     ...middleware.loadVarFromQuery('before', false),
     ...middleware.loadVarFromQuery('after', false),
+    ...middleware.loadVarFromQuery('limit', false),
     ...middleware.getChannelFromID('channelID', '_'), // Just to make sure the channel exists
     ...middleware.runIfVarExists('before',
       middleware.getMessageFromID('before', 'beforeMessage')
@@ -1036,7 +1037,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
     ),
 
     async (request, response) => {
-      const { channelID, beforeMessage, afterMessage } = request[middleware.vars]
+      const { channelID, beforeMessage, afterMessage, limit } = request[middleware.vars]
 
       const query = {channelID}
 
@@ -1061,7 +1062,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
       // TODO: Store 50 as a constant somewhere?
       const cursor = db.messages.cfind(query)
       cursor.sort({date: -1})
-      cursor.limit(50)
+      cursor.limit(limit ? Math.max(1, Math.min(50, parseInt(limit))) : 50)
       const messages = await cursor.exec()
       messages.reverse()
 
