@@ -187,7 +187,6 @@ const store = (state, emitter) => {
 
       // render the new messages!
       emitter.emit('render')
-      emitter.emit('message.fetchcomplete')
 
       // note: there is currently no way to run something after the render executes - see choojs/choo#612
       setTimeout(() => {
@@ -209,8 +208,7 @@ const store = (state, emitter) => {
 
         state.messages.handleScroll = true
 
-        // highlight code blocks
-        prism.highlightAllUnder(state.messages.el)
+        emitter.emit('messagse.fetchcomplete')
       }, 25)
     } else {
       // no past messages means we've scrolled to the beginning, so we set
@@ -224,6 +222,68 @@ const store = (state, emitter) => {
         emitter.emit('render')
       }
     }
+  })
+
+  emitter.on('messages.jumptomessage', async messageID => {
+    if (state.messages.fetching) return
+    if (!state.sessionAuthorized) return
+
+    state.messages.fetching = true
+
+    // hard-coded number of messages to fetch as context
+    // if context = 50, at most 25 messages before the jumped message will be gotten,
+    // and any remaining (50 - number of older messages) will be the number of messages
+    // after the jumped messages to be gotten
+    // (this is so that 50 messages will always be loaded in total, even if the message
+    // that is jumped back to is very close to the start of the channel, so there are
+    // less than 25 messages before that message)
+    // (51 messages will actually be fetched; ideally, 25 before and 25 after the
+    // message that is jumped to)
+    const context = 50
+
+    const messagesAPI = `channel/${state.params.channel}/latest-messages`
+
+    const { messages: oldMessages } = await api.get(
+      state, `${messagesAPI}?before=${messageID}&limit=${context / 2}`
+    )
+
+    const { messages: newMessages } = await api.get(
+      state, `${messagesAPI}?after=${messageID}&limit=${context - oldMessages.length}`
+    )
+
+    const jumpMessage = await api.get(
+      state, `message/${messageID}`
+    )
+
+    // overwrite the existing messages list - when jumping to a message, it's
+    // assumed that the message is old enough that any current scrollback will
+    // be irrelevant (also, it would be a pain to try to line up the two loaded
+    // chunks of the "timeline")
+    state.messages.fetching = false
+    state.messages.handleScroll = false
+    state.messages.list = [...oldMessages, jumpMessage, ...newMessages]
+    state.messages.groupsCached = groupMessages(state.messages.list)
+    emitter.emit('render')
+
+    setTimeout(() => {
+      const jumpMessageEl = document.getElementById('msg-' + messageID)
+      jumpMessageEl.scrollIntoView({behavior: 'instant'})
+      state.messages.handleScroll = true
+
+      jumpMessageEl.classList.add('jumped-to')
+      jumpMessageEl.addEventListener('animationend', evt => {
+        if (evt.animationName === 'jumped-message') {
+          jumpMessageEl.classList.remove('jumped-to')
+        }
+      })
+
+      emitter.emit('messages.fetchcomplete')
+    }, 155)
+  })
+
+  emitter.on('messages.fetchcomplete', () => {
+    // highlight code blocks
+    prism.highlightAllUnder(state.messages.el)
   })
 
   // when the url changes, load the new channel
