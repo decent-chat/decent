@@ -1027,6 +1027,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
     ...middleware.loadVarFromParams('channelID'),
     ...middleware.loadVarFromQuery('before', false),
     ...middleware.loadVarFromQuery('after', false),
+    ...middleware.loadVarFromQuery('limit', false),
     ...middleware.getChannelFromID('channelID', '_'), // Just to make sure the channel exists
     ...middleware.runIfVarExists('before',
       middleware.getMessageFromID('before', 'beforeMessage')
@@ -1036,7 +1037,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
     ),
 
     async (request, response) => {
-      const { channelID, beforeMessage, afterMessage } = request[middleware.vars]
+      const { channelID, beforeMessage, afterMessage, limit } = request[middleware.vars]
 
       const query = {channelID}
 
@@ -1052,6 +1053,12 @@ module.exports = async function attachAPI(app, {wss, db}) {
         }
       }
 
+      const sort = {date: -1}
+
+      if (afterMessage && !beforeMessage) {
+        sort.date = +1
+      }
+
       // We sort the messages by NEWEST date ({date: -1}), so that we're returned
       // the newest messages, but then we reverse the array, so that the actual
       // data returned from the API is sorted by oldest first. (This is so that
@@ -1060,10 +1067,12 @@ module.exports = async function attachAPI(app, {wss, db}) {
       // TODO: If there is more than 50, show that somehow.
       // TODO: Store 50 as a constant somewhere?
       const cursor = db.messages.cfind(query)
-      cursor.sort({date: -1})
-      cursor.limit(50)
+      cursor.sort(sort)
+      cursor.limit(limit ? Math.max(1, Math.min(50, parseInt(limit))) : 50)
       const messages = await cursor.exec()
-      messages.reverse()
+      if (sort.date === -1) {
+        messages.reverse()
+      }
 
       response.status(200).end(JSON.stringify({
         success: true,

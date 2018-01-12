@@ -125,8 +125,9 @@ Returns `{success: true, channels}`, where channels is an array of [(brief) chan
   * `channelID`: (via URL path) the channel ID to fetch messages from.
   * `before`: (via query; optional) the ID of the message right after the range of messages you want.
   * `after`: (via query; optional) the ID of the message right before the range of messages you want.
+  * `limit`: (via query; optional) the maximum number of messages to fetch (defaults to 50). The actual used limit will be at least 1 and not greater than 50.
 
-Returns `{success: true, messages}`, where messages is an array of the 50 most recent messages sent to the given channel. If `before` is specified, it'll only fetch messages that were sent before that one; and it'll only fetch messages sent after `after`.
+Returns `{success: true, messages}`, where messages is an array of the most recent messages sent to the given channel. If `before` is specified, it'll only fetch messages that were sent before that one; and it'll only fetch messages sent after `after`. If `limit` is specified, it'll only fetch up to that many messages (or up to 50, if not specified).
 
 ### POST `/api/register`
 

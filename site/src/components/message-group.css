@@ -42,6 +42,10 @@
         max-width: 100%;
       }
     }
+
+    &.jumped-to {
+      animation: jumped-message 4s;
+    }
   }
 
   & a:any-link {
@@ -79,5 +83,21 @@
 
     margin: 0 .05em 0 .1em;
     vertical-align: -.4em;
+  }
+}
+
+/* note: this animation name is used in the JavaScript code,
+   so take care if renaming it */
+@keyframes jumped-message {
+  from {
+    background-color: transparent;
+  }
+
+  10% {
+    background-color: rgba(50, 180, 255, 80);
+  }
+
+  to {
+    background-color: transparent;
   }
 }
