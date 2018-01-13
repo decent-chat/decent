@@ -1,6 +1,14 @@
 <h1 align='center'> 🎈 Decent API documentation </h1>
 
-The project's API is publically available to anybody with access to the actual server on which it is hosted. [HTTP endpoints](#http-endpoints) provide virtually all methods of interaction from the client towards the server, while [WebSocket events](#websocket-events) let the server send messages to the client. Common data received from the server (such as users or messages) always follows [particular formats](#objects). It would be wise to understand and expect [authorization](#authorization) to be required. All endpoints, unless General information which doesn't particularly fit anywhere else can be found in the appendix-esque section [Etc](#etc), and any questions one might have can be posted to the [issue tracker](https://github.com/towerofnix/decent/issues).
+Communicating with the API
+* [HTTP endpoints](#http-endpoints) provide virtually all methods of interaction from the client towards the server
+* [WebSocket events](#websocket-events) let the server send messages to the client.
+
+Common data received from the server (such as users or messages) always follows [particular formats](#objects).
+
+It would be wise to understand and expect [authorization](#authorization) to be required. **All endpoints, unless specified, follow the server-wide authentication rule.**
+
+General information which doesn't particularly fit anywhere else can be found in the appendix-esque section [Etc](#etc), and any questions one might have can be posted to the [issue tracker](https://github.com/decent-chat/decent/issues).
 
 ## HTTP endpoints
 
