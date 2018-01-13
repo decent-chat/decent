@@ -206,33 +206,33 @@ These are the events which are used to send (and receive) data specific to indiv
 
 This project uses a WebSocket system which is similar to [socket.io](https://socket.io/) (though more simple). Messages sent to and from clients are JSON strings following the format `{evt, data}`, where `evt` is a name representing the meaning of the event, and `data` is an optional property specifying any additional data related to the event.
 
-### To client: `ping for data`
+### To client: `pingdata`
 
 Sent periodically (typically ever 10 seconds) by the server, as well as immediately upon the client socket connecting. Clients should respond with a `pong data` event, as described below.
 
-### From client: `pong data`
+### From client: `pongdata`
 
 Should be sent from clients in response to `ping for data`. Notifies the server of any information related to the particular socket. Passed data should include:
 
 * `sessionID`, if the client is "logged in" or keeping track of a session ID. This is used for keeping track of which users are online.
 
-### From server: `received chat message`
+### From server: `message/new`
 
 Sent to all clients whenever a message is [sent](#post-apisend-message) to any channel in the server. Passed data is in the format `{message}`, where `message` is a [message object](#message-object) representing the new message.
 
-### From server: `edited chat message`
+### From server: `message/edit`
 
 Sent to all clients when any message is [edited](#post-apiedit-message). Passed data is in the format `{message}`, where `message` is a [message object](#message-object) representing the edited message.
 
-### From server: `created new channel`
+### From server: `channel/new`
 
 Sent to all clients when a channel is [created](#post-apicreate-channel). Passed data is in the format `{channel}`, where `channel` is a [(detailed) channel object](#channel-object) representing the new channel.
 
-### From server: `renamed channel`
+### From server: `channel/rename`
 
 Sent to all clients when a channel is [renamed](#post-apirename-channel). Passed data is in the format `{channelID, newName}`.
 
-### From server: `deleted channel`
+### From server: `channel/delete`
 
 Sent to all clients when a channel is [deleted](#post-apidelete-channel). Passed data is in the format `{channelID}`.
 
