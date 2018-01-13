@@ -1359,6 +1359,8 @@ module.exports = async function attachAPI(app, {wss, db}) {
   ])
 
   app.post('/api/delete-sessions', [
+    ...middleware.loadVarFromBody('sessionIDs'),
+
     // No verification ("are you the owner of this session ID" etc), because
     // if you know the session ID, you obviously have power over it!
 

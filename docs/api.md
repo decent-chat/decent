@@ -1,6 +1,6 @@
 <h1 align='center'> 🎈 Decent API documentation </h1>
 
-The project's API is publically available to anybody with access to the actual server on which it is hosted. [HTTP endpoints](#http-endpoints) provide virtually all methods of interaction from the client towards the server, while [WebSocket events](#websocket-events) let the server send messages to the client. Common data received from the server (such as users or messages) always follows [particular formats](#objects). It would be wise to understand and expect [authorization](#authorization) to be required. All endpoints, unless s General information which doesn't particularly fit anywhere else can be found in the appendix-esque section [Etc](#etc), and any questions one might have can be posted to the [issue tracker](https://github.com/towerofnix/decent/issues).
+The project's API is publically available to anybody with access to the actual server on which it is hosted. [HTTP endpoints](#http-endpoints) provide virtually all methods of interaction from the client towards the server, while [WebSocket events](#websocket-events) let the server send messages to the client. Common data received from the server (such as users or messages) always follows [particular formats](#objects). It would be wise to understand and expect [authorization](#authorization) to be required. All endpoints, unless General information which doesn't particularly fit anywhere else can be found in the appendix-esque section [Etc](#etc), and any questions one might have can be posted to the [issue tracker](https://github.com/towerofnix/decent/issues).
 
 ## HTTP endpoints
 
@@ -340,7 +340,7 @@ When a request is made to the API, the server searches for a session ID given in
 * `?sessionID` in query string
 * `X-Session-ID` header
 
-If the server requires [authorization](#authorization) and the session ID could not be found or pointed to an unauthenticated user, the request is immediately terminated with a 403 and error message. We recommend simply sending the `X-Session-ID` header with _all_ requests, even on non-authorization-requiring servers.
+If the server requires [authorization](#authorization) and the session ID could not be found or pointed to an unauthenticated user, the request is immediately terminated with a 403 and error message. It's likely simpler to just send the `X-Session-ID` header with _all_ requests, even on non-authorization-requiring servers.
 
 ### Dates
 
