@@ -212,7 +212,6 @@ const store = (state, emitter) => {
 
   // event: channel added
   emitter.on('ws.channel/new', ({ channel }) => {
-    console.log('well, hey', channel)
     state.sidebar.channels.push(channel)
     emitter.emit('render')
   })
