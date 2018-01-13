@@ -1447,7 +1447,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       const { evt, data } = messageObj
 
-      if (evt === 'pong data') {
+      if (evt === 'pongdata') {
         // Not the built-in pong; this event is used for gathering
         // socket-specific data.
         if (!data) {
@@ -1502,7 +1502,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
     // data (like the session ID) for the socket as soon as possible. Without this
     // we wait for the next ping, which is an unwanted delay (e.g. it would make
     // detecting the user being online be delayed by up to 10 seconds).
-    socket.send(JSON.stringify({evt: 'ping for data'}))
+    socket.send(JSON.stringify({evt: 'pingdata'}))
   })
 
   setInterval(() => {
@@ -1523,7 +1523,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
         // The built-in socket ping method is great for obliterating dead sockets,
         // but we also want to detect data, so we need to send out a normal 'ping'
         // event at the same time, which the client can detect and respond to.
-        socket.send(JSON.stringify({evt: 'ping for data'}))
+        socket.send(JSON.stringify({evt: 'pingdata'}))
       }
     }
   }, 10 * 1000) // Every 10s.
