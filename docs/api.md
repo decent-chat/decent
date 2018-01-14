@@ -49,7 +49,7 @@ Returns an object `{useAuthorization, authorizationMessage}`, where `useAuthoriz
   * `channelID`: (via data; string) the ID of the channel to which the message will be sent. The channel has to exist.
   * `sessionID`: (via data; string) the user's session ID. This must be a valid session ID.
 
-Sends a message. Returns an object `{success: true, messageID}` if successful, where `messageID` is the unique ID of the new message, and emits a [`received chat message`](#from-server-received-chat-message) WebSocket event.
+Sends a message. Returns an object `{success: true, messageID}` if successful, where `messageID` is the unique ID of the new message, and emits a [`message/new`](#from-server-messagenew) WebSocket event.
 
 ### GET `/api/message/:messageID`
 
@@ -65,7 +65,7 @@ Returns a [message object](#message-object) corresponding to the given message I
   * `messageID`: (via data; string) the message ID. The message has to exist.
   * `sessionID`: (via data; string) the user's session ID. **The user must own the message.**
 
-Overwrites the text content of an existing message and attaches an "edited" date to it. Returns `{success: true}` if successful, and emits an [`edited chat message`](#from-server-edited-chat-message) WebSocket event.
+Overwrites the text content of an existing message and attaches an "edited" date to it. Returns `{success: true}` if successful, and emits a [`message/edit`](#from-server-messageedit) WebSocket event.
 
 ### POST `/api/pin-message`
 
@@ -85,7 +85,7 @@ This endpoint is unstable. See discussion in [GitHub issue #21](https://github.c
   * `name`: (via data; string) the name of the channel. This must be a [valid name](#valid-names), and there must not already be a channel with the same name.
   * `sessionID`: (via data; string) the user's session ID. **The user must be an admin.**
 
-Creates a channel (which will immediately be able to receive messages). Returns `{success: true, channelID}` if successful, where `channelID` is the unique ID of the channel, and emits a [`created new channel`](#from-server-created-new-channel) WebSocket event.
+Creates a channel (which will immediately be able to receive messages). Returns `{success: true, channelID}` if successful, where `channelID` is the unique ID of the channel, and emits a [`channel/new`](#from-server-channelnew) WebSocket event.
 
 ### GET `/api/channel/:channelID`
 
@@ -102,7 +102,7 @@ Returns `{success: true, channel}` if successful, where `channel` is a [(detaile
   * `channelID`: (via data; string) the unique ID of the channel to be renamed. The channel has to exist.
   * `sessionID`: (via data; string) the session ID of the user. **The user must be an admin.**
 
-Changes the name of a channel. Returns `{success: true}` if successful, and emits a [`renamed channel`](#from-server-renamed-channel) WebSocket event.
+Changes the name of a channel. Returns `{success: true}` if successful, and emits a [`channel/rename`](#from-server-channelrename) WebSocket event.
 
 ### POST `/api/delete-channel`
 
@@ -110,7 +110,7 @@ Changes the name of a channel. Returns `{success: true}` if successful, and emit
   * `channelID`: (via data; string) the unique ID of the channel to be deleted. The channel has to exist.
   * `sessionID`: (via data; string) the session ID of the user. **The user must be an admin.**
 
-Deletes a channel and any messages in it. Returns `{success: true}` if successful, and emits a [`deleted channel`](#from-server-deleted-channel) WebSocket event.
+Deletes a channel and any messages in it. Returns `{success: true}` if successful, and emits a [`channel/delete`](#from-server-channeldelete) WebSocket event.
 
 ### GET `/api/channel-list`
 
@@ -208,11 +208,11 @@ This project uses a WebSocket system which is similar to [socket.io](https://soc
 
 ### To client: `pingdata`
 
-Sent periodically (typically ever 10 seconds) by the server, as well as immediately upon the client socket connecting. Clients should respond with a `pong data` event, as described below.
+Sent periodically (typically ever 10 seconds) by the server, as well as immediately upon the client socket connecting. Clients should respond with a `pongdata` event, as described below.
 
 ### From client: `pongdata`
 
-Should be sent from clients in response to `ping for data`. Notifies the server of any information related to the particular socket. Passed data should include:
+Should be sent from clients in response to `pingdata`. Notifies the server of any information related to the particular socket. Passed data should include:
 
 * `sessionID`, if the client is "logged in" or keeping track of a session ID. This is used for keeping track of which users are online.
 
