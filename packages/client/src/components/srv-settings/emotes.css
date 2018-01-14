@@ -1,18 +1,18 @@
 :host {
-  td:nth-child(2) {
+  & td:nth-child(2) {
     min-width: 100px;
   }
 
-  button {
+  & button {
     margin-left: 0;
   }
 
-  tr {
+  & tr {
     height: 50px;
     text-align: center;
   }
 
-  button.add {
+  & button.add {
     margin-top: 20px;
   }
 }

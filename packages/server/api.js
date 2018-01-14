@@ -28,7 +28,7 @@ const {
   serverSettingsID, serverPropertiesID, setSetting,
 } = require('./settings')
 
-module.exports = async function attachAPI(app, {wss, db}) {
+module.exports = async function attachAPI(app, {wss, db, dir}) {
   // Used to keep track of connected clients and related data, such as
   // session IDs.
   const connectedSocketsMap = new Map()
@@ -468,10 +468,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
   app.use(bodyParser.json())
 
-  app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/site/index.html')
-  })
-
   app.use(['/api/*', '/api'], async (request, response, next) => {
     response.header('Content-Type', 'application/json')
     response.header('Access-Control-Allow-Origin', '*')
@@ -586,7 +582,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
     storage: multer.diskStorage({
       destination: (req, file, cb) => {
-        const path = '/uploads/' + shortid()
+        const path = dbDir + '/uploads/' + shortid()
         const dir = __dirname + path
 
         req[middleware.vars].path = path

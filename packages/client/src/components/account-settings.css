@@ -5,11 +5,11 @@
   padding-right: 80px;
   box-shadow: 0 0 16px -4px #00000044;
 
-  h1 {
+  & h1 {
     margin-left: 180px;
   }
 
-  .styled-input {
+  & .styled-input {
     display: flex;
     flex-direction: row;
 
@@ -48,7 +48,7 @@
       margin-left: 180px;
       color: var(--gray-300);
 
-      a {
+      & a {
         color: var(--gray-100);
       }
     }
@@ -76,13 +76,13 @@
     }
   }
 
-  h2 {
+  & h2 {
     clear: right;
     border-top: 1px solid var(--gray-300);
     padding-top: 4px;
   }
 
-  .session-id {
+  & .session-id {
     color: var(--gray-300);
     font-family: monospace;
     white-space: nowrap;

@@ -1,4 +1,4 @@
-<h1 align='center'> 🎈 Decent API documentation </h1>
+# API Specification/Documentation
 
 The project's API is publicly available to anybody with access to the actual server on which it is hosted. [HTTP endpoints](#http-endpoints) provide virtually all methods of interaction from the client towards the server, while [WebSocket events](#websocket-events) let the server send messages to the client. Common data received from the server (such as users or messages) always follows [particular formats](#objects). It would be wise to understand and expect [authorization](#authorization) to be required. General information which doesn't particularly fit anywhere else can be found in the appendix-esque section [Etc](#etc), and any questions one might have can be posted to the [issue tracker](https://github.com/towerofnix/decent/issues).
 
@@ -184,7 +184,7 @@ Attempts to log in as a user, creating a new session. Returns `{success: true, s
 - Parameters:
   * `sessionID`: (via URL path) the session ID to fetch. The session must exist.
 
-Returns `{success: true, user}` if successful, where `user` is a [user object](#user-object) of the user which the session represents. This endpoint is useful when grabbing information about the logged in user (e.g. at the startup of a client program, which may display the logged in user's username in a status bar). Does not require [authorization](#authorization).
+Returns `{success: true, session: {id, dateCreated, user}}` if successful, where `user` is a [user object](#user-object) of the user which the session represents. This endpoint is useful when grabbing information about the logged in user (e.g. at the startup of a client program, which may display the logged in user's username in a status bar). Does not require [authorization](#authorization).
 
 ### POST `/api/delete-sessions`
 

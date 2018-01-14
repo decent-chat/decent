@@ -22,7 +22,7 @@ body {
   --red: #f43259;
 }
 
-:host {
+#app {
   display: flex;
   flex-direction: row;
   align-items: stretch;

@@ -5,5 +5,11 @@ uploads/*
 !uploads/.gitkeep
 
 node_modules
-site/decent.js
-site/decent.css
+
+site/dist/*.js
+site/dist/*.css
+
+yarn.lock
+package-lock.json
+
+*.log
