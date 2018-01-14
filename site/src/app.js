@@ -83,20 +83,23 @@ app.use((state, emitter) => {
 
       state.ws = new util.WS(state.params.host, state.secure)
 
+      // wait for the WebSocket to connect, because a bunch of things
+      // basically don't function without it
+      await new Promise(resolve => state.ws.once('open', resolve))
+
       state.ws.on('*', (evt, timestamp, data) => {
-        if (evt === 'ping for data') {
-          state.ws.send('pong data', {
+        if (evt === 'pingdata') {
+          state.ws.send('pongdata', {
             sessionID: state.session ? state.session.id : null
           })
         } else {
           // emit websocket events
-          emitter.emit('ws.' + evt.replace(/ /g, ''), data)
+          emitter.emit('ws.' + evt, data)
+
+          // for debugging:
+          // console.log(`ws[${evt}]:`, data)
         }
       })
-
-      // wait for the WebSocket to connect, because a bunch of things
-      // basically don't function without it
-      await new Promise(resolve => state.ws.once('open', resolve))
 
       emitter.emit('emotes.fetch')
     }

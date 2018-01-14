@@ -712,7 +712,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
         reactions: {}
       })
 
-      sendToAllSockets('received chat message', {
+      sendToAllSockets('message/new', {
         message: await serialize.message(message)
       })
 
@@ -847,7 +847,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
         returnUpdatedDocs: true
       })
 
-      sendToAllSockets('edited chat message', {message: await serialize.message(newMessage)})
+      sendToAllSockets('message/edit', {message: await serialize.message(newMessage)})
 
       response.status(200).end(JSON.stringify({success: true}))
     }
@@ -875,7 +875,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
       await db.messages.remove({_id: message._id})
 
       // We don't want to send back the message itself, obviously!
-      sendToAllSockets('deleted chat message', {messageID: message._id})
+      sendToAllSockets('message/delete', {messageID: message._id})
 
       response.status(200).end(JSON.stringify({success: true}))
     }
@@ -915,7 +915,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
         pinnedMessageIDs: []
       })
 
-      sendToAllSockets('created new channel', {
+      sendToAllSockets('channel/new', {
         channel: await serialize.channelDetail(channel),
       })
 
@@ -948,7 +948,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       await db.channels.update({_id: channelID}, {$set: {name}})
 
-      sendToAllSockets('renamed channel', {
+      sendToAllSockets('channel/rename', {
         channelID, newName: name
       })
 
@@ -975,7 +975,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
       ])
 
       // Only send the channel ID, since that's all that's needed.
-      sendToAllSockets('deleted channel', {
+      sendToAllSockets('channel/delete', {
         channelID
       })
 
@@ -1447,7 +1447,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
       const { evt, data } = messageObj
 
-      if (evt === 'pong data') {
+      if (evt === 'pongdata') {
         // Not the built-in pong; this event is used for gathering
         // socket-specific data.
         if (!data) {
@@ -1502,7 +1502,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
     // data (like the session ID) for the socket as soon as possible. Without this
     // we wait for the next ping, which is an unwanted delay (e.g. it would make
     // detecting the user being online be delayed by up to 10 seconds).
-    socket.send(JSON.stringify({evt: 'ping for data'}))
+    socket.send(JSON.stringify({evt: 'pingdata'}))
   })
 
   setInterval(() => {
@@ -1523,7 +1523,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
         // The built-in socket ping method is great for obliterating dead sockets,
         // but we also want to detect data, so we need to send out a normal 'ping'
         // event at the same time, which the client can detect and respond to.
-        socket.send(JSON.stringify({evt: 'ping for data'}))
+        socket.send(JSON.stringify({evt: 'pingdata'}))
       }
     }
   }, 10 * 1000) // Every 10s.

@@ -326,7 +326,7 @@ const store = (state, emitter) => {
   })
 
   // event: new message
-  emitter.on('ws.receivedchatmessage', ({ message }) => {
+  emitter.on('ws.message/new', ({ message }) => {
     if (message.channelID !== state.params.channel) return
 
     const groups = state.messages.groupsCached
@@ -364,7 +364,7 @@ const store = (state, emitter) => {
   })
 
   // event: edit message
-  emitter.on('ws.editedchatmessage', ({ message: msg }) => {
+  emitter.on('ws.message/edit', ({ message: msg }) => {
     if (msg.channelID !== state.params.channel) return
 
     // optimization :tada:
