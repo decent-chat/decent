@@ -13,7 +13,7 @@ Decent is the decentralized chat that's absolutely okay.
 * **Decentralized**: anyone can host a Decent server, and clients can connect to many at once, regardless of origin
 * **Feature-rich**: ∞ animated emoticons, for example
 * **Won't harvest your data**: unlike [some](https://discordapp.com/)
-* **[Hipster](https://decent-chat.github.io/decent/why.html)**
+* **Hipster**: more on that [here](https://decent-chat.github.io/decent/why.html)
 * **Open source**: 🎈
 
 ---
@@ -34,24 +34,22 @@ If you're someone who wants to **run your own Decent server**, read the followin
 
 You will need:
 
-* Node.js. Ideally a very, very recent version. You can use nvm to make installing it a lot easier.
+* A recent version of Node.js - [n](https://npm.im/n) helps here
+* A recent version of [your favourite web browser](https://www.mozilla.org/en-US/firefox/new/)
 
-* A web browser. Probably a very, very, very cutting-edge browser. We're testing Decent's reference client in Firefox Nightly, but you probably don't need the nightly version. Just run the latest release of your favorite browser.
+```sh
+> npm install -g @decent/cli
 
+> mkdir my-decent-database
+> decent 8000 my-decent-database
+
+# visit http://localhost:8000
 ```
-$ npm install -g @decent/cli
-$ mkdir db
-$ decent 80 db
 
-# now visit http://localhost:80
-```
+You'll probably need to make a channel, but to do that, you'll need to make an admin user. Start by registering a user through your web browser (just click on the register button); once you've done that, type `make-admin (the username you picked)` into the CLI:
 
-You'll probably need to make a channel, but to do that, you'll need to make an admin user. Start by registering a user through your web browser (just click on the register button); once you've done that, type `make-admin (the username you picked)` into the `node` process:
-
-```
-$ decent
-decent - listening on port 3000
-> make-admin avjoe
+```sh
+decent> make-admin avjoe
 Made avjoe an admin.
 ```
 
@@ -59,12 +57,12 @@ Then you can create a channel by logging in on the browser (you know, click the 
 
 ### Important config options
 If you're planning to serve over HTTPS, execute:
-```
+```sh
 decent> set https on
 ```
 
 If you're want to make your server private/invite-only, execute:
-```
+```sh
 decent> set requireAuthorization on
 ```
 
