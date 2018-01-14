@@ -22,13 +22,13 @@ const httpServer = http.createServer(app)
 // should be able to communicate cross-domain.
 const wss = new WebSocket.Server({server: httpServer})
 
-async function main(port = 3000, dir = __dirname) {
+async function main(port = 3000, dbDir = __dirname) {
   const db = {
-    messages: new Datastore({filename: dir + '/messages'}),
-    users:    new Datastore({filename: dir + '/users'}),
-    sessions: new Datastore({filename: dir + '/sessions'}),
-    channels: new Datastore({filename: dir + '/channels'}),
-    settings: new Datastore({filename: dir + '/settings'}),
+    messages: new Datastore({filename: dbDir + '/messages'}),
+    users:    new Datastore({filename: dbDir + '/users'}),
+    sessions: new Datastore({filename: dbDir + '/sessions'}),
+    channels: new Datastore({filename: dbDir + '/channels'}),
+    settings: new Datastore({filename: dbDir + '/settings'}),
   }
 
   await Promise.all(Object.values(db).map(d => d.loadDatabase()))
@@ -40,9 +40,9 @@ async function main(port = 3000, dir = __dirname) {
   })
 
   app.enable('trust proxy')
-  app.use('/uploads', express.static(dir + '/uploads'))
+  app.use('/uploads', express.static(dbDir + '/uploads'))
   await settings.setupDefaultSettings(db.settings)
-  await attachAPI(app, {wss, db, dbDir: dir})
+  await attachAPI(app, {wss, db, dbDir})
 
   await new Promise(resolve => httpServer.listen(port, resolve))
 

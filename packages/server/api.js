@@ -28,7 +28,7 @@ const {
   serverSettingsID, serverPropertiesID, setSetting,
 } = require('./settings')
 
-module.exports = async function attachAPI(app, {wss, db, dir}) {
+module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   // Used to keep track of connected clients and related data, such as
   // session IDs.
   const connectedSocketsMap = new Map()

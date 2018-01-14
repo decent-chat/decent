@@ -5,7 +5,7 @@ Standard web client for [Decent](https://github.com/decent-chat/decent).
 
 This package exports its `__dirname`. You can then use that to host `index.html`, `dist/`, `img/`, etc.
 
-If, however, you just want to self-host a client to access Decent servers with:
+If, however, you just want to self-host a client to access Decent servers with, see below.
 
 ### install
 ```sh
