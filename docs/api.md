@@ -238,7 +238,7 @@ Sent to all clients when a channel is [deleted](#post-apidelete-channel). Passed
 
 ### From server: `user/online`
 
-Sent to all clients when a user becomes online. This is whenever a socket [tells the server](#fromclient-pongdata) that its session ID is that of a user who was not already online before. Passed data is in the format `{userID}`.
+Sent to all clients when a user becomes online. This is whenever a socket [tells the server](#from-client-pongdata) that its session ID is that of a user who was not already online before. Passed data is in the format `{userID}`.
 
 ### From server: `user/offline`
 
@@ -270,7 +270,7 @@ A member of the server. (Every server has its own unique database of members; a 
 * `id`: (string) the ID of the user. This is a unique random string, and will never change; while a user's username may (technically) be changed, their ID will always be the same and refer only to them.
 * `username`: (string) the username of the user. This should be used for display, but not as a unique identifier for a user (use `id` for that).
 * `permissionLevel`: (string) the permission level of the user; either `member` or `admin`.
-* `online`: (boolean) whether or not the user is currently online (if there are any live sockets which are logged in to the user). (The [`user/online`](#fromserver-useronline) and [`user/offline`](#fromserver-useroffline) WebSocket events can be used to detect when users come online or offline; [`user-list`](#get-apiuserlist) can be used to quickly get the online status of every user.)
+* `online`: (boolean) whether or not the user is currently online (if there are any live sockets which are logged in to the user). (The [`user/online`](#from-server-useronline) and [`user/offline`](#from-server-useroffline) WebSocket events can be used to detect when users come online or offline; [`user-list`](#get-apiuserlist) can be used to quickly get the online status of every user.)
 * `avatarURL`: (string) image URL to be displayed as the user's profile picture.
 
 If the endpoint took a session ID (e.g. /api/session/:sessionID), the user object of **the current user** will also contain:
