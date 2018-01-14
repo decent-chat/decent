@@ -60,20 +60,55 @@ module.exports = async function attachAPI(app, {wss, db}) {
   const emailToAvatarURL = memoize(email =>
     `https://seccdn.libravatar.org/avatar/${email ? md5(email) : ''}?d=retro`)
 
-  const getUserBySessionID = async function(sessionID) {
+  const getUserIDBySessionID = async function(sessionID) {
+    if (!sessionID) {
+      return null
+    }
+
     const session = await db.sessions.findOne({_id: sessionID})
 
     if (!session) {
       return null
     }
 
-    const user = await db.users.findOne({_id: session.userID})
+    return session.userID
+  }
+
+  const getUserBySessionID = async function(sessionID) {
+    const userID = await getUserIDBySessionID(sessionID)
+
+    if (!userID) {
+      return null
+    }
+
+    const user = await db.users.findOne({_id: userID})
 
     if (!user) {
       return null
     }
 
     return user
+  }
+
+  const announceUserOffline = async function(userID) {
+    // Announces that a user has gone offline.
+
+    // We only want to announce that the user is offline if there are no
+    // sockets that say the user is online.
+    if (userID && await isUserOnline(userID) === false) {
+      // console.log('\x1b[36mOffline:', userID, '\x1b[0m')
+      sendToAllSockets('user/offline', {userID})
+    }
+  }
+
+  const announceUserOnline = async function(userID) {
+    // Same deal as announcing offline, but for going online instead.
+
+    // Only announce they're online if they weren't already online!
+    if (userID && await isUserOnline(userID) === false) {
+      // console.log('\x1b[36mOnline:', userID, '\x1b[0m')
+      sendToAllSockets('user/online', {userID})
+    }
   }
 
   const shouldUseAuthorization = async function() {
@@ -86,11 +121,8 @@ module.exports = async function attachAPI(app, {wss, db}) {
     // Simple logic: a user is online iff there is at least one socket whose
     // session belongs to that user.
 
-    const sessions = await db.sessions.find({userID})
-
     return Array.from(connectedSocketsMap.values())
-      .some(socketData => sessions
-        .some(session => session._id === socketData.sessionID))
+      .some(socketData => socketData.userID === userID)
   }
 
   const isUserAuthorized = async function(userID) {
@@ -1465,11 +1497,28 @@ module.exports = async function attachAPI(app, {wss, db}) {
         if (sessionID !== socketData.sessionID) {
           socketData.sessionID = sessionID
 
+          // Announce the user is offline. We need to set the socket's
+          // userID to null so that isUserOnline does not see the socket
+          // and decide that the user must still be online.
+          const oldUserID = socketData.userID
+          socketData.userID = null
+          await announceUserOffline(oldUserID)
+
+          // Announce the user of the *new* sessionID as being online. We have
+          // to set userID AFTER announcing the user is online, or else
+          // isUserOnline will see that the user was already online before
+          // calling announceUserOnline (so announceUserOnline won't do
+          // anything).
+          const newUserID = await getUserIDBySessionID(sessionID)
+          await announceUserOnline(newUserID)
+          socketData.userID = newUserID
+
           if (await shouldUseAuthorization()) {
             const user = await getUserBySessionID(sessionID)
 
             if (!user) {
               socketData.sessionID = null
+              socketData.userID = null
               socketData.authorized = false
               return
             }
@@ -1494,8 +1543,10 @@ module.exports = async function attachAPI(app, {wss, db}) {
       })
     })
 
-    socket.on('close', () => {
+    socket.on('close', async () => {
+      const socketData = connectedSocketsMap.get(socket)
       connectedSocketsMap.delete(socket)
+      await announceUserOffline(socketData.userID)
     })
 
     // Immediately send out a ping for data event; this will fill in important
@@ -1505,7 +1556,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
     socket.send(JSON.stringify({evt: 'pingdata'}))
   })
 
-  setInterval(() => {
+  setInterval(async () => {
     // Prune dead socket connections, and ping all
     // other sockets to check they're still alive.
     for (const [ socket, socketData ] of connectedSocketsMap) {
@@ -1513,6 +1564,7 @@ module.exports = async function attachAPI(app, {wss, db}) {
         // R.I.P.
         socket.terminate()
         connectedSocketsMap.delete(socket)
+        await announceUserOffline(socketData.userID)
       } else {
         // Ping!
         socketData.isAlive = false

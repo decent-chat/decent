@@ -152,7 +152,7 @@ const store = (state, emitter) => {
   // fetch the channel list from the server
   emitter.on('sidebar.fetchchannels', async () => {
     if (state.sessionAuthorized) {
-      const data = state.session ? { sessionID: state.session.id } : {}
+      const data = state.session.id ? { sessionID: state.session.id } : {}
       const { channels } = await api.get(state, 'channel-list', data)
       state.sidebar.channels = channels
     } else {
@@ -331,7 +331,7 @@ const store = (state, emitter) => {
 
   // logout
   emitter.on('sidebar.logout', async () => {
-    if (state.session) {
+    if (state.session.id) {
       await api.post(state, 'delete-sessions', {
         sessionIDs: [state.session.id]
       })
@@ -387,7 +387,7 @@ const component = (state, emit) => {
       ` : html`<span></span>`}
 
       ${state.params.host ? (() => {
-        if (state.session) {
+        if (state.session.user) {
           return html`<div class='session'>
             <div class='text'>
               Logged in as
@@ -414,7 +414,7 @@ const component = (state, emit) => {
         (!state.serverRequiresAuthorization || state.sessionAuthorized) ? html`<section>
       <div class='subtitle'>
         <h4>Channels</h4>
-        ${state.session && state.session.user.permissionLevel === 'admin'
+        ${state.session.user && state.session.user.permissionLevel === 'admin'
           ? html`<button onclick=${() => emit('sidebar.createchannel')}>+ Create</button>`
           : html`<span></span>`}
       </div>
@@ -442,7 +442,7 @@ const component = (state, emit) => {
       </div>
     </section>` : html`<span></span>`}
 
-    ${state.session && state.session.user.permissionLevel === 'admin' ? html`<section>
+    ${state.session.user && state.session.user.permissionLevel === 'admin' ? html`<section>
       <div class='subtitle'>
         <h4>Server settings</h4>
       </div>
