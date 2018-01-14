@@ -1,13 +1,4 @@
 # Decent
-Decent is the decentralized chat that's absolutely okay.
-
-* **Decentralized**: anyone can host a Decent server, and clients can connect to many at once, regardless of origin
-* **Feature-rich**: ∞ animated emoticons, for example
-* **Won't harvest your data**: unlike [some](https://discordapp.com/)
-* **[Hipster](https://decent-chat.github.io/decent/why.html)**
-* **Open source**: 🎈
-
----
 
 <h4>
   <a href='#join-a-server'> Join a server </a>
@@ -17,6 +8,15 @@ Decent is the decentralized chat that's absolutely okay.
   <a href='https://decent-chat.github.io/decent/api.html'> Documentation </a>
 </h4>
 
+Decent is the decentralized chat that's absolutely okay.
+
+* **Decentralized**: anyone can host a Decent server, and clients can connect to many at once, regardless of origin
+* **Feature-rich**: ∞ animated emoticons, for example
+* **Won't harvest your data**: unlike [some](https://discordapp.com/)
+* **[Hipster](https://decent-chat.github.io/decent/why.html)**
+* **Open source**: 🎈
+
+---
 
 ## Join a server
 
