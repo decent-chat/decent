@@ -4,7 +4,7 @@ const Nanobus = require('nanobus')
 const html = require('choo/html')
 const css = require('sheetify')
 
-const prefix = css('./modal.css')
+css('./modal.css')
 
 const constructStyledInput = (name, i, j) => {
   const id = `modal-input-${name}`
@@ -63,7 +63,7 @@ class Modal extends Nanobus {
     content.prepend(this.errorEl)
 
     // construct #modal element
-    this.el = html`<div class=${prefix}>
+    this.el = html`<div class='modal'>
       <div class='close-button' onclick=${this.close.bind(this)}></div>
       <div class='header'>${opts.title} <span class='subtitle'>${opts.subtitle || ''}</span></div>
       ${content}

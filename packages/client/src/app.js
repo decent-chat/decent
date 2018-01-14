@@ -167,9 +167,7 @@ for (const [ name, s ] of Object.entries(srvSettings)) {
 
 // declare routes
 {
-  const prefix = css('./app.css')
-
-  const notFound = (state, emit) => html`<div class=${prefix}>
+  const notFound = (state, emit) => html`<div id='app'>
     ${sidebar.component(state, emit)}
     <main>
       <div class='page'>
@@ -187,7 +185,7 @@ for (const [ name, s ] of Object.entries(srvSettings)) {
   app.route('/', (state, emit) => {
     state.session = null
 
-    return html`<div class=${prefix}>
+    return html`<div id='app'>
       ${sidebar.component(state, emit)}
       <main></main>
     </div>`
@@ -195,7 +193,7 @@ for (const [ name, s ] of Object.entries(srvSettings)) {
 
   // server with channel open
   app.route('/servers/:host/channels/:channel', (state, emit) => {
-    return html`<div class=${prefix}>
+    return html`<div id='app'>
       ${sidebar.component(state, emit)}
       <main>
         ${messages.component(state, emit)}
@@ -206,7 +204,7 @@ for (const [ name, s ] of Object.entries(srvSettings)) {
 
   // server account settings page
   app.route('/servers/:host/account', (state, emit) => {
-    return html`<div class=${prefix}>
+    return html`<div id='app'>
       ${sidebar.component(state, emit)}
       <main>
         ${accountSettings.component(state, emit)}
@@ -225,7 +223,7 @@ for (const [ name, s ] of Object.entries(srvSettings)) {
       return notFound(state, emit)
     }
 
-    return html`<div class=${prefix}>
+    return html`<div id='app'>
       ${sidebar.component(state, emit)}
       <main>
         ${srvSettings[state.params.setting].component(state, emit)}
@@ -235,7 +233,7 @@ for (const [ name, s ] of Object.entries(srvSettings)) {
 
   // server
   app.route('/servers/:host', (state, emit) => {
-    return html`<div class=${prefix}>
+    return html`<div id='app'>
       ${sidebar.component(state, emit)}
       <main></main>
     </div>`
@@ -244,3 +242,5 @@ for (const [ name, s ] of Object.entries(srvSettings)) {
 
 // mount app
 app.mount('#app')
+
+css('./app.css')

@@ -1,4 +1,4 @@
-<h1 align='center'> 🎈 Decent API documentation </h1>
+# API Specification/Documentation
 
 Communicating with the API
 * [HTTP endpoints](#http-endpoints) provide virtually all methods of interaction from the client towards the server
@@ -203,7 +203,7 @@ Attempts to log in as a user, creating a new session. Returns `{success: true, s
   * `sessionID`: (via URL path) the session ID to fetch. The session must exist.
 - [Authentication](#authentication): never required. Should, however, be provided in the URL.
 
-Returns `{success: true, user}` if successful, where `user` is a [user object](#user-object) of the user which the session represents. This endpoint is useful when grabbing information about the logged in user (e.g. at the startup of a client program, which may display the logged in user's username in a status bar).
+Returns `{success: true, session: {id, dateCreated, user}}` if successful, where `user` is a [user object](#user-object) of the user which the session represents. This endpoint is useful when grabbing information about the logged in user (e.g. at the startup of a client program, which may display the logged in user's username in a status bar). Does not require [authorization](#authorization).
 
 ### POST `/api/delete-sessions`
 

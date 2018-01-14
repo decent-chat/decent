@@ -68,10 +68,10 @@ const withState = state => {
 
     channelref({ read, readUntil, look }, meta) {
       let server = ''
+      let c
       if (look() === '+') {
         read()
 
-        let c
         while (c = look()) {
           if (c === '#' || c === ' ' || c === '') break
           server += read()
@@ -82,7 +82,6 @@ const withState = state => {
       if (look() === '#') {
         read()
 
-        let c
         while (c = look()) {
           if (c === ' ' || c === '') break
           channel += read()
