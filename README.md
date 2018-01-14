@@ -22,7 +22,7 @@ Decent is the decentralized chat that's absolutely okay.
 
 List of known Decent servers:
 * [meta.decent.chat](https://meta.decent.chat) - official server for discussing the development of Decent itself
-* [Host your own](#install)
+* **[Host your own!](#installation)**
 
 Most Decent servers will serve a copy of the [web client](https://github.com/decent-chat/decent/tree/master/packages/client), so you can use that to access servers (any client can connect to any Decent server, regardless of origin). Alternatively, custom clients exist:
 
