@@ -45,6 +45,53 @@ app.use((state, emitter) => {
     }
   })
 
+  // This whole mess of the _session Proxy and the session property are used to
+  // handle the session object being changed; whenever the session ID changes
+  // (be it because we set the changed session.id, completely overwrote session,
+  // deleted session or session.id, etc), we want to send the new session ID to
+  // the server (so that it knows that the user of the old session ID went
+  // offline and the user of the new session ID came online).
+
+  state._session = new Proxy({}, {
+    set: function(target, key, value) {
+      if (key === 'id') {
+        if (target.id !== value) {
+          state.ws.send('pongdata', { sessionID: value })
+        }
+      }
+
+      return Reflect.set(target, key, value)
+    },
+
+    deleteProperty: function(target, key) {
+      if (key === 'id') {
+        state.ws.send('pongdata', { sessionID: null })
+      }
+
+      return Reflect.deleteProperty(target, key)
+    }
+  })
+
+  Object.defineProperty(state, 'session', {
+    get: function() {
+      return state._session
+    },
+
+    set: function(newSession) {
+      // Delete keys which aren't found on the session.
+      for (const key of Object.keys(state._session)) {
+        if (newSession === null || Object.keys(newSession).includes(key) === false) {
+          delete state._session[key]
+        }
+      }
+
+      // Then assign the new values.
+      // We assign to state.session here because state.session will
+      // automatically deal with setting properties nicely.
+      Object.assign(state.session, newSession)
+    }
+  })
+
   // publish state for debugging/experimenting as well
   window.state = state
 
@@ -83,20 +130,23 @@ app.use((state, emitter) => {
 
       state.ws = new util.WS(state.params.host, state.secure)
 
-      state.ws.on('*', (evt, timestamp, data) => {
-        if (evt === 'ping for data') {
-          state.ws.send('pong data', {
-            sessionID: state.session ? state.session.id : null
-          })
-        } else {
-          // emit websocket events
-          emitter.emit('ws.' + evt.replace(/ /g, ''), data)
-        }
-      })
-
       // wait for the WebSocket to connect, because a bunch of things
       // basically don't function without it
       await new Promise(resolve => state.ws.once('open', resolve))
+
+      state.ws.on('*', (evt, timestamp, data) => {
+        if (evt === 'pingdata') {
+          state.ws.send('pongdata', {
+            sessionID: state.session.id
+          })
+        } else {
+          // emit websocket events
+          emitter.emit('ws.' + evt, data)
+
+          // for debugging:
+          // console.log(`ws[${evt}]:`, data)
+        }
+      })
 
       emitter.emit('emotes.fetch')
     }
@@ -164,7 +214,7 @@ for (const [ name, s ] of Object.entries(srvSettings)) {
 
   // server settings (admins only) page
   app.route('/servers/:host/settings/:setting', (state, emit) => {
-    if (!state.session || state.session.user.permissionLevel !== 'admin' || !srvSettings[state.params.setting]) {
+    if (state.session.id === null || state.session.user.permissionLevel !== 'admin' || !srvSettings[state.params.setting]) {
       return notFound(state, emit)
     }
 

@@ -34,7 +34,7 @@ module.exports = {
   get(state, path, query = {}) {
     // Set the session ID if it's set on the state, but only if not already
     // set by the passed query.
-    if (state.session && !query.sessionID) {
+    if (state.session.id && !query.sessionID) {
       query.sessionID = state.session.id
     }
 
@@ -51,7 +51,7 @@ module.exports = {
   post(state, path, data = {}) {
     // As with get, set the session ID if it's on the state and issing
     // from the data object.
-    if (state.session && !data.sessionID) {
+    if (state.session.id && !data.sessionID) {
       data.sessionID = state.session.id
     }
 

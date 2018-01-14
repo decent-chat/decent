@@ -78,6 +78,14 @@ body {
       font-size: 24px;
     }
   }
+
+  /* since bottom padding doesn't actually do anything, we need to add a
+     margin onto the bottom element
+     (this only works as long as the bottom element in the page is a block-
+     level element, but hopefully that will always be the case) */
+  & > :last-child {
+    margin-bottom: 36px;
+  }
 }
 
 .styled-input {

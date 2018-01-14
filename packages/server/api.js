@@ -60,20 +60,55 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
   const emailToAvatarURL = memoize(email =>
     `https://seccdn.libravatar.org/avatar/${email ? md5(email) : ''}?d=retro`)
 
-  const getUserBySessionID = async function(sessionID) {
+  const getUserIDBySessionID = async function(sessionID) {
+    if (!sessionID) {
+      return null
+    }
+
     const session = await db.sessions.findOne({_id: sessionID})
 
     if (!session) {
       return null
     }
 
-    const user = await db.users.findOne({_id: session.userID})
+    return session.userID
+  }
+
+  const getUserBySessionID = async function(sessionID) {
+    const userID = await getUserIDBySessionID(sessionID)
+
+    if (!userID) {
+      return null
+    }
+
+    const user = await db.users.findOne({_id: userID})
 
     if (!user) {
       return null
     }
 
     return user
+  }
+
+  const announceUserOffline = async function(userID) {
+    // Announces that a user has gone offline.
+
+    // We only want to announce that the user is offline if there are no
+    // sockets that say the user is online.
+    if (userID && await isUserOnline(userID) === false) {
+      // console.log('\x1b[36mOffline:', userID, '\x1b[0m')
+      sendToAllSockets('user/offline', {userID})
+    }
+  }
+
+  const announceUserOnline = async function(userID) {
+    // Same deal as announcing offline, but for going online instead.
+
+    // Only announce they're online if they weren't already online!
+    if (userID && await isUserOnline(userID) === false) {
+      // console.log('\x1b[36mOnline:', userID, '\x1b[0m')
+      sendToAllSockets('user/online', {userID})
+    }
   }
 
   const shouldUseAuthorization = async function() {
@@ -86,11 +121,8 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
     // Simple logic: a user is online iff there is at least one socket whose
     // session belongs to that user.
 
-    const sessions = await db.sessions.find({userID})
-
     return Array.from(connectedSocketsMap.values())
-      .some(socketData => sessions
-        .some(session => session._id === socketData.sessionID))
+      .some(socketData => socketData.userID === userID)
   }
 
   const isUserAuthorized = async function(userID) {
@@ -509,32 +541,37 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
       next()
     },
 
+    (request, response, next) => {
+      // First we check the POST body for the session ID (if it's a POST
+      // request). If we don't find anything, we check the query URL, then
+      // the headers (X-Session-ID). If we still don't find a session ID and
+      // one is required - shouldVerify - we'll say none was given
+      // and prevent the user from proceeding.
+      //
+      // See the 'authorization' section in the API docs.
+      let sessionID
+      if (request.method === 'POST' && 'sessionID' in request.body) {
+        sessionID = request.body.sessionID
+      } else if ('sessionID' in request.query) {
+        sessionID = request.query.sessionID
+      } else if ('x-session-id' in request.headers) {
+        sessionID = request.headers['x-session-id'] // All headers are lowercase.
+      } else if (request[middleware.vars].shouldVerify) {
+        // No session ID given - just quit here.
+        response.status(403).end(JSON.stringify({
+          error: 'missing sessionID field - not authorized to access API'
+        }))
+        return
+      }
+
+      // We'll save the session ID as a middleware-var so we can use it
+      // in the upcoming requests.
+      Object.assign(request[middleware.vars], {sessionID})
+
+      next()
+    },
+
     ...middleware.runIfVarExists('shouldVerify', [
-      (request, response, next) => {
-        // First we check the POST body for the session ID (if it's a POST
-        // request). If we don't find anything, we check the query URL.
-        // If we still don't find a session ID, we'll say none was given
-        // and prevent the user from proceeding.
-        let sessionID
-        if (request.method === 'POST' && 'sessionID' in request.body) {
-          sessionID = request.body.sessionID
-        } else if ('sessionID' in request.query) {
-          sessionID = request.query.sessionID
-        } else {
-          // No session ID given - just quit here.
-          response.status(403).end(JSON.stringify({
-            error: 'missing sessionID field - not authorized to access API'
-          }))
-          return
-        }
-
-        // We'll save the session ID as a middleware-var so we can use it
-        // in the upcoming requests.
-        Object.assign(request[middleware.vars], {sessionID})
-
-        next()
-      },
-
       // No need to rewrite the wheel - we have a fancy way of guessing where
       // we might get the session ID, but we can use it just like we always
       // do (with our normal middleware functions).
@@ -614,7 +651,6 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
 
   // TODO: delete old images
   app.post('/api/upload-image', [
-    ...middleware.loadVarFromQuery('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     //...middleware.requireBeAdmin('sessionUser'),
     (req, res) => uploadSingleImage(req, res, err => {
@@ -639,7 +675,6 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
   ])
 
   app.post('/api/server-settings', [
-    ...middleware.loadVarFromBody('sessionID'),
     ...middleware.loadVarFromBody('patch'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requireBeAdmin('sessionUser'),
@@ -690,7 +725,6 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
   app.post('/api/send-message', [
     ...middleware.loadVarFromBody('text'),
     ...middleware.loadVarFromBody('channelID'),
-    ...middleware.loadVarFromBody('sessionID'),
     ...middleware.getChannelFromID('channelID', '_'), // To verify that it exists.
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
 
@@ -708,7 +742,7 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
         reactions: {}
       })
 
-      sendToAllSockets('received chat message', {
+      sendToAllSockets('message/new', {
         message: await serialize.message(message)
       })
 
@@ -724,7 +758,6 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
 
   app.post('/api/pin-message', [
     ...middleware.loadVarFromBody('messageID'),
-    ...middleware.loadVarFromBody('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requireBeAdmin('sessionUser'),
     ...middleware.getMessageFromID('messageID', 'message'),
@@ -760,7 +793,6 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
 
   app.post('/api/add-message-reaction', [
     ...middleware.loadVarFromBody('reactionCode'),
-    ...middleware.loadVarFromBody('sessionID'),
     ...middleware.loadVarFromBody('messageID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.getMessageFromID('messageID', 'message'),
@@ -815,7 +847,6 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
   ])
 
   app.post('/api/edit-message', [
-    ...middleware.loadVarFromBody('sessionID'),
     ...middleware.loadVarFromBody('messageID'),
     ...middleware.loadVarFromBody('text'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
@@ -843,14 +874,13 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
         returnUpdatedDocs: true
       })
 
-      sendToAllSockets('edited chat message', {message: await serialize.message(newMessage)})
+      sendToAllSockets('message/edit', {message: await serialize.message(newMessage)})
 
       response.status(200).end(JSON.stringify({success: true}))
     }
   ])
 
   app.post('/api/delete-message', [
-    ...middleware.loadVarFromBody('sessionID'),
     ...middleware.loadVarFromBody('messageID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.getMessageFromID('messageID', 'message'),
@@ -871,7 +901,7 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
       await db.messages.remove({_id: message._id})
 
       // We don't want to send back the message itself, obviously!
-      sendToAllSockets('deleted chat message', {messageID: message._id})
+      sendToAllSockets('message/delete', {messageID: message._id})
 
       response.status(200).end(JSON.stringify({success: true}))
     }
@@ -890,7 +920,6 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
 
   app.post('/api/create-channel', [
     ...middleware.loadVarFromBody('name'),
-    ...middleware.loadVarFromBody('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requireBeAdmin('sessionUser'),
     ...middleware.requireNameValid('name'),
@@ -911,7 +940,7 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
         pinnedMessageIDs: []
       })
 
-      sendToAllSockets('created new channel', {
+      sendToAllSockets('channel/new', {
         channel: await serialize.channelDetail(channel),
       })
 
@@ -925,7 +954,6 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
   app.post('/api/rename-channel', [
     ...middleware.loadVarFromBody('channelID'),
     ...middleware.loadVarFromBody('name'),
-    ...middleware.loadVarFromBody('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requireBeAdmin('sessionUser'),
     ...middleware.requireNameValid('name'),
@@ -944,7 +972,7 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
 
       await db.channels.update({_id: channelID}, {$set: {name}})
 
-      sendToAllSockets('renamed channel', {
+      sendToAllSockets('channel/rename', {
         channelID, newName: name
       })
 
@@ -956,7 +984,6 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
 
   app.post('/api/delete-channel', [
     ...middleware.loadVarFromBody('channelID'),
-    ...middleware.loadVarFromBody('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requireBeAdmin('sessionUser'),
     ...middleware.getChannelFromID('channelID', '_'), // To verify the channel exists.
@@ -971,7 +998,7 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
       ])
 
       // Only send the channel ID, since that's all that's needed.
-      sendToAllSockets('deleted channel', {
+      sendToAllSockets('channel/delete', {
         channelID
       })
 
@@ -983,7 +1010,6 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
 
   app.get('/api/channel/:channelID', [
     ...middleware.loadVarFromParams('channelID'),
-    ...middleware.loadVarFromQuery('sessionID', false), // Optional - provides more data
     ...middleware.getChannelFromID('channelID', 'channel'),
     ...middleware.runIfVarExists('sessionID',
       middleware.getSessionUserFromID('sessionID', 'sessionUser')
@@ -1000,7 +1026,6 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
   ])
 
   app.get('/api/channel-list', [
-    ...middleware.loadVarFromQuery('sessionID', false), // Optional - provides more data
     ...middleware.runIfVarExists('sessionID',
       middleware.getSessionUserFromID('sessionID', 'sessionUser')
     ),
@@ -1079,7 +1104,6 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
 
   app.post('/api/mark-channel-as-read', [
     ...middleware.loadVarFromBody('channelID'),
-    ...middleware.loadVarFromBody('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.getChannelFromID('channelID', '_'), // To verify that it exists
 
@@ -1096,7 +1120,6 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
 
   app.get('/api/channel-is-read', [
     ...middleware.loadVarFromQuery('channelID'),
-    ...middleware.loadVarFromQuery('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
 
     async (request, response) => {
@@ -1178,7 +1201,6 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
 
   app.post('/api/account-settings', [
     ...middleware.loadVarFromBody('email'),
-    ...middleware.loadVarFromBody('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'user'),
 
     async (request, response) => {
@@ -1199,11 +1221,6 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
 
   app.get('/api/user-list', [
     ...middleware.runIfCondition(() => shouldUseAuthorization, [
-      ...middleware.loadVarFromQuery('sessionID', false),
-      ...middleware.runIfVarExists('sessionID',
-        middleware.getSessionUserFromID('sessionID', 'sessionUser')
-      ),
-
       async (request, response) => {
         const { sessionUser } = request[middleware.vars]
         const isAdmin = sessionUser && sessionUser.permissionLevel === 'admin'
@@ -1333,7 +1350,6 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
     },
 
     ...middleware.loadVarFromBody('userID'),
-    ...middleware.loadVarFromBody('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requireBeAdmin('sessionUser'),
     ...middleware.getUserFromID('userID', '_')
@@ -1409,7 +1425,6 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
   ])
 
   app.get('/api/user-session-list', [
-    ...middleware.loadVarFromQuery('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
 
     async (request, response) => {
@@ -1443,7 +1458,7 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
 
       const { evt, data } = messageObj
 
-      if (evt === 'pong data') {
+      if (evt === 'pongdata') {
         // Not the built-in pong; this event is used for gathering
         // socket-specific data.
         if (!data) {
@@ -1461,11 +1476,28 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
         if (sessionID !== socketData.sessionID) {
           socketData.sessionID = sessionID
 
+          // Announce the user is offline. We need to set the socket's
+          // userID to null so that isUserOnline does not see the socket
+          // and decide that the user must still be online.
+          const oldUserID = socketData.userID
+          socketData.userID = null
+          await announceUserOffline(oldUserID)
+
+          // Announce the user of the *new* sessionID as being online. We have
+          // to set userID AFTER announcing the user is online, or else
+          // isUserOnline will see that the user was already online before
+          // calling announceUserOnline (so announceUserOnline won't do
+          // anything).
+          const newUserID = await getUserIDBySessionID(sessionID)
+          await announceUserOnline(newUserID)
+          socketData.userID = newUserID
+
           if (await shouldUseAuthorization()) {
             const user = await getUserBySessionID(sessionID)
 
             if (!user) {
               socketData.sessionID = null
+              socketData.userID = null
               socketData.authorized = false
               return
             }
@@ -1490,18 +1522,20 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
       })
     })
 
-    socket.on('close', () => {
+    socket.on('close', async () => {
+      const socketData = connectedSocketsMap.get(socket)
       connectedSocketsMap.delete(socket)
+      await announceUserOffline(socketData.userID)
     })
 
     // Immediately send out a ping for data event; this will fill in important
     // data (like the session ID) for the socket as soon as possible. Without this
     // we wait for the next ping, which is an unwanted delay (e.g. it would make
     // detecting the user being online be delayed by up to 10 seconds).
-    socket.send(JSON.stringify({evt: 'ping for data'}))
+    socket.send(JSON.stringify({evt: 'pingdata'}))
   })
 
-  setInterval(() => {
+  setInterval(async () => {
     // Prune dead socket connections, and ping all
     // other sockets to check they're still alive.
     for (const [ socket, socketData ] of connectedSocketsMap) {
@@ -1509,6 +1543,7 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
         // R.I.P.
         socket.terminate()
         connectedSocketsMap.delete(socket)
+        await announceUserOffline(socketData.userID)
       } else {
         // Ping!
         socketData.isAlive = false
@@ -1519,7 +1554,7 @@ module.exports = async function attachAPI(app, {wss, db, dir}) {
         // The built-in socket ping method is great for obliterating dead sockets,
         // but we also want to detect data, so we need to send out a normal 'ping'
         // event at the same time, which the client can detect and respond to.
-        socket.send(JSON.stringify({evt: 'ping for data'}))
+        socket.send(JSON.stringify({evt: 'pingdata'}))
       }
     }
   }, 10 * 1000) // Every 10s.
