@@ -513,32 +513,37 @@ module.exports = async function attachAPI(app, {wss, db}) {
       next()
     },
 
+    (request, response, next) => {
+      // First we check the POST body for the session ID (if it's a POST
+      // request). If we don't find anything, we check the query URL, then
+      // the headers (X-Session-ID). If we still don't find a session ID and
+      // one is required - shouldVerify - we'll say none was given
+      // and prevent the user from proceeding.
+      //
+      // See the 'authorization' section in the API docs.
+      let sessionID
+      if (request.method === 'POST' && 'sessionID' in request.body) {
+        sessionID = request.body.sessionID
+      } else if ('sessionID' in request.query) {
+        sessionID = request.query.sessionID
+      } else if ('x-session-id' in request.headers) {
+        sessionID = request.headers['x-session-id'] // All headers are lowercase.
+      } else if (request[middleware.vars].shouldVerify) {
+        // No session ID given - just quit here.
+        response.status(403).end(JSON.stringify({
+          error: 'missing sessionID field - not authorized to access API'
+        }))
+        return
+      }
+
+      // We'll save the session ID as a middleware-var so we can use it
+      // in the upcoming requests.
+      Object.assign(request[middleware.vars], {sessionID})
+
+      next()
+    },
+
     ...middleware.runIfVarExists('shouldVerify', [
-      (request, response, next) => {
-        // First we check the POST body for the session ID (if it's a POST
-        // request). If we don't find anything, we check the query URL.
-        // If we still don't find a session ID, we'll say none was given
-        // and prevent the user from proceeding.
-        let sessionID
-        if (request.method === 'POST' && 'sessionID' in request.body) {
-          sessionID = request.body.sessionID
-        } else if ('sessionID' in request.query) {
-          sessionID = request.query.sessionID
-        } else {
-          // No session ID given - just quit here.
-          response.status(403).end(JSON.stringify({
-            error: 'missing sessionID field - not authorized to access API'
-          }))
-          return
-        }
-
-        // We'll save the session ID as a middleware-var so we can use it
-        // in the upcoming requests.
-        Object.assign(request[middleware.vars], {sessionID})
-
-        next()
-      },
-
       // No need to rewrite the wheel - we have a fancy way of guessing where
       // we might get the session ID, but we can use it just like we always
       // do (with our normal middleware functions).
@@ -618,7 +623,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
   // TODO: delete old images
   app.post('/api/upload-image', [
-    ...middleware.loadVarFromQuery('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     //...middleware.requireBeAdmin('sessionUser'),
     (req, res) => uploadSingleImage(req, res, err => {
@@ -643,7 +647,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
   ])
 
   app.post('/api/server-settings', [
-    ...middleware.loadVarFromBody('sessionID'),
     ...middleware.loadVarFromBody('patch'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requireBeAdmin('sessionUser'),
@@ -694,7 +697,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
   app.post('/api/send-message', [
     ...middleware.loadVarFromBody('text'),
     ...middleware.loadVarFromBody('channelID'),
-    ...middleware.loadVarFromBody('sessionID'),
     ...middleware.getChannelFromID('channelID', '_'), // To verify that it exists.
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
 
@@ -728,7 +730,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
   app.post('/api/pin-message', [
     ...middleware.loadVarFromBody('messageID'),
-    ...middleware.loadVarFromBody('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requireBeAdmin('sessionUser'),
     ...middleware.getMessageFromID('messageID', 'message'),
@@ -764,7 +765,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
   app.post('/api/add-message-reaction', [
     ...middleware.loadVarFromBody('reactionCode'),
-    ...middleware.loadVarFromBody('sessionID'),
     ...middleware.loadVarFromBody('messageID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.getMessageFromID('messageID', 'message'),
@@ -819,7 +819,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
   ])
 
   app.post('/api/edit-message', [
-    ...middleware.loadVarFromBody('sessionID'),
     ...middleware.loadVarFromBody('messageID'),
     ...middleware.loadVarFromBody('text'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
@@ -854,7 +853,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
   ])
 
   app.post('/api/delete-message', [
-    ...middleware.loadVarFromBody('sessionID'),
     ...middleware.loadVarFromBody('messageID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.getMessageFromID('messageID', 'message'),
@@ -894,7 +892,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
   app.post('/api/create-channel', [
     ...middleware.loadVarFromBody('name'),
-    ...middleware.loadVarFromBody('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requireBeAdmin('sessionUser'),
     ...middleware.requireNameValid('name'),
@@ -929,7 +926,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
   app.post('/api/rename-channel', [
     ...middleware.loadVarFromBody('channelID'),
     ...middleware.loadVarFromBody('name'),
-    ...middleware.loadVarFromBody('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requireBeAdmin('sessionUser'),
     ...middleware.requireNameValid('name'),
@@ -960,7 +956,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
   app.post('/api/delete-channel', [
     ...middleware.loadVarFromBody('channelID'),
-    ...middleware.loadVarFromBody('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requireBeAdmin('sessionUser'),
     ...middleware.getChannelFromID('channelID', '_'), // To verify the channel exists.
@@ -987,7 +982,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
   app.get('/api/channel/:channelID', [
     ...middleware.loadVarFromParams('channelID'),
-    ...middleware.loadVarFromQuery('sessionID', false), // Optional - provides more data
     ...middleware.getChannelFromID('channelID', 'channel'),
     ...middleware.runIfVarExists('sessionID',
       middleware.getSessionUserFromID('sessionID', 'sessionUser')
@@ -1004,7 +998,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
   ])
 
   app.get('/api/channel-list', [
-    ...middleware.loadVarFromQuery('sessionID', false), // Optional - provides more data
     ...middleware.runIfVarExists('sessionID',
       middleware.getSessionUserFromID('sessionID', 'sessionUser')
     ),
@@ -1083,7 +1076,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
   app.post('/api/mark-channel-as-read', [
     ...middleware.loadVarFromBody('channelID'),
-    ...middleware.loadVarFromBody('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.getChannelFromID('channelID', '_'), // To verify that it exists
 
@@ -1100,7 +1092,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
   app.get('/api/channel-is-read', [
     ...middleware.loadVarFromQuery('channelID'),
-    ...middleware.loadVarFromQuery('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
 
     async (request, response) => {
@@ -1182,7 +1173,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
   app.post('/api/account-settings', [
     ...middleware.loadVarFromBody('email'),
-    ...middleware.loadVarFromBody('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'user'),
 
     async (request, response) => {
@@ -1203,11 +1193,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
 
   app.get('/api/user-list', [
     ...middleware.runIfCondition(() => shouldUseAuthorization, [
-      ...middleware.loadVarFromQuery('sessionID', false),
-      ...middleware.runIfVarExists('sessionID',
-        middleware.getSessionUserFromID('sessionID', 'sessionUser')
-      ),
-
       async (request, response) => {
         const { sessionUser } = request[middleware.vars]
         const isAdmin = sessionUser && sessionUser.permissionLevel === 'admin'
@@ -1337,7 +1322,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
     },
 
     ...middleware.loadVarFromBody('userID'),
-    ...middleware.loadVarFromBody('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requireBeAdmin('sessionUser'),
     ...middleware.getUserFromID('userID', '_')
@@ -1413,7 +1397,6 @@ module.exports = async function attachAPI(app, {wss, db}) {
   ])
 
   app.get('/api/user-session-list', [
-    ...middleware.loadVarFromQuery('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
 
     async (request, response) => {

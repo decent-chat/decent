@@ -1,14 +1,26 @@
 <h1 align='center'> 🎈 Decent API documentation </h1>
 
-The project's API is publicly available to anybody with access to the actual server on which it is hosted. [HTTP endpoints](#http-endpoints) provide virtually all methods of interaction from the client towards the server, while [WebSocket events](#websocket-events) let the server send messages to the client. Common data received from the server (such as users or messages) always follows [particular formats](#objects). It would be wise to understand and expect [authorization](#authorization) to be required. General information which doesn't particularly fit anywhere else can be found in the appendix-esque section [Etc](#etc), and any questions one might have can be posted to the [issue tracker](https://github.com/towerofnix/decent/issues).
+Communicating with the API
+* [HTTP endpoints](#http-endpoints) provide virtually all methods of interaction from the client towards the server
+* [WebSocket events](#websocket-events) let the server send messages to the client.
+
+Common data received from the server (such as users or messages) always follows [particular formats](#objects).
+
+It would be wise to understand and expect [authorization](#authorization) to be required. **All endpoints, unless specified, follow the server-wide authentication rule.**
+
+General information which doesn't particularly fit anywhere else can be found in the appendix-esque section [Etc](#etc), and any questions one might have can be posted to the [issue tracker](https://github.com/decent-chat/decent/issues).
 
 ## HTTP endpoints
 
 These are all the paths (think: URLs, `/api/user/:userID`) which can be fetched with plain old HTTP requests. All POST endpoints expect bodies encoded in **JSON**, and every endpoint will respond with a stringified JSON object.
 
+If [authorization](#authorization) is required by the server, **all endpoints will require [authentication](#authentication) unless otherwise stated**. TL;DR: pass your session ID as the `X-Session-ID` header, as `sessionID` in POST data, or as `sessionID` in the URL query string.
+
 ### GET `/api`
 
-Returns `{decent: true, message, repository}`, where `message` and `repository` are hard-coded strings for Humans to read. Also returns the status code [`418`](https://en.wikipedia.org/wiki/Hyper_Text_Coffee_Pot_Control_Protocol). Use this endpoint to verify that a given hostname is actually a Decent server. Does not require [authorization](#authorization).
+- [Authentication](#authentication): never required.
+
+Returns `{decent: true, message, repository}`, where `message` and `repository` are hard-coded strings for Humans to read. Also returns the status code [`418`](https://en.wikipedia.org/wiki/Hyper_Text_Coffee_Pot_Control_Protocol). Use this endpoint to verify that a given hostname is actually a Decent server.
 
 ### GET `/api/server-settings`
 
@@ -18,7 +30,7 @@ Returns an object representing server-specific settings.
 
 - Parameters:
   * `patch`: (via data; object) an object acting as the dictionary to apply.
-  * `sessionID`: (via data; string) the user's session ID. **The user must be an admin.**
+- [Authentication](#authentication): always required. **The requesting user must be an admin.**
 
 Takes the parameter `patch` and overwrites each of the specified properties according to the corresponding values. Only previously existing settings will be overwritten (no new properties will be made). Returns the result status of each item; for example, if two properties are given, and the first has a valid key while the second's key doesn't exist, the change specified by the first will still be applied, even though the second failed.
 
@@ -29,16 +41,20 @@ Takes the parameter `patch` and overwrites each of the specified properties acco
 ### POST `/api/account-settings`
 
 - Parameters:
-  * `sessionID`: (via data; string) the user's session ID. Must be valid.
   * `email`: (via data; string/null) the new email address of the user.
+- [Authentication](#authentication): always required.
 
 Returns `{success: true, avatarURL}`, where `avatarURL` is a string URL (usually pointing to [Libravatar](https://www.libravatar.org/)) to be used as the user's profile picture.
 
 ### GET `/api/should-use-secure`
 
+- [Authentication](#authentication): never required.
+
 Returns a simple object `{useSecure}`, where `useSecure` is a boolean specifying whether or not to use WebSocket Secure and HTTPS (instead of normal WebSockets and HTTP). Of course, this assumes that HTTPS is properly set up on the host. Whether this returns true or false can be changed via the server command line (see `help` and view information on "set").
 
 ### GET `/api/should-use-authorization`
+
+- [Authentication](#authentication): never required.
 
 Returns an object `{useAuthorization, authorizationMessage}`, where `useAuthorization` is a boolean specifying whether or not to use [authorization](#authorization). If the server does require authorization, `authorizationMessage` (a message [specific to the server](#list-of-server-settings)) is passed.
 
@@ -47,7 +63,7 @@ Returns an object `{useAuthorization, authorizationMessage}`, where `useAuthoriz
 - Parameters:
   * `text`: (via data; string) the text to send in the message. Typically, clients will interpret message text as markdown.
   * `channelID`: (via data; string) the ID of the channel to which the message will be sent. The channel has to exist.
-  * `sessionID`: (via data; string) the user's session ID. This must be a valid session ID.
+- [Authentication](#authentication): always required.
 
 Sends a message. Returns an object `{success: true, messageID}` if successful, where `messageID` is the unique ID of the new message, and emits a [`message/new`](#from-server-messagenew) WebSocket event.
 
@@ -63,7 +79,7 @@ Returns a [message object](#message-object) corresponding to the given message I
 - Parameters:
   * `text`: (via data; string) the new text content.
   * `messageID`: (via data; string) the message ID. The message has to exist.
-  * `sessionID`: (via data; string) the user's session ID. **The user must own the message.**
+- [Authentication](#authentication): always required. **The user must own the message.**
 
 Overwrites the text content of an existing message and attaches an "edited" date to it. Returns `{success: true}` if successful, and emits a [`message/edit`](#from-server-messageedit) WebSocket event.
 
@@ -71,19 +87,19 @@ Overwrites the text content of an existing message and attaches an "edited" date
 
 - Parameters:
   * `messageID`: (via data; string) the ID of the message to be pinned. The message has to exist.
-  * `sessionID`: (via data; string) the user's session ID. **The user must be an admin.**
+- [Authentication](#authentication): always required. **The user must be an admin.**
 
 Adds a message to its channel's pinned messages list. Returns `{success: true}` if succesful.
 
 ### POST `/api/add-message-reaction`
 
-This endpoint is unstable. See discussion in [GitHub issue #21](https://github.com/towerofnix/bantisocial/issues/21).
+This endpoint is unstable. See discussion in [GitHub issue #21](https://github.com/decent-chat/decent/issues/21).
 
 ### POST `/api/create-channel`
 
 - Parameters:
   * `name`: (via data; string) the name of the channel. This must be a [valid name](#valid-names), and there must not already be a channel with the same name.
-  * `sessionID`: (via data; string) the user's session ID. **The user must be an admin.**
+- [Authentication](#authentication): always required. **The user must be an admin.**
 
 Creates a channel (which will immediately be able to receive messages). Returns `{success: true, channelID}` if successful, where `channelID` is the unique ID of the channel, and emits a [`channel/new`](#from-server-channelnew) WebSocket event.
 
@@ -91,7 +107,8 @@ Creates a channel (which will immediately be able to receive messages). Returns 
 
 - Parameters:
   * `channelID`: (via URL path) the unique ID of the channel. The channel has to exist.
-  * `sessionID`: (via query; optional) the session ID of the user. [Extra data](#channel-object) will be returned if given.
+- [Authentication](#authentication): optional, unless the server requires [authorization](#authorization).
+  * [Extra data](#channel-object) will be returned if given.
 
 Returns `{success: true, channel}` if successful, where `channel` is a [(detailed) channel object](#channel-object) corresponding to the channel with the given ID.
 
@@ -100,7 +117,7 @@ Returns `{success: true, channel}` if successful, where `channel` is a [(detaile
 - Parameters:
   * `name`: (via data; string) the new name to be given to the channel. Must be a [valid name](#valid-names).
   * `channelID`: (via data; string) the unique ID of the channel to be renamed. The channel has to exist.
-  * `sessionID`: (via data; string) the session ID of the user. **The user must be an admin.**
+- [Authentication](#authentication): always required. **The requesting user must be an admin.**
 
 Changes the name of a channel. Returns `{success: true}` if successful, and emits a [`channel/rename`](#from-server-channelrename) WebSocket event.
 
@@ -108,14 +125,13 @@ Changes the name of a channel. Returns `{success: true}` if successful, and emit
 
 - Parameters:
   * `channelID`: (via data; string) the unique ID of the channel to be deleted. The channel has to exist.
-  * `sessionID`: (via data; string) the session ID of the user. **The user must be an admin.**
+- [Authentication](#authentication): always required. **The requesting user must be an admin.**
 
 Deletes a channel and any messages in it. Returns `{success: true}` if successful, and emits a [`channel/delete`](#from-server-channeldelete) WebSocket event.
 
 ### GET `/api/channel-list`
 
-- Parameters:
-  * `sessionID`: (via query; optional) the session ID of the user. [Extra data](#channel-object) will be returned if given.
+- [Authentication](#authentication): always required. **The requesting user must be an admin.**
 
 Returns `{success: true, channels}`, where channels is an array of [(brief) channel objects](#channel-object) for each channel on the server.
 
@@ -134,14 +150,15 @@ Returns `{success: true, messages}`, where messages is an array of the most rece
 - Parameters:
   * `username`: (via body; string) the username to use. The username must not already be taken, and must be a [valid name](#valid-names).
   * `password`: (via body; string) the password to use. The password must be at least 6 characters long.
+- [Authentication](#authentication): never required.
 
-Registers a new user. The given password is passed to `/api/register` as a plain string, and is stored in the database as a bcrypt-hashed and salted string (and not in any plain text form). Returns `{success: true, user}` if successful, where `user` is the new user as a [user object](#user-object). Does not require [authorization](#authorization).
+Registers a new user. The given password is passed to `/api/register` as a plain string, and is stored in the database as a bcrypt-hashed and salted string (and not in any plain text form). Returns `{success: true, user}` if successful, where `user` is the new user as a [user object](#user-object).
 
 ### POST `/api/authorize-user`
 
 - Parameters:
   * `userID`: (via data; string) the unique ID of the user to be authorized.
-  * `sessionID`: (via data; string) the session ID of the user who is requesting this endpoint. **The requesting user must be an admin.**
+- [Authentication](#authentication): always required. **The requesting user must be an admin.**
 
 [Authorizes](#authorization) the given user. Returns `{success: true}` if successful. Doesn't do anything (returns an error) if authorization is disabled.
 
@@ -149,7 +166,7 @@ Registers a new user. The given password is passed to `/api/register` as a plain
 
 - Parameters:
   * `userID`: (via data; string) the unique ID of the user to be deauthorized. This must not be the requesting user (you can't deauthorize yourself).
-  * `sessionID`: (via data; string) the session ID of the user who is requesting this endpoint. **The requesting user must be an admin.**
+- [Authentication](#authentication): always required. **The requesting user must be an admin.**
 
 [Deauthorizes](#authorization) the given user. Returns `{success: true}` if successful. Doesn't do anything (returns an error) if authorization is disabled.
 
@@ -176,15 +193,17 @@ Returns `{available}`, where `available` is a boolean set to whether or not the 
 - Parameters:
   * `username`: (via body; string) the username to log in as. There must be a user with this name.
   * `password`: (via body; string) the password to use. This must (when hashed) match the user's password.
+- [Authentication](#authentication): never required.
 
-Attempts to log in as a user, creating a new session. Returns `{success: true, sessionID}` if successful, where `sessionID` is the ID of the newly-created session. Does not require [authorization](#authorization).
+Attempts to log in as a user, creating a new session. Returns `{success: true, sessionID}` if successful, where `sessionID` is the ID of the newly-created session.
 
 ### GET `/api/session/:sessionID`
 
 - Parameters:
   * `sessionID`: (via URL path) the session ID to fetch. The session must exist.
+- [Authentication](#authentication): never required. Should, however, be provided in the URL.
 
-Returns `{success: true, user}` if successful, where `user` is a [user object](#user-object) of the user which the session represents. This endpoint is useful when grabbing information about the logged in user (e.g. at the startup of a client program, which may display the logged in user's username in a status bar). Does not require [authorization](#authorization).
+Returns `{success: true, user}` if successful, where `user` is a [user object](#user-object) of the user which the session represents. This endpoint is useful when grabbing information about the logged in user (e.g. at the startup of a client program, which may display the logged in user's username in a status bar).
 
 ### POST `/api/delete-sessions`
 
@@ -195,8 +214,7 @@ Deletes the given sessions (using their IDs will no longer work). Passing just o
 
 ### GET `/api/user-session-list`
 
-- Parameters:
-  * `sessionID`: (via body; string) the session ID to use. The session must exist.
+- [Authentication](#authentication): always required.
 
 Returns `{success: true, sessions}` if successful, where `sessions` is an array of [(brief) session objects](#session-object). All sessions which are logged into the same user as the given session (via `sessionID`) are returned.
 
@@ -253,7 +271,7 @@ A message sent by an author, to a particular channel.
 * `text`: (string) the text content of the message. This is not processed; it's whatever the author entered, verbatim. This should typically be interpreted as markdown.
 * `date`: (number) the date when the message was sent (actually when it was saved into the database).
 * `editDate`: (number or null) the date when the message was most recently edited, or null, if the message has never been edited.
-* `reactions`: future storage for reactions. The reaction API is not stable yet (see [GitHub issue #21](https://github.com/towerofnix/bantisocial/issues/21)).
+* `reactions`: future storage for reactions. The reaction API is not stable yet (see [GitHub issue #21](https://github.com/decent-chat/decent/issues/21)).
 
 ### User Object
 
@@ -315,9 +333,7 @@ Authorization is a server property and can only be enabled via the actual comman
 
 When authorization is enabled for the first time, only admins will be verified. When a user is made to be an admin through the command line (`make-admin`), they will also be authorized. Users can then be authorized via the [`authorize-user`](#post-apiauthorize-user) endpoint (in the official client, there's a dedicated settings page for this). Users can be deauthorized using [`deauthorize-user`](#post-apideauthorize-user).
 
-When a request is made to the API of a server which requires authorization, the server searches for a session ID given in the request. (First it checks for a `sessionID` field in POST data; if that's not found, it checks the `?sessionID` query field.) If no session ID is found, or the session ID is for a user who isn't authorized, the request is immediately ended with status code 403 and an error. Otherwise, the request is processed as normal.
-
-What the above *basically* means is that you should always send `sessionID` (either in the POST body or the URL query), or else servers with authorization enabled won't let you do much of anything.
+See [authentication](#authentication) for details on how to authenticate. What this *basically* means is that you should always send `sessionID` (either in the POST body, the URL query string, or as a header), or else servers with authorization enabled won't let you do much of anything.
 
 Note that some endpoints do not require authorization:
 
@@ -325,6 +341,15 @@ Note that some endpoints do not require authorization:
 * [`POST /api/login`](#post-apilogin)
 * [`POST /api/register`](#post-apiregister)
 * [`GET /api/session/:sessionID`](#get-apisessionsessionid)
+
+### Authentication:
+
+When a request is made to the API, the server searches for a session ID given in the request using:
+* `sessionID` in POST data
+* `?sessionID` in query string
+* `X-Session-ID` header
+
+If the server requires [authorization](#authorization) and the session ID could not be found or pointed to an unauthenticated user, the request is immediately terminated with a 403 and error message. It's likely simpler to just send the `X-Session-ID` header with _all_ requests, even on non-authorization-requiring servers.
 
 ### Dates
 
