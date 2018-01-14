@@ -1,13 +1,6 @@
-db/*
-!db/.gitkeep
-
-uploads/*
-!uploads/.gitkeep
+uploads
 
 node_modules
-
-site/dist/*.js
-site/dist/*.css
 
 yarn.lock
 package-lock.json
