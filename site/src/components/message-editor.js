@@ -77,7 +77,7 @@ const component = (state, emit) => {
     }
   })
 
-  if (state.session) {
+  if (state.session.id) {
     const editor = html`<div class=${prefix}>
       ${textarea}
       <button onclick=${send}>Send</button>

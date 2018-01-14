@@ -26,7 +26,7 @@ const store = (state, emitter) => {
       state.serverRequiresAuthorization === false ||
 
       // and it definitely won't work if the user is logged out
-      state.session === null
+      state.session.id === null
     ) return
 
     state.authorizedUsers.fetching = true
