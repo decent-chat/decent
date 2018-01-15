@@ -134,7 +134,7 @@ app.use((state, emitter) => {
       // basically don't function without it
       await new Promise(resolve => state.ws.once('open', resolve))
 
-      state.ws.on('*', (evt, timestamp, data) => {
+      state.ws.on('*', (evt, data, timestamp) => {
         if (evt === 'pingdata') {
           state.ws.send('pongdata', {
             sessionID: state.session.id
