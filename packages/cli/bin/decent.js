@@ -1,4 +1,4 @@
-#!/usr/bin/node
+#!/usr/bin/env node
 
 const server = require('@decent/server')
 const client = require('@decent/client')
