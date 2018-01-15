@@ -3,7 +3,7 @@
 <h4>
   <a href='#join-a-server'> Join a server </a>
   <span> | </span>
-  <a href='#install'> Host a server </a>
+  <a href='#installation'> Host a server </a>
   <span> | </span>
   <a href='https://decent-chat.github.io/decent/api.html'> Documentation </a>
 </h4>
