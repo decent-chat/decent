@@ -18,6 +18,7 @@
   "dependencies": {
     "@decent/client": "^0.0.0",
     "@decent/server": "^0.0.0",
-    "express": "^4.16.2"
+    "express": "^4.16.2",
+    "fix-whitespace": "^1.0.3"
   }
 }
