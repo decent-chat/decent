@@ -8,6 +8,7 @@ const Datastore = require('nedb-promise')
 const express = require('express')
 const WebSocket = require('ws')
 const http = require('http')
+const cors = require('cors')
 
 const attachAPI = require('./api')
 const settings = require('./settings')
