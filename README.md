@@ -37,11 +37,13 @@ You will need:
 * A recent version of Node.js - [n](https://npm.im/n) helps here
 * A recent version of [your favourite web browser](https://www.mozilla.org/en-US/firefox/new/)
 
+> **Important**: Decent is not currently published to npm. You need to [install from source](#from-source).
+
 ```sh
 > npm install -g @decent/cli
 
 > mkdir my-decent-database
-> decent 8000 my-decent-database
+> decent 8000 /path/to/database/directory
 
 # visit http://localhost:8000
 ```
@@ -66,7 +68,22 @@ If you're want to make your server private/invite-only, execute:
 decent> set requireAuthorization on
 ```
 
+### From source
+```sh
+> git clone https://github.com/decent-chat/decent
+> cd decent
+
+> npx lerna bootstrap
+> npx lerna run build
+
+> cd packages/cli
+> npm install --global
+
+> decent 8000 /path/to/database/directory
+```
+
 ## Contributing
+> **Important**: You'll need to [install from git](#from-source) rather than npm to contribute!
 
 This repository is a [lerna monorepo](https://github.com/lerna/lerna), consisting of:
 * [@decent/server](https://github.com/decent-chat/decent/tree/master/packages/server) - implementation of the Decent server API

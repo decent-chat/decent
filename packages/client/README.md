@@ -19,5 +19,12 @@ Serve `index.html`, `dist` and `img` over HTTP:
 > python3 -m http.server
 ```
 
+### contributing
+[Install from source](https://github.com/decent-chat/decent#from-source). To re-build on file change, use:
+```sh
+> npm run watch
+```
+At the same time use `python3 -m http.server` (or similar) to serve your build of the client.
+
 ### license
 GPL-3.0
