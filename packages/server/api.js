@@ -564,9 +564,14 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         return
       }
 
-      // We'll save the session ID as a middleware-var so we can use it
-      // in the upcoming requests.
-      Object.assign(request[middleware.vars], {sessionID})
+      if (sessionID) {
+        // We'll save the session ID as a middleware-var so we can use it
+        // in the upcoming requests.
+        Object.assign(request[middleware.vars], {sessionID})
+
+        // Note we don't set sessionID at all if it's undefined - runIfVarExists
+        // takes even undefined values to "exist", and we don't want that.
+      }
 
       next()
     },
