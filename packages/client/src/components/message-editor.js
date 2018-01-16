@@ -8,7 +8,7 @@ const prefix = css('./message-editor.css')
 const component = (state, emit) => {
   const textarea = html`<textarea placeholder='Enter a message...'></textarea>`
 
-  async function send() {
+  async function send () {
     const text = textarea.value.trim()
 
     if (text.length === 0) return
@@ -17,7 +17,7 @@ const component = (state, emit) => {
     await api.post(state, 'send-message', {
       text,
       channelID: state.params.channel,
-      sessionID: state.session.id,
+      sessionID: state.session.id
     })
   }
 
@@ -65,7 +65,7 @@ const component = (state, emit) => {
       await api.post(state, 'send-message', {
         text: `![](${state.secure ? 'https' : 'http'}://${state.params.host}${path})`,
         channelID: state.params.channel,
-        sessionID: state.session.id,
+        sessionID: state.session.id
       })
 
       progressBar.style.width = '100%'

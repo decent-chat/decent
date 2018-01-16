@@ -7,37 +7,25 @@ const pool = new Map() // host -> WS
 
 // WS is just nanobus wrapping a WebSocket
 class WS extends Nanobus {
-  constructor(host) {
+  constructor (host, useSecure) {
     super()
 
     this.host = host
+    this.useSecure = useSecure
 
-    if (pool.has(host)) {
-      // we already have a WS connected to this server,
-      // so we can just use that one
-      const parent = pool.get(host)
-
-      this.socket = parent.socket
-      parent.on('open', () => this.socket = parent.socket)
-
-      parent.on('*', (evt, t, data) => {
-        this.emit(evt, data)
-      })
-    } else {
-      pool.set(host, this) // add to pool
-      this.connectTo(host)
-    }
+    this.connectTo(host)
   }
 
-  connectTo(host, useSecure) {
+  connectTo (host) {
     return new Promise((resolve, reject) => {
-      const uri = (useSecure ? 'wss://' : 'ws://') + host
-      this.secure = useSecure
+      const uri = (this.useSecure ? 'wss://' : 'ws://') + host
 
       this.socket = new WebSocket(uri)
 
       // listen for events on the socket
       this.socket.addEventListener('open', event => {
+        console.log('util/ws: connected', { host })
+
         this.emit('open', event)
         resolve(event)
       })
@@ -51,6 +39,8 @@ class WS extends Nanobus {
 
       this.socket.addEventListener('close', event => {
         if (!event.wasClean) {
+          console.warn('util/ws: connection closed unexpectedly', { host })
+
           // try to reconnect
           this.tryReconnect(host)
         }
@@ -60,7 +50,7 @@ class WS extends Nanobus {
     })
   }
 
-  tryReconnect(host) {
+  tryReconnect (host) {
     const reconnect = n => async () => {
       if (n > 5) n = 5 // max out at 5s between retries
 
@@ -70,10 +60,8 @@ class WS extends Nanobus {
         // :tada:
         this.emit('reconnect')
 
-        console.info('reconnected websocket', { host, tries: n })
+        console.log('util/ws: reconnected', { host, tries: n })
       } catch (error) {
-        console.error('failed to reconnect websocket', { host, error })
-
         // retry - the time we wait between retries will continually increase
         setTimeout(reconnect(n + 1), n * 1000)
       }
@@ -83,11 +71,23 @@ class WS extends Nanobus {
   }
 
   // sends { evt, data } down the socket
-  send(evt, data) {
+  send (evt, data) {
     const payload = JSON.stringify({ evt, data })
 
     this.socket.send(payload)
   }
 }
 
-module.exports = WS
+module.exports = (host, useSecure) => {
+  // if there's already an open websocket connection to this host, use
+  // it instead of creating a new one
+  if (pool.has(host)) {
+    return pool.get(host)
+  }
+
+  const ws =  new WS(host, useSecure)
+
+  pool.set(host, ws) // add to pool
+
+  return ws
+}

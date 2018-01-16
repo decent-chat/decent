@@ -13,11 +13,13 @@
   "author": "Multiple contributors",
   "license": "GPL-3.0",
   "dependencies": {
-    "choo": "^6.6.1",
-    "choo-devtools": "^2.3.3",
+    "bel": "^5.1.5",
     "mrk.js": "^1.0.1",
     "nanobus": "^4.3.2",
-    "prismjs": "^1.9.0"
+    "nanochoo": "^6.6.3",
+    "nanocomponent": "^6.5.0",
+    "nanostate": "^1.0.3",
+    "no-new": "^0.1.1"
   },
   "devDependencies": {
     "browserify": "^15.1.0",
@@ -26,14 +28,16 @@
     "pretty-bytes-cli": "^2.0.0",
     "sheetify": "^6.2.0",
     "sheetify-nested": "^1.0.2",
+    "snazzy": "^7.0.0",
+    "standard": "^10.0.3",
     "tinyify": "^2.4.0",
     "watchify": "^3.9.0",
     "yo-yoify": "^4.3.0"
   },
   "scripts": {
     "build": "browserify src/app.js -o dist/bundle.js -g yo-yoify -t [ sheetify -u sheetify-nested ] -p [ css-extract -o dist/bundle.css ] -p tinyify && cat dist/bundle.js | gzip --best > dist/bundle.js.gz && cat dist/bundle.js.gz | wc -c | pretty-bytes",
-    "watch": "watchify src/app.js -o dist/decent.js -d -t [ sheetify -u sheetify-nested ] -p [ css-extract -o dist/bundle.css ] -v",
+    "watch": "watchify src/app.js -o dist/bundle.js -d -t [ sheetify -u sheetify-nested ] -p [ css-extract -o dist/bundle.css ] -v",
     "prepublishOnly": "npm run build",
-    "test": "dependency-check . --entry src/app.js --missing --unused --no-dev -i sheetify"
+    "test": "standard --verbose | snazzy && dependency-check . --entry src/app.js --missing --unused --no-dev -i sheetify"
   }
 }

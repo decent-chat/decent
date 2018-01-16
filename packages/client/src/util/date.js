@@ -5,7 +5,7 @@ const day = 24 * hour
 const week = 7 * day
 
 // returns 3-character month name from a Date
-const month = d => [ 'Jan', 'Feb',' Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' ][d.getMonth()]
+const month = d => [ 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' ][d.getMonth()]
 
 // converts a milliseconds-date-number to a readable string
 // * < 60sec: just now
@@ -13,7 +13,7 @@ const month = d => [ 'Jan', 'Feb',' Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 // * < 24hrs: X hours (or 1 hour) -- rounded, not floored
 // * > 24hrs: X days (or 1 day)
 // * > 7days: date (e.g. Apr 2)
-module.exports.timeAgo = function(date) {
+module.exports.timeAgo = function (date) {
   const s = (t, n) => n + ' ' + t + (n === 1 ? '' : 's')
 
   const ago = Date.now() - date

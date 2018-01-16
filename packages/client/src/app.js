@@ -1,30 +1,16 @@
-const choo = require('choo')
-const devtools = require('choo-devtools')
-const html = require('choo/html')
+const choo = require('nanochoo')
+const html = require('bel')
 const css = require('sheetify')
 
-// import util
 const util = require('./util')
-const { api } = util
 
-// publish util for debugging/experimenting
-Object.assign(window, { util })
-
-// import root-level components
-const messages = require('./components/messages')
-const messageEditor = require('./components/message-editor')
-const sidebar = require('./components/sidebar')
-const accountSettings = require('./components/account-settings')
-const srvSettings = {
-  emotes: require('./components/srv-settings/emotes'),
-  authorizedUsers: require('./components/srv-settings/authorized-users'),
-}
+// import root components
+const Sidebar = require('./components/sidebar')
 
 // create app
 const app = choo()
 
-app.use(devtools())
-
+/*
 app.use((state, emitter) => {
   state.session = null // { id, user }
   state.ws = null // WS
@@ -32,7 +18,7 @@ app.use((state, emitter) => {
   state.serverRequiresAuthorization = false
 
   Object.defineProperty(state, 'sessionAuthorized', {
-    get: function() {
+    get: function () {
       if (state.serverRequiresAuthorization) {
         return state._sessionAuthorized
       } else {
@@ -40,7 +26,7 @@ app.use((state, emitter) => {
       }
     },
 
-    set: function(value) {
+    set: function (value) {
       state._sessionAuthorized = value
     }
   })
@@ -53,7 +39,7 @@ app.use((state, emitter) => {
   // offline and the user of the new session ID came online).
 
   state._session = new Proxy({}, {
-    set: function(target, key, value) {
+    set: function (target, key, value) {
       if (key === 'id') {
         if (target.id !== value) {
           state.ws.send('pongdata', { sessionID: value })
@@ -63,7 +49,7 @@ app.use((state, emitter) => {
       return Reflect.set(target, key, value)
     },
 
-    deleteProperty: function(target, key) {
+    deleteProperty: function (target, key) {
       if (key === 'id') {
         state.ws.send('pongdata', { sessionID: null })
       }
@@ -73,11 +59,11 @@ app.use((state, emitter) => {
   })
 
   Object.defineProperty(state, 'session', {
-    get: function() {
+    get: function () {
       return state._session
     },
 
-    set: function(newSession) {
+    set: function (newSession) {
       // Delete keys which aren't found on the session.
       for (const key of Object.keys(state._session)) {
         if (newSession === null || Object.keys(newSession).includes(key) === false) {
@@ -154,93 +140,54 @@ app.use((state, emitter) => {
     emitter.emit('routeready')
   })
 })
+*/
 
-app.use(messages.store)
-app.use(sidebar.store)
-app.use(accountSettings.store)
+// connect websockets to global emitter. events:
+//  - ws:any:*     (events from any websocket)
+//  - ws:HOST:*    (events from websocket connected to HOST)
+//  - ws:active:*  (events from the current host's websocket)
+app.use((_, emitter) => {
+  emitter.on('switchhost', async host => {
+    if (host === null) return
 
-for (const [ name, s ] of Object.entries(srvSettings)) {
-  if (s.store) {
-    app.use(s.store)
-  }
-}
+    const { useSecure } = await util.api.get('should-use-secure')
+    const ws = util.WS(host, useSecure)
 
-// declare routes
-{
-  const notFound = (state, emit) => html`<div id='app'>
-    ${sidebar.component(state, emit)}
-    <main>
-      <div class='page'>
-        <h3> Not found </h3>
-      </div>
-    </main>
+    if (useSecure) util.api.enableSecure()
+
+    ws.on('*', (evt, _, data) => {
+      emitter.emit('ws:any:' + evt, data)
+      emitter.emit(`ws:${host}:` + evt, data)
+      if (host === util.api.host) emitter.emit('ws:active:' + evt, data)
+    })
+
+    ws.on('pingdata', () => {
+      ws.send('pongdata', {
+        sessionID: util.storage.get('sessionid/' + host)
+      })
+    })
+  })
+})
+
+// declare view
+const sidebar = Sidebar(app.emitter)
+
+css('./app.css')
+
+app.view((state, emit) => {
+  return html`<div id='app'>
+    ${sidebar.render()}
+    <main> Hello, world </main>
   </div>`
-
-  // 404 (TODO: make prettier)
-  app.route('*', (state, emit) => {
-    return notFound(state, emit)
-  })
-
-  // no server
-  app.route('/', (state, emit) => {
-    state.session = null
-
-    return html`<div id='app'>
-      ${sidebar.component(state, emit)}
-      <main></main>
-    </div>`
-  })
-
-  // server with channel open
-  app.route('/servers/:host/channels/:channel', (state, emit) => {
-    return html`<div id='app'>
-      ${sidebar.component(state, emit)}
-      <main>
-        ${messages.component(state, emit)}
-        ${state.messages.list !== null ? messageEditor.component(state, emit) : html`<span></span>`}
-      </main>
-    </div>`
-  })
-
-  // server account settings page
-  app.route('/servers/:host/account', (state, emit) => {
-    return html`<div id='app'>
-      ${sidebar.component(state, emit)}
-      <main>
-        ${accountSettings.component(state, emit)}
-      </main>
-    </div>`
-  })
-
-  // server settings (admins only) page
-  app.route('/servers/:host/settings/:setting', (state, emit) => {
-    if (state.session.id === null || state.session.user.permissionLevel !== 'admin' || !srvSettings[state.params.setting]) {
-      return notFound(state, emit)
-    }
-
-    // only show authorized users page on servers which require authorization
-    if (state.params.setting === 'authorizedUsers' && !state.serverRequiresAuthorization) {
-      return notFound(state, emit)
-    }
-
-    return html`<div id='app'>
-      ${sidebar.component(state, emit)}
-      <main>
-        ${srvSettings[state.params.setting].component(state, emit)}
-      </main>
-    </div>`
-  })
-
-  // server
-  app.route('/servers/:host', (state, emit) => {
-    return html`<div id='app'>
-      ${sidebar.component(state, emit)}
-      <main></main>
-    </div>`
-  })
-}
+})
 
 // mount app
 app.mount('#app')
 
-css('./app.css')
+// publish some objects for debugging
+Object.assign(window, {
+  util,
+  app,
+  emit: (...args) => app.emitter.emit(...args),
+  sidebar
+})

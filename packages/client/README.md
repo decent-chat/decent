@@ -26,5 +26,7 @@ Serve `index.html`, `dist` and `img` over HTTP:
 ```
 At the same time use `python3 -m http.server` (or similar) to serve your build of the client.
 
+Note that this package uses [standard](https://standardjs.com/). Use `npm run test` to lint.
+
 ### license
 GPL-3.0

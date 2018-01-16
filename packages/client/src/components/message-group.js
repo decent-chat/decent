@@ -5,7 +5,6 @@ const html = require('choo/html')
 const mrk = require('../util/mrk')
 const { timeAgo } = require('../util/date')
 
-css('prismjs/themes/prism.css')
 const prefix = css('./message-group.css')
 
 // times are updated outside of choo because we don't need to
@@ -31,10 +30,10 @@ const component = (state, emit, group) => {
     return html`<div></div>`
   }
 
-  function timeEl(date) {
+  function timeEl (date) {
     const { needsUpdate, string } = timeAgo(date)
 
-    return html`<time class=${needsUpdate ? 'needs-update': ''}
+    return html`<time class=${needsUpdate ? 'needs-update' : ''}
          title=${new Date(date).toLocaleString()}
          data-date=${date.toString()}>
       ${string}
@@ -61,9 +60,9 @@ const component = (state, emit, group) => {
 
           ref.onclick = () => {
             if (channel) {
-              emit('pushState',  `/servers/${server || state.params.host}?c=${channel}`)
+              emit('pushState', `/servers/${server || state.params.host}?c=${channel}`)
             } else {
-              emit('pushState',  `/servers/${server}`)
+              emit('pushState', `/servers/${server}`)
             }
           }
         }

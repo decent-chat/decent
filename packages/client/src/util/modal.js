@@ -1,8 +1,9 @@
 // pretty Modal class. replaces window.prompt and friends
 
 const Nanobus = require('nanobus')
-const html = require('choo/html')
+const html = require('bel')
 const css = require('sheetify')
+const nonew = require('no-new')
 
 css('./modal.css')
 
@@ -16,7 +17,7 @@ const constructStyledInput = (name, i, j) => {
 }
 
 class Modal extends Nanobus {
-  constructor(opts) {
+  constructor (opts) {
     super('modal')
 
     const content = html`<div class='content'></div>`
@@ -82,20 +83,20 @@ class Modal extends Nanobus {
     this.opts = opts
   }
 
-  disable(state = true) {
+  disable (state = true) {
     // disable all inputs
     for (const { name, el } of this.styledInputs) {
       el.querySelector('input').disabled = !!state
     }
   }
 
-  focus() {
+  focus () {
     // focus on the FIRST input
     // tabindex is set so people can then use tab to select the next one
     this.styledInputs[0].el.querySelector('input').focus()
   }
 
-  get values() {
+  get values () {
     // map of input id to its current value
     const map = {} // we _would_ use a Map here but then you can't destructure it
 
@@ -112,18 +113,18 @@ class Modal extends Nanobus {
     return map
   }
 
-  showError(message) {
+  showError (message) {
     // display an error message
     this.errorEl.innerText = message
   }
 
-  submit() {
+  submit () {
     // submit the modal -- don't close it
     // this only means emitting the 'submit' event
     this.emit('submit', this.values)
   }
 
-  close() {
+  close () {
     // close the modal
     this.visible = false
     this.el.remove()
@@ -136,4 +137,4 @@ class Modal extends Nanobus {
   }
 }
 
-module.exports = Modal
+module.exports = nonew(Modal)

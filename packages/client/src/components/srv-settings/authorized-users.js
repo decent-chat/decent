@@ -14,7 +14,7 @@ const store = (state, emitter) => {
     fetched: false,
 
     // true once save is pressed; false when the textarea is changed
-    authMessageSaved: false,
+    authMessageSaved: false
   }
 
   reset()

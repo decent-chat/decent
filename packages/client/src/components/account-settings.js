@@ -10,7 +10,7 @@ const store = (state, emitter) => {
     sessionList: null,
     fetchingSessions: false,
     oldRoute: '/',
-    shouldFetchSessionsAgain: false,
+    shouldFetchSessionsAgain: false
   }
 
   reset()
@@ -81,11 +81,11 @@ const component = (state, emit) => {
       try {
         const { avatarURL } = await api.post(state, 'account-settings', {
           email,
-          sessionID: state.session.id,
+          sessionID: state.session.id
         })
 
         Object.assign(state.session.user, {
-          email, avatarURL,
+          email, avatarURL
         })
 
         emit('render')

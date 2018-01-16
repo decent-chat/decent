@@ -1,4 +1,4 @@
-const html = require('choo/html')
+const html = require('bel')
 const css = require('sheetify')
 const { api, Modal } = require('../../util')
 
@@ -7,7 +7,7 @@ const prefix = css('./emotes.css')
 const store = (state, emitter) => {
   const reset = () => state.emotes = {
     list: null, // null if unloaded, array if loaded
-    fetching: false,
+    fetching: false
   }
 
   reset()
@@ -55,10 +55,10 @@ const component = (state, emit) => {
 
       inputs: {
         image: { label: 'Image', type: 'file', accept: 'image/*' },
-        shortcode: { label: 'Name', placeholder: 'e.g. thinking' },
+        shortcode: { label: 'Name', placeholder: 'e.g. thinking' }
       },
 
-      button: 'Add',
+      button: 'Add'
     })
 
     modal.on('submit', async ({ image, shortcode }) => {
@@ -105,7 +105,7 @@ const component = (state, emit) => {
         patch: {
           emotes: [ ...state.emotes.list, emote ]
         },
-        sessionID: state.session.id,
+        sessionID: state.session.id
       }).catch(error => {
         modal.showError('Internal error')
         modal.disable(false)
@@ -129,9 +129,9 @@ const component = (state, emit) => {
 
       await api.post(state, 'server-settings', {
         patch: {
-          emotes: state.emotes.list,
+          emotes: state.emotes.list
         },
-        sessionID: state.session.id,
+        sessionID: state.session.id
       }).catch(error => {
         throw error
       })

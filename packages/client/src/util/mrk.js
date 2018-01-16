@@ -2,7 +2,7 @@ const mrk = require('mrk.js')
 
 const withState = state => {
   Object.assign(mrk.patterns, {
-    image({ read, readUntil }, meta) {
+    image ({ read, readUntil }, meta) {
       if (read(2) !== '![') return
 
       // All characters up to `]` are the alt text
@@ -21,14 +21,15 @@ const withState = state => {
 
     // mrk supports 'code' already - but we don't want it to apply
     // it if it's just '``' (i.e. no content)
-    code({ read, has }) {
-      if(read() === '`') {
+    code ({ read, has }) {
+      if (read() === '`') {
         if (read() === '`') return false
 
         // Eat up every character until another backtick
-        let escaped = false, char, n
+        let escaped = false
+        let char
 
-        while (char = read()) {
+        while ((char = read())) {
           if (char === '\\' && !escaped) escaped = true
           else if (char === '`' && !escaped) return true
           else escaped = false
@@ -36,7 +37,7 @@ const withState = state => {
       }
     },
 
-    codeblock({ read, readUntil, look }, meta) {
+    codeblock ({ read, readUntil, look }, meta) {
       if (read(3) !== '```') return
 
       let numBackticks = 3
@@ -66,13 +67,13 @@ const withState = state => {
       return true
     },
 
-    channelref({ read, readUntil, look }, meta) {
+    channelref ({ read, readUntil, look }, meta) {
       let server = ''
       let c
       if (look() === '+') {
         read()
 
-        while (c = look()) {
+        while ((c = look())) {
           if (c === '#' || c === ' ' || c === '') break
           server += read()
         }
@@ -82,7 +83,7 @@ const withState = state => {
       if (look() === '#') {
         read()
 
-        while (c = look()) {
+        while ((c = look())) {
           if (c === ' ' || c === '') break
           channel += read()
         }
@@ -95,19 +96,19 @@ const withState = state => {
       return true
     },
 
-    emote({ read, has }) {
-      if(read() === ':') {
+    emote ({ read, has }) {
+      if (read() === ':') {
         if (read() === ':') return false
 
         // Eat up every valid character until another colon
-        let escaped = false, char, n
+        let char
 
-        while (char = read()) {
+        while ((char = read())) {
           if (char === ':') return true
           else if (/[a-zA-Z0-9-_]/.test(char) === false) return false
         }
       }
-    },
+    }
   })
 
   Object.assign(mrk.htmlify, {
@@ -119,7 +120,7 @@ const withState = state => {
       ${mrk.escapeHTML(text)}
     </a>`,
 
-    image({ metadata }) {
+    image ({ metadata }) {
       const src = mrk.escapeHTML(metadata.src)
       const alt = mrk.escapeHTML(metadata.alt)
 
@@ -128,17 +129,17 @@ const withState = state => {
       </a>`
     },
 
-    codeblock({ metadata }) {
+    codeblock ({ metadata }) {
       return `<pre><code class='codeblock language-${mrk.escapeHTML(metadata.lang).replace(/ /g, '-')}'>${mrk.escapeHTML(metadata.code)}</code></pre>`
     },
 
-    channelref({ metadata, text }) {
+    channelref ({ metadata, text }) {
       return `<a class='channel-ref' data-server='${mrk.escapeHTML(metadata.server)}' data-channel='${mrk.escapeHTML(metadata.channel)}'>
         ${mrk.escapeHTML(text)}
       </a>`
     },
 
-    emote({ text }) {
+    emote ({ text }) {
       const emote = (state.emotes.list || []).find(e => e.shortcode === text.substr(1, text.length - 2))
 
       if (emote) {
@@ -146,7 +147,7 @@ const withState = state => {
       } else {
         return mrk.escapeHTML(text)
       }
-    },
+    }
   })
 
   return mrk
