@@ -131,9 +131,7 @@ Deletes a channel and any messages in it. Returns `{success: true}` if successfu
 
 ### GET `/api/channel-list`
 
-- [Authentication](#authentication): always required. **The requesting user must be an admin.**
-
-Returns `{success: true, channels}`, where channels is an array of [(brief) channel objects](#channel-object) for each channel on the server.
+Returns `{success: true, channels}`, where channels is an array of [(brief) channel objects](#channel-object) for each channel on the server. Note that channel objects have more data when [authentication](#authentication) if provided.
 
 ### GET `/api/channel/:channelID/latest-messages`
 
