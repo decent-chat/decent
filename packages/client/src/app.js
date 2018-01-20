@@ -6,6 +6,7 @@ const util = require('./util')
 
 // import root components
 const Sidebar = require('./components/sidebar')
+const MessagesList = require('./components/messages/list')
 
 // create app
 const app = choo()
@@ -146,6 +147,7 @@ app.use((state, emitter) => {
 //  - ws:any:*     (events from any websocket)
 //  - ws:HOST:*    (events from websocket connected to HOST)
 //  - ws:active:*  (events from the current host's websocket)
+//  - usesecure
 app.use((_, emitter) => {
   emitter.on('switchhost', async host => {
     if (host === null) return
@@ -153,9 +155,10 @@ app.use((_, emitter) => {
     const { useSecure } = await util.api.get('should-use-secure')
     const ws = util.WS(host, useSecure)
 
-    if (useSecure) util.api.enableSecure()
+    util.api.setSecure(useSecure)
+    emitter.emit('usesecure', useSecure)
 
-    ws.on('*', (evt, _, data) => {
+    ws.on('*', (evt, data) => {
       emitter.emit('ws:any:' + evt, data)
       emitter.emit(`ws:${host}:` + evt, data)
       if (host === util.api.host) emitter.emit('ws:active:' + evt, data)
@@ -171,14 +174,50 @@ app.use((_, emitter) => {
 
 // declare view
 const sidebar = Sidebar(app.emitter)
-
-css('./app.css')
+const messagesList = new Map()
 
 app.view((state, emit) => {
-  return html`<div id='app'>
-    ${sidebar.render()}
-    <main> Hello, world </main>
-  </div>`
+  css('./app.css')
+
+  if (state.channel) {
+    if (!messagesList.has(state.channel)) {
+      const ml = new MessagesList(app.emitter, state.channel)
+      messagesList.set(state.channel, ml)
+    }
+
+    return html`
+      <div id='app'>
+        ${sidebar.render()}
+        <main>
+          ${messagesList.get(state.channel).render()}
+        </main>
+      </div>
+    `
+  } else {
+    return html`
+      <div id='app'>
+        ${sidebar.render()}
+        <main></main>
+      </div>
+    `
+  }
+})
+
+// follow active channelID changes (`state.channel`)
+app.use((state, emitter) => {
+  state.channel = ''
+
+  emitter.on('switchchannel', id => {
+    state.channel = id
+    emitter.emit('render')
+  })
+
+  // discount the current channel when we switch host!
+  emitter.on('switchhost', () => {
+    state.channel = ''
+    state.messagesList = new Map()
+    emitter.emit('render')
+  })
 })
 
 // mount app
@@ -189,5 +228,6 @@ Object.assign(window, {
   util,
   app,
   emit: (...args) => app.emitter.emit(...args),
-  sidebar
+  sidebar,
+  messagesList
 })

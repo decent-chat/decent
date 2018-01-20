@@ -85,7 +85,7 @@ module.exports = (host, useSecure) => {
     return pool.get(host)
   }
 
-  const ws =  new WS(host, useSecure)
+  const ws = new WS(host, useSecure)
 
   pool.set(host, ws) // add to pool
 

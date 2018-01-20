@@ -9,6 +9,7 @@ body {
   --gray-700: #eaedf2;
   --gray-500: #cdd1d7;
   --gray-300: #a3a8af;
+  --gray-200: #848484;
   --gray-100: #2d323a;
 
   --blue: #337df4;
@@ -149,6 +150,7 @@ body {
     background: transparent;
 
     &.red { color: var(--red); }
+    &.gray { color: var(--gray-200); }
     &[disabled] { color: var(--gray-300); }
 
     &:hover:not([disabled]) {
@@ -158,6 +160,7 @@ body {
 
   &:not(.no-bg) {
     &.red { background-color: var(--red); color: white; }
+    &.gray { background-color: var(--gray-500); color: var(--gray-200); }
   }
 }
 

@@ -2,7 +2,7 @@
 
 let host = undefined
 let session = null
-let secure = false
+let secure = null
 
 async function fetchHelper (path, fetchConfig = {}) {
   if (!path) throw new Error('No path argument given')
@@ -33,9 +33,9 @@ async function fetchHelper (path, fetchConfig = {}) {
 }
 
 module.exports = {
-  enableSecure () {
-    console.log('util/api: now using https')
-    secure = true
+  setSecure (useSecure) {
+    console.log('util/api: secure: ', useSecure)
+    secure = useSecure
   },
 
   setHost (newHost) {
@@ -53,6 +53,8 @@ module.exports = {
     session = null
   },
 
+  get secureKnown () { return secure !== null },
+  get secure () { return !!secure },
   get session () { return session },
   get host () { return host },
 

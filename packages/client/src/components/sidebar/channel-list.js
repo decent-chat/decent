@@ -29,6 +29,9 @@ class ChannelList extends Nanocomponent {
       this.emitter.emit('render')
 
       try {
+        // we need to know if we need to use secure https:// or not before making this request.
+        if (!api.secureKnown) await new Promise(r => this.emitter.once('usesecure', r))
+
         const { channels } = await api.get('channel-list')
 
         this.channels = channels
@@ -41,8 +44,8 @@ class ChannelList extends Nanocomponent {
           this.switchTo(defaultChannel.id)
         }
       } catch (error) {
-        console.error(error)
         this.machine.emit('error')
+        throw error
       }
     })
 
@@ -55,7 +58,9 @@ class ChannelList extends Nanocomponent {
       }
     })
 
-    this.emitter.on('ws:active:message/new', message => {
+    this.emitter.on('ws:active:message/new', ({ message }) => {
+      if (message.channelID === this.activeChannelID) return
+
       const channel = this.channels.find(c => c.id === message.channelID)
       channel.unreadMessageCount = channel.unreadMesageCount + 1 || 1
 
@@ -163,6 +168,7 @@ class ChannelList extends Nanocomponent {
     console.log('sidebar: switched channel to', { id })
 
     this.activeChannelID = id
+    this.channels.find(c => c.id === id).unreadMessageCount = 0
 
     this.emitter.emit('switchchannel', id)
     this.emitter.emit('render')

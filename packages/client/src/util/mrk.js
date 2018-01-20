@@ -96,6 +96,7 @@ const withState = state => {
       return true
     },
 
+    /*
     emote ({ read, has }) {
       if (read() === ':') {
         if (read() === ':') return false
@@ -109,6 +110,7 @@ const withState = state => {
         }
       }
     }
+    */
   })
 
   Object.assign(mrk.htmlify, {
@@ -139,6 +141,7 @@ const withState = state => {
       </a>`
     },
 
+    /*
     emote ({ text }) {
       const emote = (state.emotes.list || []).find(e => e.shortcode === text.substr(1, text.length - 2))
 
@@ -148,6 +151,7 @@ const withState = state => {
         return mrk.escapeHTML(text)
       }
     }
+    */
   })
 
   return mrk
