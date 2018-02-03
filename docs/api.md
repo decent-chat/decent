@@ -216,6 +216,26 @@ Deletes the given sessions (using their IDs will no longer work). Passing just o
 
 Returns `{sessions}` if successful, where `sessions` is an array of [(brief) session objects](#session-object). All sessions which are logged into the same user as the given session (via `sessionID`) are returned.
 
+
+## Endpoint errors
+
+Nearly all of the [HTTP endpoints](#http-endpoints) return errors situationally. The following list describes each:
+
+- `NOT_FOUND` - For when you try to request a something, but it isn't found (e.g. requesting the user by the name `foobar` when there is no such user).
+- `NOT_YOURS` - For when you attempt to do something impactful (e.g. editing/deleting) to a something you aren't the owner/author of.
+- `MUST_BE_ADMIN` - For when you try to do something limited to admins, but you are not an admin.
+- `ALREADY_PERFORMED` - For when you try to do something, but you have already done that something (e.g. pinning a message you've already pinned).
+- `INCOMPLETE_PARAMETERS` - For when a property is missing from a request's parameters. The missing property's name is passed in `error.missing`.
+- `INVALID_PARAMETER_TYPE` - For when a property is given in a request's parameters, but is not the right type (e.g. passing a string instead of an array). The invalid property's name is passed in `error.invalidParameter`.
+  - Note that this is only for type-checking. Client programs should *never* get this error, regardless of user input. More specific errors, such as `SHORT_PASSWORD`, are responded for issues that might be related to user input.
+- `INVALID_SESSION_ID` - For when a session ID is passed, but there is no session with that ID. (This is for general usage where being logged in is required. For `/session/:sessionID`, `NOT_FOUND` is returned if there is no session with the given ID.)
+- `UPLOAD_FAILED` - For when an upload fails.
+- `NAME_ALREADY_TAKEN` - For when you try to create a something, but your passed name is already taken by another something (e.g. registering a username which is already used by someone else).
+- `SHORT_PASSWORD` - For when you attempt to register but your password is too short.
+- `INCORRECT_PASSWORD` - For when you attempt to log in but you didn't enter the right password. (Note that `NOT_FOUND` is returned if you try to log in with an unused username.)
+- `INVALID_NAME` - For when you try to make something (a user or channel, etc) with an invalid name.
+
+
 ## WebSocket events
 
 These are the events which are used to send (and receive) data specific to individual connections to the server, and for "live" updates (e.g. rather than having the client poll the server for new messages every 5 seconds, the server emits a message to the client's web socket whenever a new message appears). These should certainly be considered when designing a custom client as they are the primary way in which the server talks to the client.
@@ -355,12 +375,12 @@ When a request is made to the API, the server searches for a session ID given in
 * `?sessionID` in query string
 * `X-Session-ID` header
 
-If the server requires [authorization](#authorization) and the session ID could not be found or pointed to an unauthenticated user, the request is immediately terminated with a 403 and error message. It's likely simpler to just send the `X-Session-ID` header with _all_ requests, even on non-authorization-requiring servers.
+If the server requires [authorization](#authorization) and the session ID could not be found or pointed to an unauthenticated user, the request is immediately terminated with a 403 status code. It's likely simpler to just send the `X-Session-ID` header with _all_ requests, even on non-authorization-requiring servers.
 
 ### Dates
 
-It should be noted that, in this document, "dates" are numbers specified according to JavaScript's [`Date.now`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/now) function. This is equal to the number of *milliseconds* elapsed since the UNIX epoch. Programming languages which expect a UNIX timestamp may stumble as they expect a number of seconds since the UNIX epoch, not a number of milliseconds.
+In this document and throughout the API, "dates" are numbers specified according to JavaScript's [`Date.now`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/now) function. This is equal to the number of *milliseconds* elapsed since the UNIX epoch. Programming languages which expect a UNIX timestamp may stumble as they expect a number of seconds since the UNIX epoch, not a number of milliseconds.
 
 ### Valid names
 
-Several parts of the API expect names to be given (e.g. [creating a channel](#post-apicreate-channel)). These names will eventually be displayed to users, and so must follow a basic guideline for being formatted: **Names may consist only of alphanumeric characters, underscores (`_`), and dashes (`-`).** When a name which does not follow these guidelines is given to an endpoint, an error message will be responded and the request will have no action.
+Several parts of the API expect names to be given (e.g. [creating a channel](#post-apicreate-channel)). These names will eventually be displayed to users, and so must follow a basic guideline for being formatted: **Names may consist only of alphanumeric characters, underscores (`_`), and dashes (`-`).** When a name which does not follow these guidelines is given to an endpoint, an `INVALID_NAME` [error](#endpoint-errors) will be responded and the request will have no action.
