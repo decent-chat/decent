@@ -78,7 +78,7 @@ server(port, dbDir).then(async ({ settings, app, db }) => {
 
           const [ key, value ] = parts.slice(1)
 
-          const result = await setSetting(db.settings, settings.serverPropertiesID, key, value)
+          const result = await settings.setSetting(db.settings, settings.serverPropertiesID, key, value)
 
           if (result === 'updated') {
             console.log('Set.')
