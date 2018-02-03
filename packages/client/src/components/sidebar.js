@@ -184,7 +184,7 @@ const store = (state, emitter) => {
       modal.disable()
 
       try {
-        const { success } = await api.post(state, 'create-channel', {
+        await api.post(state, 'create-channel', {
           name: channelName.trim(),
           sessionID: state.session.id,
         })

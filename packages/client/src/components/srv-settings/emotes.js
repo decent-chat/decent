@@ -17,7 +17,7 @@ const store = (state, emitter) => {
 
     state.emotes.fetching = true
 
-    const { emotes } = await api.get(state, 'server-settings')
+    const { settings: { emotes } } = await api.get(state, 'server-settings')
 
     state.emotes.list = emotes
     state.emotes.fetching = false

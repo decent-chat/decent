@@ -666,7 +666,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       } else {
         const { path } = req[middleware.vars]
         res.status(200).end(JSON.stringify({
-          success: true, path
+          path
         }))
       }
     })
@@ -675,7 +675,9 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   app.get('/api/server-settings', [
     async (request, response) => {
       const serverSettings = await db.settings.findOne({_id: serverSettingsID})
-      response.status(200).end(JSON.stringify(serverSettings))
+      response.status(200).end(JSON.stringify({
+        settings: serverSettings
+      }))
     }
   ])
 
@@ -755,7 +757,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       await markChannelAsRead(sessionUser._id, channelID)
 
       response.status(201).end(JSON.stringify({
-        success: true,
         messageID: message._id
       }))
     }
@@ -790,9 +791,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         }
       })
 
-      response.status(200).end(JSON.stringify({
-        success: true
-      }))
+      response.status(200).end(JSON.stringify({}))
     }
   ])
 
@@ -845,7 +844,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       }
 
       response.status(200).end(JSON.stringify({
-        success: true,
         newCount: newReactionCount
       }))
     }
@@ -881,7 +879,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       sendToAllSockets('message/edit', {message: await serialize.message(newMessage)})
 
-      response.status(200).end(JSON.stringify({success: true}))
+      response.status(200).end(JSON.stringify({}))
     }
   ])
 
@@ -908,7 +906,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       // We don't want to send back the message itself, obviously!
       sendToAllSockets('message/delete', {messageID: message._id})
 
-      response.status(200).end(JSON.stringify({success: true}))
+      response.status(200).end(JSON.stringify({}))
     }
   ])
 
@@ -919,7 +917,9 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     async (request, response) => {
       const { message } = request[middleware.vars]
 
-      response.status(200).end(JSON.stringify(await serialize.message(message)))
+      response.status(200).end(JSON.stringify({
+        message: await serialize.message(message)
+      }))
     }
   ])
 
@@ -950,7 +950,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       })
 
       response.status(201).end(JSON.stringify({
-        success: true,
         channelID: channel._id
       }))
     }
@@ -981,9 +980,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         channelID, newName: name
       })
 
-      response.status(200).end(JSON.stringify({
-        success: true
-      }))
+      response.status(200).end(JSON.stringify({}))
     }
   ])
 
@@ -1007,9 +1004,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         channelID
       })
 
-      response.status(200).end(JSON.stringify({
-        success: true
-      }))
+      response.status(200).end(JSON.stringify({}))
     }
   ])
 
@@ -1024,7 +1019,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       const { channel, sessionUser } = request[middleware.vars]
 
       response.status(200).end(JSON.stringify({
-        success: true,
         channel: await serialize.channelDetail(channel, sessionUser)
       }))
     }
@@ -1041,7 +1035,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       const channels = await db.channels.find({})
 
       response.status(200).end(JSON.stringify({
-        success: true,
         channels: await Promise.all(channels.map(channel => {
           return serialize.channelBrief(channel, sessionUser)
         }))
@@ -1101,7 +1094,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       }
 
       response.status(200).end(JSON.stringify({
-        success: true,
         messages: await Promise.all(messages.map(serialize.message))
       }))
     }
@@ -1117,9 +1109,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       await markChannelAsRead(sessionUser._id, channelID)
 
-      response.status(200).end(JSON.stringify({
-        success: true
-      }))
+      response.status(200).end(JSON.stringify({}))
     }
   ])
 
@@ -1133,7 +1123,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       const count = await getUnreadMessageCountInChannel(sessionUser, channelID)
 
       response.status(200).end(JSON.stringify({
-        success: true, count
+        count
       }))
     }
   ])
@@ -1175,7 +1165,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       })
 
       response.status(201).end(JSON.stringify({
-        success: true,
         user: await serialize.user(user)
       }))
     }
@@ -1198,7 +1187,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       }
 
       response.status(200).end(JSON.stringify({
-        success: true,
         user: await serialize.user(user)
       }))
     }
@@ -1218,7 +1206,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       })
 
       response.status(200).end(JSON.stringify({
-        success: true,
         avatarURL: emailToAvatarURL(email),
       }))
     }
@@ -1244,7 +1231,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         ])
 
         const result = {
-          success: true,
           users: await Promise.all(authorizedUsers.map(serialize.user))
         }
 
@@ -1265,7 +1251,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         const users = await db.users.find({})
 
         response.status(200).end(JSON.stringify({
-          success: true,
           users: await Promise.all(users.map(serialize.user))
         }))
       }
@@ -1309,7 +1294,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         })
 
         response.status(200).end(JSON.stringify({
-          success: true,
           sessionID: session._id
         }))
       } else {
@@ -1337,7 +1321,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       }
 
       response.status(200).end(JSON.stringify({
-        success: true,
         session: await serialize.sessionDetail(session)
       }))
     }
@@ -1370,9 +1353,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         $set: {authorized: true}
       })
 
-      response.status(200).end(JSON.stringify({
-        success: true
-      }))
+      response.status(200).end(JSON.stringify({}))
     }
   ])
 
@@ -1394,9 +1375,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         $set: {authorized: false}
       })
 
-      response.status(200).end(JSON.stringify({
-        success: true
-      }))
+      response.status(200).end(JSON.stringify({}))
     }
   ])
 
@@ -1422,9 +1401,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
           sid => db.sessions.remove({_id: sid})
         ))
 
-        response.status(200).end(JSON.stringify({
-          success: true
-        }))
+        response.status(200).end(JSON.stringify({}))
       }
     }
   ])
@@ -1438,7 +1415,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       const sessions = await db.sessions.find({userID: sessionUser._id})
 
       response.status(200).end(JSON.stringify({
-        success: true,
         sessions: await Promise.all(sessions.map(serialize.sessionBrief))
       }))
     }
