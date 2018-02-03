@@ -613,7 +613,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       // For people viewing the API manually for whatever reason to have
       // something to reference, we provide some info about the server itself.
       message: `This is a Decent chat server. See the repo for details.`,
-      repository: 'https://github.com/towerofnix/decent',
+      repository: 'https://github.com/decent-chat/decent',
     }))
   })
 
