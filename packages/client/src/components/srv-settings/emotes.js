@@ -107,7 +107,7 @@ const component = (state, emit) => {
         },
         sessionID: state.session.id,
       }).catch(error => {
-        modal.showError('Internal error')
+        modal.showError(error.message)
         modal.disable(false)
         throw error
       })
@@ -132,8 +132,6 @@ const component = (state, emit) => {
           emotes: state.emotes.list,
         },
         sessionID: state.session.id,
-      }).catch(error => {
-        throw error
       })
 
       emit('render')
