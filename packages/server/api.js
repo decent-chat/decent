@@ -341,7 +341,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         }
       }).concat(runIfNot.map(callback => async (request, response, next) => {
         if (!await conditionFn()) {
-          callback(request, rseponse, next)
+          callback(request, response, next)
         } else {
           next()
         }
@@ -1225,7 +1225,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   ])
 
   app.get('/api/user-list', [
-    ...middleware.runIfCondition(() => shouldUseAuthorization, [
+    ...middleware.runIfCondition(() => shouldUseAuthorization(), [
       async (request, response) => {
         const { sessionUser } = request[middleware.vars]
         const isAdmin = sessionUser && sessionUser.permissionLevel === 'admin'
