@@ -28,6 +28,8 @@ const {
   serverSettingsID, serverPropertiesID, setSetting,
 } = require('./settings')
 
+const DB_IN_MEMORY = Symbol()
+
 module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   // Used to keep track of connected clients and related data, such as
   // session IDs.
@@ -617,60 +619,70 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }))
   })
 
-  const upload = multer({
-    limits: {
-      files: 1, fileSize: 1e7 // 10 megabytes
-    },
-
-    storage: multer.diskStorage({
-      destination: (req, file, cb) => {
-        const path = dbDir + '/uploads/' + shortid()
-        const dir = __dirname + path
-
-        req[middleware.vars].path = path
-
-        mkdir(dir)
-          .then(() => cb(null, dir))
-          .catch(error => cb(error))
+  if (dbDir === DB_IN_MEMORY) {
+    // If the database is in-memory we have nowhere to store uploads, so we'll
+    // just reject them instead.
+    app.post('/api/upload-image', (request, response) => {
+      response.status(500).end(JSON.stringify({
+        error: 'uploads are disabled'
+      }))
+    })
+  } else {
+    const upload = multer({
+      limits: {
+        files: 1, fileSize: 1e7 // 10 megabytes
       },
 
-      filename: (req, file, cb) => {
-        let ext
-        switch (file.mimetype) {
-          case 'image/gif': ext = 'gif'; break
-          case 'image/jpeg': ext = 'jpeg'; break
-          case 'image/png': ext = 'png'; break
-          default: cb(new Error('invalid MIME type')); return
+      storage: multer.diskStorage({
+        destination: (req, file, cb) => {
+          const path = dbDir + '/uploads/' + shortid()
+          const dir = __dirname + path
+
+          req[middleware.vars].path = path
+
+          mkdir(dir)
+            .then(() => cb(null, dir))
+            .catch(error => cb(error))
+        },
+
+        filename: (req, file, cb) => {
+          let ext
+          switch (file.mimetype) {
+            case 'image/gif': ext = 'gif'; break
+            case 'image/jpeg': ext = 'jpeg'; break
+            case 'image/png': ext = 'png'; break
+            default: cb(new Error('invalid MIME type')); return
+          }
+
+          const name = file.originalname || 'image'
+          const basename = path.basename(name, path.extname(name))
+          const filename = `${basename}.${ext}`
+
+          req[middleware.vars].path += '/' + filename
+          cb(null, filename)
         }
-
-        const name = file.originalname || 'image'
-        const basename = path.basename(name, path.extname(name))
-        const filename = `${basename}.${ext}`
-
-        req[middleware.vars].path += '/' + filename
-        cb(null, filename)
-      }
+      })
     })
-  })
-  const uploadSingleImage = upload.single('image')
+    const uploadSingleImage = upload.single('image')
 
-  // TODO: delete old images
-  app.post('/api/upload-image', [
-    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-    //...middleware.requireBeAdmin('sessionUser'),
-    (req, res) => uploadSingleImage(req, res, err => {
-      if (err) {
-        res.status(500).end(JSON.stringify({
-          error: err.message
-        }))
-      } else {
-        const { path } = req[middleware.vars]
-        res.status(200).end(JSON.stringify({
-          success: true, path
-        }))
-      }
-    })
-  ])
+    // TODO: delete old images
+    app.post('/api/upload-image', [
+      ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+      //...middleware.requireBeAdmin('sessionUser'),
+      (req, res) => uploadSingleImage(req, res, err => {
+        if (err) {
+          res.status(500).end(JSON.stringify({
+            error: err.message
+          }))
+        } else {
+          const { path } = req[middleware.vars]
+          res.status(200).end(JSON.stringify({
+            success: true, path
+          }))
+        }
+      })
+    ])
+  }
 
   app.get('/api/server-settings', [
     async (request, response) => {
@@ -1579,3 +1591,5 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   setInterval(pruneOldSessions, 5 * 60 * 1000) // Every 5min.
   pruneOldSessions()
 }
+
+Object.assign(module.exports, { DB_IN_MEMORY })
