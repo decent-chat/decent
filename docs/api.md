@@ -89,7 +89,7 @@ Overwrites the text content of an existing message and attaches an "edited" date
   * `messageID`: (via data; string) the ID of the message to be pinned. The message has to exist.
 - [Authentication](#authentication): always required. **The user must be an admin.**
 
-Adds a message to its channel's pinned messages list. Returns `{success: true}` if succesful.
+Adds a message to its channel's pinned messages list. Returns `{success: true}` if successful.
 
 ### POST `/api/add-message-reaction`
 
@@ -301,7 +301,7 @@ A channel on the server. Channels are essentially containers of messages; every 
 All returned channel objects have these properties:
 
 * `id`: (string) the ID of the channel. This is a unique random string, and, like user IDs, will never change.
-* `name`: (string) the name of the channel. This does not include a hash (`name: "general"`, not `name: "#general"`). This should be displayed to the user, but not used as a unique identifyer for the channel; channels can be renamed (which would be reflected in this property).
+* `name`: (string) the name of the channel. This does not include a hash (`name: "general"`, not `name: "#general"`). This should be displayed to the user, but not used as a unique identifier for the channel; channels can be renamed (which would be reflected in this property).
 
 Some endpoints return a more detailed channel object. (Particularly, `/api/channel/:channelID` always returns one, and can be used when you found the ID of a channel via an endpoint which returns "brief" channels and would like more details on that channel.) Detailed channel objects contain all of the properties described above as well as the following:
 
