@@ -29,7 +29,7 @@ decentServer(port).then(function (server) {
 #### `server = await decentServer(port = 3000, databaseDir = '/path/to/db/directory')`
 (Note use of `await` here - `decentServer` returns a Promise.)
 
-Spawns a Decent server. `databaseDir` defaults to `__dirname`, which is probably unwanted.
+Spawns a Decent server. To use a volatile, in-memory datastore, pass `decentServer.DB_IN_MEMORY` as `databaseDir`.
 
 #### `server.app`
 Running express server.

@@ -10,13 +10,13 @@ If you want to access the server instance itself, check out [@decent/server](htt
 
 ### usage
 ```sh
-> decent <port> <database-directory>
+> decent [port] [database-directory]
 
 # ex:
 > cd /opt/decent-server
 > decent 80 .
 ```
-Default port is 3000, default database directory is `.` (current directory).
+Default port is 3000. Omit the database directory to use a volatile in-memory store - note that this will disable image uploads.
 
 Note: don't share databases between two running Decent servers at once; something will probably go wrong.
 
