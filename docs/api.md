@@ -219,7 +219,7 @@ Returns `{sessions}` if successful, where `sessions` is an array of [(brief) ses
 
 ## Endpoint errors
 
-Nearly all of the [HTTP endpoints](#http-endpoints) return errors situationally. The following list describes each:
+Nearly all of the [HTTP endpoints](#http-endpoints) return errors situationally. Generally, when the processing of a request errors, its response will have the `error` property, which will follow the form `{code, message}`. The `message` property is a string of a human-readable English message briefly explaining what went wrong, and the `code` is a permanent identifier string for the type of error that happened. (Checking `code` is useful for displaying custom messages or behavior when particular errors occur.) The following list describes each possible error code:
 
 - `NOT_FOUND` - For when you try to request a something, but it isn't found (e.g. requesting the user by the name `foobar` when there is no such user).
 - `NOT_YOURS` - For when you attempt to do something impactful (e.g. editing/deleting) to a something you aren't the owner/author of.
