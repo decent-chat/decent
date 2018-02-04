@@ -479,17 +479,12 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       }
     ],
 
-    requireNameValid: (nameVar, errorFieldName = null) => [
+    requireNameValid: (nameVar) => [
       function(request, response, next) {
         const name = request[middleware.vars][nameVar]
 
         if (isNameValid(name) === false) {
           response.status(400).end(JSON.stringify({
-            // Totally cheating here - this is so that it responds with
-            // "username invalid" rather than, e.g., "name invalid", when
-            // the username variable is passed. To make this a little less
-            // evil, it's possible for that word to be passed manually
-            // (as the second argument to requireNameValid).
             error: errors.INVALID_NAME
           }))
 
@@ -664,7 +659,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     (req, res) => uploadSingleImage(req, res, err => {
       if (err) {
         res.status(500).end(JSON.stringify({
-          error: Object.assign(errors.UPLOAD_FAILED, {message: err.message})
+          error: Object.assign({}, errors.UPLOAD_FAILED, {message: err.message})
         }))
       } else {
         const { path } = req[middleware.vars]
@@ -1360,7 +1355,9 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       if (sessionUser._id === userID) {
         response.status(400).end(JSON.stringify({
-          error: errors.AUTHORIZATION_ERROR
+          error: Object.assign({}, errors.AUTHORIZATION_ERROR, {
+            message: 'You can\'t deauthorize yourself.'
+          })
         }))
 
         return
@@ -1383,13 +1380,11 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     async (request, response) => {
       const { sessionIDs } = request[middleware.vars]
 
-      if (Array.isArray(sessionIDs) === false) {
+      if (!(Array.isArray(sessionIDs) && sessionIDs.every(x => typeof x === 'string'))) {
         response.status(400).end(JSON.stringify({
-          error: errors.INVALID_PARAMETER_TYPE
-        }))
-      } else if (sessionIDs.find(x => typeof x !== 'string')) {
-        respones.status(400).end(JSON.stringify({
-          error: errors.INVALID_PARAMETER_TYPE
+          error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+            message: 'Expected sessionIDs to be an array of strings.'
+          })
         }))
       } else {
         await Promise.all(sessionIDs.map(
