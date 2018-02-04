@@ -7,10 +7,14 @@ const readline = require('readline')
 const fixWS = require('fix-whitespace')
 
 const port = parseInt(process.argv[2]) || 3000
-const dbDir = process.argv[3] || '.'
+const dbDir = process.argv[3] || server.DB_IN_MEMORY
 
 server(port, dbDir).then(async ({ settings, app, db }) => {
   console.log(`Listening on port ${port} (try "license" or "help" for info)`)
+
+  if (dbDir === server.DB_IN_MEMORY) {
+    console.log('Using in-memory database; image uploading is disabled')
+  }
 
   app.use(express.static(client)) // index.html, dist/, img/
   app.get('*', (req, res) => res.sendFile(client + '/index.html'))
@@ -78,7 +82,7 @@ server(port, dbDir).then(async ({ settings, app, db }) => {
 
           const [ key, value ] = parts.slice(1)
 
-          const result = await setSetting(db.settings, settings.serverPropertiesID, key, value)
+          const result = await settings.setSetting(db.settings, settings.serverPropertiesID, key, value)
 
           if (result === 'updated') {
             console.log('Set.')
@@ -170,6 +174,6 @@ server(port, dbDir).then(async ({ settings, app, db }) => {
     rl.prompt()
   })
 }).catch(err => {
-  console.error(err.trace)
+  console.error(err.trace || err)
   process.exit(1)
 })

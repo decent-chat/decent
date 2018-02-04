@@ -11,4 +11,5 @@ module.exports = {
   NOT_FOUND: {code: 'NOT_FOUND', message: 'This couldn\'t be found.'},
   NOT_YOURS: {code: 'NOT_YOURS', message: 'You don\'t own this.'},
   UPLOAD_FAILED: {code: 'UPLOAD_FAILED', message: 'The upload failed.'},
+  UPLOADS_DISABLED: {code: 'UPLOADS_DISABLED', message: 'Uploads are disabled.'},
 }

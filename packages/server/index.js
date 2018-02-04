@@ -12,6 +12,7 @@ const cors = require('cors')
 
 const attachAPI = require('./api')
 const settings = require('./settings')
+const { DB_IN_MEMORY } = attachAPI
 
 const app = express()
 const httpServer = http.createServer(app)
@@ -23,8 +24,16 @@ const httpServer = http.createServer(app)
 // should be able to communicate cross-domain.
 const wss = new WebSocket.Server({server: httpServer})
 
-async function main(port = 3000, dbDir = __dirname) {
-  const db = {
+async function main(port = 3000, dbDir) {
+  if (!dbDir) throw new TypeError('dbDir argument required')
+
+  const db = dbDir === DB_IN_MEMORY ? {
+    messages: new Datastore(),
+    users:    new Datastore(),
+    sessions: new Datastore(),
+    channels: new Datastore(),
+    settings: new Datastore(),
+  } : {
     messages: new Datastore({filename: dbDir + '/messages'}),
     users:    new Datastore({filename: dbDir + '/users'}),
     sessions: new Datastore({filename: dbDir + '/sessions'}),
@@ -38,7 +47,7 @@ async function main(port = 3000, dbDir = __dirname) {
   app.options('*', cors())
 
   app.enable('trust proxy')
-  app.use('/uploads', express.static(dbDir + '/uploads'))
+  if (dbDir !== main.DB_IN_MEMORY) app.use('/uploads', express.static(dbDir + '/uploads'))
   await settings.setupDefaultSettings(db.settings)
   await attachAPI(app, {wss, db, dbDir})
 
@@ -48,3 +57,4 @@ async function main(port = 3000, dbDir = __dirname) {
 }
 
 module.exports = main
+Object.assign(module.exports, { DB_IN_MEMORY })
