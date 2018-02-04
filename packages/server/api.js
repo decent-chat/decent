@@ -327,6 +327,24 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       }
     ],
 
+    validateVar: (varName, validationFn) => [
+      ...middleware.verifyVarsExists(),
+
+      async function(request, response, next) {
+        const value = request[middleware.vars][varName]
+
+        if (await validationFn(value)) {
+          next()
+        } else {
+          response.status(400).end(JSON.stringify({
+            error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+              message: `Expected ${varName} to be ${validationFn.description}.`
+            })
+          }))
+        }
+      }
+    ],
+
     runIfVarExists: (varName, runIfSo) => (
       runIfSo.map(callback => (request, response, next) => {
         if (varName in request[middleware.vars]) {
@@ -496,6 +514,12 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         next()
       }
     ],
+  }
+
+  const validate = {
+    string: Object.assign(function(x) {
+      return typeof x === 'string'
+    }, {description: 'a string'})
   }
 
   app.use(bodyParser.json())
