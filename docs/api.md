@@ -38,7 +38,7 @@ Authorization is a server property and can only be enabled via the command line:
 > set requireAuthorization on|off
 ```
 
-**This will cause all endpoints except those marked _never requires session_ to require [authentication](#authentication).**
+**This will cause all endpoints except those marked _never requires session_ to require [authentication](#sessions).**
 
 # Terminology
 
