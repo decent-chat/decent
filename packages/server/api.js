@@ -682,16 +682,19 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     ])
   }
 
-  app.get('/api/server-settings', [
+  app.get('/api/settings', [
     async (request, response) => {
       const serverSettings = await db.settings.findOne({_id: serverSettingsID})
+
+      delete serverSettings._id
+
       response.status(200).end(JSON.stringify({
         settings: serverSettings
       }))
     }
   ])
 
-  app.post('/api/server-settings', [
+  app.patch('/api/settings', [
     ...middleware.loadVarFromBody('patch'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requireBeAdmin('sessionUser'),
@@ -711,30 +714,16 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  app.get('/api/should-use-secure', [
+  app.get('/api/properties', [
     async (request, response) => {
       const { https } = await db.settings.findOne({_id: serverPropertiesID})
-
-      response.status(200).end(JSON.stringify({
-        useSecure: https === 'on' ? true : false
-      }))
-    }
-  ])
-
-  app.get('/api/should-use-authorization', [
-    async (request, response) => {
       const useAuthorization = await shouldUseAuthorization()
 
-      let authorizationMessage
-      if (useAuthorization) {
-        authorizationMessage = (
-          await db.settings.findOne({_id: serverSettingsID})
-        ).authorizationMessage
-      }
-
       response.status(200).end(JSON.stringify({
-        useAuthorization: await shouldUseAuthorization(),
-        authorizationMessage
+        properties: {
+          useSecure: https === 'on' ? true : false,
+          useAuthorization
+        }
       }))
     }
   ])
