@@ -2,10 +2,10 @@
 
 **Communicating with the API**
 * [HTTP Endpoints](#http-endpoints)
-  - [Settings](#settings-api-settings)
-  - [Properties](#properties-api-properties)
-  - [Messages](#messages-api-messages)
-  - [Channels](#channels-api-channels)
+  - [Settings](#settings)
+  - [Properties](#properties)
+  - [Messages](#messages)
+  - [Channels](#channels)
 * [WebSocket Events](#websocket-events)
 
 **Misc**
@@ -16,6 +16,8 @@
   - [Dates](#dates)
   - [Names](#names)
   - [Errors](#errors)
+
+---
 
 # Authenticating with the API
 
@@ -39,6 +41,8 @@ Authorization is a server property and can only be enabled via the command line:
 ```
 
 **This will cause all endpoints except those marked _never requires session_ to require [authentication](#sessions).**
+
+---
 
 # Terminology
 
@@ -81,9 +85,11 @@ The following list describes each possible error code:
 - `INCORRECT_PASSWORD` - For when you attempt to log in but you didn't enter the right password. (Note that `NOT_FOUND` is returned if you try to log in with an unused username.)
 - `INVALID_NAME` - For when you try to make something (a user or channel, etc) with an invalid name.
 
+---
+
 # HTTP Endpoints
 
-## Retrieve server details [/api]
+## Retrieve server details [GET /api]
 + never requires session
 
 Returns `{ decent, version }`. `decent` is always `true`, and should be used to check to see if a particular server is compatible with this spec.
@@ -97,8 +103,9 @@ GET /api/
 <- }
 ```
 
-<a name='settings'></a>
-## Settings [/api/settings]
+---
+
+## Settings
 
 Model:
 ```
@@ -114,7 +121,7 @@ Model:
 }
 ```
 
-### Retrieve all settings [GET]
+### Retrieve all settings [GET /api/settings]
 Returns `{ settings }`, where `settings` is an object representing server-specific settings.
 
 ```js
@@ -134,7 +141,7 @@ GET /api/settings
 <- }
 ```
 
-### Modify settings [PATCH]
+### Modify settings [PATCH /api/settings]
 + requires admin session
 + `patch` (settings) - The new settings to apply
 
@@ -158,8 +165,9 @@ PATCH /api/settings
 <- }
 ```
 
-<a name='properties'></a>
-## Properties [/api/properties]
+---
+
+## Properties
 
 Properties can only be modified on the command line.
 
@@ -175,7 +183,7 @@ Model:
 }
 ```
 
-### Retrieve all properties [GET]
+### Retrieve all properties [GET /api/properties]
 Returns `{ properties }`, where `properties` is an object representing server-specific properties.
 
 ```js
@@ -188,6 +196,8 @@ GET /api/properties
 <-   }
 <- }
 ```
+
+---
 
 ## Upload an image [POST /api/upload-image]
 + requires session
@@ -208,8 +218,9 @@ POST /api/upload-image
 
 This endpoint may return [an error](#errors), namely UPLOAD_FAILED or UPLOADS_DISABLED.
 
-<a name='messages'></a>
-## Messages [/api/messages]
+---
+
+## Messages
 
 Model:
 ```js
@@ -226,14 +237,11 @@ Model:
   "authorAvatarURL": string,
 
   "date": number,     // Created on
-  "editDate": number, // Last edited on
+  "editDate": number, // Last edited on. null if not edited
 
   "reactions": [ Reaction ]
 }
 ```
-
-Related endpoints:
-* [reactions](#reactions)
 
 Related events:
 * [message/new](#message-new)
@@ -241,7 +249,7 @@ Related events:
 * [message/delete](#message-delete)
 
 <a name='send-message'></a>
-### Send a message [POST]
+### Send a message [POST /api/messages]
 + requires session
 + `channelID` (ID) - The parent channel of the new message
 + `text` (string) - The content of the message
@@ -312,6 +320,219 @@ DELETE /api/messages/1234
 ```
 
 This endpoint may return a NOT_YOURS [error](#errors) if you do not own the message in question. Note that admins may delete any message.
+
+---
+
+## Channels
+
+Model:
+```js
+{
+  "id": ID,
+  "name": string, // Does not include a hash
+
+  // Number of 'unread' messages, capped at 200. Unread messages are
+  // simply messages that were sent more recently than the last time
+  // the channel was marked read by this user. *Not present if no session
+  // is provided!*
+  "unreadMessageCount": number
+}
+```
+
+Related events:
+* [channel/new](#channel-new)
+* [channel/rename](#channel-rename)
+* [channel/delete](#channel-delete)
+
+<a name='channel-list'></a>
+### Get list of channels [GET /api/channels]
++ returns extra data (`unreadMessageCount`) with session
+
+Returns `{ channels }`, where channels is an array of channels. Note `unreadMessageCount` will only be returned if this endpoint receives a session.
+
+```js
+GET /api/channels
+
+<- {
+<-   "channels": [
+<-     {
+<-       "id": "5678",
+<-       "name": "general"
+<-     }
+<-   ]
+<- }
+```
+
+<a name='create-channel'></a>
+### Create a channel [POST /api/channels]
++ requires admin session
++ `name` (name) - The name of the channel.
+
+On success, emits [channel/new](#channel-new) and returns `{ channelID }`.
+
+```js
+POST /api/channels
+
+-> {
+->   "name": "general"
+-> }
+
+<- {
+<-   "channelID": "5678"
+<- }
+```
+
+May return [an error](#errors): MUST_BE_ADMIN, NAME_ALREADY_TAKEN, INVALID_NAME.
+
+<a name='get-channel'></a>
+### Retrieve a channel [GET /api/channels/:id]
++ returns extra data (`unreadMessageCount`) with session
++ **in-url** id (ID) - The ID of the channel.
+
+Returns `{ channel }`. Note `unreadMessageCount` will only be returned if this endpoint receives a session.
+
+```js
+GET /api/channels/5678
+
+<- {
+<-   "id": "5678",
+<-   "name": "general"
+<- }
+```
+
+May return [an error](#errors), including MUST_BE_ADMIN, NAME_ALREADY_TAKEN, and INVALID_NAME.
+
+<a name='rename-channel'></a>
+### Rename a channel [PUT /api/channels/:id]
++ requires admin session
++ **in-url** id (ID) - The ID of the channel.
++ name (name) - The new name of the channel
+
+Returns `{}` if successful, emitting [channel/rename](#channel-rename).
+
+```js
+PUT /api/channels/5678
+
+-> {
+->   "name": "best-channel"
+-> }
+
+<- {}
+```
+
+<a name='delete-channel'></a>
+### Delete a channel [DELETE /api/channels/:id]
++ requires admin session
++ **in-url** id (ID) - The ID of the channel to delete.
+
+Returns `{}` if successful. Emits [channel/delete](#channel-delete).
+
+```js
+PUT /api/channels/5678
+
+-> {
+->   "name": "best-channel"
+-> }
+
+<- {}
+```
+
+<a name='mark-channel-as-read'></a>
+### Mark a channel as read [POST /api/channels/:id/mark-read]
++ requires session
++ **in-url** id (ID) - The ID of the channel.
+
+Marks the channel as read (ie. sets `unreadMessageCount` to 0), returning `{}`.
+
+```js
+POST /api/channels/5678/mark-read
+
+<- {}
+```
+
+<a name='get-messages-in-channel'></a>
+### Get messages in channel [GET /api/channels/:id/messages]
++ **in-url** id (ID) - The ID of the channel to fetch messages of.
++ `before` (ID; optional) - The ID of the message right **after** the range of messages you want.
++ `after` (ID; optional) - The ID of the message right **before** the range of messages you want.
++ `limit` (integer; default `50`) - The maximum number of messages to fetch. Must be `1 <= limit <= 50`.
+
+Returns `{ messages }`, where messages is an array of the most recent [messages](#messages) sent to this channel. If `limit` is given, it'll only fetch that many messages.
+
+If `before` is specified, it'll only return messages sent before that one; and it'll only return messages sent after `after`.
+
+```js
+GET /api/channels/5678/messages
+
+<- {
+<-   "messages": [
+<-     {
+<-       "id": "1234",
+<-       "channelID": "5678",
+<-       // ...
+<-     },
+<-     {
+<-       "id": "1235",
+<-       "channelID": "5678",
+<-       // ...
+<-     }
+<-   ]
+<- }
+```
+
+```js
+GET /api/channels/5678/messages?after=1234
+
+<- {
+<-   "messages": [
+<-     {
+<-       "id": "1235",
+<-       "channelID": "5678",
+<-       // ...
+<-     }
+<-   ]
+<- }
+```
+
+<a name='get-pins'></a>
+### Retrieve all pinned messages [GET /api/channels/:id/pins]
++ **in-url** id (ID)
+
+Returns `{ pins }`, where pins is an array of [messages](#messages) that have been pinned to this channel.
+
+```js
+GET /api/channels/5678/pins
+
+<- {
+<-   "pins": [
+<-     {
+<-       "id": "1235",
+<-       "channelID": "5678",
+<-       // ...
+<-     }
+<-   ]
+<- }
+```
+
+<a name='pin'></a>
+### Pin a message [POST /api/channels/:id/pins]
++ requires admin session
++ **in-url** id (ID)
++ `messageID` (ID) - The message to pin to this channel.
+
+Returns `{}` if successful.
+
+```js
+POST /api/channels/5678/pins
+
+-> {
+->   "messageID": "1234"
+-> }
+
+<- {}
+```
+
+---
 
 # Websocket Events
 These are the events which are used to send (and receive) data specific to individual connections to the server, and for "live" updates (e.g. rather than having the client poll the server for new messages every 5 seconds, the server emits a message to the client's web socket whenever a new message appears).
