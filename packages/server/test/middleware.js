@@ -1,6 +1,10 @@
 const { test } = require('ava')
 const { makeMiddleware, validate } = require('../middleware')
+const { makeUser, makeAdmin } = require('./_serverUtil')
+const spawn = require('./_spawn')
 const Datastore = require('nedb')
+
+let portForMiddlewareTests = 22000
 
 function interpretMiddlewareHelper(request, response, middleware) {
   if (middleware.length) {
@@ -301,8 +305,6 @@ test('runIfCondition - condition function only called once', async t => {
   t.is(wasFalse, 0)
 })
 
-// Test that runIfCondition does not "pollute" middleware.vars
-// (will need to remove the symbol after done with it)..
 test('runIfCondition - request variables should not be polluted', async t => {
   const db = new Datastore()
   const { middleware } = makeMiddleware({db})
@@ -314,4 +316,19 @@ test('runIfCondition - request variables should not be polluted', async t => {
     ])
   )
   t.deepEqual(Object.getOwnPropertySymbols(request[middleware.vars]), [])
+})
+
+test('getSessionUserFromID', async t => {
+  const port = portForMiddlewareTests++
+  const server = await spawn(port)
+  const { middleware } = makeMiddleware({db: server.db})
+
+  const { user, sessionID } = await makeUser(server, port)
+  const request = {[middleware.vars]: {sessionID}}
+  await interpretMiddleware(request,
+    middleware.getSessionUserFromID('sessionID', 'user')
+  )
+  t.is(request[middleware.vars].user._id, user.id)
+
+  await server.kill()
 })

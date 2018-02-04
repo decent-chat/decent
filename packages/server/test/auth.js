@@ -1,42 +1,13 @@
 const { test } = require('ava')
 const fetch = require('./_fetch')
 const spawn = require('./_spawn')
+const { makeUser, makeAdmin } = require('./_serverUtil')
 
-const makeUser = async (server, port, username = 'test_user') => {
-  const { user } = await fetch(port, '/register', {
-    method: 'POST',
-    body: JSON.stringify({
-      username,
-      password: 'abcdef'
-    })
-  })
-
-  const { sessionID } = await fetch(port, '/login', {
-    method: 'POST',
-    body: JSON.stringify({
-      username,
-      password: 'abcdef'
-    })
-  })
-
-  return { user, sessionID }
-}
-
-const makeAdmin = async (server, port, username = 'admin') => {
-  const { user: admin, sessionID } = await makeUser(server, port, username)
-
-  await server.db.users.update({ username }, {
-    $set: {
-      permissionLevel: 'admin',
-      authorized: true
-    }
-  })
-
-  return { admin, sessionID }
-}
+let portForAuthTests = 21000
 
 test('register', async t => {
-  const { server, port } = await spawn()
+  const port = portForAuthTests++
+  const server = await spawn(port)
 
   const { user } = await fetch(port, '/register', {
     method: 'POST',
@@ -55,7 +26,8 @@ test('register', async t => {
 })
 
 test('login', async t => {
-  const { server, port } = await spawn()
+  const port = portForAuthTests++
+  const server = await spawn(port)
 
   const { user } = await fetch(port, '/register', {
     method: 'POST',
@@ -74,13 +46,14 @@ test('login', async t => {
   })
 
   const session = await server.db.sessions.findOne({ _id: sessionID })
-  t.true(session.userID === user.id)
+  t.is(session.userID, user.id)
 
   await server.kill()
 })
 
 test('username-available', async t => {
-  const { server, port } = await spawn()
+  const port = portForAuthTests++
+  const server = await spawn(port)
 
   const { available: before } = await fetch(port, '/username-available/test_user')
   t.true(before)
@@ -100,7 +73,8 @@ test('username-available', async t => {
 })
 
 test('authorize-user', async t => {
-  const { server, port } = await spawn()
+  const port = portForAuthTests++
+  const server = await spawn(port)
   await server.settings.setSetting(server.db.settings, server.settings.serverPropertiesID, 'requireAuthorization', 'on')
 
   const { admin, sessionID } = await makeAdmin(server, port)

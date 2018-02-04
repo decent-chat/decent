@@ -27,8 +27,7 @@
   "devDependencies": {
     "ava": "^0.25.0",
     "dependency-check": "^2.10.0",
-    "node-fetch": "^1.7.3",
-    "openport": "0.0.4"
+    "node-fetch": "^1.7.3"
   },
   "scripts": {
     "test": "dependency-check . --missing --unused --no-dev && ava"
