@@ -52,14 +52,14 @@ test('structure of makeMiddleware', t => {
 test('interpretMiddlewareHelper', async t => {
   const request = {}, response = {}
   await new Promise(resolve => interpretMiddlewareHelper(request, response, [
-    function(request, response, next) {
+    function(req, res, next) {
       setTimeout(() => {
-        request.n = 2
+        req.n = 2
         next()
       }, 150)
     },
-    function(request, response, next) {
-      request.n *= 4
+    function(req, res, next) {
+      req.n *= 4
       next()
     },
     resolve
@@ -70,28 +70,29 @@ test('interpretMiddlewareHelper', async t => {
 test('interpretMiddleware - basic usage', async t => {
   const request = {}
   await interpretMiddleware(request, [
-    function(request, response, next) {
+    function(req, res, next) {
       setTimeout(() => {
-        request.n = 2
+        req.n = 2
         next()
       }, 150)
     },
-    function(request, response, next) {
-      request.n *= 4
+    function(req, res, next) {
+      req.n *= 4
       next()
     }
   ])
   t.is(request.n, 8)
 })
 
-test('interpretMiddleware - response.end', async t => {
+test('interpretMiddleware - response.status.end', async t => {
   const request = {}
   const { response } = await interpretMiddleware(request, [
-    function(request, response, next) {
-      response.end(123)
+    function(req, res, next) {
+      res.status(200).end(123)
     }
   ])
   t.true(response.wasEnded)
+  t.is(response.statusCode, 200)
   t.is(response.endData, 123)
 })
 
@@ -199,4 +200,118 @@ test('validateVar - test data is invalid', async t => {
   const { response } = await interpretMiddleware(request, middleware.validateVar('x', validate.string))
   t.true(response.wasEnded)
   t.is(response.statusCode, 400)
+})
+
+test('runIfVarExists - var does exist', async t => {
+  const db = new Datastore()
+  const { middleware } = makeMiddleware({db})
+
+  const request = {[middleware.vars]: {x: 25}}
+  await interpretMiddleware(request,
+    middleware.runIfVarExists('x', [
+      function(req, res, next) {
+        req[middleware.vars].x *= 5
+        next()
+      }
+    ])
+  )
+  t.is(request[middleware.vars].x, 125)
+})
+
+test('runIfVarExists - var does not exist', async t => {
+  const db = new Datastore()
+  const { middleware } = makeMiddleware({db})
+
+  const request = {[middleware.vars]: {y: 'hello'}}
+  await interpretMiddleware(request,
+    middleware.runIfVarExists('x', [
+      function(req, res, next) {
+        req[middleware.vars].z = 'flamingo'
+      }
+    ])
+  )
+  t.is(request[middleware.vars].z, undefined)
+})
+
+test('runIfCondition - basic if/else usage, condition is true', async t => {
+  const db = new Datastore()
+  const { middleware } = makeMiddleware({db})
+
+  const request = {}
+  await interpretMiddleware(request,
+    middleware.runIfCondition(() => true, [
+      function(req, res, next) {
+        req.wasTrue = true
+        next()
+      }
+    ], [
+      function(req, res, next) {
+        req.wasFalse = true
+        next()
+      }
+    ])
+  )
+  t.true(request.wasTrue)
+  t.is(request.wasFalse, undefined)
+})
+
+test('runIfCondition - basic if/else usage, condition is false', async t => {
+  const db = new Datastore()
+  const { middleware } = makeMiddleware({db})
+
+  const request = {}
+  await interpretMiddleware(request,
+    middleware.runIfCondition(() => false, [
+      function(req, res, next) {
+        req.wasTrue = true
+        next()
+      }
+    ], [
+      function(req, res, next) {
+        req.wasFalse = true
+        next()
+      }
+    ])
+  )
+  t.true(request.wasFalse)
+  t.is(request.wasTrue, undefined)
+})
+
+test('runIfCondition - condition function only called once', async t => {
+  const db = new Datastore()
+  const { middleware } = makeMiddleware({db})
+
+  const request = {}
+  let timesCalled = 0, wasTrue = 0, wasFalse = 0
+  await interpretMiddleware(request,
+    middleware.runIfCondition(() => {
+      timesCalled++
+      // Should be true: 1 % 2 === 1.
+      return timesCalled % 2 === 1
+    }, [
+      function(req, res, next) { wasTrue++; next() },
+      function(req, res, next) { wasTrue++; next() }
+    ], [
+      function(req, res, next) { wasFalse++; next() },
+      function(req, res, next) { wasFalse++; next() }
+    ])
+  )
+  t.is(timesCalled, 1)
+  t.is(wasTrue, 2)
+  t.is(wasFalse, 0)
+})
+
+// Test that runIfCondition does not "pollute" middleware.vars
+// (will need to remove the symbol after done with it)..
+test('runIfCondition - request variables should not be polluted', async t => {
+  const db = new Datastore()
+  const { middleware } = makeMiddleware({db})
+
+  const request = {}
+  await interpretMiddleware(request,
+    middleware.runIfCondition(() => true, [
+      function(req, res, next) { next() }
+    ])
+  )
+  t.deepEqual(Object.getOwnPropertySymbols(request[middleware.vars]), [])
 })

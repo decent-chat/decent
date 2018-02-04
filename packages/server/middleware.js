@@ -137,21 +137,39 @@ module.exports.makeMiddleware = function({db}) {
       })
     ),
 
-    runIfCondition: (conditionFn, runIfSo, runIfNot = []) => (
-      runIfSo.map(callback => async (request, response, next) => {
-        if (await conditionFn()) {
-          callback(request, response, next)
-        } else {
+    runIfCondition: (conditionFn, runIfSo, runIfNot = []) => {
+      const conditionResultSymbol = Symbol('runIfCondition condition result')
+
+      return [
+        ...middleware.verifyVarsExists(),
+
+        async function(request, response, next) {
+          request[middleware.vars][conditionResultSymbol] = await conditionFn()
+          next()
+        },
+
+        ...runIfSo.map(callback => (request, response, next) => {
+          if (request[middleware.vars][conditionResultSymbol]) {
+            callback(request, response, next)
+          } else {
+            next()
+          }
+        }),
+
+        ...runIfNot.map(callback => (request, response, next) => {
+          if (!request[middleware.vars][conditionResultSymbol]) {
+            callback(request, response, next)
+          } else {
+            next()
+          }
+        }),
+
+        function(request, response, next) {
+          delete request[middleware.vars][conditionResultSymbol]
           next()
         }
-      }).concat(runIfNot.map(callback => async (request, response, next) => {
-        if (!await conditionFn()) {
-          callback(request, response, next)
-        } else {
-          next()
-        }
-      }))
-    ),
+      ]
+    },
 
     getSessionUserFromID: (sessionIDVar, sessionUserVar) => [
       async function(request, response, next) {
