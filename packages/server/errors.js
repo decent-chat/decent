@@ -3,6 +3,7 @@ module.exports = {
   AUTHORIZATION_ERROR: {code: 'AUTHORIZATION_ERROR', message: 'Authorization-related error.'},
   INCOMPLETE_PARAMETERS: {code: 'INCOMPLETE_PARAMETERS', message: 'The request is missing a parameter.'},
   INCORRECT_PASSWORD: {code: 'INCORRECT_PASSWORD', message: 'That is not the correct password.'},
+  INTERNAL_ERROR: {code: 'INTERNAL_ERROR', message: 'There was an internal error.'},
   INVALID_NAME: {code: 'INVALID_NAME', message: 'That name is not valid.'},
   INVALID_PARAMETER_TYPE: {code: 'INVALID_PARAMETER_TYPE', message: 'A parameter is not of the correct type.'},
   INVALID_SESSION_ID: {code: 'INVALID_SESSION_ID', message: 'The session ID is invalid.'},

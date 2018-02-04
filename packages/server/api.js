@@ -455,9 +455,11 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  app.post('/api/send-message', [
+  app.post('/api/messages', [
     ...middleware.loadVarFromBody('text'),
+    ...middleware.validateVar('text', validate.string),
     ...middleware.loadVarFromBody('channelID'),
+    ...middleware.validateVar('channelID', validate.string),
     ...middleware.getChannelFromID('channelID', '_'), // To verify that it exists.
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
 
@@ -1137,6 +1139,17 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       }))
     }
   ])
+
+  app.use(['/api/*', '/api'], async (error, request, response, next) => {
+    // console.error('\x1b[31m' + error.message + '\x1b[2m\n' + error.stack + '\x1b[0m')
+
+    response.status(500).end(JSON.stringify({
+      error: Object.assign(errors.INTERNAL_ERROR, {
+        message: error.message,
+        stack: error.stack
+      })
+    }))
+  })
 
   wss.on('connection', socket => {
     const socketData = {
