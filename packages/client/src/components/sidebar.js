@@ -335,7 +335,7 @@ const store = (state, emitter) => {
     if (session.user) {
       state.session = { id: sessionID, user: session.user }
 
-      state.sessionAuthorized = true
+      state.sessionAuthorized = session.user.authorized
 
       emitter.emit('login')
     } else {
