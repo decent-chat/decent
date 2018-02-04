@@ -2,10 +2,10 @@
 
 **Communicating with the API**
 * [HTTP Endpoints](#http-endpoints)
-  - [Settings](#settings-api-settings)
-  - [Properties](#properties-api-properties)
-  - [Messages](#messages-api-messages)
-  - [Channels](#channels-api-channels)
+  - [Settings](#settings)
+  - [Properties](#properties)
+  - [Messages](#messages)
+  - [Channels](#channels)
 * [WebSocket Events](#websocket-events)
 
 **Misc**
@@ -16,6 +16,8 @@
   - [Dates](#dates)
   - [Names](#names)
   - [Errors](#errors)
+
+---
 
 # Authenticating with the API
 
@@ -39,6 +41,8 @@ Authorization is a server property and can only be enabled via the command line:
 ```
 
 **This will cause all endpoints except those marked _never requires session_ to require [authentication](#sessions).**
+
+---
 
 # Terminology
 
@@ -81,9 +85,11 @@ The following list describes each possible error code:
 - `INCORRECT_PASSWORD` - For when you attempt to log in but you didn't enter the right password. (Note that `NOT_FOUND` is returned if you try to log in with an unused username.)
 - `INVALID_NAME` - For when you try to make something (a user or channel, etc) with an invalid name.
 
+---
+
 # HTTP Endpoints
 
-## Retrieve server details [/api]
+## Retrieve server details [GET /api]
 + never requires session
 
 Returns `{ decent, version }`. `decent` is always `true`, and should be used to check to see if a particular server is compatible with this spec.
@@ -97,8 +103,9 @@ GET /api/
 <- }
 ```
 
-<a name='settings'></a>
-## Settings [/api/settings]
+---
+
+## Settings
 
 Model:
 ```
@@ -114,7 +121,7 @@ Model:
 }
 ```
 
-### Retrieve all settings [GET]
+### Retrieve all settings [GET /api/settings]
 Returns `{ settings }`, where `settings` is an object representing server-specific settings.
 
 ```js
@@ -134,7 +141,7 @@ GET /api/settings
 <- }
 ```
 
-### Modify settings [PATCH]
+### Modify settings [PATCH /api/settings]
 + requires admin session
 + `patch` (settings) - The new settings to apply
 
@@ -158,8 +165,9 @@ PATCH /api/settings
 <- }
 ```
 
-<a name='properties'></a>
-## Properties [/api/properties]
+---
+
+## Properties
 
 Properties can only be modified on the command line.
 
@@ -175,7 +183,7 @@ Model:
 }
 ```
 
-### Retrieve all properties [GET]
+### Retrieve all properties [GET /api/properties]
 Returns `{ properties }`, where `properties` is an object representing server-specific properties.
 
 ```js
@@ -188,6 +196,8 @@ GET /api/properties
 <-   }
 <- }
 ```
+
+---
 
 ## Upload an image [POST /api/upload-image]
 + requires session
@@ -208,8 +218,9 @@ POST /api/upload-image
 
 This endpoint may return [an error](#errors), namely UPLOAD_FAILED or UPLOADS_DISABLED.
 
-<a name='messages'></a>
-## Messages [/api/messages]
+---
+
+## Messages
 
 Model:
 ```js
@@ -241,7 +252,7 @@ Related events:
 * [message/delete](#message-delete)
 
 <a name='send-message'></a>
-### Send a message [POST]
+### Send a message [POST /api/messages]
 + requires session
 + `channelID` (ID) - The parent channel of the new message
 + `text` (string) - The content of the message
@@ -312,6 +323,8 @@ DELETE /api/messages/1234
 ```
 
 This endpoint may return a NOT_YOURS [error](#errors) if you do not own the message in question. Note that admins may delete any message.
+
+---
 
 # Websocket Events
 These are the events which are used to send (and receive) data specific to individual connections to the server, and for "live" updates (e.g. rather than having the client poll the server for new messages every 5 seconds, the server emits a message to the client's web socket whenever a new message appears).
