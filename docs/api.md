@@ -453,11 +453,13 @@ POST /api/channels/5678/mark-read
 <a name='get-messages-in-channel'></a>
 ### Get messages in channel [GET /api/channels/:id/messages]
 + **in-url** id (ID) - The ID of the channel to fetch messages of.
-+ `before` (ID; optional) - The ID of the message right before the range of messages you want.
-+ `after` (ID; optional) - The ID of the message right after the range of messages you want.
++ `before` (ID; optional) - The ID of the message right **after** the range of messages you want.
++ `after` (ID; optional) - The ID of the message right **before** the range of messages you want.
 + `limit` (integer; default `50`) - The maximum number of messages to fetch. Must be `1 <= limit <= 50`.
 
-Returns `{ messages }`, where messages is an array of the most recent [messages](#messages) sent to this channel. If `before` is specified, it'll only return messages sent before that one; and it'll only return messages sent after `after`. If `limit` is given, it'll only fetch that many messages.
+Returns `{ messages }`, where messages is an array of the most recent [messages](#messages) sent to this channel. If `limit` is given, it'll only fetch that many messages.
+
+If `before` is specified, it'll only return messages sent before that one; and it'll only return messages sent after `after`.
 
 ```js
 GET /api/channels/5678/messages
