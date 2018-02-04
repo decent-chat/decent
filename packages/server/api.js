@@ -27,6 +27,7 @@ const mkdir = util.promisify(fs.mkdir)
 const {
   serverSettingsID, serverPropertiesID, setSetting,
 } = require('./settings')
+const errors = require('./errors')
 
 const DB_IN_MEMORY = Symbol()
 
@@ -256,7 +257,9 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   const _loadVarFromObject = (request, response, next, obj, key, required) => {
     if (required && obj[key] === undefined) {
       response.status(400).end(JSON.stringify({
-        error: `${key} field missing`
+        error: Object.assign({}, errors.INCOMPLETE_PARAMETERS, {
+          missing: key
+        })
       }))
 
       return
@@ -357,7 +360,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
         if (!user) {
           response.status(401).end(JSON.stringify({
-            error: 'invalid session ID'
+            error: errors.INVALID_SESSION_ID
           }))
 
           return
@@ -376,7 +379,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
         if (!user) {
           response.status(404).end(JSON.stringify({
-            error: 'user not found'
+            error: errors.NOT_FOUND
           }))
 
           return
@@ -395,7 +398,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
         if (!user) {
           response.status(404).end(JSON.stringify({
-            error: 'user not found'
+            error: errors.NOT_FOUND
           }))
 
           return
@@ -414,7 +417,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
         if (!message) {
           response.status(404).end(JSON.stringify({
-            error: 'message not found'
+            error: errors.NOT_FOUND
           }))
 
           return
@@ -433,7 +436,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
         if (!channel) {
           response.status(404).end(JSON.stringify({
-            error: 'channel not found'
+            error: errors.NOT_FOUND
           }))
 
           return
@@ -451,7 +454,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
         if (permissionLevel !== 'admin') {
           response.status(403).end(JSON.stringify({
-            error: 'you are not an admin'
+            error: errors.MUST_BE_ADMIN
           }))
 
           return
@@ -468,7 +471,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
         if (message.authorID !== user._id) {
           response.status(403).end(JSON.stringify({
-            error: 'you are not the author of this message'
+            error: errors.NOT_YOURS
           }))
 
           return
@@ -478,18 +481,13 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       }
     ],
 
-    requireNameValid: (nameVar, errorFieldName = null) => [
+    requireNameValid: (nameVar) => [
       function(request, response, next) {
         const name = request[middleware.vars][nameVar]
 
         if (isNameValid(name) === false) {
           response.status(400).end(JSON.stringify({
-            // Totally cheating here - this is so that it responds with
-            // "username invalid" rather than, e.g., "name invalid", when
-            // the username variable is passed. To make this a little less
-            // evil, it's possible for that word to be passed manually
-            // (as the second argument to requireNameValid).
-            error: `${errorFieldName || nameVar} invalid`
+            error: errors.INVALID_NAME
           }))
 
           return
@@ -561,7 +559,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       } else if (request[middleware.vars].shouldVerify) {
         // No session ID given - just quit here.
         response.status(403).end(JSON.stringify({
-          error: 'missing sessionID field - not authorized to access API'
+          error: errors.AUTHORIZATION_ERROR
         }))
         return
       }
@@ -595,7 +593,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
           next()
         } else {
           response.status(403).end(JSON.stringify({
-            error: 'not authorized to access API yet - admin action required'
+            error: errors.AUTHORIZATION_ERROR
           }))
         }
       }
@@ -624,7 +622,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     // just reject them instead.
     app.post('/api/upload-image', (request, response) => {
       response.status(500).end(JSON.stringify({
-        error: 'uploads are disabled'
+        error: errors.UPLOADS_DISABLED
       }))
     })
   } else {
@@ -672,12 +670,12 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       (req, res) => uploadSingleImage(req, res, err => {
         if (err) {
           res.status(500).end(JSON.stringify({
-            error: err.message
+            error: Object.assign({}, errors.UPLOAD_FAILED, {message: err.message})
           }))
         } else {
           const { path } = req[middleware.vars]
           res.status(200).end(JSON.stringify({
-            success: true, path
+            path
           }))
         }
       })
@@ -687,7 +685,9 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   app.get('/api/server-settings', [
     async (request, response) => {
       const serverSettings = await db.settings.findOne({_id: serverSettingsID})
-      response.status(200).end(JSON.stringify(serverSettings))
+      response.status(200).end(JSON.stringify({
+        settings: serverSettings
+      }))
     }
   ])
 
@@ -767,7 +767,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       await markChannelAsRead(sessionUser._id, channelID)
 
       response.status(201).end(JSON.stringify({
-        success: true,
         messageID: message._id
       }))
     }
@@ -790,7 +789,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       if (channel.pinnedMessageIDs.includes(messageID)) {
         response.status(500).end(JSON.stringify({
-          error: 'this message is already pinned'
+          error: errors.ALREADY_PERFORMED
         }))
 
         return
@@ -802,9 +801,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         }
       })
 
-      response.status(200).end(JSON.stringify({
-        success: true
-      }))
+      response.status(200).end(JSON.stringify({}))
     }
   ])
 
@@ -817,20 +814,12 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     async (request, response) => {
       const { reactionCode, message, sessionUser: { _id: userID } } = request[middleware.vars]
 
-      if (reactionCode.length !== 1) {
-        response.status(400).end(JSON.stringify({
-          error: 'reactionCode should be 1-character string'
-        }))
-
-        return
-      }
-
       let newReactionCount
 
       if (reactionCode in message.reactions) {
         if (message.reactions[reactionCode].includes(userID)) {
           response.status(500).end(JSON.stringify({
-            error: 'you already reacted with this'
+            error: errors.ALREADY_PERFORMED
           }))
 
           return
@@ -857,7 +846,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       }
 
       response.status(200).end(JSON.stringify({
-        success: true,
         newCount: newReactionCount
       }))
     }
@@ -875,7 +863,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       if (userID !== oldMessage.authorID) {
         response.status(403).end(JSON.stringify({
-          error: 'you are not the owner of this message'
+          error: errors.NOT_YOURS
         }))
 
         return
@@ -893,7 +881,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       sendToAllSockets('message/edit', {message: await serialize.message(newMessage)})
 
-      response.status(200).end(JSON.stringify({success: true}))
+      response.status(200).end(JSON.stringify({}))
     }
   ])
 
@@ -908,7 +896,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       if (sessionUser._id !== message.authorID) {
         if (sessionUser.permissionLevel !== 'admin') {
           response.status(403).end(JSON.stringify({
-            error: 'you are not the owner of this message'
+            error: errors.NOT_YOURS
           }))
 
           return
@@ -920,7 +908,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       // We don't want to send back the message itself, obviously!
       sendToAllSockets('message/delete', {messageID: message._id})
 
-      response.status(200).end(JSON.stringify({success: true}))
+      response.status(200).end(JSON.stringify({}))
     }
   ])
 
@@ -931,7 +919,9 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     async (request, response) => {
       const { message } = request[middleware.vars]
 
-      response.status(200).end(JSON.stringify(await serialize.message(message)))
+      response.status(200).end(JSON.stringify({
+        message: await serialize.message(message)
+      }))
     }
   ])
 
@@ -946,7 +936,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       if (await db.channels.findOne({name})) {
         response.status(500).end(JSON.stringify({
-          error: 'channel name already taken'
+          error: errors.NAME_ALREADY_TAKEN
         }))
 
         return
@@ -962,7 +952,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       })
 
       response.status(201).end(JSON.stringify({
-        success: true,
         channelID: channel._id
       }))
     }
@@ -981,7 +970,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       if (await db.channels.findOne({name})) {
         response.status(400).end(JSON.stringify({
-          error: 'channel name already taken'
+          error: errors.NAME_ALREADY_TAKEN
         }))
 
         return
@@ -993,9 +982,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         channelID, newName: name
       })
 
-      response.status(200).end(JSON.stringify({
-        success: true
-      }))
+      response.status(200).end(JSON.stringify({}))
     }
   ])
 
@@ -1019,9 +1006,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         channelID
       })
 
-      response.status(200).end(JSON.stringify({
-        success: true
-      }))
+      response.status(200).end(JSON.stringify({}))
     }
   ])
 
@@ -1036,7 +1021,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       const { channel, sessionUser } = request[middleware.vars]
 
       response.status(200).end(JSON.stringify({
-        success: true,
         channel: await serialize.channelDetail(channel, sessionUser)
       }))
     }
@@ -1053,7 +1037,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       const channels = await db.channels.find({})
 
       response.status(200).end(JSON.stringify({
-        success: true,
         channels: await Promise.all(channels.map(channel => {
           return serialize.channelBrief(channel, sessionUser)
         }))
@@ -1113,7 +1096,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       }
 
       response.status(200).end(JSON.stringify({
-        success: true,
         messages: await Promise.all(messages.map(serialize.message))
       }))
     }
@@ -1129,9 +1111,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       await markChannelAsRead(sessionUser._id, channelID)
 
-      response.status(200).end(JSON.stringify({
-        success: true
-      }))
+      response.status(200).end(JSON.stringify({}))
     }
   ])
 
@@ -1145,7 +1125,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       const count = await getUnreadMessageCountInChannel(sessionUser, channelID)
 
       response.status(200).end(JSON.stringify({
-        success: true, count
+        count
       }))
     }
   ])
@@ -1160,7 +1140,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       if (await db.users.findOne({username})) {
         response.status(500).end(JSON.stringify({
-          error: 'username already taken'
+          error: errors.NAME_ALREADY_TAKEN
         }))
 
         return
@@ -1168,7 +1148,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       if (password.length < 6) {
         response.status(400).end(JSON.stringify({
-          error: 'password must be at least 6 characters long'
+          error: errors.SHORT_PASSWORD
         }))
 
         return
@@ -1187,7 +1167,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       })
 
       response.status(201).end(JSON.stringify({
-        success: true,
         user: await serialize.user(user)
       }))
     }
@@ -1203,14 +1182,13 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       if (!user) {
         response.status(404).end(JSON.stringify({
-          error: 'user not found'
+          error: errors.NOT_FOUND
         }))
 
         return
       }
 
       response.status(200).end(JSON.stringify({
-        success: true,
         user: await serialize.user(user)
       }))
     }
@@ -1230,7 +1208,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       })
 
       response.status(200).end(JSON.stringify({
-        success: true,
         avatarURL: emailToAvatarURL(email),
       }))
     }
@@ -1256,7 +1233,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         ])
 
         const result = {
-          success: true,
           users: await Promise.all(authorizedUsers.map(serialize.user))
         }
 
@@ -1277,7 +1253,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         const users = await db.users.find({})
 
         response.status(200).end(JSON.stringify({
-          success: true,
           users: await Promise.all(users.map(serialize.user))
         }))
       }
@@ -1321,12 +1296,11 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         })
 
         response.status(200).end(JSON.stringify({
-          success: true,
           sessionID: session._id
         }))
       } else {
         response.status(401).end(JSON.stringify({
-          error: 'incorrect password'
+          error: errors.INCORRECT_PASSWORD
         }))
       }
     }
@@ -1342,14 +1316,13 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       if (!session) {
         response.status(404).end(JSON.stringify({
-          error: 'session not found'
+          error: errors.NOT_FOUND
         }))
 
         return
       }
 
       response.status(200).end(JSON.stringify({
-        success: true,
         session: await serialize.sessionDetail(session)
       }))
     }
@@ -1361,7 +1334,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         next()
       } else {
         response.status(400).end(JSON.stringify({
-          error: 'authorization is not enabled'
+          error: errors.AUTHORIZATION_ERROR
         }))
       }
     },
@@ -1382,9 +1355,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         $set: {authorized: true}
       })
 
-      response.status(200).end(JSON.stringify({
-        success: true
-      }))
+      response.status(200).end(JSON.stringify({}))
     }
   ])
 
@@ -1396,7 +1367,9 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       if (sessionUser._id === userID) {
         response.status(400).end(JSON.stringify({
-          error: 'you cannot deauthorize yourself'
+          error: Object.assign({}, errors.AUTHORIZATION_ERROR, {
+            message: 'You can\'t deauthorize yourself.'
+          })
         }))
 
         return
@@ -1406,9 +1379,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         $set: {authorized: false}
       })
 
-      response.status(200).end(JSON.stringify({
-        success: true
-      }))
+      response.status(200).end(JSON.stringify({}))
     }
   ])
 
@@ -1421,22 +1392,18 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     async (request, response) => {
       const { sessionIDs } = request[middleware.vars]
 
-      if (Array.isArray(sessionIDs) === false) {
+      if (!(Array.isArray(sessionIDs) && sessionIDs.every(x => typeof x === 'string'))) {
         response.status(400).end(JSON.stringify({
-          error: 'expected sessionIDs to be an array'
-        }))
-      } else if (sessionIDs.find(x => typeof x !== 'string')) {
-        respones.status(400).end(JSON.stringify({
-          error: 'expected sessionIDs to be an array of strings'
+          error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+            message: 'Expected sessionIDs to be an array of strings.'
+          })
         }))
       } else {
         await Promise.all(sessionIDs.map(
           sid => db.sessions.remove({_id: sid})
         ))
 
-        response.status(200).end(JSON.stringify({
-          success: true
-        }))
+        response.status(200).end(JSON.stringify({}))
       }
     }
   ])
@@ -1450,7 +1417,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       const sessions = await db.sessions.find({userID: sessionUser._id})
 
       response.status(200).end(JSON.stringify({
-        success: true,
         sessions: await Promise.all(sessions.map(serialize.sessionBrief))
       }))
     }

@@ -20,11 +20,11 @@ If [authorization](#authorization) is required by the server, **all endpoints wi
 
 - [Authentication](#authentication): never required.
 
-Returns `{decent: true, message, repository}`, where `message` and `repository` are hard-coded strings for Humans to read. Also returns the status code [`418`](https://en.wikipedia.org/wiki/Hyper_Text_Coffee_Pot_Control_Protocol). Use this endpoint to verify that a given hostname is actually a Decent server.
+Returns `{decent: true, message, repository}`, where `message` and `repository` are hard-coded strings for Humans to read. Also returns the HTTP status code [`418`](https://en.wikipedia.org/wiki/Hyper_Text_Coffee_Pot_Control_Protocol). Use this endpoint to verify that a given hostname is actually a Decent server.
 
 ### GET `/api/server-settings`
 
-Returns an object representing server-specific settings.
+Returns `{settings}`, where `settings` is an object representing server-specific settings.
 
 ### POST `/api/server-settings`
 
@@ -44,7 +44,7 @@ Takes the parameter `patch` and overwrites each of the specified properties acco
   * `email`: (via data; string/null) the new email address of the user.
 - [Authentication](#authentication): always required.
 
-Returns `{success: true, avatarURL}`, where `avatarURL` is a string URL (usually pointing to [Libravatar](https://www.libravatar.org/)) to be used as the user's profile picture.
+Returns `{avatarURL}`, where `avatarURL` is a string URL (usually pointing to [Libravatar](https://www.libravatar.org/)) to be used as the user's profile picture.
 
 ### GET `/api/should-use-secure`
 
@@ -65,7 +65,7 @@ Returns an object `{useAuthorization, authorizationMessage}`, where `useAuthoriz
   * `channelID`: (via data; string) the ID of the channel to which the message will be sent. The channel has to exist.
 - [Authentication](#authentication): always required.
 
-Sends a message. Returns an object `{success: true, messageID}` if successful, where `messageID` is the unique ID of the new message, and emits a [`message/new`](#from-server-messagenew) WebSocket event.
+Sends a message. Returns an object `{messageID}` if successful, where `messageID` is the unique ID of the new message, and emits a [`message/new`](#from-server-messagenew) WebSocket event.
 
 ### GET `/api/message/:messageID`
 
@@ -81,7 +81,7 @@ Returns a [message object](#message-object) corresponding to the given message I
   * `messageID`: (via data; string) the message ID. The message has to exist.
 - [Authentication](#authentication): always required. **The user must own the message.**
 
-Overwrites the text content of an existing message and attaches an "edited" date to it. Returns `{success: true}` if successful, and emits a [`message/edit`](#from-server-messageedit) WebSocket event.
+Overwrites the text content of an existing message and attaches an "edited" date to it. Returns `{true}` if successful, and emits a [`message/edit`](#from-server-messageedit) WebSocket event.
 
 ### POST `/api/pin-message`
 
@@ -89,7 +89,7 @@ Overwrites the text content of an existing message and attaches an "edited" date
   * `messageID`: (via data; string) the ID of the message to be pinned. The message has to exist.
 - [Authentication](#authentication): always required. **The user must be an admin.**
 
-Adds a message to its channel's pinned messages list. Returns `{success: true}` if successful.
+Adds a message to its channel's pinned messages list. Returns an empty object if successful.
 
 ### POST `/api/add-message-reaction`
 
@@ -101,7 +101,7 @@ This endpoint is unstable. See discussion in [GitHub issue #21](https://github.c
   * `name`: (via data; string) the name of the channel. This must be a [valid name](#valid-names), and there must not already be a channel with the same name.
 - [Authentication](#authentication): always required. **The user must be an admin.**
 
-Creates a channel (which will immediately be able to receive messages). Returns `{success: true, channelID}` if successful, where `channelID` is the unique ID of the channel, and emits a [`channel/new`](#from-server-channelnew) WebSocket event.
+Creates a channel (which will immediately be able to receive messages). Returns `{channelID}` if successful, where `channelID` is the unique ID of the channel, and emits a [`channel/new`](#from-server-channelnew) WebSocket event.
 
 ### GET `/api/channel/:channelID`
 
@@ -110,7 +110,7 @@ Creates a channel (which will immediately be able to receive messages). Returns 
 - [Authentication](#authentication): optional, unless the server requires [authorization](#authorization).
   * [Extra data](#channel-object) will be returned if given.
 
-Returns `{success: true, channel}` if successful, where `channel` is a [(detailed) channel object](#channel-object) corresponding to the channel with the given ID.
+Returns `{channel}` if successful, where `channel` is a [(detailed) channel object](#channel-object) corresponding to the channel with the given ID.
 
 ### POST `/api/rename-channel`
 
@@ -119,7 +119,7 @@ Returns `{success: true, channel}` if successful, where `channel` is a [(detaile
   * `channelID`: (via data; string) the unique ID of the channel to be renamed. The channel has to exist.
 - [Authentication](#authentication): always required. **The requesting user must be an admin.**
 
-Changes the name of a channel. Returns `{success: true}` if successful, and emits a [`channel/rename`](#from-server-channelrename) WebSocket event.
+Changes the name of a channel. Returns `{true}` if successful, and emits a [`channel/rename`](#from-server-channelrename) WebSocket event.
 
 ### POST `/api/delete-channel`
 
@@ -127,11 +127,11 @@ Changes the name of a channel. Returns `{success: true}` if successful, and emit
   * `channelID`: (via data; string) the unique ID of the channel to be deleted. The channel has to exist.
 - [Authentication](#authentication): always required. **The requesting user must be an admin.**
 
-Deletes a channel and any messages in it. Returns `{success: true}` if successful, and emits a [`channel/delete`](#from-server-channeldelete) WebSocket event.
+Deletes a channel and any messages in it. Returns `{true}` if successful, and emits a [`channel/delete`](#from-server-channeldelete) WebSocket event.
 
 ### GET `/api/channel-list`
 
-Returns `{success: true, channels}`, where channels is an array of [(brief) channel objects](#channel-object) for each channel on the server. Note that channel objects have more data when [authentication](#authentication) is provided.
+Returns `{channels}`, where channels is an array of [(brief) channel objects](#channel-object) for each channel on the server. Note that channel objects have more data when [authentication](#authentication) is provided.
 
 ### GET `/api/channel/:channelID/latest-messages`
 
@@ -141,7 +141,7 @@ Returns `{success: true, channels}`, where channels is an array of [(brief) chan
   * `after`: (via query; optional) the ID of the message right before the range of messages you want.
   * `limit`: (via query; optional) the maximum number of messages to fetch (defaults to 50). The actual used limit will be at least 1 and not greater than 50.
 
-Returns `{success: true, messages}`, where messages is an array of the most recent messages sent to the given channel. If `before` is specified, it'll only fetch messages that were sent before that one; and it'll only fetch messages sent after `after`. If `limit` is specified, it'll only fetch up to that many messages (or up to 50, if not specified).
+Returns `{messages}`, where messages is an array of the most recent messages sent to the given channel. If `before` is specified, it'll only fetch messages that were sent before that one; and it'll only fetch messages sent after `after`. If `limit` is specified, it'll only fetch up to that many messages (or up to 50, if not specified).
 
 ### POST `/api/register`
 
@@ -150,7 +150,7 @@ Returns `{success: true, messages}`, where messages is an array of the most rece
   * `password`: (via body; string) the password to use. The password must be at least 6 characters long.
 - [Authentication](#authentication): never required.
 
-Registers a new user. The given password is passed to `/api/register` as a plain string, and is stored in the database as a bcrypt-hashed and salted string (and not in any plain text form). Returns `{success: true, user}` if successful, where `user` is the new user as a [user object](#user-object).
+Registers a new user. The given password is passed to `/api/register` as a plain string, and is stored in the database as a bcrypt-hashed and salted string (and not in any plain text form). Returns `{user}` if successful, where `user` is the new user as a [user object](#user-object).
 
 ### POST `/api/authorize-user`
 
@@ -158,7 +158,7 @@ Registers a new user. The given password is passed to `/api/register` as a plain
   * `userID`: (via data; string) the unique ID of the user to be authorized.
 - [Authentication](#authentication): always required. **The requesting user must be an admin.**
 
-[Authorizes](#authorization) the given user. Returns `{success: true}` if successful. Doesn't do anything (returns an error) if authorization is disabled.
+[Authorizes](#authorization) the given user. Returns an empty object if successful. Doesn't do anything (returns an error) if authorization is disabled.
 
 ### POST `/api/deauthorize-user`
 
@@ -166,18 +166,18 @@ Registers a new user. The given password is passed to `/api/register` as a plain
   * `userID`: (via data; string) the unique ID of the user to be deauthorized. This must not be the requesting user (you can't deauthorize yourself).
 - [Authentication](#authentication): always required. **The requesting user must be an admin.**
 
-[Deauthorizes](#authorization) the given user. Returns `{success: true}` if successful. Doesn't do anything (returns an error) if authorization is disabled.
+[Deauthorizes](#authorization) the given user. Returns an empty object if successful. Doesn't do anything (returns an error) if authorization is disabled.
 
 ### GET `/api/user/:userID`
 
 - Parameters:
   * `userID`: (via URL path) the ID of the user to fetch. The user has to exist.
 
-Returns `{success: true, user}` if successful, where `user` is a [user object](#user-objects) corresponding to the user with the given ID.
+Returns `{user}` if successful, where `user` is a [user object](#user-objects) corresponding to the user with the given ID.
 
 ### GET `/api/user-list`
 
-Returns `{success: true, users}`, where `users` is an array of every registered user on the server as [user objects](#user-objects).
+Returns `{users}`, where `users` is an array of every registered user on the server as [user objects](#user-objects).
 
 ### GET `/api/username-available/:username`
 
@@ -193,7 +193,7 @@ Returns `{available}`, where `available` is a boolean set to whether or not the 
   * `password`: (via body; string) the password to use. This must (when hashed) match the user's password.
 - [Authentication](#authentication): never required.
 
-Attempts to log in as a user, creating a new session. Returns `{success: true, sessionID}` if successful, where `sessionID` is the ID of the newly-created session.
+Attempts to log in as a user, creating a new session. Returns `{sessionID}` if successful, where `sessionID` is the ID of the newly-created session.
 
 ### GET `/api/session/:sessionID`
 
@@ -201,20 +201,40 @@ Attempts to log in as a user, creating a new session. Returns `{success: true, s
   * `sessionID`: (via URL path) the session ID to fetch. The session must exist.
 - [Authentication](#authentication): never required. Should, however, be provided in the URL.
 
-Returns `{success: true, session: {id, dateCreated, user}}` if successful, where `user` is a [user object](#user-object) of the user which the session represents. This endpoint is useful when grabbing information about the logged in user (e.g. at the startup of a client program, which may display the logged in user's username in a status bar). Does not require [authorization](#authorization).
+Returns `{session: {id, dateCreated, user}}` if successful, where `user` is a [user object](#user-object) of the user which the session represents. This endpoint is useful when grabbing information about the logged in user (e.g. at the startup of a client program, which may display the logged in user's username in a status bar). Does not require [authorization](#authorization).
 
 ### POST `/api/delete-sessions`
 
 - Parameters:
   * `sessionIDs`: (via body; array of strings) the IDs of the sessions to be deleted.
 
-Deletes the given sessions (using their IDs will no longer work). Passing just one session ID is fine. Returns `{success: true}` if successful.
+Deletes the given sessions (using their IDs will no longer work). Passing just one session ID is fine. Returns an empty object if successful.
 
 ### GET `/api/user-session-list`
 
 - [Authentication](#authentication): always required.
 
-Returns `{success: true, sessions}` if successful, where `sessions` is an array of [(brief) session objects](#session-object). All sessions which are logged into the same user as the given session (via `sessionID`) are returned.
+Returns `{sessions}` if successful, where `sessions` is an array of [(brief) session objects](#session-object). All sessions which are logged into the same user as the given session (via `sessionID`) are returned.
+
+
+## Endpoint errors
+
+Nearly all of the [HTTP endpoints](#http-endpoints) return errors situationally. Generally, when the processing of a request errors, its response will have the `error` property, which will follow the form `{code, message}`. The `message` property is a string of a human-readable English message briefly explaining what went wrong, and the `code` is a permanent identifier string for the type of error that happened. (Checking `code` is useful for displaying custom messages or behavior when particular errors occur.) The following list describes each possible error code:
+
+- `NOT_FOUND` - For when you try to request a something, but it isn't found (e.g. requesting the user by the name `foobar` when there is no such user).
+- `NOT_YOURS` - For when you attempt to do something impactful (e.g. editing/deleting) to a something you aren't the owner/author of.
+- `MUST_BE_ADMIN` - For when you try to do something limited to admins, but you are not an admin.
+- `ALREADY_PERFORMED` - For when you try to do something, but you have already done that something (e.g. pinning a message you've already pinned).
+- `INCOMPLETE_PARAMETERS` - For when a property is missing from a request's parameters. The missing property's name is passed in `error.missing`.
+- `INVALID_PARAMETER_TYPE` - For when a property is given in a request's parameters, but is not the right type (e.g. passing a string instead of an array). The invalid property's name is passed in `error.invalidParameter`.
+  - Note that this is only for type-checking. Client programs should *never* get this error, regardless of user input. More specific errors, such as `SHORT_PASSWORD`, are responded for issues that might be related to user input.
+- `INVALID_SESSION_ID` - For when a session ID is passed, but there is no session with that ID. (This is for general usage where being logged in is required. For `/session/:sessionID`, `NOT_FOUND` is returned if there is no session with the given ID.)
+- `UPLOAD_FAILED` - For when an upload fails.
+- `NAME_ALREADY_TAKEN` - For when you try to create a something, but your passed name is already taken by another something (e.g. registering a username which is already used by someone else).
+- `SHORT_PASSWORD` - For when you attempt to register but your password is too short.
+- `INCORRECT_PASSWORD` - For when you attempt to log in but you didn't enter the right password. (Note that `NOT_FOUND` is returned if you try to log in with an unused username.)
+- `INVALID_NAME` - For when you try to make something (a user or channel, etc) with an invalid name.
+
 
 ## WebSocket events
 
@@ -355,12 +375,12 @@ When a request is made to the API, the server searches for a session ID given in
 * `?sessionID` in query string
 * `X-Session-ID` header
 
-If the server requires [authorization](#authorization) and the session ID could not be found or pointed to an unauthenticated user, the request is immediately terminated with a 403 and error message. It's likely simpler to just send the `X-Session-ID` header with _all_ requests, even on non-authorization-requiring servers.
+If the server requires [authorization](#authorization) and the session ID could not be found or pointed to an unauthenticated user, the request is immediately terminated with a 403 status code. It's likely simpler to just send the `X-Session-ID` header with _all_ requests, even on non-authorization-requiring servers.
 
 ### Dates
 
-It should be noted that, in this document, "dates" are numbers specified according to JavaScript's [`Date.now`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/now) function. This is equal to the number of *milliseconds* elapsed since the UNIX epoch. Programming languages which expect a UNIX timestamp may stumble as they expect a number of seconds since the UNIX epoch, not a number of milliseconds.
+In this document and throughout the API, "dates" are numbers specified according to JavaScript's [`Date.now`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/now) function. This is equal to the number of *milliseconds* elapsed since the UNIX epoch. Programming languages which expect a UNIX timestamp may stumble as they expect a number of seconds since the UNIX epoch, not a number of milliseconds.
 
 ### Valid names
 
-Several parts of the API expect names to be given (e.g. [creating a channel](#post-apicreate-channel)). These names will eventually be displayed to users, and so must follow a basic guideline for being formatted: **Names may consist only of alphanumeric characters, underscores (`_`), and dashes (`-`).** When a name which does not follow these guidelines is given to an endpoint, an error message will be responded and the request will have no action.
+Several parts of the API expect names to be given (e.g. [creating a channel](#post-apicreate-channel)). These names will eventually be displayed to users, and so must follow a basic guideline for being formatted: **Names may consist only of alphanumeric characters, underscores (`_`), and dashes (`-`).** When a name which does not follow these guidelines is given to an endpoint, an `INVALID_NAME` [error](#endpoint-errors) will be responded and the request will have no action.

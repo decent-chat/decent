@@ -59,7 +59,7 @@ const store = (state, emitter) => {
           .then(res => res.json())
 
         if (!decent) {
-          throw 'not a decent server'
+          throw new Error('not a decent server')
         }
 
         // it's a decent server!
@@ -184,21 +184,15 @@ const store = (state, emitter) => {
       modal.disable()
 
       try {
-        const { success } = await api.post(state, 'create-channel', {
+        await api.post(state, 'create-channel', {
           name: channelName.trim(),
           sessionID: state.session.id,
         })
 
         modal.close()
       } catch (error) {
-        if (error.message === 'name invalid') {
-          modal.showError('Invalid name - can only contain a-z, 0-9,\nunderscores, and dashes')
-        } else if (error.message === 'channel name already taken') {
-          modal.showError(`#${channelName.trim()} already exists`)
-        } else {
-          console.error(error)
-          modal.showError('Internal error')
-        }
+        modal.showError(error.message)
+        console.error(error)
 
         modal.disable(false) // enable
       }
@@ -267,17 +261,10 @@ const store = (state, emitter) => {
         // close the modal
         modal.close()
       } catch (error) {
-        // handle error
-        if (error.message === 'username already taken') {
-          modal.showError('Username already taken')
-        } else if (error.message === 'password must be at least 6 characters long') {
-          modal.showError('Password must be at least 6 characters long')
-        } else if (error.message === 'username invalid') {
+        if (error.code === 'INVALID_NAME') {
           modal.showError('Username can contain only alphanumeric characters, underscores, and dashes')
         } else {
-          // not an error from the server?
-          console.error(error)
-          modal.showError('Internal error')
+          modal.showError(error.message)
         }
 
         modal.disable(false) // enable
@@ -315,15 +302,10 @@ const store = (state, emitter) => {
         // close the modal
         modal.close()
       } catch (error) {
-        // handle error
-        if (error.message === 'incorrect password') {
-          modal.showError('Incorrect password')
-        } else if (error.message === 'user not found') {
-          modal.showError('User not found')
+        if (error.code === 'NOT_FOUND') {
+          modal.showError('There is no user with that username.')
         } else {
-          // not an error from the server?
-          console.error(error)
-          modal.showError('Internal error')
+          modal.showError(error.message)
         }
       }
     })

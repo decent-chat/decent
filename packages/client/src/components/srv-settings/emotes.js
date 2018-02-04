@@ -17,7 +17,7 @@ const store = (state, emitter) => {
 
     state.emotes.fetching = true
 
-    const { emotes } = await api.get(state, 'server-settings')
+    const { settings: { emotes } } = await api.get(state, 'server-settings')
 
     state.emotes.list = emotes
     state.emotes.fetching = false
@@ -107,7 +107,7 @@ const component = (state, emit) => {
         },
         sessionID: state.session.id,
       }).catch(error => {
-        modal.showError('Internal error')
+        modal.showError(error.message)
         modal.disable(false)
         throw error
       })
@@ -132,8 +132,6 @@ const component = (state, emit) => {
           emotes: state.emotes.list,
         },
         sessionID: state.session.id,
-      }).catch(error => {
-        throw error
       })
 
       emit('render')

@@ -22,7 +22,8 @@ async function fetchHelper(state, path, fetchConfig = {}) {
   // if we get an error object, throw
   if (result.error) {
     // { message, data }
-    throw Object.assign(new Error(result.error + ` (to path ${path})`), {
+    throw Object.assign(new Error(result.error.message), {
+      code: result.error.code,
       data: result,
     })
   }
