@@ -1,15 +1,3 @@
-// TODO: Resources. When a resource is sent back to the client, it is sent in a
-// serialized form - for example, a User resource might serialize to not include
-// the password hash or salt fields. (NOTE: Resources DO NOT have to be JavaScript
-// objects! It could be as simple as defining "serialize" functions for each type
-// of resource, e.g. serializeUser.)
-
-// TODO: Parameters. When defining an API endpoint, parameters can be specified.
-// These may be automatically processed - for example, a sessionID parameter could
-// automatically be turned into a user object fetched from the database, and, if
-// that user object is not found, it could automatically prevent the API request
-// from continuing.
-
 const express = require('express')
 const bodyParser = require('body-parser')
 const multer = require('multer')
