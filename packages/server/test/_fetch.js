@@ -8,7 +8,17 @@ const defaults = {
 
 module.exports = (port, path = '', opts = {}) =>
   fetch(`http://localhost:${port}/api${path}`, Object.assign({}, defaults, opts))
-    .then(res => res.json())
+    .then(res => res.text())
+    .then(text => {
+      try {
+        return JSON.parse(text)
+      } catch(err) {
+        return {error: {
+          code: 'INTERNAL_ERROR',
+          stack: new Error('Failed to parse JSON from:\n-----\n' + text + '\n-----')
+        }}
+      }
+    })
     .then(res => {
       if (res.error) {
         if (res.error.code === 'INTERNAL_ERROR') {
