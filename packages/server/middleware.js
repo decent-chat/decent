@@ -310,6 +310,8 @@ module.exports.makeMiddleware = function({db}) {
     ],
 
     requireNameValid: (nameVar) => [
+      ...middleware.validateVar(nameVar, validate.string),
+
       function(request, response, next) {
         const name = request[middleware.vars][nameVar]
 

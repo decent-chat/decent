@@ -609,3 +609,77 @@ test('requireBeAdmin - basic functionality, as non-admin', async t => {
 
   await server.kill()
 })
+
+test('requireBeMessageAuthor - basic functionality, as author', async t => {
+  const port = portForMiddlewareTests++
+  const server = await spawn(port)
+  const { middleware } = makeMiddleware({db: server.db})
+
+  const { messageID, sessionID } = await makeMessage(server, port)
+  const request = {[middleware.vars]: {messageID, sessionID}}
+  const { response } = await interpretMiddleware(request, [
+    ...middleware.getMessageFromID('messageID', 'message'),
+    ...middleware.getSessionUserFromID('sessionID', 'user'),
+    ...middleware.requireBeMessageAuthor('message', 'user')
+  ])
+  t.false(response.wasEnded)
+
+  await server.kill()
+})
+
+test('requireBeMessageAuthor - basic functionality, as non-author', async t => {
+  const port = portForMiddlewareTests++
+  const server = await spawn(port)
+  const { middleware } = makeMiddleware({db: server.db})
+
+  const { messageID } = await makeMessage(server, port)
+  const { sessionID } = await makeUser(server, port)
+  const request = {[middleware.vars]: {messageID, sessionID}}
+  const { response } = await interpretMiddleware(request, [
+    ...middleware.getMessageFromID('messageID', 'message'),
+    ...middleware.getSessionUserFromID('sessionID', 'user'),
+    ...middleware.requireBeMessageAuthor('message', 'user')
+  ])
+  t.true(response.wasEnded)
+  t.is(response.statusCode, 403)
+  t.is(response.endData.error.code, 'NOT_YOURS')
+
+  await server.kill()
+})
+
+test('requireNameValid - basic functionality, name valid', async t => {
+  const db = new Datastore()
+  const { middleware } = makeMiddleware({db})
+
+  const request = {[middleware.vars]: {name: 'burrito-land'}}
+  const { response } = await interpretMiddleware(request,
+    middleware.requireNameValid('name')
+  )
+  t.false(response.wasEnded)
+})
+
+test('requireNameValid - basic functionality, name not valid', async t => {
+  const db = new Datastore()
+  const { middleware } = makeMiddleware({db})
+
+  const request = {[middleware.vars]: {name: 'OmG???!?? Why$$## This is a DUMB name.\x1b\x1b\x1b'}}
+  const { response } = await interpretMiddleware(request,
+    middleware.requireNameValid('name')
+  )
+  t.true(response.wasEnded)
+  t.is(response.statusCode, 400)
+  t.is(response.endData.error.code, 'INVALID_NAME')
+})
+
+test('requireNameValid - non-string name', async t => {
+  const db = new Datastore()
+  const { middleware } = makeMiddleware({db})
+
+  const request = {[middleware.vars]: {name: {x: 123}}}
+  const { response } = await interpretMiddleware(request,
+    middleware.requireNameValid('name')
+  )
+  t.true(response.wasEnded)
+  t.is(response.statusCode, 400)
+  t.is(response.endData.error.code, 'INVALID_PARAMETER_TYPE')
+})
