@@ -2,6 +2,7 @@ const { test } = require('ava')
 const { makeMiddleware, validate } = require('../middleware')
 const { makeUser, makeAdmin } = require('./_serverUtil')
 const spawn = require('./_spawn')
+const fetch = require('./_fetch')
 const Datastore = require('nedb')
 
 let portForMiddlewareTests = 22000
@@ -467,6 +468,40 @@ test('getUserFromID - id of nonexistent user', async t => {
   t.is(response.statusCode, 404)
   t.is(response.endData.error.code, 'NOT_FOUND')
   t.is(request[middleware.vars].user, undefined)
+
+  await server.kill()
+})
+
+test('getMessageFromID - basic functionality', async t => {
+  const port = portForMiddlewareTests++
+  const server = await spawn(port)
+  const { middleware } = makeMiddleware({db: server.db})
+
+  // TODO: Make a function to quickly generate an admin, channel, and message.
+  // This would be helpful in lots of future tests (as well as here).
+
+  const { sessionID } = await makeAdmin(server, port)
+
+  const { channelID } = await fetch(port, '/channels', {
+    method: 'POST',
+    body: JSON.stringify({
+      name: 'general', sessionID
+    })
+  })
+
+  const { messageID } = await fetch(port, '/messages', {
+    method: 'POST',
+    body: JSON.stringify({
+      channelID, text: 'Hello, world!', sessionID
+    })
+  })
+
+  const request = {[middleware.vars]: {messageID}}
+  await interpretMiddleware(request,
+    middleware.getMessageFromID('messageID', 'message')
+  )
+  t.is(request[middleware.vars].message._id, messageID)
+  t.is(request[middleware.vars].message.text, 'Hello, world!')
 
   await server.kill()
 })

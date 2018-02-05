@@ -643,7 +643,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  app.post('/api/create-channel', [
+  app.post('/api/channels', [
     ...middleware.loadVarFromBody('name'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requireBeAdmin('sessionUser'),
