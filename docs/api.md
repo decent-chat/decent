@@ -137,18 +137,10 @@ Returns `{}` if successful. Updates settings with new values provided.
 PATCH /api/settings
 
 -> {
-->   "patch": {
-->     "name": "My Server",
-->     "emotes": 0
-->   }
+->   "name": "My Server"
 -> }
 
-<- {
-<-   "results": {
-<-     "name": "updated",
-<-     "emotes": "invalid value - not an array of emote objects"
-<-   }
-<- }
+<- {}
 ```
 
 ---
@@ -216,6 +208,10 @@ Model:
 }
 ```
 
+Related events:
+* [emote/new](#emote-new)
+* [emote/delete](#emote-delete)
+
 <a name='list-emotes'></a>
 ### List emotes [GET /api/emotes]
 
@@ -235,7 +231,7 @@ GET /api/emotes
 + `imageURL` (string)
 + `shortcode` (Name) - Should not include colons (`:`).
 
-Returns `{}` if successful.
+Returns `{}` if successful. Emits [emote/new](#emote-new).
 
 ```js
 POST /api/emotes
@@ -264,7 +260,7 @@ POST /api/emotes
 + requires admin session
 + **in-url** shortcode (string)
 
-Returns `{}` if successful.
+Returns `{}` if successful. Emits [emote/delete](#emote-delete).
 
 ```js
 DELETE /api/emotes/package
@@ -802,17 +798,17 @@ Should be **sent from clients** in response to `pingdata`. Notifies the server o
 <a name='message-new'></a>
 ## message/new
 
-Sent to all clients whenever a message is [sent](#send-message) to any channel in the server. Passed data is in the format `{ message }`, where `message` is a [Message](#messages) representing the new message.
+Sent to all clients whenever a message is [sent](#send-message) to any channel in the server. Passed data is in the format `{ message }`, where `message` is a [message](#messages) representing the new message.
 
 <a name='message-edit'></a>
 ## message/edit
 
-Sent to all clients when any message is [edited](#edit-message). Passed data is in the format `{ message }`, where `message` is a [Message](#messages) representing the new message.
+Sent to all clients when any message is [edited](#edit-message). Passed data is in the format `{ message }`, where `message` is a [message](#messages) representing the new message.
 
 <a name='channel-new'></a>
 ## channel/new
 
-Sent to all clients when a channel is [created](#create-channel). Passed data is in the format `{channel}`, where `channel` is a [detailed Channel](#channels) representing the new channel.
+Sent to all clients when a channel is [created](#create-channel). Passed data is in the format `{ channel }`, where `channel` is a [channel](#channels) representing the new channel.
 
 <a name='channel-rename'></a>
 ## channel/rename
@@ -833,3 +829,13 @@ Sent to all clients when a user becomes online. This is whenever a socket [tells
 ## user/offline
 
 Sent to all clients when a user becomes offline. This is whenever the last socket of a user who is online terminates. Passed data is in the format `{ userID }`.
+
+<a name='emote-new'></a>
+## emote/new
+
+Sent to all clients when an emote is [added](#add-emote). Passed data is in the format `{ emote }`, where `emote` is the new [emote](#emotes).
+
+<a name='emote-delete'></a>
+## emote/delete
+
+Sent to all clients when an emote is [added](#add-emote). Passed data is in the format `{ shortcode }`, where `shortcode` is the deleted [emote](#emotes)'s shortcode.
