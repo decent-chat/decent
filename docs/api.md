@@ -5,6 +5,7 @@
   - [Settings](#settings)
   - [Properties](#properties)
   - [Emotes](#emotes)
+  - [Sessions](#sessions)
   - [Messages](#messages)
   - [Channels](#channels)
   - [Users](#users)
@@ -12,7 +13,7 @@
 
 **Misc**
 * Authentication
-  - [Sessions](#sessions)
+  - [Session IDs](#session-ids)
   - [Authorization](#authorization)
 * Terminology
   - [Dates](#dates)
@@ -23,7 +24,7 @@
 
 # Authenticating with the API
 
-## Sessions
+## Session IDs
 When a request is made to the API, the server searches for a session ID given in the request using:
 * `sessionID` in POST body
 * `?sessionID` in query string
@@ -42,7 +43,7 @@ Authorization is a server property and can only be enabled via the command line:
 > set requireAuthorization on|off
 ```
 
-**This will cause all endpoints except those marked _never requires session_ to require [authentication](#sessions).**
+**This will cause all endpoints except those marked _never requires session_ to require [authentication](#session-ids).**
 
 ---
 
@@ -273,6 +274,91 @@ DELETE /api/emotes/package
 
 ---
 
+## Sessions
+
+Model:
+```js
+{
+  "id": string,
+  "dateCreated": number,
+}
+```
+
+<a name='get-sessions'></a>
+### Fetch the current user's sessions [GET /api/sessions]
++ requires session
+
+Responds with `{ sessions }`, where `sessions` is an array of [sessions](#sessions) that also represent the user that the provided session represents (the callee; you).
+
+```js
+GET /api/sessions
+
+<- {
+<-   "sessions": [
+<-     "id": "12345678-ABCDEFGH",
+<-     "dateCreated": 123456789000
+<-   ]
+<- }
+```
+
+<a name='login'></a>
+### Login [POST /api/sessions]
++ never requires session
++ `username` (string)
++ `password` (string)
+
+Responds with `{ sessionID }` if successful, where `sessionID` is the ID of the newly-created session. Related endpoint: [register](#register).
+
+```js
+POST /api/sessions
+
+-> {
+->   "username": "admin",
+->   "password": "abcdef"
+-> }
+
+<- {
+<-   "sessionID": "12345678-ABCDEFGH"
+<- }
+```
+
+### Fetch session details [GET /api/session/:id]
++ never requires session (provided in the URL)
++ **in-url** id (string)
+
+Responds with `{ session, user }` upon success, where `session` is a [session](#sessions) and `user` is the [user](#users) this session represents.
+
+```js
+GET /api/session/12345678-ABCDEFGH
+
+<- {
+<-   "session": {
+<-     "id": "12345678-ABCDEFGH",
+<-     "dateCreated": 123456789000
+<-   },
+<-   "user": {
+<-     "id": "1234",
+<-     "username": "admin",
+<-     // ...
+<-   }
+<- }
+```
+
+<a name='logout'></a>
+### Logout [DELETE /api/session/:id]
++ never requires session (if you know the ID, it's yours)
++ **in-url** id (string)
+
+Responds with `{}` upon success. Any further requests using the provided session ID will fail.
+
+```js
+DELETE /api/session/12345678-ABCDEFGH
+
+<- {}
+```
+
+---
+
 ## Messages
 
 Model:
@@ -289,8 +375,8 @@ Model:
   "authorUsername": Name,
   "authorAvatarURL": string,
 
-  "date": number,     // Created on
-  "editDate": number, // Last edited on. null if not edited
+  "dateCreated": number,
+  "dateEdited": number | null,
 
   "reactions": [ Reaction ]
 }
@@ -628,6 +714,31 @@ GET /api/users?username=test-user
 <- }
 ```
 
+<a name='register'></a>
+### Register (create new user) [POST /api/users]
++ never requires session
++ `username` ([Name](#names)) - Must be unique
++ `password` (string) - Errors if shorter than 6 characters
+
+Responds with `{ user }` if successful, where `user` is the new user object. Note the given password is passed as a plain string and is stored in the database as a bcrypt-hashed and salted string (and not in any plaintext form). Login with [POST /api/sessions](#login).
+
+```js
+POST /api/users
+
+-> {
+->   "username": "joe",
+->   "password": "secret"
+-> }
+
+<- {
+<-   "user: {
+<-     "id": "8769",
+<-     "username": "joe",
+<-     // ...
+<-   }
+<- }
+```
+
 <a name='get-user'></a>
 ### Retrieve a user by ID [GET /api/users/:id]
 + may return extra data (`email`) with session
@@ -652,7 +763,7 @@ GET /api/users/1
 + requires session representing this user
 + **in-url** id (ID) - The user ID to patch
 + `password` (object; optional):
-  * `new` (string) - Errors if be shorter than 6 characters
+  * `new` (string) - Errors if shorter than 6 characters
   * `old` (string)
 + `email` (string; optional) - Not public
 
