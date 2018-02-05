@@ -325,6 +325,7 @@ test('runIfCondition - request variables should not be polluted', async t => {
   t.deepEqual(Object.getOwnPropertySymbols(request[middleware.vars]), [])
 })
 
+// TODO: Rename this to getUserFromSessionID, everywhere.
 test('getSessionUserFromID - basic functionality', async t => {
   const port = portForMiddlewareTests++
   const server = await spawn(port)
@@ -594,6 +595,40 @@ test('getChannelFromID - channelID of nonexistent channel', async t => {
   t.is(response.statusCode, 404)
   t.is(response.endData.error.code, 'NOT_FOUND')
   t.is(request[middleware.vars].channel, undefined)
+
+  await server.kill()
+})
+
+test('requireBeAdmin - basic functionality, as admin', async t => {
+  const port = portForMiddlewareTests++
+  const server = await spawn(port)
+  const { middleware } = makeMiddleware({db: server.db})
+
+  const { sessionID } = await makeAdmin(server, port)
+  const request = {[middleware.vars]: {sessionID}}
+  const { response } = await interpretMiddleware(request, [
+    ...middleware.getSessionUserFromID('sessionID', 'user'),
+    ...middleware.requireBeAdmin('user')
+  ])
+  t.false(response.wasEnded)
+
+  await server.kill()
+})
+
+test('requireBeAdmin - basic functionality, as non-admin', async t => {
+  const port = portForMiddlewareTests++
+  const server = await spawn(port)
+  const { middleware } = makeMiddleware({db: server.db})
+
+  const { sessionID } = await makeUser(server, port)
+  const request = {[middleware.vars]: {sessionID}}
+  const { response } = await interpretMiddleware(request, [
+    ...middleware.getSessionUserFromID('sessionID', 'user'),
+    ...middleware.requireBeAdmin('user')
+  ])
+  t.true(response.wasEnded)
+  t.is(response.statusCode, 403)
+  t.is(response.endData.error.code, 'MUST_BE_ADMIN')
 
   await server.kill()
 })
