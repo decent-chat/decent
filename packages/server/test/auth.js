@@ -19,7 +19,7 @@ test('register', async t => {
 
   t.truthy(user)
 
-  const userFromDB = await server.db.users.findOne({ _id: user.id })
+  const userFromDB = await server.db.users.findOne({_id: user.id})
   t.truthy(userFromDB)
 
   await server.kill()
@@ -45,7 +45,7 @@ test('login', async t => {
     })
   })
 
-  const session = await server.db.sessions.findOne({ _id: sessionID })
+  const session = await server.db.sessions.findOne({_id: sessionID})
   t.is(session.userID, user.id)
 
   await server.kill()
@@ -80,7 +80,7 @@ test('authorize-user', async t => {
   const { admin, sessionID } = await makeAdmin(server, port)
   const { user } = await makeUser(server, port)
 
-  const userBefore = await server.db.users.findOne({ _id: user.id })
+  const userBefore = await server.db.users.findOne({_id: user.id})
   t.false(userBefore.authorized)
 
   await fetch(port, '/authorize-user', {
@@ -91,7 +91,7 @@ test('authorize-user', async t => {
     })
   })
 
-  const userAfter = await server.db.users.findOne({ _id: user.id })
+  const userAfter = await server.db.users.findOne({_id: user.id})
   t.true(userAfter.authorized)
 
   await fetch(port, '/deauthorize-user', {
@@ -102,7 +102,7 @@ test('authorize-user', async t => {
     })
   })
 
-  const userAfterDeauth = await server.db.users.findOne({ _id: user.id })
+  const userAfterDeauth = await server.db.users.findOne({_id: user.id})
   t.false(userAfterDeauth.authorized)
 
   await server.kill()
