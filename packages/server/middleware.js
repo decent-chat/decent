@@ -172,6 +172,8 @@ module.exports.makeMiddleware = function({db}) {
     },
 
     getSessionUserFromID: (sessionIDVar, sessionUserVar) => [
+      ...middleware.validateVar(sessionIDVar, validate.string),
+
       async function(request, response, next) {
         const sessionID = request[middleware.vars][sessionIDVar]
         const user = await getUserBySessionID(sessionID)
@@ -191,6 +193,8 @@ module.exports.makeMiddleware = function({db}) {
     ],
 
     getUserFromUsername: (usernameVar, userVar) => [
+      ...middleware.validateVar(usernameVar, validate.string),
+
       async function(request, response, next) {
         const username = request[middleware.vars][usernameVar]
         const user = await db.users.findOne({username})
@@ -210,6 +214,8 @@ module.exports.makeMiddleware = function({db}) {
     ],
 
     getUserFromID: (userIDVar, userVar) => [
+      ...middleware.validateVar(userIDVar, validate.string),
+
       async function(request, response, next) {
         const userID = request[middleware.vars][userIDVar]
         const user = await db.users.findOne({_id: userID})
@@ -322,8 +328,10 @@ module.exports.makeMiddleware = function({db}) {
   }
 }
 
-module.exports.validate = {
+const validate = {
   string: Object.assign(function(x) {
     return typeof x === 'string'
   }, {description: 'a string'})
 }
+
+module.exports.validate = validate
