@@ -1,0 +1,171 @@
+const { test } = require('ava')
+const { makeMiddleware } = require('../middleware')
+const { makeUser, makeChannel, makeMessage } = require('./_serverUtil')
+const spawn = require('./_spawn')
+const makeSerializers = require('../serialize')
+
+let portForSerializeTests = 23000
+
+test('serialize.message', async t => {
+  const port = portForSerializeTests++
+  const server = await spawn(port)
+  const { util } = makeMiddleware({db: server.db})
+  const serialize = makeSerializers({util, db: server.db})
+
+  const date = Date.now(), editDate = date - 5000
+  const reactions = {} // TODO: Actually check how reactions are serialized.
+
+  const message = {
+    _id: '123',
+    authorID: '234',
+    authorUsername: 'jen',
+    text: 'Hello!',
+    date, editDate,
+    channelID: '345',
+    reactions
+  }
+
+  const serialized = await serialize.message(message)
+
+  t.deepEqual(Object.keys(serialized), ['id', 'authorUsername', 'authorID', 'authorAvatarURL', 'text', 'date', 'editDate', 'channelID', 'reactions'])
+  t.is(serialized.id, '123')
+  t.is(serialized.authorUsername, 'jen')
+  t.is(serialized.authorID, '234')
+  t.is(typeof serialized.authorAvatarURL, 'string')
+  t.is(serialized.text, 'Hello!')
+  t.is(serialized.date, date)
+  t.is(serialized.editDate, editDate)
+  t.is(serialized.channelID, '345')
+  t.deepEqual(serialized.reactions, reactions)
+
+  const message2 = Object.assign({}, message)
+  delete message2.editDate
+
+  const serialized2 = await serialize.message(message2)
+
+  t.is(serialized2.editDate, undefined)
+
+  await server.kill()
+})
+
+test('serialize.user', async t => {
+  // Users are more complicated to test because the "online" property is based
+  // on the connected sockets map (which we mock here).
+
+  const port = portForSerializeTests++
+  const server = await spawn(port)
+  const connectedSocketsMap = new Map()
+  const { util } = makeMiddleware({db: server.db, connectedSocketsMap})
+  const serialize = makeSerializers({db: server.db, util})
+
+  const user = {
+    _id: 'user1',
+    username: 'user',
+    passwordHash: 'hash',
+    salt: 'salt',
+    email: 'user1@nonfree.news',
+    permissionLevel: 'member',
+    authorized: true,
+    lastReadChannelDates: {}
+  }
+
+  const serialized = await serialize.user(user)
+  const baseProperties = ['id', 'username', 'avatarURL', 'permissionLevel', 'online']
+  t.deepEqual(Object.keys(serialized), baseProperties)
+  t.is(serialized.id, 'user1')
+  t.is(serialized.username, 'user')
+  t.is(typeof serialized.avatarURL, 'string')
+  t.is(serialized.permissionLevel, 'member')
+  t.false(serialized.online)
+
+  const fakeSocket = {}
+  connectedSocketsMap.set(fakeSocket, {
+    userID: 'user1', isAlive: true
+  })
+
+  const serialized2 = await serialize.user(user)
+  t.true(serialized2.online)
+
+  const sessionUser = Object.assign({}, user)
+  const serialized3 = await serialize.user(user, sessionUser)
+  t.deepEqual(Object.keys(serialized3), baseProperties.concat(['email']))
+  t.is(serialized3.email, 'user1@nonfree.news')
+
+  await server.settings.setSetting(server.db.settings, server.settings.serverPropertiesID, 'requireAuthorization', 'on')
+  const serialized4 = await serialize.user(user, sessionUser)
+  t.deepEqual(Object.keys(serialized4), baseProperties.concat(['email', 'authorized']))
+  t.true(serialized4.authorized)
+
+  await server.kill()
+})
+
+test('serialize.sessionBrief, serialize.sessionDetail', async t => {
+  const port = portForSerializeTests++
+  const server = await spawn(port)
+  const connectedSocketsMap = new Map()
+  const { util } = makeMiddleware({db: server.db, connectedSocketsMap})
+  const serialize = makeSerializers({db: server.db, util})
+
+  const { user, sessionID } = await makeUser(server, port)
+
+  const dateCreated = Date.now()
+  const session = {_id: sessionID, dateCreated, userID: user._id}
+  const serialized = await serialize.sessionBrief(session)
+
+  t.deepEqual(Object.keys(serialized), ['id', 'dateCreated'])
+  t.is(serialized.id, sessionID)
+  t.is(serialized.dateCreated, dateCreated)
+
+  const serialized2 = await serialize.sessionDetail(session)
+
+  t.deepEqual(Object.keys(serialized2), ['id', 'dateCreated', 'user'])
+  t.is(serialized2.id, sessionID)
+  t.is(serialized2.dateCreated, dateCreated)
+  t.is(serialized2.user.id, user.id)
+
+  await server.kill()
+})
+
+test('serialize.channelBrief, serialize.channelDetail', async t => {
+  const port = portForSerializeTests++
+  const server = await spawn(port)
+  const connectedSocketsMap = new Map()
+  const { util } = makeMiddleware({db: server.db, connectedSocketsMap})
+  const serialize = makeSerializers({db: server.db, util})
+
+  const { channelID } = await makeChannel(server, port, 'general')
+
+  const channel = {
+    _id: channelID,
+    name: 'general',
+    pinnedMessageIDs: []
+  }
+
+  const serialized = await serialize.channelBrief(channel)
+  t.deepEqual(Object.keys(serialized), ['id', 'name'])
+  t.is(serialized.id, channelID)
+  t.is(serialized.name, 'general')
+
+  // channelBrief (and channelDetail) respond unread message count when passed a session user.
+  const { messageID: msg1 } = await makeMessage(server, port, 'Hello.', channelID)
+  const { messageID: msg2 } = await makeMessage(server, port, 'Hello.', channelID)
+  const user = await makeUser(server, port)
+  const serialized2 = await serialize.channelBrief(channel, user)
+  t.deepEqual(Object.keys(serialized2), ['id', 'name', 'unreadMessageCount'])
+  t.is(serialized2.unreadMessageCount, 2)
+
+  // channelDetail also responds pinned messages.
+  channel.pinnedMessageIDs.push(msg1, msg2)
+  const serialized3 = await serialize.channelDetail(channel)
+  t.deepEqual(Object.keys(serialized3), ['id', 'name', 'pinnedMessages'])
+  t.true(Array.isArray(serialized3.pinnedMessages))
+  t.is(serialized3.pinnedMessages.length, 2)
+  t.is(serialized3.pinnedMessages[0].id, msg1)
+  t.is(serialized3.pinnedMessages[1].id, msg2)
+
+  // Deleted pinned messages should not be returned.
+  await server.db.messages.remove({_id: msg1})
+  const serialized4 = await serialize.channelDetail(channel)
+  t.is(serialized4.pinnedMessages.length, 1)
+  t.is(serialized4.pinnedMessages[0].id, msg2)
+})

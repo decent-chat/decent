@@ -28,7 +28,7 @@ const makeAdmin = async (server, port, username = 'test_admin_' + shortid()) => 
   return {admin, sessionID}
 }
 
-const makeChannel = async (server, port, channelName = 'test_channel_' + shortid(), sessionID = null) => {
+const makeChannel = async (server, port, name = 'test_channel_' + shortid(), sessionID = null) => {
   if (sessionID === null) {
     sessionID = (await makeAdmin(server, port)).sessionID
   }
@@ -36,7 +36,7 @@ const makeChannel = async (server, port, channelName = 'test_channel_' + shortid
   const { channelID } = await fetch(port, '/channels', {
     method: 'POST',
     body: JSON.stringify({
-      name: 'general', sessionID
+      name, sessionID
     })
   })
 
@@ -55,7 +55,7 @@ const makeMessage = async (server, port, text = 'Hello.', channelID = null, sess
   const { messageID } = await fetch(port, '/messages', {
     method: 'POST',
     body: JSON.stringify({
-      channelID, text: 'Hello, world!', sessionID
+      channelID, text, sessionID
     })
   })
 

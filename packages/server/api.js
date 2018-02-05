@@ -7,9 +7,8 @@ const fs = require('fs')
 const path = require('path')
 const util = require('util')
 const bcrypt = require('./bcrypt-util')
-const crypto = require('crypto')
-const memoize = require('memoizee')
 const { makeMiddleware, validate } = require('./middleware')
+const makeSerializers = require('./serialize')
 
 const mkdir = util.promisify(fs.mkdir)
 
@@ -21,14 +20,24 @@ const errors = require('./errors')
 const DB_IN_MEMORY = Symbol()
 
 module.exports = async function attachAPI(app, {wss, db, dbDir}) {
-  const { middleware, util: {
-    getUserIDBySessionID,
-    getUserBySessionID
-  } } = makeMiddleware({db})
-
   // Used to keep track of connected clients and related data, such as
   // session IDs.
   const connectedSocketsMap = new Map()
+
+  const { middleware, util: middlewareUtil } = makeMiddleware({
+    db, connectedSocketsMap
+  })
+
+  const serialize = makeSerializers({db, util: middlewareUtil})
+
+  const {
+    getUserIDBySessionID,
+    getUserBySessionID,
+    emailToAvatarURL,
+    isUserOnline,
+    shouldUseAuthorization, isUserAuthorized,
+    getUnreadMessageCountInChannel
+  } = middlewareUtil
 
   const sendToAllSockets = function(evt, data, sendToUnauthorized = false) {
     for (const [ socket, socketData ] of connectedSocketsMap.entries()) {
@@ -40,17 +49,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       }
     }
   }
-
-  const md5 = string => {
-    if (!string) {
-      throw 'md5() was not passed ' + string
-    }
-
-    return crypto.createHash('md5').update(string).digest('hex')
-  }
-
-  const emailToAvatarURL = memoize(email =>
-    `https://seccdn.libravatar.org/avatar/${email ? md5(email) : ''}?d=retro`)
 
   const announceUserOffline = async function(userID) {
     // Announces that a user has gone offline.
@@ -73,57 +71,12 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   }
 
-  const shouldUseAuthorization = async function() {
-    const { requireAuthorization } = await db.settings.findOne({_id: serverPropertiesID})
-
-    return requireAuthorization === 'on'
-  }
-
-  const isUserOnline = async function(userID) {
-    // Simple logic: a user is online iff there is at least one socket whose
-    // session belongs to that user.
-
-    return Array.from(connectedSocketsMap.values())
-      .some(socketData => socketData.userID === userID)
-  }
-
-  const isUserAuthorized = async function(userID) {
-    // Checks if a user is authorized. If authorization is disabled, this will
-    // always return true (even if the "authorized" field is set to false).
-
-    if (await shouldUseAuthorization() === false) {
-      return true
-    }
-
-    const user = await db.users.findOne({_id: userID})
-
-    return user && user.authorized ? true : false
-  }
-
   const markChannelAsRead = async function(userID, channelID) {
     await db.users.update({_id: userID}, {
       $set: {
         [`lastReadChannelDates.${channelID}`]: Date.now()
       }
     })
-  }
-
-  const getUnreadMessageCountInChannel = async function(userObj, channelID) {
-    let date = 0
-    const { lastReadChannelDates } = userObj
-    if (lastReadChannelDates) {
-      if (channelID in lastReadChannelDates) {
-        date = lastReadChannelDates[channelID]
-      }
-    }
-
-    const cursor = db.messages.ccount({
-      date: {$gt: date},
-      channelID
-    }).limit(200)
-    const count = await cursor.exec()
-
-    return count
   }
 
   const loadVarsFromRequestObject = function(object, request, response, next) {
@@ -135,82 +88,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
 
     next()
-  }
-
-  const serialize = {
-    message: async m => ({
-      id: m._id,
-      authorUsername: m.authorUsername,
-      authorID: m.authorID,
-      authorAvatarURL: emailToAvatarURL(m.authorEmail || m.authorID),
-      text: m.text,
-      date: m.date,
-      editDate: m.editDate,
-      channelID: m.channelID,
-      reactions: m.reactions
-    }),
-
-    user: async (u, sessionUser = null) => {
-      const obj = {
-        id: u._id,
-        username: u.username,
-        avatarURL: emailToAvatarURL(u.email || u._id),
-        permissionLevel: u.permissionLevel,
-        online: await isUserOnline(u._id)
-      }
-
-      if (sessionUser && sessionUser._id === u._id) {
-        obj.email = u.email || null
-
-        if (await shouldUseAuthorization()) {
-          obj.authorized = u.authorized || false
-        }
-      }
-
-      return obj
-    },
-
-    sessionBrief: async s => ({
-      id: s._id,
-      dateCreated: s.dateCreated
-    }),
-
-    sessionDetail: async s => {
-      const user = await getUserBySessionID(s._id)
-
-      return Object.assign(await serialize.sessionBrief(s), {
-        user: await serialize.user(user, user)
-      })
-    },
-
-    channelBrief: async (c, sessionUser = null) => {
-      const obj = {
-        id: c._id,
-        name: c.name
-      }
-
-      if (sessionUser) {
-        obj.unreadMessageCount = await getUnreadMessageCountInChannel(sessionUser, c._id)
-      }
-
-      return obj
-    },
-
-    // Extra details for a channel - these aren't returned in the channel list API,
-    // but are when a specific channel is fetched.
-    channelDetail: async (c, sessionUser = null) => {
-      let pinnedMessages = await Promise.all(c.pinnedMessageIDs.map(id => db.messages.findOne({_id: id})))
-
-      // Null messages are filtered out, just in case there's a broken message ID in the
-      // pinned message list (e.g. because a message was deleted).
-      pinnedMessages = pinnedMessages.filter(Boolean)
-
-      pinnedMessages = await Promise.all(pinnedMessages.map(serialize.message))
-
-      return Object.assign(await serialize.channelBrief(c, sessionUser), {
-        pinnedMessages
-      })
-    }
   }
 
   app.use(bodyParser.json())
@@ -1142,6 +1019,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   wss.on('connection', socket => {
     const socketData = {
       sessionID: null,
+      userID: null,
       authorized: false,
       isAlive: true,
     }

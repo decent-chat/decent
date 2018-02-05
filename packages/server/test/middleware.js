@@ -460,7 +460,7 @@ test('getMessageFromID - basic functionality', async t => {
   const server = await spawn(port)
   const { middleware } = makeMiddleware({db: server.db})
 
-  const { messageID } = await makeMessage(server, port)
+  const { messageID } = await makeMessage(server, port, 'Hello, world!')
 
   const request = {[middleware.vars]: {messageID}}
   await interpretMiddleware(request,
