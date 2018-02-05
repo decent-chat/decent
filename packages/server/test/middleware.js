@@ -3,7 +3,6 @@ const { makeMiddleware, validate } = require('../middleware')
 const { makeUser, makeAdmin, makeChannel, makeMessage } = require('./_serverUtil')
 const spawn = require('./_spawn')
 const fetch = require('./_fetch')
-const Datastore = require('nedb')
 
 let portForMiddlewareTests = 22000
 
@@ -52,8 +51,7 @@ async function interpretMiddleware(request, middleware) {
 
 test('structure of makeMiddleware', t => {
   t.is(typeof makeMiddleware, 'function')
-  const db = new Datastore()
-  const ret = makeMiddleware({db})
+  const ret = makeMiddleware({db: null})
   t.is(typeof ret, 'object')
   t.is(typeof ret.util, 'object')
 })
@@ -106,8 +104,7 @@ test('interpretMiddleware - response.status.json', async t => {
 })
 
 test('verifyVarsExists', async t => {
-  const db = new Datastore()
-  const { middleware } = makeMiddleware({db})
+  const { middleware } = makeMiddleware({db: null})
 
   const request = {}
   await interpretMiddleware(request, middleware.verifyVarsExists())
@@ -115,8 +112,7 @@ test('verifyVarsExists', async t => {
 })
 
 test('loadVarFromBody - basic usage', async t => {
-  const db = new Datastore()
-  const { middleware } = makeMiddleware({db})
+  const { middleware } = makeMiddleware({db: null})
 
   const request = {body: {x: 25}}
   await interpretMiddleware(request, middleware.loadVarFromBody('x'))
@@ -124,8 +120,7 @@ test('loadVarFromBody - basic usage', async t => {
 })
 
 test('loadVarFromBody - missing variable, required = true', async t => {
-  const db = new Datastore()
-  const { middleware } = makeMiddleware({db})
+  const { middleware } = makeMiddleware({db: null})
 
   const request = {body: {x: 25}}
   const { response } = await interpretMiddleware(request, middleware.loadVarFromBody('y'))
@@ -135,8 +130,7 @@ test('loadVarFromBody - missing variable, required = true', async t => {
 })
 
 test('loadVarFromBody - missing variable, required = false', async t => {
-  const db = new Datastore()
-  const { middleware } = makeMiddleware({db})
+  const { middleware } = makeMiddleware({db: null})
 
   const request = {body: {x: 25}}
   const { response } = await interpretMiddleware(request, middleware.loadVarFromBody('y', false))
@@ -145,8 +139,7 @@ test('loadVarFromBody - missing variable, required = false', async t => {
 })
 
 test('loadVarFromQuery - basic usage', async t => {
-  const db = new Datastore()
-  const { middleware } = makeMiddleware({db})
+  const { middleware } = makeMiddleware({db: null})
 
   const request = {query: {x: 25}}
   await interpretMiddleware(request, middleware.loadVarFromQuery('x'))
@@ -154,8 +147,7 @@ test('loadVarFromQuery - basic usage', async t => {
 })
 
 test('loadVarFromQuery - missing variable, required = true', async t => {
-  const db = new Datastore()
-  const { middleware } = makeMiddleware({db})
+  const { middleware } = makeMiddleware({db: null})
 
   const request = {query: {x: 25}}
   const { response } = await interpretMiddleware(request, middleware.loadVarFromQuery('y'))
@@ -166,8 +158,7 @@ test('loadVarFromQuery - missing variable, required = true', async t => {
 })
 
 test('loadVarFromQuery - missing variable, required = false', async t => {
-  const db = new Datastore()
-  const { middleware } = makeMiddleware({db})
+  const { middleware } = makeMiddleware({db: null})
 
   const request = {query: {x: 25}}
   const { response } = await interpretMiddleware(request, middleware.loadVarFromQuery('y', false))
@@ -179,8 +170,7 @@ test('loadVarFromQuery - missing variable, required = false', async t => {
 // won't even call this middleware function if any parameters are missing (since
 // it wouldn't be the same route).
 test('loadVarFromParams', async t => {
-  const db = new Datastore()
-  const { middleware } = makeMiddleware({db})
+  const { middleware } = makeMiddleware({db: null})
 
   const request = {params: {x: 25}}
   await interpretMiddleware(request, middleware.loadVarFromParams('x'))
@@ -194,8 +184,7 @@ test('validate.string', t => {
 })
 
 test('validateVar - test data is valid', async t => {
-  const db = new Datastore()
-  const { middleware } = makeMiddleware({db})
+  const { middleware } = makeMiddleware({db: null})
 
   const request = {[middleware.vars]: {x: 'hello'}}
   const { response } = await interpretMiddleware(request, middleware.validateVar('x', validate.string))
@@ -203,8 +192,7 @@ test('validateVar - test data is valid', async t => {
 })
 
 test('validateVar - test data is invalid', async t => {
-  const db = new Datastore()
-  const { middleware } = makeMiddleware({db})
+  const { middleware } = makeMiddleware({db: null})
 
   const request = {[middleware.vars]: {x: 123}}
   const { response } = await interpretMiddleware(request, middleware.validateVar('x', validate.string))
@@ -214,8 +202,7 @@ test('validateVar - test data is invalid', async t => {
 })
 
 test('runIfVarExists - var does exist', async t => {
-  const db = new Datastore()
-  const { middleware } = makeMiddleware({db})
+  const { middleware } = makeMiddleware({db: null})
 
   const request = {[middleware.vars]: {x: 25}}
   await interpretMiddleware(request,
@@ -230,8 +217,7 @@ test('runIfVarExists - var does exist', async t => {
 })
 
 test('runIfVarExists - var does not exist', async t => {
-  const db = new Datastore()
-  const { middleware } = makeMiddleware({db})
+  const { middleware } = makeMiddleware({db: null})
 
   const request = {[middleware.vars]: {y: 'hello'}}
   await interpretMiddleware(request,
@@ -245,8 +231,7 @@ test('runIfVarExists - var does not exist', async t => {
 })
 
 test('runIfCondition - basic if/else usage, condition is true', async t => {
-  const db = new Datastore()
-  const { middleware } = makeMiddleware({db})
+  const { middleware } = makeMiddleware({db: null})
 
   const request = {}
   await interpretMiddleware(request,
@@ -267,8 +252,7 @@ test('runIfCondition - basic if/else usage, condition is true', async t => {
 })
 
 test('runIfCondition - basic if/else usage, condition is false', async t => {
-  const db = new Datastore()
-  const { middleware } = makeMiddleware({db})
+  const { middleware } = makeMiddleware({db: null})
 
   const request = {}
   await interpretMiddleware(request,
@@ -289,8 +273,7 @@ test('runIfCondition - basic if/else usage, condition is false', async t => {
 })
 
 test('runIfCondition - condition function only called once', async t => {
-  const db = new Datastore()
-  const { middleware } = makeMiddleware({db})
+  const { middleware } = makeMiddleware({db: null})
 
   const request = {}
   let timesCalled = 0, wasTrue = 0, wasFalse = 0
@@ -313,8 +296,7 @@ test('runIfCondition - condition function only called once', async t => {
 })
 
 test('runIfCondition - request variables should not be polluted', async t => {
-  const db = new Datastore()
-  const { middleware } = makeMiddleware({db})
+  const { middleware } = makeMiddleware({db: null})
 
   const request = {}
   await interpretMiddleware(request,
@@ -502,7 +484,7 @@ test('getMessageFromID - non-string messageID', async t => {
   t.true(response.wasEnded)
   t.is(response.statusCode, 400)
   t.is(response.endData.error.code, 'INVALID_PARAMETER_TYPE')
-  t.is(request[middleware.vars].user, undefined)
+  t.is(request[middleware.vars].message, undefined)
 
   await server.kill()
 })
@@ -519,7 +501,7 @@ test('getMessageFromID - messageID of nonexistent message', async t => {
   t.true(response.wasEnded)
   t.is(response.statusCode, 404)
   t.is(response.endData.error.code, 'NOT_FOUND')
-  t.is(request[middleware.vars].user, undefined)
+  t.is(request[middleware.vars].message, undefined)
 
   await server.kill()
 })
@@ -646,8 +628,7 @@ test('requireBeMessageAuthor - basic functionality, as non-author', async t => {
 })
 
 test('requireNameValid - basic functionality, name valid', async t => {
-  const db = new Datastore()
-  const { middleware } = makeMiddleware({db})
+  const { middleware } = makeMiddleware({db: null})
 
   const request = {[middleware.vars]: {name: 'burrito-land'}}
   const { response } = await interpretMiddleware(request,
@@ -657,8 +638,7 @@ test('requireNameValid - basic functionality, name valid', async t => {
 })
 
 test('requireNameValid - basic functionality, name not valid', async t => {
-  const db = new Datastore()
-  const { middleware } = makeMiddleware({db})
+  const { middleware } = makeMiddleware({db: null})
 
   const request = {[middleware.vars]: {name: 'OmG???!?? Why$$## This is a DUMB name.\x1b\x1b\x1b'}}
   const { response } = await interpretMiddleware(request,
@@ -670,8 +650,7 @@ test('requireNameValid - basic functionality, name not valid', async t => {
 })
 
 test('requireNameValid - non-string name', async t => {
-  const db = new Datastore()
-  const { middleware } = makeMiddleware({db})
+  const { middleware } = makeMiddleware({db: null})
 
   const request = {[middleware.vars]: {name: {x: 123}}}
   const { response } = await interpretMiddleware(request,
