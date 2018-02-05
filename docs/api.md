@@ -1,4 +1,4 @@
-# Decent API
+# Decent API Specification
 
 **Communicating with the API**
 * [HTTP Endpoints](#http-endpoints)
@@ -25,7 +25,7 @@
 
 ## Sessions
 When a request is made to the API, the server searches for a session ID given in the request using:
-* `sessionID` in POST/PUT/PATCH data
+* `sessionID` in POST body
 * `?sessionID` in query string
 * `X-Session-ID` header
 
@@ -47,14 +47,6 @@ Authorization is a server property and can only be enabled via the command line:
 ---
 
 # Terminology
-
-Models are written as `{ "key": type, ... }`, where type is one of:
-* `string`
-* `number`
-* `boolean`
-* `{ "key", type, ... }` (a nested model)
-* `[ type ]` (an array of `type`)
-* another model's name
 
 ## Dates
 In this document, "dates" are integers specified according to JavaScript's [`Date.now`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/now) function. This is equal to the number of *milliseconds* elapsed since the UNIX epoch.
@@ -91,10 +83,12 @@ The following list describes each possible error code:
 
 # HTTP Endpoints
 
-## Retrieve server details [GET /api]
+All endpoints respond in JSON, and those which take POST bodies expect it to be formatted using JSON.
+
+## Retrieve server version [GET /api]
 + never requires session
 
-Returns `{ decent, version }`. `decent` is always `true`, and should be used to check to see if a particular server is compatible with this spec.
+Returns `{ decentVersion }`.Should be used to check to see if a particular server is compatible with this spec.
 
 ```js
 GET /api/
@@ -355,7 +349,7 @@ GET /api/messages/1234
 Emits [message/edit](#message-edit) and returns `{}`.
 
 ```js
-PUT /api/messages/1234
+PATCH /api/messages/1234
 
 -> {
 ->   "text": "Updated message text"
@@ -462,7 +456,7 @@ GET /api/channels/5678
 May return [an error](#errors), including MUST_BE_ADMIN, NAME_ALREADY_TAKEN, and INVALID_NAME.
 
 <a name='rename-channel'></a>
-### Rename a channel [PUT /api/channels/:id]
+### Rename a channel [PATCH /api/channels/:id]
 + requires admin session
 + **in-url** id (ID) - The ID of the channel.
 + name (name) - The new name of the channel
@@ -470,7 +464,7 @@ May return [an error](#errors), including MUST_BE_ADMIN, NAME_ALREADY_TAKEN, and
 Returns `{}` if successful, emitting [channel/rename](#channel-rename).
 
 ```js
-PUT /api/channels/5678
+PATCH /api/channels/5678
 
 -> {
 ->   "name": "best-channel"
@@ -487,11 +481,7 @@ PUT /api/channels/5678
 Returns `{}` if successful. Emits [channel/delete](#channel-delete).
 
 ```js
-PUT /api/channels/5678
-
--> {
-->   "name": "best-channel"
--> }
+DELETE /api/channels/5678
 
 <- {}
 ```
