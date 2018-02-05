@@ -1,6 +1,6 @@
 const { test } = require('ava')
 const { makeMiddleware, validate } = require('../middleware')
-const { makeUser, makeAdmin } = require('./_serverUtil')
+const { makeUser, makeAdmin, makeChannel, makeMessage } = require('./_serverUtil')
 const spawn = require('./_spawn')
 const fetch = require('./_fetch')
 const Datastore = require('nedb')
@@ -480,22 +480,7 @@ test('getMessageFromID - basic functionality', async t => {
 
   // TODO: Make a function to quickly generate an admin, channel, and message.
   // This would be helpful in lots of future tests (as well as here).
-
-  const { sessionID } = await makeAdmin(server, port)
-
-  const { channelID } = await fetch(port, '/channels', {
-    method: 'POST',
-    body: JSON.stringify({
-      name: 'general', sessionID
-    })
-  })
-
-  const { messageID } = await fetch(port, '/messages', {
-    method: 'POST',
-    body: JSON.stringify({
-      channelID, text: 'Hello, world!', sessionID
-    })
-  })
+  const { messageID } = await makeMessage(server, port)
 
   const request = {[middleware.vars]: {messageID}}
   await interpretMiddleware(request,
@@ -546,15 +531,7 @@ test('getChannelFromID - basic functionality', async t => {
   const server = await spawn(port)
   const { middleware } = makeMiddleware({db: server.db})
 
-  const { sessionID } = await makeAdmin(server, port)
-
-  const { channelID } = await fetch(port, '/channels', {
-    method: 'POST',
-    body: JSON.stringify({
-      name: 'general', sessionID
-    })
-  })
-
+  const { channelID } = await makeChannel(server, port, 'general')
   const request = {[middleware.vars]: {channelID}}
   await interpretMiddleware(request,
     middleware.getChannelFromID('channelID', 'channel')

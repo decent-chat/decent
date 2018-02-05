@@ -27,4 +27,38 @@ const makeAdmin = async (server, port, username = 'admin') => {
   return {admin, sessionID}
 }
 
-module.exports = {makeUser, makeAdmin}
+const makeChannel = async (server, port, channelName = 'general', sessionID = null) => {
+  if (sessionID === null) {
+    sessionID = (await makeAdmin(server, port)).sessionID
+  }
+
+  const { channelID } = await fetch(port, '/channels', {
+    method: 'POST',
+    body: JSON.stringify({
+      name: 'general', sessionID
+    })
+  })
+
+  return {channelID, sessionID}
+}
+
+const makeMessage = async (server, port, text = 'Hello.', channelID = null, sessionID = null) => {
+  if (channelID === null) {
+    channelID = (await makeChannel(server, port)).channelID
+  }
+
+  if (sessionID === null) {
+    sessionID = (await makeUser(server, port)).sessionID
+  }
+
+  const { messageID } = await fetch(port, '/messages', {
+    method: 'POST',
+    body: JSON.stringify({
+      channelID, text: 'Hello, world!', sessionID
+    })
+  })
+
+  return {messageID, channelID, sessionID}
+}
+
+module.exports = {makeUser, makeAdmin, makeChannel, makeMessage}
