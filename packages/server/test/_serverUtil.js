@@ -1,6 +1,7 @@
 const fetch = require('./_fetch')
+const shortid = require('shortid')
 
-const makeUser = async (server, port, username = 'test_user', password = 'abcdef') => {
+const makeUser = async (server, port, username = 'test_user_' + shortid(), password = 'abcdef') => {
   const { user } = await fetch(port, '/register', {
     method: 'POST',
     body: JSON.stringify({username, password})
@@ -14,7 +15,7 @@ const makeUser = async (server, port, username = 'test_user', password = 'abcdef
   return {user, sessionID}
 }
 
-const makeAdmin = async (server, port, username = 'admin') => {
+const makeAdmin = async (server, port, username = 'test_admin_' + shortid()) => {
   const { user: admin, sessionID } = await makeUser(server, port, username)
 
   await server.db.users.update({username}, {
@@ -27,7 +28,7 @@ const makeAdmin = async (server, port, username = 'admin') => {
   return {admin, sessionID}
 }
 
-const makeChannel = async (server, port, channelName = 'general', sessionID = null) => {
+const makeChannel = async (server, port, channelName = 'test_channel_' + shortid(), sessionID = null) => {
   if (sessionID === null) {
     sessionID = (await makeAdmin(server, port)).sessionID
   }
