@@ -539,3 +539,61 @@ test('getMessageFromID - messageID of nonexistent message', async t => {
 
   await server.kill()
 })
+
+test('getChannelFromID - basic functionality', async t => {
+  const port = portForMiddlewareTests++
+  const server = await spawn(port)
+  const { middleware } = makeMiddleware({db: server.db})
+
+  const { sessionID } = await makeAdmin(server, port)
+
+  const { channelID } = await fetch(port, '/channels', {
+    method: 'POST',
+    body: JSON.stringify({
+      name: 'general', sessionID
+    })
+  })
+
+  const request = {[middleware.vars]: {channelID}}
+  await interpretMiddleware(request,
+    middleware.getChannelFromID('channelID', 'channel')
+  )
+  t.is(request[middleware.vars].channel._id, channelID)
+  t.is(request[middleware.vars].channel.name, 'general')
+
+  await server.kill()
+})
+
+test('getChannelFromID - non-string channelID', async t => {
+  const port = portForMiddlewareTests++
+  const server = await spawn(port)
+  const { middleware } = makeMiddleware({db: server.db})
+
+  const request = {[middleware.vars]: {channelID: 9999}}
+  const { response } = await interpretMiddleware(request,
+    middleware.getChannelFromID('channelID', 'channel')
+  )
+  t.true(response.wasEnded)
+  t.is(response.statusCode, 400)
+  t.is(response.endData.error.code, 'INVALID_PARAMETER_TYPE')
+  t.is(request[middleware.vars].channel, undefined)
+
+  await server.kill()
+})
+
+test('getChannelFromID - channelID of nonexistent channel', async t => {
+  const port = portForMiddlewareTests++
+  const server = await spawn(port)
+  const { middleware } = makeMiddleware({db: server.db})
+
+  const request = {[middleware.vars]: {channelID: 'a'}}
+  const { response } = await interpretMiddleware(request,
+    middleware.getChannelFromID('channelID', 'channel')
+  )
+  t.true(response.wasEnded)
+  t.is(response.statusCode, 404)
+  t.is(response.endData.error.code, 'NOT_FOUND')
+  t.is(request[middleware.vars].channel, undefined)
+
+  await server.kill()
+})

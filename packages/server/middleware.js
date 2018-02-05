@@ -256,6 +256,8 @@ module.exports.makeMiddleware = function({db}) {
     ],
 
     getChannelFromID: (channelIDVar, channelVar) => [
+      ...middleware.validateVar(channelIDVar, validate.string),
+
       async function(request, response, next) {
         const channelID = request[middleware.vars][channelIDVar]
         const channel = await db.channels.findOne({_id: channelID})
