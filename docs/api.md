@@ -95,8 +95,7 @@ Returns `{ decentVersion }`.Should be used to check to see if a particular serve
 GET /api/
 
 <- {
-<-   "decent": true,
-<-   "version": "0.1.0"
+<-   "decentVersion": "0.1.0"
 <- }
 ```
 
