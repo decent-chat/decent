@@ -29,6 +29,10 @@ async function interpretMiddleware(request, middleware) {
       response.wasEnded = true
       response.endData = JSON.parse(data)
       return response
+    },
+
+    json: function(obj) {
+      return response.end(JSON.stringify(obj))
     }
   }
 
@@ -88,11 +92,11 @@ test('interpretMiddleware - basic usage', async t => {
   t.is(request.n, 8)
 })
 
-test('interpretMiddleware - response.status.end', async t => {
+test('interpretMiddleware - response.status.json', async t => {
   const request = {}
   const { response } = await interpretMiddleware(request, [
     function(req, res, next) {
-      res.status(200).end(JSON.stringify({x: 123}))
+      res.status(200).json({x: 123})
     }
   ])
   t.true(response.wasEnded)
