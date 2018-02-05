@@ -235,6 +235,8 @@ module.exports.makeMiddleware = function({db}) {
     ],
 
     getMessageFromID: (messageIDVar, messageVar) => [
+      ...middleware.validateVar(messageIDVar, validate.string),
+
       async function(request, response, next) {
         const messageID = request[middleware.vars][messageIDVar]
         const message = await db.messages.findOne({_id: messageID})

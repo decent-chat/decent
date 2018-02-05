@@ -505,3 +505,37 @@ test('getMessageFromID - basic functionality', async t => {
 
   await server.kill()
 })
+
+test('getMessageFromID - non-string messageID', async t => {
+  const port = portForMiddlewareTests++
+  const server = await spawn(port)
+  const { middleware } = makeMiddleware({db: server.db})
+
+  const request = {[middleware.vars]: {messageID: 9999}}
+  const { response } = await interpretMiddleware(request,
+    middleware.getMessageFromID('messageID', 'message')
+  )
+  t.true(response.wasEnded)
+  t.is(response.statusCode, 400)
+  t.is(response.endData.error.code, 'INVALID_PARAMETER_TYPE')
+  t.is(request[middleware.vars].user, undefined)
+
+  await server.kill()
+})
+
+test('getMessageFromID - messageID of nonexistent message', async t => {
+  const port = portForMiddlewareTests++
+  const server = await spawn(port)
+  const { middleware } = makeMiddleware({db: server.db})
+
+  const request = {[middleware.vars]: {messageID: 'a'}}
+  const { response } = await interpretMiddleware(request,
+    middleware.getMessageFromID('messageID', 'message')
+  )
+  t.true(response.wasEnded)
+  t.is(response.statusCode, 404)
+  t.is(response.endData.error.code, 'NOT_FOUND')
+  t.is(request[middleware.vars].user, undefined)
+
+  await server.kill()
+})
