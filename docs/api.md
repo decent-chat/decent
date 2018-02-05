@@ -731,7 +731,7 @@ POST /api/users
 -> }
 
 <- {
-<-   "user: {
+<-   "user": {
 <-     "id": "8769",
 <-     "username": "joe",
 <-     // ...
