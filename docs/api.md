@@ -4,8 +4,10 @@
 * [HTTP Endpoints](#http-endpoints)
   - [Settings](#settings)
   - [Properties](#properties)
+  - [Emotes](#emotes)
   - [Messages](#messages)
   - [Channels](#channels)
+  - [Users](#users)
 * [WebSocket Events](#websocket-events)
 
 **Misc**
@@ -111,13 +113,7 @@ Model:
 ```
 {
   "name": string,
-  "authorizationMessage": string,
-  "emotes": [
-    {
-      "imageURL": string,
-      "shortcode": name
-    }
-  ]
+  "authorizationMessage": string
 }
 ```
 
@@ -130,22 +126,17 @@ GET /api/settings
 <- {
 <-   "settings": {
 <-     "name": "Unnamed Decent chat server",
-<-     "authorizationMessage": "Unauthorized - contact this server's webmaster to authorize your account for interacting with the server.",
-<-     "emotes": [
-<-       {
-<-         "imageURL": "https://example.com/uploads/24",
-<-         "shortcode": "shipit"
-<-       }
-<-     ]
+<-     "authorizationMessage": "Unauthorized - contact this server's webmaster to authorize your account for interacting with the server."
 <-   }
 <- }
 ```
 
 ### Modify settings [PATCH /api/settings]
 + requires admin session
-+ `patch` (settings) - The new settings to apply
++ `name` (string; optional)
++ `authorizationMessage` (string; optional)
 
-Returns `{ results }` which mirrors the request `patch` but with each value being either `"updated"` or an error message string. Always returns `200 OK` regardless.
+Returns `{}` if successful. Updates settings with new values provided.
 
 ```js
 PATCH /api/settings
@@ -220,6 +211,74 @@ This endpoint may return [an error](#errors), namely UPLOAD_FAILED or UPLOADS_DI
 
 ---
 
+## Emotes
+
+Model:
+```js
+{
+  "shortcode": Name, // Without colons
+  "imageURL": string
+}
+```
+
+<a name='list-emotes'></a>
+### List emotes [GET /api/emotes]
+
+Returns `{ emotes }`, where `emotes` is an array of emote objects.
+
+```js
+GET /api/emotes
+
+<- {
+<-   "emotes": []
+<- }
+```
+
+<a name='new-emote'></a>
+### Add a new emote [POST /api/emotes]
++ requires admin session
++ `imageURL` (string)
++ `shortcode` (Name) - Should not include colons (`:`).
+
+Returns `{}` if successful.
+
+```js
+POST /api/emotes
+
+-> {
+->   "imageURL": "https://example.com/path/to/emote.png",
+->   "shortcode": "package"
+-> }
+
+<- {}
+```
+
+<a name='view-emote'></a>
+### View an emote [GET /api/emotes/:shortcode]
++ **in-url** shortcode (string)
+
+302 redirects to the `imageURL` of the emote specified. 404s if not found or invalid.
+
+```html
+<!-- To view the :package: emoji in HTML: -->
+<img src='/api/emotes/package' width='16' height='16'/>
+```
+
+<a name='delete-emote'></a>
+### Delete an existing emote [DELETE /api/emotes/:shortcode]
++ requires admin session
++ **in-url** shortcode (string)
+
+Returns `{}` if successful.
+
+```js
+DELETE /api/emotes/package
+
+<- {}
+```
+
+---
+
 ## Messages
 
 Model:
@@ -288,7 +347,7 @@ GET /api/messages/1234
 ```
 
 <a name='edit-message'></a>
-### Edit a message [PUT /api/messages/:id]
+### Edit a message [PATCH /api/messages/:id]
 + requires session
 + **in-url** id (ID) - The ID of the message to edit
 + `text` (string) - The new content of the message
@@ -527,6 +586,96 @@ POST /api/channels/5678/pins
 
 -> {
 ->   "messageID": "1234"
+-> }
+
+<- {}
+```
+
+---
+
+## Users
+
+Model:
+```js
+{
+  "id": ID,
+  "username": Name,
+
+  "avatarURL": string,
+  "permissionLevel": "admin" | "member",
+
+  "online": boolean,
+
+  "authorized": boolean, // Only present if useAuthorization is true
+  "email": string, // Only provided if this user is you
+}
+```
+
+Related events:
+* [user/online](#user-online)
+* [user/offline](#cuser-offline)
+
+<a name='user-list'></a>
+### Fetch users [GET /api/users]
++ returns extra data (`unauthorizedUsers`) with admin session
++ may return extra data (`email`) with session
++ `username` (string; optional) - Filters results to the user with that username
++ `authorized` (boolean; optional) - Filters results to authorized/deauthorized users only
+
+Returns `{ users }`, where `users` is an array of [users](#users). If `username` or `authorized` are provided, results are filtered as such (eg. if `?authorized=true` only authorized users will be returned).
+
+```js
+GET /api/users?username=test-user
+
+<- {
+<-   "users": [
+<-     {
+<-       "id": "2",
+<-       "username": "test-user",
+<-       // ...
+<-     }
+<-   ]
+<- }
+```
+
+<a name='get-user'></a>
+### Retrieve a user by ID [GET /api/users/:id]
++ may return extra data (`email`) with session
++ **in-url** id (ID) - The user ID to fetch
+
+Returns `{ user }`.
+
+```js
+GET /api/users/1
+
+<- {
+<-   "user": {
+<-     "id": "1",
+<-     "username": "admin",
+<-     // ...
+<-   }
+<- }
+```
+
+<a name='update-user'></a>
+### Update user details [PATCH /api/users/:id]
++ requires session representing this user
++ **in-url** id (ID) - The user ID to patch
++ `password` (object; optional):
+  * `new` (string) - Errors if be shorter than 6 characters
+  * `old` (string)
++ `email` (string; optional) - Not public
+
+Returns `{}` and applies changes, assuming a valid session for this user is provided. Errors are provided as usual.
+
+```js
+PATCH /api/users/1
+
+-> {
+->   "password": {
+->     "old": "abcdef",
+->     "new": "secure"
+->   }
 -> }
 
 <- {}
