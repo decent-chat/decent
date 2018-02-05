@@ -478,8 +478,6 @@ test('getMessageFromID - basic functionality', async t => {
   const server = await spawn(port)
   const { middleware } = makeMiddleware({db: server.db})
 
-  // TODO: Make a function to quickly generate an admin, channel, and message.
-  // This would be helpful in lots of future tests (as well as here).
   const { messageID } = await makeMessage(server, port)
 
   const request = {[middleware.vars]: {messageID}}
