@@ -78,17 +78,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     })
   }
 
-  const loadVarsFromRequestObject = function(object, request, response, next) {
-    // TODO: Actually implement the variable system..!
-    request[middleware.vars] = {}
-
-    for (const [ key, value ] of Object.entries(object)) {
-      request[middleware.vars][key] = value
-    }
-
-    next()
-  }
-
   app.use(bodyParser.json())
 
   app.use(['/api/*', '/api'], async (request, response, next) => {
