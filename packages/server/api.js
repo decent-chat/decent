@@ -9,6 +9,7 @@ const util = require('util')
 const bcrypt = require('./bcrypt-util')
 const { makeMiddleware, validate } = require('./middleware')
 const makeSerializers = require('./serialize')
+const makeCommonUtil = require('./common')
 
 const mkdir = util.promisify(fs.mkdir)
 
@@ -24,11 +25,9 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   // session IDs.
   const connectedSocketsMap = new Map()
 
-  const { middleware, util: middlewareUtil } = makeMiddleware({
-    db, connectedSocketsMap
-  })
-
-  const serialize = makeSerializers({db, util: middlewareUtil})
+  const util = makeCommonUtil({db, connectedSocketsMap})
+  const middleware = makeMiddleware({db, util})
+  const serialize = makeSerializers({db, util})
 
   const {
     getUserIDBySessionID,
@@ -37,7 +36,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     isUserOnline,
     shouldUseAuthorization, isUserAuthorized,
     getUnreadMessageCountInChannel
-  } = middlewareUtil
+  } = util
 
   const sendToAllSockets = function(evt, data, sendToUnauthorized = false) {
     for (const [ socket, socketData ] of connectedSocketsMap.entries()) {

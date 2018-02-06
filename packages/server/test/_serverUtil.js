@@ -1,5 +1,22 @@
 const fetch = require('./_fetch')
+const spawn = require('./_spawn')
 const shortid = require('shortid')
+const makeCommonUtils = require('../common')
+const { makeMiddleware } = require('../middleware')
+const makeSerializers = require('../serialize')
+
+const testWithServer = async (port, cb) => {
+  const server = await spawn(port)
+  const connectedSocketsMap = new Map()
+  const util = makeCommonUtils({db: server.db, connectedSocketsMap})
+  const middleware = makeMiddleware({db: server.db, util})
+  const serialize = makeSerializers({db: server.db, util})
+  try {
+    await cb({port, server, middleware, serialize, util, connectedSocketsMap})
+  } finally {
+    await server.kill()
+  }
+}
 
 const makeUser = async (server, port, username = 'test_user_' + shortid(), password = 'abcdef') => {
   const { user } = await fetch(port, '/register', {
@@ -62,4 +79,4 @@ const makeMessage = async (server, port, text = 'Hello.', channelID = null, sess
   return {messageID, channelID, sessionID}
 }
 
-module.exports = {makeUser, makeAdmin, makeChannel, makeMessage}
+module.exports = {testWithServer, makeUser, makeAdmin, makeChannel, makeMessage}

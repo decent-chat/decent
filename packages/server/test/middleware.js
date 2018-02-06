@@ -1,10 +1,16 @@
 const { test } = require('ava')
 const { makeMiddleware, validate } = require('../middleware')
-const { makeUser, makeAdmin, makeChannel, makeMessage } = require('./_serverUtil')
-const spawn = require('./_spawn')
+const makeCommonUtils = require('../common')
+const { testWithServer, makeUser, makeAdmin, makeChannel, makeMessage } = require('./_serverUtil')
 const fetch = require('./_fetch')
 
 let portForMiddlewareTests = 22000
+
+function quickMakeServerlessMiddleware() {
+  const util = makeCommonUtils({})
+  const middleware = makeMiddleware({util})
+  return {util, middleware}
+}
 
 function interpretMiddlewareHelper(request, response, middleware) {
   if (middleware.length) {
@@ -51,9 +57,8 @@ async function interpretMiddleware(request, middleware) {
 
 test('structure of makeMiddleware', t => {
   t.is(typeof makeMiddleware, 'function')
-  const ret = makeMiddleware({db: null})
-  t.is(typeof ret, 'object')
-  t.is(typeof ret.util, 'object')
+  const { middleware } = quickMakeServerlessMiddleware()
+  t.is(typeof middleware, 'object')
 })
 
 test('interpretMiddlewareHelper', async t => {
@@ -104,7 +109,7 @@ test('interpretMiddleware - response.status.json', async t => {
 })
 
 test('verifyVarsExists', async t => {
-  const { middleware } = makeMiddleware({db: null})
+  const { middleware } = quickMakeServerlessMiddleware()
 
   const request = {}
   await interpretMiddleware(request, middleware.verifyVarsExists())
@@ -112,7 +117,7 @@ test('verifyVarsExists', async t => {
 })
 
 test('loadVarFromBody - basic usage', async t => {
-  const { middleware } = makeMiddleware({db: null})
+  const { middleware } = quickMakeServerlessMiddleware()
 
   const request = {body: {x: 25}}
   await interpretMiddleware(request, middleware.loadVarFromBody('x'))
@@ -120,7 +125,7 @@ test('loadVarFromBody - basic usage', async t => {
 })
 
 test('loadVarFromBody - missing variable, required = true', async t => {
-  const { middleware } = makeMiddleware({db: null})
+  const { middleware } = quickMakeServerlessMiddleware()
 
   const request = {body: {x: 25}}
   const { response } = await interpretMiddleware(request, middleware.loadVarFromBody('y'))
@@ -130,7 +135,7 @@ test('loadVarFromBody - missing variable, required = true', async t => {
 })
 
 test('loadVarFromBody - missing variable, required = false', async t => {
-  const { middleware } = makeMiddleware({db: null})
+  const { middleware } = quickMakeServerlessMiddleware()
 
   const request = {body: {x: 25}}
   const { response } = await interpretMiddleware(request, middleware.loadVarFromBody('y', false))
@@ -139,7 +144,7 @@ test('loadVarFromBody - missing variable, required = false', async t => {
 })
 
 test('loadVarFromQuery - basic usage', async t => {
-  const { middleware } = makeMiddleware({db: null})
+  const { middleware } = quickMakeServerlessMiddleware()
 
   const request = {query: {x: 25}}
   await interpretMiddleware(request, middleware.loadVarFromQuery('x'))
@@ -147,7 +152,7 @@ test('loadVarFromQuery - basic usage', async t => {
 })
 
 test('loadVarFromQuery - missing variable, required = true', async t => {
-  const { middleware } = makeMiddleware({db: null})
+  const { middleware } = quickMakeServerlessMiddleware()
 
   const request = {query: {x: 25}}
   const { response } = await interpretMiddleware(request, middleware.loadVarFromQuery('y'))
@@ -158,7 +163,7 @@ test('loadVarFromQuery - missing variable, required = true', async t => {
 })
 
 test('loadVarFromQuery - missing variable, required = false', async t => {
-  const { middleware } = makeMiddleware({db: null})
+  const { middleware } = quickMakeServerlessMiddleware()
 
   const request = {query: {x: 25}}
   const { response } = await interpretMiddleware(request, middleware.loadVarFromQuery('y', false))
@@ -170,7 +175,7 @@ test('loadVarFromQuery - missing variable, required = false', async t => {
 // won't even call this middleware function if any parameters are missing (since
 // it wouldn't be the same route).
 test('loadVarFromParams', async t => {
-  const { middleware } = makeMiddleware({db: null})
+  const { middleware } = quickMakeServerlessMiddleware()
 
   const request = {params: {x: 25}}
   await interpretMiddleware(request, middleware.loadVarFromParams('x'))
@@ -184,7 +189,7 @@ test('validate.string', t => {
 })
 
 test('validateVar - test data is valid', async t => {
-  const { middleware } = makeMiddleware({db: null})
+  const { middleware } = quickMakeServerlessMiddleware()
 
   const request = {[middleware.vars]: {x: 'hello'}}
   const { response } = await interpretMiddleware(request, middleware.validateVar('x', validate.string))
@@ -192,7 +197,7 @@ test('validateVar - test data is valid', async t => {
 })
 
 test('validateVar - test data is invalid', async t => {
-  const { middleware } = makeMiddleware({db: null})
+  const { middleware } = quickMakeServerlessMiddleware()
 
   const request = {[middleware.vars]: {x: 123}}
   const { response } = await interpretMiddleware(request, middleware.validateVar('x', validate.string))
@@ -202,7 +207,7 @@ test('validateVar - test data is invalid', async t => {
 })
 
 test('runIfVarExists - var does exist', async t => {
-  const { middleware } = makeMiddleware({db: null})
+  const { middleware } = quickMakeServerlessMiddleware()
 
   const request = {[middleware.vars]: {x: 25}}
   await interpretMiddleware(request,
@@ -217,7 +222,7 @@ test('runIfVarExists - var does exist', async t => {
 })
 
 test('runIfVarExists - var does not exist', async t => {
-  const { middleware } = makeMiddleware({db: null})
+  const { middleware } = quickMakeServerlessMiddleware()
 
   const request = {[middleware.vars]: {y: 'hello'}}
   await interpretMiddleware(request,
@@ -231,7 +236,7 @@ test('runIfVarExists - var does not exist', async t => {
 })
 
 test('runIfCondition - basic if/else usage, condition is true', async t => {
-  const { middleware } = makeMiddleware({db: null})
+  const { middleware } = quickMakeServerlessMiddleware()
 
   const request = {}
   await interpretMiddleware(request,
@@ -252,7 +257,7 @@ test('runIfCondition - basic if/else usage, condition is true', async t => {
 })
 
 test('runIfCondition - basic if/else usage, condition is false', async t => {
-  const { middleware } = makeMiddleware({db: null})
+  const { middleware } = quickMakeServerlessMiddleware()
 
   const request = {}
   await interpretMiddleware(request,
@@ -273,7 +278,7 @@ test('runIfCondition - basic if/else usage, condition is false', async t => {
 })
 
 test('runIfCondition - condition function only called once', async t => {
-  const { middleware } = makeMiddleware({db: null})
+  const { middleware } = quickMakeServerlessMiddleware()
 
   const request = {}
   let timesCalled = 0, wasTrue = 0, wasFalse = 0
@@ -296,7 +301,7 @@ test('runIfCondition - condition function only called once', async t => {
 })
 
 test('runIfCondition - request variables should not be polluted', async t => {
-  const { middleware } = makeMiddleware({db: null})
+  const { middleware } = quickMakeServerlessMiddleware()
 
   const request = {}
   await interpretMiddleware(request,
@@ -308,327 +313,249 @@ test('runIfCondition - request variables should not be polluted', async t => {
 })
 
 // TODO: Rename this to getUserFromSessionID, everywhere.
-test('getSessionUserFromID - basic functionality', async t => {
-  const port = portForMiddlewareTests++
-  const server = await spawn(port)
-  const { middleware } = makeMiddleware({db: server.db})
-
-  const { user, sessionID } = await makeUser(server, port)
-  const request = {[middleware.vars]: {sessionID}}
-  await interpretMiddleware(request,
-    middleware.getSessionUserFromID('sessionID', 'user')
-  )
-  t.is(request[middleware.vars].user._id, user.id)
-
-  await server.kill()
+test('getSessionUserFromID - basic functionality', t => {
+  return testWithServer(portForMiddlewareTests++, async ({ middleware, server, port }) => {
+    const { user, sessionID } = await makeUser(server, port)
+    const request = {[middleware.vars]: {sessionID}}
+    await interpretMiddleware(request,
+      middleware.getSessionUserFromID('sessionID', 'user')
+    )
+    t.is(request[middleware.vars].user._id, user.id)
+  })
 })
 
-test('getSessionUserFromID - non-string sessionID', async t => {
-  const port = portForMiddlewareTests++
-  const server = await spawn(port)
-  const { middleware } = makeMiddleware({db: server.db})
-
-  const request = {[middleware.vars]: {sessionID: 123}}
-  const { response } = await interpretMiddleware(request,
-    middleware.getSessionUserFromID('sessionID', 'user')
-  )
-  t.true(response.wasEnded)
-  t.is(response.statusCode, 400)
-  t.is(response.endData.error.code, 'INVALID_PARAMETER_TYPE')
-  t.is(request[middleware.vars].user, undefined)
-
-  await server.kill()
+test('getSessionUserFromID - non-string sessionID', t => {
+  return testWithServer(portForMiddlewareTests++, async ({ middleware, server, port }) => {
+    const request = {[middleware.vars]: {sessionID: 123}}
+    const { response } = await interpretMiddleware(request,
+      middleware.getSessionUserFromID('sessionID', 'user')
+    )
+    t.true(response.wasEnded)
+    t.is(response.statusCode, 400)
+    t.is(response.endData.error.code, 'INVALID_PARAMETER_TYPE')
+  })
 })
 
-test('getSessionUserFromID - sessionID for nonexistent session', async t => {
-  const port = portForMiddlewareTests++
-  const server = await spawn(port)
-  const { middleware } = makeMiddleware({db: server.db})
-
-  const request = {[middleware.vars]: {sessionID: 'a'}}
-  const { response } = await interpretMiddleware(request,
-    middleware.getSessionUserFromID('sessionID', 'user')
-  )
-  t.true(response.wasEnded)
-  t.is(response.statusCode, 401)
-  t.is(response.endData.error.code, 'INVALID_SESSION_ID')
-  t.is(request[middleware.vars].user, undefined)
-
-  await server.kill()
+test('getSessionUserFromID - sessionID for nonexistent session', t => {
+  return testWithServer(portForMiddlewareTests++, async ({ middleware }) => {
+    const request = {[middleware.vars]: {sessionID: 'a'}}
+    const { response } = await interpretMiddleware(request,
+      middleware.getSessionUserFromID('sessionID', 'user')
+    )
+    t.true(response.wasEnded)
+    t.is(response.statusCode, 401)
+    t.is(response.endData.error.code, 'INVALID_SESSION_ID')
+    t.is(request[middleware.vars].user, undefined)
+  })
 })
 
-test('getUserFromUsername - basic functionality', async t => {
-  const port = portForMiddlewareTests++
-  const server = await spawn(port)
-  const { middleware } = makeMiddleware({db: server.db})
-
-  const { user } = await makeUser(server, port, 'johndoe')
-  const request = {[middleware.vars]: {username: 'johndoe'}}
-  await interpretMiddleware(request,
-    middleware.getUserFromUsername('username', 'user')
-  )
-  t.is(request[middleware.vars].user._id, user.id)
-
-  await server.kill()
+test('getUserFromUsername - basic functionality', t => {
+  return testWithServer(portForMiddlewareTests++, async ({ middleware, server, port }) => {
+    const { user } = await makeUser(server, port, 'johndoe')
+    const request = {[middleware.vars]: {username: 'johndoe'}}
+    await interpretMiddleware(request,
+      middleware.getUserFromUsername('username', 'user')
+    )
+    t.is(request[middleware.vars].user._id, user.id)
+  })
 })
 
-test('getUserFromUsername - non-string username', async t => {
-  const port = portForMiddlewareTests++
-  const server = await spawn(port)
-  const { middleware } = makeMiddleware({db: server.db})
-
-  const request = {[middleware.vars]: {username: 9999}}
-  const { response } = await interpretMiddleware(request,
-    middleware.getUserFromUsername('username', 'user')
-  )
-  t.true(response.wasEnded)
-  t.is(response.statusCode, 400)
-  t.is(response.endData.error.code, 'INVALID_PARAMETER_TYPE')
-  t.is(request[middleware.vars].user, undefined)
-
-  await server.kill()
+test('getUserFromUsername - non-string username', t => {
+  return testWithServer(portForMiddlewareTests++, async ({ middleware }) => {
+    const request = {[middleware.vars]: {username: 9999}}
+    const { response } = await interpretMiddleware(request,
+      middleware.getUserFromUsername('username', 'user')
+    )
+    t.true(response.wasEnded)
+    t.is(response.statusCode, 400)
+    t.is(response.endData.error.code, 'INVALID_PARAMETER_TYPE')
+    t.is(request[middleware.vars].user, undefined)
+  })
 })
 
-test('getUserFromUsername - username of nonexistent user', async t => {
-  const port = portForMiddlewareTests++
-  const server = await spawn(port)
-  const { middleware } = makeMiddleware({db: server.db})
-
-  const request = {[middleware.vars]: {username: 'counterfeitcharlie'}}
-  const { response } = await interpretMiddleware(request,
-    middleware.getUserFromUsername('username', 'user')
-  )
-  t.true(response.wasEnded)
-  t.is(response.statusCode, 404)
-  t.is(response.endData.error.code, 'NOT_FOUND')
-  t.is(request[middleware.vars].user, undefined)
-
-  await server.kill()
+test('getUserFromUsername - username of nonexistent user', t => {
+  return testWithServer(portForMiddlewareTests++, async ({ middleware }) => {
+    const request = {[middleware.vars]: {username: 'counterfeitcharlie'}}
+    const { response } = await interpretMiddleware(request,
+      middleware.getUserFromUsername('username', 'user')
+    )
+    t.true(response.wasEnded)
+    t.is(response.statusCode, 404)
+    t.is(response.endData.error.code, 'NOT_FOUND')
+    t.is(request[middleware.vars].user, undefined)
+  })
 })
 
-test('getUserFromID - basic functionality', async t => {
-  const port = portForMiddlewareTests++
-  const server = await spawn(port)
-  const { middleware } = makeMiddleware({db: server.db})
-
-  const { user } = await makeUser(server, port)
-  const request = {[middleware.vars]: {userID: user.id}}
-  await interpretMiddleware(request,
-    middleware.getUserFromID('userID', 'user')
-  )
-  t.is(request[middleware.vars].user._id, user.id)
-
-  await server.kill()
+test('getUserFromID - basic functionality', t => {
+  return testWithServer(portForMiddlewareTests++, async ({ middleware, server, port }) => {
+    const { user } = await makeUser(server, port)
+    const request = {[middleware.vars]: {userID: user.id}}
+    await interpretMiddleware(request,
+      middleware.getUserFromID('userID', 'user')
+    )
+    t.is(request[middleware.vars].user._id, user.id)
+  })
 })
 
-test('getUserFromID - non-string userID', async t => {
-  const port = portForMiddlewareTests++
-  const server = await spawn(port)
-  const { middleware } = makeMiddleware({db: server.db})
-
-  const request = {[middleware.vars]: {userID: 7370}}
-  const { response } = await interpretMiddleware(request,
-    middleware.getUserFromID('userID', 'user')
-  )
-  t.true(response.wasEnded)
-  t.is(response.statusCode, 400)
-  t.is(response.endData.error.code, 'INVALID_PARAMETER_TYPE')
-  t.is(request[middleware.vars].user, undefined)
-
-  await server.kill()
+test('getUserFromID - non-string userID', t => {
+  return testWithServer(portForMiddlewareTests++, async ({ middleware }) => {
+    const request = {[middleware.vars]: {userID: 7370}}
+    const { response } = await interpretMiddleware(request,
+      middleware.getUserFromID('userID', 'user')
+    )
+    t.true(response.wasEnded)
+    t.is(response.statusCode, 400)
+    t.is(response.endData.error.code, 'INVALID_PARAMETER_TYPE')
+    t.is(request[middleware.vars].user, undefined)
+  })
 })
 
-test('getUserFromID - id of nonexistent user', async t => {
-  const port = portForMiddlewareTests++
-  const server = await spawn(port)
-  const { middleware } = makeMiddleware({db: server.db})
-
-  const request = {[middleware.vars]: {userID: 'a'}}
-  const { response } = await interpretMiddleware(request,
-    middleware.getUserFromID('userID', 'user')
-  )
-  t.true(response.wasEnded)
-  t.is(response.statusCode, 404)
-  t.is(response.endData.error.code, 'NOT_FOUND')
-  t.is(request[middleware.vars].user, undefined)
-
-  await server.kill()
+test('getUserFromID - id of nonexistent user', t => {
+  return testWithServer(portForMiddlewareTests++, async ({ middleware }) => {
+    const request = {[middleware.vars]: {userID: 'a'}}
+    const { response } = await interpretMiddleware(request,
+      middleware.getUserFromID('userID', 'user')
+    )
+    t.true(response.wasEnded)
+    t.is(response.statusCode, 404)
+    t.is(response.endData.error.code, 'NOT_FOUND')
+    t.is(request[middleware.vars].user, undefined)
+  })
 })
 
-test('getMessageFromID - basic functionality', async t => {
-  const port = portForMiddlewareTests++
-  const server = await spawn(port)
-  const { middleware } = makeMiddleware({db: server.db})
-
-  const { messageID } = await makeMessage(server, port, 'Hello, world!')
-
-  const request = {[middleware.vars]: {messageID}}
-  await interpretMiddleware(request,
-    middleware.getMessageFromID('messageID', 'message')
-  )
-  t.is(request[middleware.vars].message._id, messageID)
-  t.is(request[middleware.vars].message.text, 'Hello, world!')
-
-  await server.kill()
+test('getMessageFromID - basic functionality', t => {
+  return testWithServer(portForMiddlewareTests++, async ({ middleware, server, port }) => {
+    const { messageID } = await makeMessage(server, port, 'Hello, world!')
+    const request = {[middleware.vars]: {messageID}}
+    await interpretMiddleware(request,
+      middleware.getMessageFromID('messageID', 'message')
+    )
+    t.is(request[middleware.vars].message._id, messageID)
+    t.is(request[middleware.vars].message.text, 'Hello, world!')
+  })
 })
 
-test('getMessageFromID - non-string messageID', async t => {
-  const port = portForMiddlewareTests++
-  const server = await spawn(port)
-  const { middleware } = makeMiddleware({db: server.db})
-
-  const request = {[middleware.vars]: {messageID: 9999}}
-  const { response } = await interpretMiddleware(request,
-    middleware.getMessageFromID('messageID', 'message')
-  )
-  t.true(response.wasEnded)
-  t.is(response.statusCode, 400)
-  t.is(response.endData.error.code, 'INVALID_PARAMETER_TYPE')
-  t.is(request[middleware.vars].message, undefined)
-
-  await server.kill()
+test('getMessageFromID - non-string messageID', t => {
+  return testWithServer(portForMiddlewareTests++, async ({ middleware }) => {
+    const request = {[middleware.vars]: {messageID: 9999}}
+    const { response } = await interpretMiddleware(request,
+      middleware.getMessageFromID('messageID', 'message')
+    )
+    t.true(response.wasEnded)
+    t.is(response.statusCode, 400)
+    t.is(response.endData.error.code, 'INVALID_PARAMETER_TYPE')
+    t.is(request[middleware.vars].message, undefined)
+  })
 })
 
-test('getMessageFromID - messageID of nonexistent message', async t => {
-  const port = portForMiddlewareTests++
-  const server = await spawn(port)
-  const { middleware } = makeMiddleware({db: server.db})
-
-  const request = {[middleware.vars]: {messageID: 'a'}}
-  const { response } = await interpretMiddleware(request,
-    middleware.getMessageFromID('messageID', 'message')
-  )
-  t.true(response.wasEnded)
-  t.is(response.statusCode, 404)
-  t.is(response.endData.error.code, 'NOT_FOUND')
-  t.is(request[middleware.vars].message, undefined)
-
-  await server.kill()
+test('getMessageFromID - messageID of nonexistent message', t => {
+  return testWithServer(portForMiddlewareTests++, async ({ middleware }) => {
+    const request = {[middleware.vars]: {messageID: 'a'}}
+    const { response } = await interpretMiddleware(request,
+      middleware.getMessageFromID('messageID', 'message')
+    )
+    t.true(response.wasEnded)
+    t.is(response.statusCode, 404)
+    t.is(response.endData.error.code, 'NOT_FOUND')
+    t.is(request[middleware.vars].message, undefined)
+  })
 })
 
-test('getChannelFromID - basic functionality', async t => {
-  const port = portForMiddlewareTests++
-  const server = await spawn(port)
-  const { middleware } = makeMiddleware({db: server.db})
-
-  const { channelID } = await makeChannel(server, port, 'general')
-  const request = {[middleware.vars]: {channelID}}
-  await interpretMiddleware(request,
-    middleware.getChannelFromID('channelID', 'channel')
-  )
-  t.is(request[middleware.vars].channel._id, channelID)
-  t.is(request[middleware.vars].channel.name, 'general')
-
-  await server.kill()
+test('getChannelFromID - basic functionality', t => {
+  return testWithServer(portForMiddlewareTests++, async ({ middleware, server, port }) => {
+    const { channelID } = await makeChannel(server, port, 'general')
+    const request = {[middleware.vars]: {channelID}}
+    await interpretMiddleware(request,
+      middleware.getChannelFromID('channelID', 'channel')
+    )
+    t.is(request[middleware.vars].channel._id, channelID)
+    t.is(request[middleware.vars].channel.name, 'general')
+  })
 })
 
-test('getChannelFromID - non-string channelID', async t => {
-  const port = portForMiddlewareTests++
-  const server = await spawn(port)
-  const { middleware } = makeMiddleware({db: server.db})
-
-  const request = {[middleware.vars]: {channelID: 9999}}
-  const { response } = await interpretMiddleware(request,
-    middleware.getChannelFromID('channelID', 'channel')
-  )
-  t.true(response.wasEnded)
-  t.is(response.statusCode, 400)
-  t.is(response.endData.error.code, 'INVALID_PARAMETER_TYPE')
-  t.is(request[middleware.vars].channel, undefined)
-
-  await server.kill()
+test('getChannelFromID - non-string channelID', t => {
+  return testWithServer(portForMiddlewareTests++, async ({ middleware }) => {
+    const request = {[middleware.vars]: {channelID: 9999}}
+    const { response } = await interpretMiddleware(request,
+      middleware.getChannelFromID('channelID', 'channel')
+    )
+    t.true(response.wasEnded)
+    t.is(response.statusCode, 400)
+    t.is(response.endData.error.code, 'INVALID_PARAMETER_TYPE')
+    t.is(request[middleware.vars].channel, undefined)
+  })
 })
 
-test('getChannelFromID - channelID of nonexistent channel', async t => {
-  const port = portForMiddlewareTests++
-  const server = await spawn(port)
-  const { middleware } = makeMiddleware({db: server.db})
-
-  const request = {[middleware.vars]: {channelID: 'a'}}
-  const { response } = await interpretMiddleware(request,
-    middleware.getChannelFromID('channelID', 'channel')
-  )
-  t.true(response.wasEnded)
-  t.is(response.statusCode, 404)
-  t.is(response.endData.error.code, 'NOT_FOUND')
-  t.is(request[middleware.vars].channel, undefined)
-
-  await server.kill()
+test('getChannelFromID - channelID of nonexistent channel', t => {
+  return testWithServer(portForMiddlewareTests++, async ({ middleware }) => {
+    const request = {[middleware.vars]: {channelID: 'a'}}
+    const { response } = await interpretMiddleware(request,
+      middleware.getChannelFromID('channelID', 'channel')
+    )
+    t.true(response.wasEnded)
+    t.is(response.statusCode, 404)
+    t.is(response.endData.error.code, 'NOT_FOUND')
+    t.is(request[middleware.vars].channel, undefined)
+  })
 })
 
-test('requireBeAdmin - basic functionality, as admin', async t => {
-  const port = portForMiddlewareTests++
-  const server = await spawn(port)
-  const { middleware } = makeMiddleware({db: server.db})
-
-  const { sessionID } = await makeAdmin(server, port)
-  const request = {[middleware.vars]: {sessionID}}
-  const { response } = await interpretMiddleware(request, [
-    ...middleware.getSessionUserFromID('sessionID', 'user'),
-    ...middleware.requireBeAdmin('user')
-  ])
-  t.false(response.wasEnded)
-
-  await server.kill()
+test('requireBeAdmin - basic functionality, as admin', t => {
+  return testWithServer(portForMiddlewareTests++, async ({ middleware, server, port }) => {
+    const { sessionID } = await makeAdmin(server, port)
+    const request = {[middleware.vars]: {sessionID}}
+    const { response } = await interpretMiddleware(request, [
+      ...middleware.getSessionUserFromID('sessionID', 'user'),
+      ...middleware.requireBeAdmin('user')
+    ])
+    t.false(response.wasEnded)
+  })
 })
 
-test('requireBeAdmin - basic functionality, as non-admin', async t => {
-  const port = portForMiddlewareTests++
-  const server = await spawn(port)
-  const { middleware } = makeMiddleware({db: server.db})
-
-  const { sessionID } = await makeUser(server, port)
-  const request = {[middleware.vars]: {sessionID}}
-  const { response } = await interpretMiddleware(request, [
-    ...middleware.getSessionUserFromID('sessionID', 'user'),
-    ...middleware.requireBeAdmin('user')
-  ])
-  t.true(response.wasEnded)
-  t.is(response.statusCode, 403)
-  t.is(response.endData.error.code, 'MUST_BE_ADMIN')
-
-  await server.kill()
+test('requireBeAdmin - basic functionality, as non-admin', t => {
+  return testWithServer(portForMiddlewareTests++, async ({ middleware, server, port }) => {
+    const { sessionID } = await makeUser(server, port)
+    const request = {[middleware.vars]: {sessionID}}
+    const { response } = await interpretMiddleware(request, [
+      ...middleware.getSessionUserFromID('sessionID', 'user'),
+      ...middleware.requireBeAdmin('user')
+    ])
+    t.true(response.wasEnded)
+    t.is(response.statusCode, 403)
+    t.is(response.endData.error.code, 'MUST_BE_ADMIN')
+  })
 })
 
-test('requireBeMessageAuthor - basic functionality, as author', async t => {
-  const port = portForMiddlewareTests++
-  const server = await spawn(port)
-  const { middleware } = makeMiddleware({db: server.db})
-
-  const { messageID, sessionID } = await makeMessage(server, port)
-  const request = {[middleware.vars]: {messageID, sessionID}}
-  const { response } = await interpretMiddleware(request, [
-    ...middleware.getMessageFromID('messageID', 'message'),
-    ...middleware.getSessionUserFromID('sessionID', 'user'),
-    ...middleware.requireBeMessageAuthor('message', 'user')
-  ])
-  t.false(response.wasEnded)
-
-  await server.kill()
+test('requireBeMessageAuthor - basic functionality, as author', t => {
+  return testWithServer(portForMiddlewareTests++, async ({ middleware, server, port }) => {
+    const { messageID, sessionID } = await makeMessage(server, port)
+    const request = {[middleware.vars]: {messageID, sessionID}}
+    const { response } = await interpretMiddleware(request, [
+      ...middleware.getMessageFromID('messageID', 'message'),
+      ...middleware.getSessionUserFromID('sessionID', 'user'),
+      ...middleware.requireBeMessageAuthor('message', 'user')
+    ])
+    t.false(response.wasEnded)
+  })
 })
 
-test('requireBeMessageAuthor - basic functionality, as non-author', async t => {
-  const port = portForMiddlewareTests++
-  const server = await spawn(port)
-  const { middleware } = makeMiddleware({db: server.db})
-
-  const { messageID } = await makeMessage(server, port)
-  const { sessionID } = await makeUser(server, port)
-  const request = {[middleware.vars]: {messageID, sessionID}}
-  const { response } = await interpretMiddleware(request, [
-    ...middleware.getMessageFromID('messageID', 'message'),
-    ...middleware.getSessionUserFromID('sessionID', 'user'),
-    ...middleware.requireBeMessageAuthor('message', 'user')
-  ])
-  t.true(response.wasEnded)
-  t.is(response.statusCode, 403)
-  t.is(response.endData.error.code, 'NOT_YOURS')
-
-  await server.kill()
+test('requireBeMessageAuthor - basic functionality, as non-author', t => {
+  return testWithServer(portForMiddlewareTests++, async ({ middleware, server, port }) => {
+    const { messageID } = await makeMessage(server, port)
+    const { sessionID } = await makeUser(server, port)
+    const request = {[middleware.vars]: {messageID, sessionID}}
+    const { response } = await interpretMiddleware(request, [
+      ...middleware.getMessageFromID('messageID', 'message'),
+      ...middleware.getSessionUserFromID('sessionID', 'user'),
+      ...middleware.requireBeMessageAuthor('message', 'user')
+    ])
+    t.true(response.wasEnded)
+    t.is(response.statusCode, 403)
+    t.is(response.endData.error.code, 'NOT_YOURS')
+  })
 })
 
 test('requireNameValid - basic functionality, name valid', async t => {
-  const { middleware } = makeMiddleware({db: null})
+  const { middleware } = quickMakeServerlessMiddleware()
 
   const request = {[middleware.vars]: {name: 'burrito-land'}}
   const { response } = await interpretMiddleware(request,
@@ -638,7 +565,7 @@ test('requireNameValid - basic functionality, name valid', async t => {
 })
 
 test('requireNameValid - basic functionality, name not valid', async t => {
-  const { middleware } = makeMiddleware({db: null})
+  const { middleware } = quickMakeServerlessMiddleware()
 
   const request = {[middleware.vars]: {name: 'OmG???!?? Why$$## This is a DUMB name.\x1b\x1b\x1b'}}
   const { response } = await interpretMiddleware(request,
@@ -650,7 +577,7 @@ test('requireNameValid - basic functionality, name not valid', async t => {
 })
 
 test('requireNameValid - non-string name', async t => {
-  const { middleware } = makeMiddleware({db: null})
+  const { middleware } = quickMakeServerlessMiddleware()
 
   const request = {[middleware.vars]: {name: {x: 123}}}
   const { response } = await interpretMiddleware(request,
