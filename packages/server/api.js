@@ -80,14 +80,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
   app.use(bodyParser.json())
 
-  app.use(['/api/*', '/api'], async (request, response, next) => {
-    response.header('Content-Type', 'application/json')
-    response.header('Access-Control-Allow-Origin', '*')
-    response.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
-
-    next()
-  })
-
   // Don't let users who aren't verified (authorized false) interact with
   // most API endpoints.
   app.use('/api', [
