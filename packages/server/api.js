@@ -254,7 +254,9 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       const newEmote = {imageURL, shortcode}
       await db.emotes.insert(newEmote)
-      sendToAllSockets('emote/new', {emote: newEmote})
+      sendToAllSockets('emote/new', {
+        emote: await serialize.emote(newEmote)
+      })
       response.status(200).json({})
     }
   ])
@@ -270,6 +272,15 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       } else {
         response.status(404).json({error: errors.NOT_FOUND})
       }
+    }
+  ])
+
+  app.get('/api/emotes', [
+    async function (request, response, next) {
+      const emotes = await db.emotes.find({})
+      response.status(200).json({
+        emotes: await Promise.all(emotes.map(serialize.emote))
+      })
     }
   ])
 

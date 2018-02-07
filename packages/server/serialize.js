@@ -77,7 +77,12 @@ module.exports = function makeSerializers({util, db}) {
       return Object.assign(await serialize.channelBrief(c, sessionUser), {
         pinnedMessages
       })
-    }
+    },
+
+    emote: async e => ({
+      shortcode: e.shortcode,
+      imageURL: e.imageURL
+    })
   }
 
   return serialize

@@ -108,7 +108,7 @@ test('serialize.sessionBrief, serialize.sessionDetail', t => {
   })
 })
 
-test('serialize.channelBrief, serialize.channelDetail', async t => {
+test('serialize.channelBrief, serialize.channelDetail', t => {
   return testWithServer(portForSerializeTests++, async ({ serialize, server, port }) => {
     const { channelID } = await makeChannel(server, port, 'general')
 
@@ -145,5 +145,20 @@ test('serialize.channelBrief, serialize.channelDetail', async t => {
     const serialized4 = await serialize.channelDetail(channel)
     t.is(serialized4.pinnedMessages.length, 1)
     t.is(serialized4.pinnedMessages[0].id, msg2)
+  })
+})
+
+test('serialize.emote', t => {
+  return testWithServer(portForSerializeTests++, async ({ serialize }) => {
+    const emote = {
+      _id: 'a',
+      shortcode: 'shipit',
+      imageURL: '/img/shipit.png'
+    }
+
+    const serialized = await serialize.emote(emote)
+    t.deepEqual(Object.keys(serialized), ['shortcode', 'imageURL'])
+    t.is(serialized.shortcode, 'shipit')
+    t.is(serialized.imageURL, '/img/shipit.png')
   })
 })
