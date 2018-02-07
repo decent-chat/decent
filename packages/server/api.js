@@ -81,6 +81,10 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
   app.use(bodyParser.json())
 
+  if (process.env.NODE_ENV !== 'production') {
+    app.set('json spaces', 2)
+  }
+
   // Don't let users who aren't verified (authorized false) interact with
   // most API endpoints.
   app.use('/api', [
