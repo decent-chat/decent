@@ -239,7 +239,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requireBeAdmin('sessionUser'),
     ...middleware.loadVarFromBody('shortcode'),
-    ...middleware.validateVar('shortcode', validate.string),
     ...middleware.requireNameValid('shortcode'),
     ...middleware.loadVarFromBody('imageURL'),
     ...middleware.validateVar('imageURL', validate.string),
