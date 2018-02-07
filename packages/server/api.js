@@ -10,6 +10,7 @@ const bcrypt = require('./bcrypt-util')
 const { makeMiddleware, validate } = require('./middleware')
 const makeSerializers = require('./serialize')
 const makeCommonUtil = require('./common')
+const packageObj = require('./package.json')
 
 const mkdir = util.promisify(fs.mkdir)
 
@@ -173,19 +174,8 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   ])
 
   app.get('/api/', (request, response) => {
-    // We use HTTP 418 (I'm a teapot) unironically here because
-    // no other /api/ is likely to return it, so it can be a quick
-    // check for is-this-a-decent-server.
-    response.status(418).json({
-      // The client's 'add server' implementation should check for the
-      // presence of this property to check if it's actually talking to
-      // a Decent server like this one.
-      decent: true,
-
-      // For people viewing the API manually for whatever reason to have
-      // something to reference, we provide some info about the server itself.
-      message: `This is a Decent chat server. See the repo for details.`,
-      repository: 'https://github.com/decent-chat/decent',
+    response.status(200).json({
+      decentVersion: packageObj.version
     })
   })
 

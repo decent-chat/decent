@@ -89,7 +89,7 @@ All endpoints respond in JSON, and those which take POST bodies expect it to be 
 ## Retrieve server version [GET /api]
 + never requires session
 
-Returns `{ decentVersion }`.Should be used to check to see if a particular server is compatible with this spec.
+Returns `{ decentVersion }`. Should be used to check to see if a particular server is compatible with this spec.
 
 ```js
 GET /api/
