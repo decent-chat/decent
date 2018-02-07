@@ -188,6 +188,12 @@ test('validate.string', t => {
   t.false(validate.string())
 })
 
+test('validate.object', t => {
+  t.true(validate.object({}))
+  t.false(validate.object(123))
+  t.false(validate.object())
+})
+
 test('validateVar - test data is valid', async t => {
   const { middleware } = quickMakeServerlessMiddleware()
 

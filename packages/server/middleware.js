@@ -144,6 +144,41 @@ module.exports.makeMiddleware = function({db, util}) {
       ]
     },
 
+    loadSessionID: (sessionIDVar, shouldError = true) => [
+      ...middleware.verifyVarsExists(),
+
+      function(request, response, next) {
+        // First we check the POST body for the session ID (if it's a POST
+        // request). If we don't find anything, we check the query URL, then
+        // the headers (X-Session-ID). If we still don't find a session ID and
+        // one is required - shouldError - we'll stop the request immediately.
+        let sessionID
+        if (request.method === 'POST' && 'sessionID' in request.body) {
+          sessionID = request.body.sessionID
+        } else if ('sessionID' in request.query) {
+          sessionID = request.query.sessionID
+        } else if ('x-session-id' in request.headers) {
+          sessionID = request.headers['x-session-id'] // All headers are lowercase.
+        } else if (shouldError) {
+          // No session ID given - just quit here.
+          response.status(400).json({error: Object.assign(
+            {}, errors.INCOMPLETE_PARAMETERS, {missing: 'sessionID'}
+          )})
+          return
+        }
+
+        if (sessionID) {
+          request[middleware.vars][sessionIDVar] = sessionID
+        }
+
+        next()
+      },
+
+      ...middleware.runIfVarExists(sessionIDVar, [
+        ...middleware.validateVar(sessionIDVar, validate.string)
+      ])
+    ],
+
     getSessionUserFromID: (sessionIDVar, sessionUserVar) => [
       ...middleware.validateVar(sessionIDVar, validate.string),
 
@@ -307,7 +342,10 @@ module.exports.makeMiddleware = function({db, util}) {
 const validate = {
   string: Object.assign(function(x) {
     return typeof x === 'string'
-  }, {description: 'a string'})
+  }, {description: 'a string'}),
+  object: Object.assign(function(x) {
+    return typeof x === 'object'
+  }, {description: 'an object'})
 }
 
 module.exports.validate = validate

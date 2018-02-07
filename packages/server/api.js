@@ -114,36 +114,15 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       next()
     },
 
+    ...middleware.loadSessionID('sessionID', false),
+
     (request, response, next) => {
-      // First we check the POST body for the session ID (if it's a POST
-      // request). If we don't find anything, we check the query URL, then
-      // the headers (X-Session-ID). If we still don't find a session ID and
-      // one is required - shouldVerify - we'll say none was given
-      // and prevent the user from proceeding.
-      //
-      // See the 'authorization' section in the API docs.
-      let sessionID
-      if (request.method === 'POST' && 'sessionID' in request.body) {
-        sessionID = request.body.sessionID
-      } else if ('sessionID' in request.query) {
-        sessionID = request.query.sessionID
-      } else if ('x-session-id' in request.headers) {
-        sessionID = request.headers['x-session-id'] // All headers are lowercase.
-      } else if (request[middleware.vars].shouldVerify) {
+      if (!request[middleware.vars].sessionID && request[middleware.vars].shouldVerify) {
         // No session ID given - just quit here.
         response.status(403).json({
           error: errors.AUTHORIZATION_ERROR
         })
         return
-      }
-
-      if (sessionID) {
-        // We'll save the session ID as a middleware-var so we can use it
-        // in the upcoming requests.
-        Object.assign(request[middleware.vars], {sessionID})
-
-        // Note we don't set sessionID at all if it's undefined - runIfVarExists
-        // takes even undefined values to "exist", and we don't want that.
       }
 
       next()
@@ -170,7 +149,14 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
           })
         }
       }
-    ])
+    ]),
+
+    // Don't pollute middleware-vars!
+    function(request, response, next) {
+      delete request[middleware.vars].shouldVerify
+      delete request[middleware.vars].sessionID
+      next()
+    }
   ])
 
   app.get('/api/', (request, response) => {
@@ -283,7 +269,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       response.status(200).json({
         properties: {
-          useSecure: https === 'on' ? true : false,
+          useSecure: https === 'on',
           useAuthorization
         }
       })
@@ -296,6 +282,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     ...middleware.loadVarFromBody('channelID'),
     ...middleware.validateVar('channelID', validate.string),
     ...middleware.getChannelFromID('channelID', '_'), // To verify that it exists.
+    ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
 
     async (request, response) => {
@@ -404,9 +391,10 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  app.post('/api/edit-message', [
-    ...middleware.loadVarFromBody('messageID'),
+  app.patch('/api/message/:messageID', [
+    ...middleware.loadVarFromParams('messageID'),
     ...middleware.loadVarFromBody('text'),
+    ...middleware.validateVar('text', validate.string),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.getMessageFromID('messageID', 'oldMessage'),
     ...middleware.requireBeMessageAuthor('oldMessage', 'sessionUser'),
@@ -480,6 +468,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
   app.post('/api/channels', [
     ...middleware.loadVarFromBody('name'),
+    ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requireBeAdmin('sessionUser'),
     ...middleware.requireNameValid('name'),
@@ -893,6 +882,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     },
 
     ...middleware.loadVarFromBody('userID'),
+    ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requireBeAdmin('sessionUser'),
     ...middleware.getUserFromID('userID', '_')
