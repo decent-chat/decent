@@ -1,5 +1,6 @@
 const serverSettingsID = 'server-settings'
 const serverPropertiesID = 'server-properties'
+const errors = require('./errors')
 
 const defaultSettings = {
   // "Server settings" - these are settings that Do Things on the server. They can
@@ -9,31 +10,6 @@ const defaultSettings = {
   [serverSettingsID]: {
     // The name of the server.
     name: {value: 'Unnamed Decent chat server'},
-
-    // List of emotes.
-    emotes: {
-      value: [
-        // Each emote has an image URL (relative to this site/) and a shortcode.
-        { imageURL: '/img/shipit.png', shortcode: 'shipit' },
-      ],
-      validationFn: list => {
-        if (!Array.isArray(list)) {
-          throw 'not an array'
-        }
-
-        const seen = []
-
-        for (const emote of list) {
-          if (typeof emote !== 'object') throw 'not an array of emote objects'
-          if (typeof emote.imageURL !== 'string') throw `an emote object does not have string imageURL`
-          if (typeof emote.shortcode !== 'string') throw `an emote object does not have string shortcode`
-          if (/^[a-zA-Z0-9-_]+$/.test(emote.shortcode) === false) throw `an emote object has an invalid string shortcode`
-          if (seen.includes(emote.shortcode)) throw `duplicate emote shortcode: ${emote.shortcode}`
-
-          seen.push(emote.shortcode)
-        }
-      }
-    },
 
     // Authorization message displayed to users who are logged in but not
     // authorized to participate in the server. Must be less than 800

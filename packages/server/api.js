@@ -234,6 +234,30 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     ])
   }
 
+  app.post('/api/emotes', [
+    ...middleware.loadSessionID('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.loadVarFromBody('shortcode'),
+    ...middleware.validateVar('shortcode', validate.string),
+    ...middleware.requireNameValid('shortcode'),
+    ...middleware.loadVarFromBody('imageURL'),
+    ...middleware.validateVar('imageURL', validate.string),
+
+    async function(request, response, next) {
+      const { imageURL, shortcode } = request[middleware.vars]
+
+      if (await db.emotes.findOne({shortcode})) {
+        response.status(400).json(errors.NAME_ALREADY_TAKEN)
+        return
+      }
+
+      const newEmote =  {imageURL, shortcode}
+      await db.emotes.insert(newEmote)
+      response.status(200).json({})
+    }
+  ])
+
   app.get('/api/settings', [
     async (request, response) => {
       const serverSettings = await db.settings.findOne({_id: serverSettingsID})
