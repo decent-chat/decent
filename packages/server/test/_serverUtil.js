@@ -24,7 +24,7 @@ const makeUser = async (server, port, username = 'test_user_' + shortid(), passw
     body: JSON.stringify({username, password})
   })
 
-  const { sessionID } = await fetch(port, '/login', {
+  const { sessionID } = await fetch(port, '/sessions', {
     method: 'POST',
     body: JSON.stringify({username, password})
   })

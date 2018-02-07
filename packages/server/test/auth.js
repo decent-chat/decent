@@ -5,6 +5,7 @@ const { makeUser, makeAdmin } = require('./_serverUtil')
 
 let portForAuthTests = 21000
 
+/*
 test('register', async t => {
   const port = portForAuthTests++
   const server = await spawn(port)
@@ -71,6 +72,7 @@ test('username-available', async t => {
 
   await server.kill()
 })
+*/
 
 test('authorize-user', async t => {
   const port = portForAuthTests++

@@ -73,7 +73,7 @@ The following list describes each possible error code:
 - `INCOMPLETE_PARAMETERS` - For when a property is missing from a request's parameters. The missing property's name is passed in `error.missing`.
 - `INVALID_PARAMETER_TYPE` - For when a property is given in a request's parameters, but is not the right type (e.g. passing a string instead of an array). The invalid property's name is passed in `error.invalidParameter`.
   - Note that this is only for type-checking. Client programs should *never* get this error, regardless of user input. More specific errors, such as `SHORT_PASSWORD`, are responded for issues that might be related to user input.
-- `INVALID_SESSION_ID` - For when a session ID is passed, but there is no session with that ID. (This is for general usage where being logged in is required. For `/session/:sessionID`, `NOT_FOUND` is returned if there is no session with the given ID.)
+- `INVALID_SESSION_ID` - For when a session ID is passed, but there is no session with that ID. (This is for general usage where being logged in is required. For `/sessions/:sessionID`, `NOT_FOUND` is returned if there is no session with the given ID.)
 - `UPLOAD_FAILED` - For when an upload fails.
 - `NAME_ALREADY_TAKEN` - For when you try to create a something, but your passed name is already taken by another something (e.g. registering a username which is already used by someone else).
 - `SHORT_PASSWORD` - For when you attempt to register but your password is too short.
@@ -290,8 +290,10 @@ GET /api/sessions
 
 <- {
 <-   "sessions": [
-<-     "id": "12345678-ABCDEFGH",
-<-     "dateCreated": 123456789000
+<-     {
+<-       "id": "12345678-ABCDEFGH",
+<-       "dateCreated": 123456789000
+<-     }
 <-   ]
 <- }
 ```
@@ -317,14 +319,14 @@ POST /api/sessions
 <- }
 ```
 
-### Fetch session details [GET /api/session/:id]
+### Fetch session details [GET /api/sessions/:id]
 + never requires session (provided in the URL)
 + **in-url** id (string)
 
 Responds with `{ session, user }` upon success, where `session` is a [session](#sessions) and `user` is the [user](#users) this session represents.
 
 ```js
-GET /api/session/12345678-ABCDEFGH
+GET /api/sessions/12345678-ABCDEFGH
 
 <- {
 <-   "session": {
@@ -340,14 +342,14 @@ GET /api/session/12345678-ABCDEFGH
 ```
 
 <a name='logout'></a>
-### Logout [DELETE /api/session/:id]
+### Logout [DELETE /api/sessions/:id]
 + never requires session (if you know the ID, it's yours)
 + **in-url** id (string)
 
 Responds with `{}` upon success. Any further requests using the provided session ID will fail.
 
 ```js
-DELETE /api/session/12345678-ABCDEFGH
+DELETE /api/sessions/12345678-ABCDEFGH
 
 <- {}
 ```

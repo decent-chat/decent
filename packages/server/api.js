@@ -103,14 +103,10 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       if (requireAuthorization === 'on' && !(
         [
-          '/login', '/register',
-          '/delete-sessions', '/user-session-list',
-          '/should-use-secure', '/should-use-authorization',
-          '/' // "This is a Decent server..."
-        ].includes(request.path) ||
-
-        // /session/:sessionID should work.
-        request.path.startsWith('/session/')
+          ['GET', /^\/$/],
+          ['POST', /^\/sessions$/],
+          ['POST', /^\/register$/], // Temporary!!!!!
+        ].find(([ m, re ]) => request.method === m && re.test(request.path))
       )) {
         request[middleware.vars].shouldVerify = true
       }
@@ -897,55 +893,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  app.post('/api/login', [
-    ...middleware.loadVarFromBody('username'),
-    ...middleware.loadVarFromBody('password'),
-    ...middleware.getUserFromUsername('username', 'user'),
-
-    async (request, response) => {
-      const { username, password, user } = request[middleware.vars]
-      const { salt, passwordHash } = user
-
-      if (await bcrypt.compare(password, passwordHash)) {
-        const session = await db.sessions.insert({
-          _id: uuidv4(),
-          userID: user._id,
-          dateCreated: Date.now()
-        })
-
-        response.status(200).json({
-          sessionID: session._id
-        })
-      } else {
-        response.status(401).json({
-          error: errors.INCORRECT_PASSWORD
-        })
-      }
-    }
-  ])
-
-  app.get('/api/session/:sessionID', [
-    ...middleware.loadVarFromParams('sessionID'),
-
-    async (request, response) => {
-      const { sessionID } = request[middleware.vars]
-
-      const session = await db.sessions.findOne({_id: sessionID})
-
-      if (!session) {
-        response.status(404).json({
-          error: errors.NOT_FOUND
-        })
-
-        return
-      }
-
-      response.status(200).json({
-        session: await serialize.sessionDetail(session)
-      })
-    }
-  ])
-
   const authUserMiddleware = [
     async function(request, response, next) {
       if (await shouldUseAuthorization()) {
@@ -1002,32 +949,8 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  app.post('/api/delete-sessions', [
-    ...middleware.loadVarFromBody('sessionIDs'),
-
-    // No verification ("are you the owner of this session ID" etc), because
-    // if you know the session ID, you obviously have power over it!
-
-    async (request, response) => {
-      const { sessionIDs } = request[middleware.vars]
-
-      if (!(Array.isArray(sessionIDs) && sessionIDs.every(x => typeof x === 'string'))) {
-        response.status(400).json({
-          error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-            message: 'Expected sessionIDs to be an array of strings.'
-          })
-        })
-      } else {
-        await Promise.all(sessionIDs.map(
-          sid => db.sessions.remove({_id: sid})
-        ))
-
-        response.status(200).json({})
-      }
-    }
-  ])
-
-  app.get('/api/user-session-list', [
+  app.get('/api/sessions', [
+    ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
 
     async (request, response) => {
@@ -1037,6 +960,74 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       response.status(200).json({
         sessions: await Promise.all(sessions.map(serialize.sessionBrief))
+      })
+    }
+  ])
+
+  app.post('/api/sessions', [
+    ...middleware.loadVarFromBody('username'),
+    ...middleware.validateVar('username', validate.string),
+    ...middleware.loadVarFromBody('password'),
+    ...middleware.validateVar('password', validate.string),
+    ...middleware.getUserFromUsername('username', 'user'),
+
+    async (request, response) => {
+      const { username, password, user } = request[middleware.vars]
+      const { salt, passwordHash } = user
+
+      if (await bcrypt.compare(password, passwordHash)) {
+        const session = await db.sessions.insert({
+          _id: uuidv4(),
+          userID: user._id,
+          dateCreated: Date.now()
+        })
+
+        response.status(200).json({
+          sessionID: session._id
+        })
+      } else {
+        response.status(401).json({
+          error: errors.INCORRECT_PASSWORD
+        })
+      }
+    }
+  ])
+
+  app.delete('/api/sessions/:sessionID', [
+    ...middleware.loadVarFromParams('sessionID'),
+
+    // No verification ("are you the owner of this session ID" etc), because
+    // if you know the session ID, you obviously have power over it!
+
+    async (request, response) => {
+      const { sessionID } = request[middleware.vars]
+      const numRemoved = await db.sessions.remove({_id: sessionID})
+      if (numRemoved) {
+        response.status(200).json({})
+      } else {
+        response.status(404).json(errors.NOT_FOUND)
+      }
+    }
+  ])
+
+  app.get('/api/sessions/:sessionID', [
+    ...middleware.loadVarFromParams('sessionID'),
+
+    async (request, response) => {
+      const { sessionID } = request[middleware.vars]
+
+      const session = await db.sessions.findOne({_id: sessionID})
+
+      if (!session) {
+        response.status(404).json({
+          error: errors.NOT_FOUND
+        })
+
+        return
+      }
+
+      response.status(200).json({
+        session: await serialize.sessionDetail(session)
       })
     }
   ])
