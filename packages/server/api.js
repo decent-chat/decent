@@ -257,7 +257,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       sendToAllSockets('emote/new', {
         emote: await serialize.emote(newEmote)
       })
-      response.status(200).json({})
+      response.status(201).json({})
     }
   ])
 
