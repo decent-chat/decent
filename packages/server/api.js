@@ -258,6 +258,20 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
+  app.get('/api/emotes/:shortcode', [
+    ...middleware.loadVarFromParams('shortcode'),
+
+    async function (request, response, next) {
+      const { shortcode } = request[middleware.vars]
+      const emote = await db.emotes.findOne({shortcode})
+      if (emote) {
+        response.redirect(302, emote.imageURL)
+      } else {
+        response.status(404).json({error: errors.NOT_FOUND})
+      }
+    }
+  ])
+
   app.get('/api/settings', [
     async (request, response) => {
       const serverSettings = await db.settings.findOne({_id: serverSettingsID})
