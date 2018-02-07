@@ -23,7 +23,7 @@ module.exports = function makeSerializers({util, db}) {
         username: u.username,
         avatarURL: emailToAvatarURL(u.email || u._id),
         permissionLevel: u.permissionLevel,
-        online: await isUserOnline(u._id)
+        online: isUserOnline(u._id)
       }
 
       if (sessionUser && sessionUser._id === u._id) {

@@ -41,8 +41,8 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
   }
 
   const md5 = string => {
-    if (!string) {
-      throw 'md5() was not passed ' + string
+    if (typeof string !== 'string' || string.length === 0) {
+      throw new Error('md5() was not passed string')
     }
 
     return crypto.createHash('md5').update(string).digest('hex')
@@ -52,7 +52,7 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
     `https://seccdn.libravatar.org/avatar/${email ? md5(email) : ''}?d=retro`
   )
 
-  const isUserOnline = async function(userID) {
+  const isUserOnline = function(userID) {
     // Simple logic: a user is online iff there is at least one socket whose
     // session belongs to that user.
 
@@ -98,9 +98,11 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
   }
 
   return {
+    isNameValid,
     getUserIDBySessionID, getUserBySessionID,
+    md5,
     isUserOnline, isUserAuthorized,
-    emailToAvatarURL, isNameValid,
+    emailToAvatarURL,
     getUnreadMessageCountInChannel,
     shouldUseAuthorization
   }
