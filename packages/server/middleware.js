@@ -344,7 +344,7 @@ const validate = {
     return typeof x === 'string'
   }, {description: 'a string'}),
   object: Object.assign(function(x) {
-    return typeof x === 'object'
+    return typeof x === 'object' && !Array.isArray(x)
   }, {description: 'an object'})
 }
 
