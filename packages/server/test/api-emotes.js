@@ -21,6 +21,28 @@ test('POST /api/emotes', t => {
   })
 })
 
+test('DELETE /api/emotes/:shortcode', t => {
+  return testWithServer(portForApiEmoteTests++, async ({ server, port }) => {
+    const { sessionID } = await makeAdmin(server, port)
+
+    await fetch(port, '/emotes', {
+      method: 'POST',
+      body: JSON.stringify({
+        shortcode: 'shipit',
+        imageURL: '/img/shipit.png',
+        sessionID
+      })
+    })
+    t.is(await server.db.emotes.count({}), 1)
+
+    await fetch(port, '/emotes/shipit', {
+      method: 'DELETE',
+      body: JSON.stringify({sessionID})
+    })
+    t.is(await server.db.emotes.count({}), 0)
+  })
+})
+
 test('GET /api/emotes', t => {
   return testWithServer(portForApiEmoteTests++, async ({ server, port }) => {
     const { sessionID } = await makeAdmin(server, port)

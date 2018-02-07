@@ -148,12 +148,12 @@ module.exports.makeMiddleware = function({db, util}) {
       ...middleware.verifyVarsExists(),
 
       function(request, response, next) {
-        // First we check the POST body for the session ID (if it's a POST
-        // request). If we don't find anything, we check the query URL, then
-        // the headers (X-Session-ID). If we still don't find a session ID and
-        // one is required - shouldError - we'll stop the request immediately.
+        // First we check the body for the session ID. If we don't find anything,
+        // we check the query URL, then the headers (for X-Session-ID). If we
+        // still don't find a session ID and one is required - shouldError - we'll
+        // stop the request immediately.
         let sessionID
-        if (request.method === 'POST' && 'sessionID' in request.body) {
+        if ('sessionID' in request.body) {
           sessionID = request.body.sessionID
         } else if ('sessionID' in request.query) {
           sessionID = request.query.sessionID

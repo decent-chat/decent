@@ -26,7 +26,7 @@ module.exports = (port, path = '', opts = {}) =>
             stack: res.error.stack
           })
         } else {
-          throw res.error
+          throw Object.assign(res.error, {_to: path, _opts: opts})
         }
       }
 

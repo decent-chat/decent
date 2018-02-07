@@ -264,7 +264,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   app.get('/api/emotes/:shortcode', [
     ...middleware.loadVarFromParams('shortcode'),
 
-    async function (request, response, next) {
+    async function(request, response, next) {
       const { shortcode } = request[middleware.vars]
       const emote = await db.emotes.findOne({shortcode})
       if (emote) {
@@ -275,11 +275,34 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
+  app.delete('/api/emotes/:shortcode', [
+    ...middleware.loadVarFromParams('shortcode'),
+    ...middleware.loadSessionID('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.requireBeAdmin('sessionUser'),
+
+    async function(request, response, next) {
+      const { shortcode } = request[middleware.vars]
+      const numRemoved = await db.emotes.remove({shortcode})
+      if (numRemoved) {
+        response.status(200).json({})
+      } else {
+        response.status(404).json(errors.NOT_FOUND)
+      }
+    }
+  ])
+
   app.get('/api/emotes', [
-    async function (request, response, next) {
+    async function(request, response, next) {
       const emotes = await db.emotes.find({})
+      const serialized = await Promise.all(emotes.map(serialize.emote))
+      serialized.sort((a, b) => {
+        const as = a.shortcode
+        const bs = b.shortcode
+        return as < bs ? -1 : bs < as ? 1 : 0
+      })
       response.status(200).json({
-        emotes: await Promise.all(emotes.map(serialize.emote))
+        emotes: serialized
       })
     }
   ])
