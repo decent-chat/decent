@@ -252,8 +252,9 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         return
       }
 
-      const newEmote =  {imageURL, shortcode}
+      const newEmote = {imageURL, shortcode}
       await db.emotes.insert(newEmote)
+      sendToAllSockets('emote/new', {emote: newEmote})
       response.status(200).json({})
     }
   ])
