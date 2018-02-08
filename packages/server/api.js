@@ -959,7 +959,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       const sessions = await db.sessions.find({userID: sessionUser._id})
 
       response.status(200).json({
-        sessions: await Promise.all(sessions.map(serialize.sessionBrief))
+        sessions: await Promise.all(sessions.map(serialize.session))
       })
     }
   ])
@@ -1005,7 +1005,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       if (numRemoved) {
         response.status(200).json({})
       } else {
-        response.status(404).json(errors.NOT_FOUND)
+        response.status(404).json({error: errors.NOT_FOUND})
       }
     }
   ])
@@ -1026,8 +1026,11 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         return
       }
 
+      const user = await db.users.findOne({_id: session.userID})
+
       response.status(200).json({
-        session: await serialize.sessionDetail(session)
+        session: await serialize.session(session),
+        user: await serialize.user(user, user)
       })
     }
   ])

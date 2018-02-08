@@ -37,18 +37,10 @@ module.exports = function makeSerializers({util, db}) {
       return obj
     },
 
-    sessionBrief: async s => ({
+    session: async s => ({
       id: s._id,
       dateCreated: s.dateCreated
     }),
-
-    sessionDetail: async s => {
-      const user = await getUserBySessionID(s._id)
-
-      return Object.assign(await serialize.sessionBrief(s), {
-        user: await serialize.user(user, user)
-      })
-    },
 
     channelBrief: async (c, sessionUser = null) => {
       const obj = {

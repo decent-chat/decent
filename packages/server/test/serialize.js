@@ -87,24 +87,17 @@ test('serialize.user', t => {
   })
 })
 
-test('serialize.sessionBrief, serialize.sessionDetail', t => {
+test('serialize.session', t => {
   return testWithServer(portForSerializeTests++, async ({ serialize, server, port }) => {
     const { user, sessionID } = await makeUser(server, port)
 
     const dateCreated = Date.now()
     const session = {_id: sessionID, dateCreated, userID: user._id}
-    const serialized = await serialize.sessionBrief(session)
+    const serialized = await serialize.session(session)
 
     t.deepEqual(Object.keys(serialized), ['id', 'dateCreated'])
     t.is(serialized.id, sessionID)
     t.is(serialized.dateCreated, dateCreated)
-
-    const serialized2 = await serialize.sessionDetail(session)
-
-    t.deepEqual(Object.keys(serialized2), ['id', 'dateCreated', 'user'])
-    t.is(serialized2.id, sessionID)
-    t.is(serialized2.dateCreated, dateCreated)
-    t.is(serialized2.user.id, user.id)
   })
 })
 

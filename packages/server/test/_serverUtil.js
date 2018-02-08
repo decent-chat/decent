@@ -18,11 +18,17 @@ const testWithServer = async (port, cb) => {
   }
 }
 
-const makeUser = async (server, port, username = 'test_user_' + shortid(), password = 'abcdef') => {
+const makeUserWithoutSession = async (server, port, username = 'test_user_' + shortid(), password = 'abcdef') => {
   const { user } = await fetch(port, '/register', {
     method: 'POST',
     body: JSON.stringify({username, password})
   })
+
+  return { user, username, password }
+}
+
+const makeUser = async (server, port, inUsername = undefined, inPassword = undefined) => {
+  const { user, username, password } = await makeUserWithoutSession(server, port, inUsername, inPassword)
 
   const { sessionID } = await fetch(port, '/sessions', {
     method: 'POST',
@@ -79,4 +85,8 @@ const makeMessage = async (server, port, text = 'Hello.', channelID = null, sess
   return {messageID, channelID, sessionID}
 }
 
-module.exports = {testWithServer, makeUser, makeAdmin, makeChannel, makeMessage}
+module.exports = {
+  testWithServer,
+  makeUserWithoutSession, makeUser, makeAdmin,
+  makeChannel, makeMessage
+}
