@@ -282,7 +282,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       if (numRemoved) {
         response.status(200).json({})
       } else {
-        response.status(404).json(errors.NOT_FOUND)
+        response.status(404).json({error: errors.NOT_FOUND})
       }
     }
   ])

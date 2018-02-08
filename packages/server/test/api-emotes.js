@@ -40,6 +40,16 @@ test('DELETE /api/emotes/:shortcode', t => {
       body: JSON.stringify({sessionID})
     })
     t.is(await server.db.emotes.count({}), 0)
+
+    try {
+      await fetch(port, '/emotes/a', {
+        method: 'DELETE',
+        body: JSON.stringify({sessionID})
+      })
+      t.fail('Could delete emote that does not exist')
+    } catch (error) {
+      t.is(error.code, 'NOT_FOUND')
+    }
   })
 })
 
