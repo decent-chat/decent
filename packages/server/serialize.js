@@ -42,7 +42,7 @@ module.exports = function makeSerializers({util, db}) {
       dateCreated: s.dateCreated
     }),
 
-    channelBrief: async (c, sessionUser = null) => {
+    channel: async (c, sessionUser = null) => {
       const obj = {
         id: c._id,
         name: c.name
@@ -53,22 +53,6 @@ module.exports = function makeSerializers({util, db}) {
       }
 
       return obj
-    },
-
-    // Extra details for a channel - these aren't returned in the channel list API,
-    // but are when a specific channel is fetched.
-    channelDetail: async (c, sessionUser = null) => {
-      let pinnedMessages = await Promise.all(c.pinnedMessageIDs.map(id => db.messages.findOne({_id: id})))
-
-      // Null messages are filtered out, just in case there's a broken message ID in the
-      // pinned message list (e.g. because a message was deleted).
-      pinnedMessages = pinnedMessages.filter(Boolean)
-
-      pinnedMessages = await Promise.all(pinnedMessages.map(serialize.message))
-
-      return Object.assign(await serialize.channelBrief(c, sessionUser), {
-        pinnedMessages
-      })
     },
 
     emote: async e => ({

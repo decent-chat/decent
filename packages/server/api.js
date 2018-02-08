@@ -384,39 +384,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  app.post('/api/pin-message', [
-    ...middleware.loadVarFromBody('messageID'),
-    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-    ...middleware.requireBeAdmin('sessionUser'),
-    ...middleware.getMessageFromID('messageID', 'message'),
-    (req, res, next) => {
-      const v = req[middleware.vars]
-      v.channelID = v.message.channelID
-      next()
-    },
-    ...middleware.getChannelFromID('channelID', 'channel'),
-
-    async (request, response) => {
-      const { messageID, channel } = request[middleware.vars]
-
-      if (channel.pinnedMessageIDs.includes(messageID)) {
-        response.status(500).json({
-          error: errors.ALREADY_PERFORMED
-        })
-
-        return
-      }
-
-      await db.channels.update({_id: channel._id}, {
-        $push: {
-          pinnedMessageIDs: messageID
-        }
-      })
-
-      response.status(200).json({})
-    }
-  ])
-
   app.post('/api/add-message-reaction', [
     ...middleware.loadVarFromBody('reactionCode'),
     ...middleware.loadVarFromBody('messageID'),
@@ -536,7 +503,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     ...middleware.getMessageFromID('messageID', 'message'),
 
     async (request, response) => {
-      const { message } = request[middleware.vars]
+      const { message, sessionUser } = request[middleware.vars]
 
       response.status(200).json({
         message: await serialize.message(message)
@@ -544,11 +511,30 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
+  app.get('/api/channels', [
+    ...middleware.loadSessionID('sessionID', false),
+    ...middleware.runIfVarExists('sessionID',
+      middleware.getSessionUserFromID('sessionID', 'sessionUser')
+    ),
+
+    async (request, response) => {
+      const { sessionUser } = request[middleware.vars]
+
+      const channels = await db.channels.find({})
+
+      response.status(200).json({
+        channels: await Promise.all(channels.map(channel => {
+          return serialize.channel(channel, sessionUser)
+        }))
+      })
+    }
+  ])
+
   app.post('/api/channels', [
-    ...middleware.loadVarFromBody('name'),
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.loadVarFromBody('name'),
     ...middleware.requireNameValid('name'),
 
     async (request, response) => {
@@ -568,7 +554,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       })
 
       sendToAllSockets('channel/new', {
-        channel: await serialize.channelDetail(channel),
+        channel: await serialize.channel(channel),
       })
 
       response.status(201).json({
@@ -577,11 +563,29 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  app.post('/api/rename-channel', [
-    ...middleware.loadVarFromBody('channelID'),
-    ...middleware.loadVarFromBody('name'),
+  app.get('/api/channels/:channelID', [
+    ...middleware.loadVarFromParams('channelID'),
+    ...middleware.getChannelFromID('channelID', 'channel'),
+    ...middleware.loadSessionID('sessionID', false),
+    ...middleware.runIfVarExists('sessionID',
+      middleware.getSessionUserFromID('sessionID', 'sessionUser')
+    ),
+
+    async (request, response) => {
+      const { channel, sessionUser, sessionID } = request[middleware.vars]
+
+      response.status(200).json({
+        channel: await serialize.channel(channel, sessionUser)
+      })
+    }
+  ])
+
+  app.patch('/api/channels/:channelID', [
+    ...middleware.loadVarFromParams('channelID'),
+    ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.loadVarFromBody('name'),
     ...middleware.requireNameValid('name'),
     ...middleware.getChannelFromID('channelID', '_'), // To verify the channel exists.
 
@@ -606,10 +610,11 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  app.post('/api/delete-channel', [
-    ...middleware.loadVarFromBody('channelID'),
+  app.delete('/api/channels/:channelID', [
+    ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.loadVarFromParams('channelID'),
     ...middleware.getChannelFromID('channelID', '_'), // To verify the channel exists.
 
     async (request, response) => {
@@ -630,41 +635,22 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  app.get('/api/channel/:channelID', [
+  app.post('/api/channels/:channelID/mark-read', [
+    ...middleware.loadSessionID('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.loadVarFromParams('channelID'),
-    ...middleware.getChannelFromID('channelID', 'channel'),
-    ...middleware.runIfVarExists('sessionID',
-      middleware.getSessionUserFromID('sessionID', 'sessionUser')
-    ),
+    ...middleware.getChannelFromID('channelID', '_'), // To verify that it exists
 
     async (request, response) => {
-      const { channel, sessionUser } = request[middleware.vars]
+      const { sessionUser, channelID } = request[middleware.vars]
 
-      response.status(200).json({
-        channel: await serialize.channelDetail(channel, sessionUser)
-      })
+      await markChannelAsRead(sessionUser._id, channelID)
+
+      response.status(200).json({})
     }
   ])
 
-  app.get('/api/channel-list', [
-    ...middleware.runIfVarExists('sessionID',
-      middleware.getSessionUserFromID('sessionID', 'sessionUser')
-    ),
-
-    async (request, response) => {
-      const { sessionUser } = request[middleware.vars]
-
-      const channels = await db.channels.find({})
-
-      response.status(200).json({
-        channels: await Promise.all(channels.map(channel => {
-          return serialize.channelBrief(channel, sessionUser)
-        }))
-      })
-    }
-  ])
-
-  app.get('/api/channel/:channelID/latest-messages', [
+  app.get('/api/channels/:channelID/messages', [
     ...middleware.loadVarFromParams('channelID'),
     ...middleware.loadVarFromQuery('before', false),
     ...middleware.loadVarFromQuery('after', false),
@@ -696,7 +682,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       const sort = {date: -1}
 
-      if (afterMessage && !beforeMessage) {
+      if (afterMessage) {
         sort.date = +1
       }
 
@@ -721,32 +707,58 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  app.post('/api/mark-channel-as-read', [
-    ...middleware.loadVarFromBody('channelID'),
-    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-    ...middleware.getChannelFromID('channelID', '_'), // To verify that it exists
+  app.get('/api/channels/:channelID/pins', [
+    ...middleware.loadVarFromParams('channelID'),
+    ...middleware.getChannelFromID('channelID', 'channel'),
 
     async (request, response) => {
-      const { sessionUser, channelID } = request[middleware.vars]
-
-      await markChannelAsRead(sessionUser._id, channelID)
-
-      response.status(200).json({})
+      const { channel } = request[middleware.vars]
+      response.status(200).json({
+        pins: (await Promise.all(
+          channel.pinnedMessageIDs.map(id =>
+            db.messages.findOne({_id: id})
+              .then(msg => msg ? serialize.message(msg) : null)
+          )
+        )).filter(Boolean)
+      })
     }
   ])
 
-  app.get('/api/channel-is-read', [
-    ...middleware.loadVarFromQuery('channelID'),
+  app.post('/api/channels/:channelID/pins', [
+    ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.loadVarFromParams('channelID'),
+    ...middleware.getChannelFromID('channelID', 'channel'),
+    ...middleware.loadVarFromBody('messageID'),
+    ...middleware.getMessageFromID('messageID', 'message'),
+    (request, response, next) => {
+      const { message, channelID } = request[middleware.vars]
+      if (message.channelID === channelID) {
+        next()
+      } else {
+        response.status(400).json({error: errors.NOT_FROM_SAME_CHANNEL})
+      }
+    },
 
     async (request, response) => {
-      const { channelID, sessionUser } = request[middleware.vars]
+      const { messageID, channel } = request[middleware.vars]
 
-      const count = await getUnreadMessageCountInChannel(sessionUser, channelID)
+      if (channel.pinnedMessageIDs.includes(messageID)) {
+        response.status(500).json({
+          error: errors.ALREADY_PERFORMED
+        })
 
-      response.status(200).json({
-        count
+        return
+      }
+
+      await db.channels.update({_id: channel._id}, {
+        $push: {
+          pinnedMessageIDs: messageID
+        }
       })
+
+      response.status(200).json({})
     }
   ])
 

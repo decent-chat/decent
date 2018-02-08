@@ -10,6 +10,7 @@ module.exports = {
   MUST_BE_ADMIN: {code: 'MUST_BE_ADMIN', message: 'You must be an administrator to do this.'},
   NAME_ALREADY_TAKEN: {code: 'NAME_ALREADY_TAKEN', message: 'That name is already taken.'},
   NOT_FOUND: {code: 'NOT_FOUND', message: 'This couldn\'t be found.'},
+  NOT_FROM_SAME_CHANNEL: {code: 'NOT_FROM_SAME_CHANNEL', message: 'This is not from the same channel.'},
   NOT_YOURS: {code: 'NOT_YOURS', message: 'You don\'t own this.'},
   UPLOAD_FAILED: {code: 'UPLOAD_FAILED', message: 'The upload failed.'},
   UPLOADS_DISABLED: {code: 'UPLOADS_DISABLED', message: 'Uploads are disabled.'},

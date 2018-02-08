@@ -101,7 +101,7 @@ test('serialize.session', t => {
   })
 })
 
-test('serialize.channelBrief, serialize.channelDetail', t => {
+test('serialize.channel', t => {
   return testWithServer(portForSerializeTests++, async ({ serialize, server, port }) => {
     const { channelID } = await makeChannel(server, port, 'general')
 
@@ -111,33 +111,18 @@ test('serialize.channelBrief, serialize.channelDetail', t => {
       pinnedMessageIDs: []
     }
 
-    const serialized = await serialize.channelBrief(channel)
+    const serialized = await serialize.channel(channel)
     t.deepEqual(Object.keys(serialized), ['id', 'name'])
     t.is(serialized.id, channelID)
     t.is(serialized.name, 'general')
 
-    // channelBrief (and channelDetail) respond unread message count when passed a session user.
+    // serialize.channel responds unread message count when passed a session user.
     const { messageID: msg1 } = await makeMessage(server, port, 'Hello.', channelID)
     const { messageID: msg2 } = await makeMessage(server, port, 'Hello.', channelID)
     const user = await makeUser(server, port)
-    const serialized2 = await serialize.channelBrief(channel, user)
+    const serialized2 = await serialize.channel(channel, user)
     t.deepEqual(Object.keys(serialized2), ['id', 'name', 'unreadMessageCount'])
     t.is(serialized2.unreadMessageCount, 2)
-
-    // channelDetail also responds pinned messages.
-    channel.pinnedMessageIDs.push(msg1, msg2)
-    const serialized3 = await serialize.channelDetail(channel)
-    t.deepEqual(Object.keys(serialized3), ['id', 'name', 'pinnedMessages'])
-    t.true(Array.isArray(serialized3.pinnedMessages))
-    t.is(serialized3.pinnedMessages.length, 2)
-    t.is(serialized3.pinnedMessages[0].id, msg1)
-    t.is(serialized3.pinnedMessages[1].id, msg2)
-
-    // Deleted pinned messages should not be returned.
-    await server.db.messages.remove({_id: msg1})
-    const serialized4 = await serialize.channelDetail(channel)
-    t.is(serialized4.pinnedMessages.length, 1)
-    t.is(serialized4.pinnedMessages[0].id, msg2)
   })
 })
 

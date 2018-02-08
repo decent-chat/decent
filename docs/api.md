@@ -588,7 +588,7 @@ POST /api/channels/5678/mark-read
 + **in-url** id (ID) - The ID of the channel to fetch messages of.
 + `before` (ID; optional) - The ID of the message right **after** the range of messages you want.
 + `after` (ID; optional) - The ID of the message right **before** the range of messages you want.
-+ `limit` (integer; default `50`) - The maximum number of messages to fetch. Must be `1 <= limit <= 50`.
++ `limit` (integer; optional, default `50`) - The maximum number of messages to fetch. Must be `1 <= limit <= 50`.
 
 Returns `{ messages }`, where messages is an array of the most recent [messages](#messages) sent to this channel. If `limit` is given, it'll only fetch that many messages.
 
