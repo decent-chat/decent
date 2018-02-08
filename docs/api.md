@@ -445,6 +445,7 @@ This endpoint will return a NOT_YOURS [error](#errors) if you do not own the mes
 
 <a name='delete-message'></a>
 ### Delete a message [DELETE /api/messages/:id]
++ requires session
 + **in-url** id (ID) - The ID of the message to delete
 
 Emits [message/delete](#message-delete) and returns `{}`.

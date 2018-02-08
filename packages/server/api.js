@@ -463,12 +463,13 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  app.patch('/api/message/:messageID', [
+  app.patch('/api/messages/:messageID', [
     ...middleware.loadVarFromParams('messageID'),
+    ...middleware.loadSessionID('sessionID'),
     ...middleware.loadVarFromBody('text'),
     ...middleware.validateVar('text', validate.string),
-    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.getMessageFromID('messageID', 'oldMessage'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requireBeMessageAuthor('oldMessage', 'sessionUser'),
 
     async (request, response) => {
@@ -498,8 +499,9 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  app.post('/api/delete-message', [
-    ...middleware.loadVarFromBody('messageID'),
+  app.delete('/api/messages/:messageID', [
+    ...middleware.loadVarFromParams('messageID'),
+    ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.getMessageFromID('messageID', 'message'),
 
@@ -516,6 +518,10 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         }
       }
 
+      // Normally we'd check if this actually deleted anything, to return a
+      // NOT_FOUND error if it didn't, but we already know that the message
+      // exists (from getMessageFromID earlier, to check if the session user
+      // was its author).
       await db.messages.remove({_id: message._id})
 
       // We don't want to send back the message itself, obviously!
@@ -525,7 +531,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  app.get('/api/message/:messageID', [
+  app.get('/api/messages/:messageID', [
     ...middleware.loadVarFromParams('messageID'),
     ...middleware.getMessageFromID('messageID', 'message'),
 
