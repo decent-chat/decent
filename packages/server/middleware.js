@@ -72,8 +72,17 @@ module.exports.makeMiddleware = function({db, util}) {
       ...middleware.loadVarFromQuery(key, false),
       ...middleware.loadVarFromBody(key, false),
 
-      // TODO: return errors.INCOMPLETE_PARAMETERS here instead
-      ...middleware.validateVar(key, required ? validate.defined : async x => true),
+      async function (request, response, next) {
+        if (required && request[middleware.vars][key] === undefined) {
+          response.status(400).end(JSON.stringify({
+            error: Object.assign({}, errors.INCOMPLETE_PARAMETERS, {
+              missing: key
+            })
+          }))
+        } else {
+          next()
+        }
+      }
     ],
 
     loadVarFromParams: key => [
