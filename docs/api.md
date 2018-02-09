@@ -1,4 +1,4 @@
-# Decent API Specification
+# Decent API Specification 0.1.0
 
 **Communicating with the API**
 * [HTTP Endpoints](#http-endpoints)
@@ -89,7 +89,7 @@ All endpoints respond in JSON, and those which take POST bodies expect it to be 
 ## Retrieve server version [GET /api]
 + never requires session
 
-Returns `{ decentVersion }`. Should be used to check to see if a particular server is compatible with this spec.
+Returns `{ decentVersion }`. Should be used to check to see if a particular server is compatible with this spec. Note that Decent follows [SemVer](https://semver.org/), so unless the MAJOR (first) portion of the version number is different to what you expect communication should work fine.
 
 ```js
 GET /api/
