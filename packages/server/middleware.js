@@ -66,6 +66,15 @@ module.exports.makeMiddleware = function({db, util}) {
       }
     ],
 
+    loadVarFromQueryOrBody: (key, required = true) => [
+      // Combines loadVarFromQuery and loadVarFromBody. The body recieves priority.
+
+      ...middleware.loadVarFromBody(key, false),
+      ...middleware.loadVarFromQuery(key, false), // Does not overwrite.
+
+      ...middleware.validateVar(key, required ? validate.defined : async x => true),
+    ],
+
     loadVarFromParams: key => [
       // Same as loadVarFromBody, but it loads from the request's params.
       // Use this for GET requests where the parameter is labeled in the URL,
@@ -345,7 +354,10 @@ const validate = {
   }, {description: 'a string'}),
   object: Object.assign(function(x) {
     return typeof x === 'object' && !Array.isArray(x)
-  }, {description: 'an object'})
+  }, {description: 'an object'}),
+  defined: Object.assign(function(x) {
+    return typeof x !== 'undefined'
+  }, {description: 'defined'})
 }
 
 module.exports.validate = validate
