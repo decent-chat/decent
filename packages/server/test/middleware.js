@@ -171,6 +171,50 @@ test('loadVarFromQuery - missing variable, required = false', async t => {
   t.is(request[middleware.vars].y, undefined)
 })
 
+test('loadVarFromQueryOrBody - basic usage', async t => {
+  const { middleware } = quickMakeServerlessMiddleware()
+
+  const queryRequest = {query: {x: 25}}
+  await interpretMiddleware(queryRequest, middleware.loadVarFromQueryOrBody('x'))
+  t.is(queryRequest[middleware.vars]['x'], 25)
+
+  const bodyRequest = {body: {x: 25}}
+  await interpretMiddleware(bodyRequest, middleware.loadVarFromQueryOrBody('x'))
+  t.is(bodyRequest[middleware.vars]['x'], 25)
+})
+
+test('loadVarFromQueryOrBody - body gets priority over query', async t => {
+  const { middleware } = quickMakeServerlessMiddleware()
+
+  const request = {
+    query: {x: 'via query'},
+    body:  {x: 'via body'}
+  }
+
+  await interpretMiddleware(request, middleware.loadVarFromQueryOrBody('x'))
+  t.is(request[middleware.vars]['x'], 'via body')
+})
+
+test('loadVarFromQueryOrBody - missing variable, required = true', async t => {
+  const { middleware } = quickMakeServerlessMiddleware()
+
+  const request = {query: {x: 25}, body: {x: 25}}
+  const { response } = await interpretMiddleware(request, middleware.loadVarFromQueryOrBody('y'))
+  t.true(response.wasEnded)
+  t.is(response.statusCode, 400)
+  t.is(response.endData.error.code, 'INCOMPLETE_PARAMETERS')
+  t.is(request[middleware.vars].y, undefined) 
+})
+
+test('loadVarFromQueryOrBody - missing variable, required = false', async t => {
+  const { middleware } = quickMakeServerlessMiddleware()
+
+  const request = {query: {x: 25}, body: {x: 25}}
+  const { response } = await interpretMiddleware(request, middleware.loadVarFromQueryOrBody('y', false))
+  t.false(response.wasEnded)
+  t.is(request[middleware.vars].y, undefined)
+})
+
 // There are no tests for variables missing from the params object, since Express
 // won't even call this middleware function if any parameters are missing (since
 // it wouldn't be the same route).

@@ -51,7 +51,7 @@ module.exports.makeMiddleware = function({db, util}) {
       ...middleware.verifyVarsExists(),
 
       function(request, response, next) {
-        _loadVarFromObject(request, response, next, request.body, key, required)
+        _loadVarFromObject(request, response, next, request.body || {}, key, required)
       }
     ],
 
@@ -62,16 +62,17 @@ module.exports.makeMiddleware = function({db, util}) {
       ...middleware.verifyVarsExists(),
 
       function(request, response, next) {
-        _loadVarFromObject(request, response, next, request.query, key, required)
+        _loadVarFromObject(request, response, next, request.query || {}, key, required)
       }
     ],
 
     loadVarFromQueryOrBody: (key, required = true) => [
       // Combines loadVarFromQuery and loadVarFromBody. The body recieves priority.
 
+      ...middleware.loadVarFromQuery(key, false),
       ...middleware.loadVarFromBody(key, false),
-      ...middleware.loadVarFromQuery(key, false), // Does not overwrite.
 
+      // TODO: return errors.INCOMPLETE_PARAMETERS here instead
       ...middleware.validateVar(key, required ? validate.defined : async x => true),
     ],
 
