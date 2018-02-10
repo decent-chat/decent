@@ -708,7 +708,9 @@ GET /api/users
 <-     }
 <-   ]
 <- }
+```
 
+```js
 GET /api/users?sessionID=adminsid123
 
 <- {
