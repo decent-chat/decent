@@ -25,10 +25,11 @@
     "ws": "^3.3.2"
   },
   "devDependencies": {
-    "dependency-check": "^2.10.0"
+    "ava": "^0.25.0",
+    "dependency-check": "^2.10.0",
+    "node-fetch": "^1.7.3"
   },
   "scripts": {
-    "start": "node .",
-    "test": "dependency-check . --missing --unused --no-dev"
+    "test": "dependency-check . --missing --unused --no-dev && ava"
   }
 }

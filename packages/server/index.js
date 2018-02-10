@@ -9,20 +9,11 @@ const express = require('express')
 const WebSocket = require('ws')
 const http = require('http')
 const cors = require('cors')
+const p = require('util').promisify
 
 const attachAPI = require('./api')
 const settings = require('./settings')
 const { DB_IN_MEMORY } = attachAPI
-
-const app = express()
-const httpServer = http.createServer(app)
-
-// WebSockets are not limited by the Same Origin Policy (i.e.
-// CORS) -- it's up to the server to reject/accept connections
-// on its own. This is great for us because we want to accept
-// every connection regardless of origin, since servers/clients
-// should be able to communicate cross-domain.
-const wss = new WebSocket.Server({server: httpServer})
 
 async function main(port = 3000, dbDir) {
   if (!dbDir) throw new TypeError('dbDir argument required')
@@ -33,15 +24,27 @@ async function main(port = 3000, dbDir) {
     sessions: new Datastore(),
     channels: new Datastore(),
     settings: new Datastore(),
+    emotes:   new Datastore(),
   } : {
     messages: new Datastore({filename: dbDir + '/messages'}),
     users:    new Datastore({filename: dbDir + '/users'}),
     sessions: new Datastore({filename: dbDir + '/sessions'}),
     channels: new Datastore({filename: dbDir + '/channels'}),
     settings: new Datastore({filename: dbDir + '/settings'}),
+    emotes:   new Datastore({filename: dbDir + '/emotes'}),
   }
 
   await Promise.all(Object.values(db).map(d => d.loadDatabase()))
+
+  const app = express()
+  const httpServer = http.createServer(app)
+
+  // WebSockets are not limited by the Same Origin Policy (i.e.
+  // CORS) -- it's up to the server to reject/accept connections
+  // on its own. This is great for us because we want to accept
+  // every connection regardless of origin, since servers/clients
+  // should be able to communicate cross-domain.
+  const wss = new WebSocket.Server({server: httpServer})
 
   app.use(cors())
   app.options('*', cors())
@@ -53,7 +56,12 @@ async function main(port = 3000, dbDir) {
 
   await new Promise(resolve => httpServer.listen(port, resolve))
 
-  return { settings, db, app, httpServer, wss }
+  return { settings, db, app, httpServer, wss, kill: () => {
+    return Promise.all([
+      p(httpServer.close),
+      p(wss.close),
+    ])
+  }}
 }
 
 module.exports = main
