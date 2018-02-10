@@ -51,7 +51,7 @@
 + 2 / 4
 ```
 
-* Spaces after/before curly braces
+* No spaces after/before curly braces
 
 ```diff
 - const obj = { a: 1, b: 2 }
