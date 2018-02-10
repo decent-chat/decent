@@ -694,7 +694,7 @@ Related events:
 + returns extra data (`unauthorizedUsers`) with admin session
 + may return extra data (`email`) with session
 
-Returns `{ users }`, where `users` is an array of [users](#users). If an admin session is given, also returns `unauthorizedUsers`, a list of users who have not yet been authorized.
+Returns `{ users }`, where `users` is an array of [users](#users). If an admin session is given, also returns `unauthorizedUsers`, an array of users who have not yet been authorized.
 
 ```js
 GET /api/users
