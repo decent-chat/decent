@@ -693,19 +693,36 @@ Related events:
 ### Fetch users [GET /api/users]
 + returns extra data (`unauthorizedUsers`) with admin session
 + may return extra data (`email`) with session
-+ `username` (string; optional) - Filters results to the user with that username
-+ `authorized` (boolean; optional) - Filters results to authorized/deauthorized users only
 
-Returns `{ users }`, where `users` is an array of [users](#users). If `username` or `authorized` are provided, results are filtered as such (eg. if `?authorized=true` only authorized users will be returned).
+Returns `{ users }`, where `users` is an array of [users](#users). If an admin session is given, also returns `unauthorizedUsers`, a list of users who have not yet been authorized.
 
 ```js
-GET /api/users?username=test-user
+GET /api/users
 
 <- {
 <-   "users": [
 <-     {
-<-       "id": "2",
+<-       "id": "1",
 <-       "username": "test-user",
+<-       // ...
+<-     }
+<-   ]
+<- }
+
+GET /api/users?sessionID=adminsid123
+
+<- {
+<-   "users": [
+<-     {
+<-       "id": "1234",
+<-       "username": "test-user",
+<-       // ...
+<-     }
+<-   ],
+<-   "unauthorizedUsers": [
+<-     {
+<-       "id": "5678",
+<-       "username": "pls-let-me-join-pls-pls",
 <-       // ...
 <-     }
 <-   ]
