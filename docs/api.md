@@ -780,6 +780,21 @@ PATCH /api/users/1
 <- {}
 ```
 
+<a name='check-username-available'></a>
+### Check if a username is available [GET /api/username-available/:username]
++ never requires session
++ **in-url** username (name)
+
+On success, returns `{ available }`, where available is a boolean for if the username is available or not. May return the [error](#errors) INVALID_NAME.
+
+```js
+GET /api/username-available/patrick
+
+<- {
+<-   "available": false
+<- }
+```
+
 ---
 
 # Websocket Events
