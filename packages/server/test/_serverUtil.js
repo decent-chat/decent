@@ -19,7 +19,7 @@ const testWithServer = async (port, cb) => {
 }
 
 const makeUserWithoutSession = async (server, port, username = 'test_user_' + shortid(), password = 'abcdef') => {
-  const { user } = await fetch(port, '/register', {
+  const { user } = await fetch(port, '/users', {
     method: 'POST',
     body: JSON.stringify({username, password})
   })
@@ -85,8 +85,13 @@ const makeMessage = async (server, port, text = 'Hello.', channelID = null, sess
   return {messageID, channelID, sessionID}
 }
 
+const enableAuthorization = async server => {
+  await server.settings.setSetting(server.db.settings, server.settings.serverPropertiesID, 'requireAuthorization', 'on')
+}
+
 module.exports = {
   testWithServer,
   makeUserWithoutSession, makeUser, makeAdmin,
-  makeChannel, makeMessage
+  makeChannel, makeMessage,
+  enableAuthorization
 }

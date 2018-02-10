@@ -733,10 +733,10 @@ GET /api/users?sessionID=adminsid123
 <a name='register'></a>
 ### Register (create new user) [POST /api/users]
 + never requires session
-+ `username` ([Name](#names)) - Must be unique
++ `username` ([name](#names)) - Must be unique
 + `password` (string) - Errors if shorter than 6 characters
 
-Responds with `{ user }` if successful, where `user` is the new user object. Note the given password is passed as a plain string and is stored in the database as a bcrypt-hashed and salted string (and not in any plaintext form). Login with [POST /api/sessions](#login).
+Responds with `{ user }` if successful, where `user` is the new user object. Note the given password is passed as a plain string and is stored in the database as a bcrypt-hashed and salted string (and not in any plaintext form). Log in with [POST /api/sessions](#login).
 
 ```js
 POST /api/users

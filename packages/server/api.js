@@ -105,7 +105,8 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         [
           ['GET', /^\/$/],
           ['POST', /^\/sessions$/],
-          ['POST', /^\/register$/], // Temporary!!!!!
+          ['POST', /^\/users$/],
+          ['GET', /^\/username-available/],
         ].find(([ m, re ]) => request.method === m && re.test(request.path))
       )) {
         request[middleware.vars].shouldVerify = true
@@ -762,70 +763,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  app.post('/api/register', [
-    ...middleware.loadVarFromBody('username'),
-    ...middleware.loadVarFromBody('password'),
-    ...middleware.requireNameValid('username'),
-
-    async (request, response) => {
-      const { username, password } = request[middleware.vars]
-
-      if (await db.users.findOne({username})) {
-        response.status(500).json({
-          error: errors.NAME_ALREADY_TAKEN
-        })
-
-        return
-      }
-
-      if (password.length < 6) {
-        response.status(400).json({
-          error: errors.SHORT_PASSWORD
-        })
-
-        return
-      }
-
-      const salt = await bcrypt.genSalt()
-      const passwordHash = await bcrypt.hash(password, salt)
-
-      const user = await db.users.insert({
-        username,
-        passwordHash, salt,
-        email: null,
-        permissionLevel: 'member',
-        authorized: false,
-        lastReadChannelDates: {}
-      })
-
-      response.status(201).json({
-        user: await serialize.user(user)
-      })
-    }
-  ])
-
-  app.get('/api/user/:userID', [
-    ...middleware.loadVarFromParams('userID'),
-
-    async (request, response) => {
-      const { userID } = request[middleware.vars]
-
-      const user = await db.users.findOne({_id: userID})
-
-      if (!user) {
-        response.status(404).json({
-          error: errors.NOT_FOUND
-        })
-
-        return
-      }
-
-      response.status(200).json({
-        user: await serialize.user(user)
-      })
-    }
-  ])
-
   app.post('/api/account-settings', [
     ...middleware.loadVarFromBody('email'),
     ...middleware.getSessionUserFromID('sessionID', 'user'),
@@ -845,8 +782,13 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  app.get('/api/user-list', [
+  app.get('/api/users', [
     ...middleware.runIfCondition(() => shouldUseAuthorization(), [
+      ...middleware.loadSessionID('sessionID', false),
+      ...middleware.runIfVarExists('sessionID',
+        middleware.getSessionUserFromID('sessionID'),
+      ),
+
       async (request, response) => {
         const { sessionUser } = request[middleware.vars]
         const isAdmin = sessionUser && sessionUser.permissionLevel === 'admin'
@@ -891,8 +833,78 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     ])
   ])
 
+  app.post('/api/users', [
+    ...middleware.loadVarFromBody('username'),
+    ...middleware.requireNameValid('username'),
+    ...middleware.loadVarFromBody('password'),
+    ...middleware.validateVar('password', validate.string),
+
+    async (request, response) => {
+      const { username, password } = request[middleware.vars]
+
+      if (await db.users.findOne({username})) {
+        response.status(500).json({
+          error: errors.NAME_ALREADY_TAKEN
+        })
+
+        return
+      }
+
+      if (password.length < 6) {
+        response.status(400).json({
+          error: errors.SHORT_PASSWORD
+        })
+
+        return
+      }
+
+      const salt = await bcrypt.genSalt()
+      const passwordHash = await bcrypt.hash(password, salt)
+
+      const user = await db.users.insert({
+        username,
+        passwordHash, salt,
+        email: null,
+        permissionLevel: 'member',
+        authorized: false,
+        lastReadChannelDates: {}
+      })
+
+      response.status(201).json({
+        user: await serialize.user(user, user)
+      })
+    }
+  ])
+
+  app.get('/api/user/:userID', [
+    ...middleware.loadVarFromParams('userID'),
+    ...middleware.loadSessionID('sessionID', false),
+    ...middleware.runIfVarExists('sessionID',
+      middleware.getSessionUserFromID('sessionID', 'sessionUser')
+    ),
+
+    async (request, response) => {
+      const { userID, sessionUser } = request[middleware.vars]
+
+      const user = await db.users.findOne({_id: userID})
+
+      if (!user) {
+        response.status(404).json({
+          error: errors.NOT_FOUND
+        })
+
+        return
+      }
+
+      response.status(200).json({
+        user: await serialize.user(user, sessionUser)
+      })
+    }
+  ])
+
   app.get('/api/username-available/:username', [
     ...middleware.loadVarFromParams('username'),
+    ...middleware.requireNameValid('username'),
 
     async (request, response) => {
       const { username } = request[middleware.vars]
