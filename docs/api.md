@@ -702,7 +702,7 @@ GET /api/users
 <- {
 <-   "users": [
 <-     {
-<-       "id": "1",
+<-       "id": "1234",
 <-       "username": "test-user",
 <-       // ...
 <-     }
