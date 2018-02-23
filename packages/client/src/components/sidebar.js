@@ -199,9 +199,11 @@ const store = (state, emitter) => {
 
   // switch to a channel
   emitter.on('sidebar.switchchannel', id => {
-    emitter.emit('pushState', `/servers/${state.params.host}/channels/${id}`)
+    // Don't switch to the channel if we're already viewing it!
+    if (!(state.route === '/servers/:host/channels/:channel' && state.params.channel === id)) {
+      emitter.emit('pushState', `/servers/${state.params.host}/channels/${id}`)
+    }
   })
-
 
   // move up/down the channel list
   emitter.on('sidebar.upchannel', () => {
