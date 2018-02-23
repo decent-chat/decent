@@ -97,7 +97,10 @@ const component = (state, emit) => {
             return 0
           }).map(user => {
             return html`
-              <div class='item user ${user.online ? 'online' : 'offline'}'>
+              <div
+                class='item user ${user.online ? 'online' : 'offline'}'
+                title='${user.username} (${user.online ? 'Online' : 'Offline'})'
+              >
                 <div class='icon'>
                   <img src=${user.avatarURL}>
                 </div>

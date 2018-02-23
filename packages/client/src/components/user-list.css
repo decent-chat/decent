@@ -12,37 +12,11 @@
         height: inherit;
         border-radius: inherit;
       }
-
-      &::after {
-        content: ' ';
-
-        position: absolute;
-        top: 0;
-        right: 0;
-        transform: translate(33%, -33%);
-        width: 25%;
-        height: 25%;
-
-        border-radius: 999px;
-        border: 2px solid var(--gray-900);
-      }
-    }
-
-    &:hover .icon::after {
-      border-color: var(--gray-700);
-    }
-
-    &.online .icon::after {
-      background: var(--green);
     }
 
     &.offline {
       .username, .icon {
         opacity: 0.4;
-      }
-
-      .icon::after {
-        background: var(--gray-500);
       }
     }
   }
