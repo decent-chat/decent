@@ -14,6 +14,7 @@ Object.assign(window, { util })
 const messages = require('./components/messages')
 const messageEditor = require('./components/message-editor')
 const sidebar = require('./components/sidebar')
+const userList = require('./components/user-list')
 const accountSettings = require('./components/account-settings')
 const srvSettings = {
   emotes: require('./components/srv-settings/emotes'),
@@ -54,13 +55,16 @@ app.use((state, emitter) => {
 
   state._session = new Proxy({}, {
     set: function(target, key, value) {
-      if (key === 'id') {
+      const ret = Reflect.set(target, key, value)
+
+      if (key === 'user') {
         if (target.id !== value) {
           state.ws.send('pongdata', { sessionID: value })
+          emitter.emit('sessionuserloaded')
         }
       }
 
-      return Reflect.set(target, key, value)
+      return ret
     },
 
     deleteProperty: function(target, key) {
@@ -152,6 +156,7 @@ app.use((state, emitter) => {
 
 app.use(messages.store)
 app.use(sidebar.store)
+app.use(userList.store)
 app.use(accountSettings.store)
 
 for (const [ name, s ] of Object.entries(srvSettings)) {
@@ -186,6 +191,15 @@ for (const [ name, s ] of Object.entries(srvSettings)) {
     </div>`
   })
 
+  // server
+  app.route('/servers/:host', (state, emit) => {
+    return html`<div id='app'>
+      ${sidebar.component(state, emit)}
+      <main></main>
+      ${userList.component(state, emit)}
+    </div>`
+  })
+
   // server with channel open
   app.route('/servers/:host/channels/:channel', (state, emit) => {
     return html`<div id='app'>
@@ -194,6 +208,7 @@ for (const [ name, s ] of Object.entries(srvSettings)) {
         ${messages.component(state, emit)}
         ${state.messages.list !== null ? messageEditor.component(state, emit) : html`<span></span>`}
       </main>
+      ${userList.component(state, emit)}
     </div>`
   })
 
@@ -223,14 +238,6 @@ for (const [ name, s ] of Object.entries(srvSettings)) {
       <main>
         ${srvSettings[state.params.setting].component(state, emit)}
       </main>
-    </div>`
-  })
-
-  // server
-  app.route('/servers/:host', (state, emit) => {
-    return html`<div id='app'>
-      ${sidebar.component(state, emit)}
-      <main></main>
     </div>`
   })
 }
