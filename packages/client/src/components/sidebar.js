@@ -55,10 +55,10 @@ const store = (state, emitter) => {
 
       // check host is a decent server
       try {
-        const { decent } = await fetch(`//${host}/api/`)
+        const { decentVersion } = await fetch(`//${host}/api/`)
           .then(res => res.json())
 
-        if (!decent) {
+        if (!decentVersion) {
           throw new Error('not a decent server')
         }
 
