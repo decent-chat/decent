@@ -818,7 +818,7 @@ GET /api/username-available/patrick
 + requires admin session
 + userID (ID)
 
-On success, returns `{ authorized: true }`. Note that this endpoint will error (`AUTHORIZATION_ERROR`) if the server does not [require authorization](#authorization).
+Note that this endpoint will error (`AUTHORIZATION_ERROR`) if the server does not [require authorization](#authorization).
 
 ```js
 POST /api/authorize-user
@@ -827,9 +827,7 @@ POST /api/authorize-user
 ->   "userID": "123456"
 -> }
 
-<- {
-<-   "authorized": true
-<- }
+<- {}
 ```
 
 <a name='authorize-user'></a>
@@ -837,7 +835,7 @@ POST /api/authorize-user
 + requires admin session
 + userID (ID) - can't be you
 
-On success, returns `{ authorized: false }`. Note that this endpoint will error (`AUTHORIZATION_ERROR`) if the server does not [require authorization](#authorization) or if you attempt to deauthorize yourself.
+Note that this endpoint will error (`AUTHORIZATION_ERROR`) if the server does not [require authorization](#authorization) or if you attempt to deauthorize yourself.
 
 ```js
 POST /api/deauthorize-user
@@ -846,9 +844,7 @@ POST /api/deauthorize-user
 ->   "userID": "123456"
 -> }
 
-<- {
-<-   "authorized": false
-<- }
+<- {}
 ```
 
 ---
