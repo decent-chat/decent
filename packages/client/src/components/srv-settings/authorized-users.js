@@ -31,20 +31,12 @@ const store = (state, emitter) => {
 
     state.authorizedUsers.fetching = true
 
-    {
-      // technically passing sessionID here is redundant, since api.get
-      // will automatically add it, But Whatever
-      const result = await api.get(state, 'user-list', {sessionID: api.sessionID})
+    const { users, unauthorizedUsers } = await api.get(state, 'user-list')
+    state.authorizedUsers.authorizedList = users
+    state.authorizedUsers.unauthorizedList = unauthorizedUsers
 
-      state.authorizedUsers.authorizedList = result.users
-      state.authorizedUsers.unauthorizedList = result.unauthorizedUsers
-    }
-
-    {
-      const result = await api.get(state, 'server-settings')
-
-      state.authorizedUsers.authorizationMessage = result.authorizationMessage
-    }
+    const { authorizationMessage } = await api.get(state, 'settings')
+    state.authorizedUsers.authorizationMessage = authorizationMessage
 
     state.authorizedUsers.fetching = false
     state.authorizedUsers.fetched = true
@@ -54,11 +46,7 @@ const store = (state, emitter) => {
   emitter.on('authorizedUsers.saveMessage', async () => {
     const authorizationMessage = document.getElementById(`${prefix}message`).value
 
-    await api.post(state, 'server-settings', {
-      patch: {
-        authorizationMessage
-      }
-    })
+    await api.patch(state, 'settings', {authorizationMessage})
 
     state.authorizedUsers.authMessageSaved = true
 
@@ -66,17 +54,13 @@ const store = (state, emitter) => {
   })
 
   emitter.on('authorizedUsers.authorizeUser', async userID => {
-    await api.post(state, 'authorize-user', {
-      userID, sessionID: state.session.id
-    })
+    await api.post(state, 'authorize-user', {userID})
 
     emitter.emit('authorizedUsers.fetch')
   })
 
   emitter.on('authorizedUsers.deauthorizeUser', async userID => {
-    await api.post(state, 'deauthorize-user', {
-      userID, sessionID: state.session.id
-    })
+    await api.post(state, 'deauthorize-user', {userID})
 
     emitter.emit('authorizedUsers.fetch')
   })

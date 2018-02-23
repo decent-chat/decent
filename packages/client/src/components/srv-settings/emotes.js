@@ -17,7 +17,7 @@ const store = (state, emitter) => {
 
     state.emotes.fetching = true
 
-    const { settings: { emotes } } = await api.get(state, 'server-settings')
+    const { emotes } = await api.get(state, 'emotes')
 
     state.emotes.list = emotes
     state.emotes.fetching = false
@@ -92,30 +92,18 @@ const component = (state, emit) => {
       const formData = new FormData()
       formData.append('image', image)
 
-      const { path } = await api.postRaw(state, 'upload-image?sessionID=' + state.session.id, formData).catch(error => {
+      const { path: imageURL } = await api.postRaw(state, 'upload-image?sessionID=' + state.session.id, formData).catch(error => {
         modal.showError('Failed to upload image')
         modal.disable(false)
         throw error
       })
 
-      // update the emotes list
-      const emote = { shortcode, imageURL: path }
-
-      const { results } = await api.post(state, 'server-settings', {
-        patch: {
-          emotes: [ ...state.emotes.list, emote ]
-        },
-        sessionID: state.session.id,
-      }).catch(error => {
+      try {
+        await api.post(state, 'emotes', {shortcode, imageURL})
+      } catch (error) {
         modal.showError(error.message)
         modal.disable(false)
         throw error
-      })
-
-      if (results.emotes !== 'updated') {
-        modal.showError('Internal error')
-        modal.disable(false)
-        throw results.emotes
       }
 
       emit('emotes.fetch')
@@ -126,14 +114,7 @@ const component = (state, emit) => {
   const rows = state.emotes.list.map(emote => {
     const deleteEmote = async () => {
       state.emotes.list = state.emotes.list.filter(e => e.shortcode !== emote.shortcode)
-
-      await api.post(state, 'server-settings', {
-        patch: {
-          emotes: state.emotes.list,
-        },
-        sessionID: state.session.id,
-      })
-
+      await api.delete(state, 'emotes/' + emote.shortcode)
       emit('render')
     }
 

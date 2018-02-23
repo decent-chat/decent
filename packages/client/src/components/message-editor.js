@@ -14,18 +14,16 @@ const component = (state, emit) => {
     if (text.length === 0) return
     textarea.value = ''
 
-    await api.post(state, 'send-message', {
-      text,
-      channelID: state.params.channel,
-      sessionID: state.session.id,
+    await api.post(state, 'messages', {
+      text, channelID: state.params.channel,
     })
   }
 
   textarea.addEventListener('keydown', evt => {
-    const key = evt.which
+    const key = (evt.which || evt.keyCode)
 
-    // enter
     if (key === 13) {
+      // enter/return
       if (evt.shiftKey) {
         // if shift is down, enter a newline
         // this is default behaviour
@@ -33,6 +31,18 @@ const component = (state, emit) => {
         // if shift is not down, send the message
         evt.preventDefault()
         send()
+      }
+    } else if (key === 38) {
+      // up arrow
+      if (evt.altKey) {
+        evt.preventDefault()
+        emit('sidebar.upchannel')
+      }
+    } else if (key === 40) {
+      // down arrow
+      if (evt.altKey) {
+        evt.preventDefault()
+        emit('sidebar.downchannel')
       }
     }
   })
@@ -57,15 +67,15 @@ const component = (state, emit) => {
     progressBar.classList.add('moving')
 
     try {
+      console.log(state.session.id)
       const { path } = await api.postRaw(state, 'upload-image?sessionID=' + state.session.id, formData)
 
       progressBar.style.width = '90%'
 
       // send a message with the image in it
-      await api.post(state, 'send-message', {
+      await api.post(state, 'messages', {
         text: `![](${state.secure ? 'https' : 'http'}://${state.params.host}${path})`,
-        channelID: state.params.channel,
-        sessionID: state.session.id,
+        channelID: state.params.channel
       })
 
       progressBar.style.width = '100%'
@@ -90,6 +100,12 @@ const component = (state, emit) => {
     editor.isSameNode = a => {
       return a.className === editor.className
     }
+
+    // Hack!!! - Select the textarea *soon*. We assume that the component is
+    // rendered and on the page by 25ms from now.
+    setInterval(() => {
+      textarea.focus()
+    }, 25)
 
     return editor
   } else {

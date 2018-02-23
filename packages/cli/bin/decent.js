@@ -17,7 +17,7 @@ server(port, dbDir).then(async ({ settings, app, db }) => {
   }
 
   app.use(express.static(client)) // index.html, dist/, img/
-  app.get('*', (req, res) => res.sendFile(client + '/index.html'))
+  app.get(/^(?!\/api)/, (req, res) => res.sendFile(client + '/index.html'))
 
   const rl = readline.createInterface({
     input: process.stdin,

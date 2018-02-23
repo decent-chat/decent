@@ -55,10 +55,10 @@ const store = (state, emitter) => {
 
       // check host is a decent server
       try {
-        const { decent } = await fetch(`//${host}/api/`)
+        const { decentVersion } = await fetch(`//${host}/api/`)
           .then(res => res.json())
 
-        if (!decent) {
+        if (!decentVersion) {
           throw new Error('not a decent server')
         }
 
@@ -152,8 +152,7 @@ const store = (state, emitter) => {
   // fetch the channel list from the server
   emitter.on('sidebar.fetchchannels', async () => {
     if (state.sessionAuthorized) {
-      const data = state.session.id ? { sessionID: state.session.id } : {}
-      const { channels } = await api.get(state, 'channel-list', data)
+      const { channels } = await api.get(state, 'channels')
       state.sidebar.channels = channels
     } else {
       state.sidebar.channels = []
@@ -184,9 +183,8 @@ const store = (state, emitter) => {
       modal.disable()
 
       try {
-        await api.post(state, 'create-channel', {
+        await api.post(state, 'channels', {
           name: channelName.trim(),
-          sessionID: state.session.id,
         })
 
         modal.close()
@@ -201,7 +199,31 @@ const store = (state, emitter) => {
 
   // switch to a channel
   emitter.on('sidebar.switchchannel', id => {
-    emitter.emit('pushState', `/servers/${state.params.host}/channels/${id}`)
+    // Don't switch to the channel if we're already viewing it!
+    if (!(state.route === '/servers/:host/channels/:channel' && state.params.channel === id)) {
+      emitter.emit('pushState', `/servers/${state.params.host}/channels/${id}`)
+    }
+  })
+
+  // move up/down the channel list
+  emitter.on('sidebar.upchannel', () => {
+    let index = state.sidebar.channels.findIndex(c => c.id === state.params.channel)
+    if (index === 0) {
+      index = state.sidebar.channels.length - 1
+    } else {
+      index--
+    }
+    emitter.emit('sidebar.switchchannel', state.sidebar.channels[index].id)
+  })
+
+  emitter.on('sidebar.downchannel', () => {
+    let index = state.sidebar.channels.findIndex(c => c.id === state.params.channel)
+    if (index === state.sidebar.channels.length - 1) {
+      index = 0
+    } else {
+      index++
+    }
+    emitter.emit('sidebar.switchchannel', state.sidebar.channels[index].id)
   })
 
   // event: channel added
@@ -256,9 +278,7 @@ const store = (state, emitter) => {
       modal.disable()
 
       try {
-        await api.post(state, 'register', { username, password })
-
-        // close the modal
+        await api.post(state, 'users', { username, password })
         modal.close()
       } catch (error) {
         if (error.code === 'INVALID_NAME') {
@@ -268,7 +288,10 @@ const store = (state, emitter) => {
         }
 
         modal.disable(false) // enable
+        return
       }
+
+      await login(username, password)
     })
   })
 
@@ -294,12 +317,7 @@ const store = (state, emitter) => {
 
     modal.on('submit', async ({ username, password }) => {
       try {
-        const { sessionID } = await api.post(state, 'login', { username, password })
-        await loadSessionID(sessionID)
-        storage.set('sessionID@' + state.params.host, sessionID)
-        emitter.emit('render')
-
-        // close the modal
+        await login(username, password)
         modal.close()
       } catch (error) {
         if (error.code === 'NOT_FOUND') {
@@ -311,19 +329,41 @@ const store = (state, emitter) => {
     })
   })
 
+  async function login(username, password) {
+    const { sessionID } = await api.post(state, 'sessions', { username, password })
+    await loadSessionID(sessionID)
+    storage.set('sessionID@' + state.params.host, sessionID)
+    emitter.emit('render')
+  }
+
   // logout
   emitter.on('sidebar.logout', async () => {
     if (state.session.id) {
-      await api.post(state, 'delete-sessions', {
-        sessionIDs: [state.session.id]
-      })
+      try {
+        await api.delete(state, 'sessions/' + state.session.id)
+      } catch (error) {
+        // It's okay to log out from a session which does not exist (e.g.
+        // if sidebar.logout is emitted immediately after deleting the current
+        // session from some other code).
+        if (error.code !== 'NOT_FOUND') {
+          throw error
+        }
+      }
     }
 
     state.session = null
     state.sessionAuthorized = null
     storage.set('sessionID@' + state.params.host, null)
     emitter.emit('logout')
-    emitter.emit('render')
+
+    // Logging out from the account settings page should quit back to the
+    // server homepage, since it doesn't make sense to try to change account
+    // settings while not logged in.
+    if (state.route === '/servers/:host/account') {
+      emitter.emit('pushState', `/servers/${state.params.host}`)
+    } else {
+      emitter.emit('render')
+    }
   })
 
   // fetch channels after logging in/out
@@ -331,12 +371,10 @@ const store = (state, emitter) => {
   emitter.on('logout', () => emitter.emit('sidebar.fetchchannels'))
 
   async function loadSessionID(sessionID) {
-    const { session } = await api.get(state, 'session/' + sessionID, {sessionID})
-    if (session.user) {
-      state.session = { id: sessionID, user: session.user }
-
-      state.sessionAuthorized = session.user.authorized
-
+    const { user } = await api.get(state, 'sessions/' + sessionID)
+    if (user) {
+      state.session = { id: sessionID, user }
+      state.sessionAuthorized = user.authorized
       emitter.emit('login')
     } else {
       state.session = null

@@ -39,8 +39,8 @@ class Modal extends Nanobus {
       const input = el.querySelector('input')
 
       input.addEventListener('keypress', evt => {
-        // listen for enter/return keypress
         if (evt.which === 13) {
+          // enter/return, move to next input or submit
           evt.preventDefault()
 
           // if there's a next input, focus it
@@ -50,6 +50,10 @@ class Modal extends Nanobus {
           } else {
             this.submit()
           }
+        } else if ((evt.which || evt.keyCode) === 27) {
+          // escape, cancel
+          evt.preventDefault()
+          this.close()
         }
       })
     }
