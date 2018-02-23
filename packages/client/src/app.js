@@ -55,13 +55,16 @@ app.use((state, emitter) => {
 
   state._session = new Proxy({}, {
     set: function(target, key, value) {
-      if (key === 'id') {
+      const ret = Reflect.set(target, key, value)
+
+      if (key === 'user') {
         if (target.id !== value) {
           state.ws.send('pongdata', { sessionID: value })
+          emitter.emit('sessionuserloaded')
         }
       }
 
-      return Reflect.set(target, key, value)
+      return ret
     },
 
     deleteProperty: function(target, key) {

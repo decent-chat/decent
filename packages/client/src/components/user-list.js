@@ -29,6 +29,41 @@ const store = (state, emitter) => {
     state.userList.fetching = false
     emitter.emit('render')
   })
+
+  // As soon as the user is logged in, show them as logged in in the user list.
+  // If the user list is fetched before the websocket has properly connected,
+  // the API will say that our session's user is not logged in. But it'll emit
+  // that we've logged in *before we're even listening for users to come online*,
+  // which means we'll miss that event. We use this "session user loaded" event
+  // as a workaround to deal with that.
+  emitter.on('sessionuserloaded', () => {
+    if (state.session.user) {
+      state.userList.users.find(u => u.id === state.session.user.id).online = true
+    }
+  })
+
+  emitter.on('ws.user/online', data => {
+    if (state.userList.users) {
+      const user = state.userList.users.find(u => u.id === data.userID)
+      // Only show the user as online if they existed before.
+      // Totally new users should be handled by a "user created" event
+      // somewhere else.
+      if (user) {
+        user.online = true
+        emitter.emit('render')
+      }
+    }
+  })
+
+  emitter.on('ws.user/offline', data => {
+    if (state.userList.users) {
+      const user = state.userList.users.find(u => u.id === data.userID)
+      if (user) {
+        user.online = false
+        emitter.emit('render')
+      }
+    }
+  })
 }
 
 const prefixSidebar = css('./sidebar.css')
