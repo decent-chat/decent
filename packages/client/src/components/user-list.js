@@ -77,7 +77,25 @@ const component = (state, emit) => {
       </div>
       ${state.userList.users ? html`
         <div class='list'>
-          ${state.userList.users.map(user => {
+          ${state.userList.users.slice().sort((a, b) => {
+            if (a.online && !b.online) {
+              return -1
+            }
+
+            if (b.online && !a.online) {
+              return +1
+            }
+
+            if (a.username < b.username) {
+              return -1
+            }
+
+            if (b.username < a.username) {
+              return +1
+            }
+
+            return 0
+          }).map(user => {
             return html`
               <div class='item user ${user.online ? 'online' : 'offline'}'>
                 <div class='icon'>
