@@ -15,6 +15,11 @@ async function fetchHelper(state, path, fetchConfig = {}) {
     console.trace()
   }
 
+  if (state.session.id) {
+    fetchConfig.headers = fetchConfig.headers || {}
+    fetchConfig.headers['X-Session-ID'] = state.session.id
+  }
+
   const protocol = secure ? 'https://' : '//'
   const result = await fetch(protocol + host + '/api/' + path, fetchConfig)
     .then(res => res.json())
@@ -42,34 +47,17 @@ function generateQueryString(query) {
 
 module.exports = {
   get(state, path, query = {}) {
-    // Set the session ID if it's set on the state, but only if not already
-    // set by the passed query.
-    if (state.session.id && !query.sessionID) {
-      query.sessionID = state.session.id
-    }
-
     return fetchHelper(state, path + generateQueryString(query))
   },
 
   delete(state, path, query = {}) {
     // DELETE takes a query string, not a body (so, no "POST" data).
-
-    if (state.session.id && !query.sessionID) {
-      query.sessionID = state.session.id
-    }
-
     return fetchHelper(state, path + generateQueryString(query), {
       method: 'delete'
     })
   },
 
   post(state, path, data = {}) {
-    // As with get, set the session ID if it's on the state and issing
-    // from the data object.
-    if (state.session.id && !data.sessionID) {
-      data.sessionID = state.session.id
-    }
-
     return fetchHelper(state, path, {
       method: 'post',
       headers: {
@@ -81,11 +69,6 @@ module.exports = {
 
   patch(state, path, changes = {}) {
     // PATCH takes a body, like POST.
-
-    if (state.session.id && !data.sessionID) {
-      data.sessionID = state.session.id
-    }
-
     return fetchHelper(state, path, {
       method: 'patch',
       headers: {
