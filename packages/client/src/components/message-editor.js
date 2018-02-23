@@ -20,10 +20,10 @@ const component = (state, emit) => {
   }
 
   textarea.addEventListener('keydown', evt => {
-    const key = evt.which
+    const key = (evt.which || evt.keyCode)
 
-    // enter
     if (key === 13) {
+      // enter/return
       if (evt.shiftKey) {
         // if shift is down, enter a newline
         // this is default behaviour
@@ -31,6 +31,18 @@ const component = (state, emit) => {
         // if shift is not down, send the message
         evt.preventDefault()
         send()
+      }
+    } else if (key === 38) {
+      // up arrow
+      if (evt.altKey) {
+        evt.preventDefault()
+        emit('sidebar.upchannel')
+      }
+    } else if (key === 40) {
+      // down arrow
+      if (evt.altKey) {
+        evt.preventDefault()
+        emit('sidebar.downchannel')
       }
     }
   })
@@ -88,6 +100,12 @@ const component = (state, emit) => {
     editor.isSameNode = a => {
       return a.className === editor.className
     }
+
+    // Hack!!! - Select the textarea *soon*. We assume that the component is
+    // rendered and on the page by 25ms from now.
+    setInterval(() => {
+      textarea.focus()
+    }, 25)
 
     return editor
   } else {

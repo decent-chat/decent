@@ -202,6 +202,28 @@ const store = (state, emitter) => {
     emitter.emit('pushState', `/servers/${state.params.host}/channels/${id}`)
   })
 
+
+  // move up/down the channel list
+  emitter.on('sidebar.upchannel', () => {
+    let index = state.sidebar.channels.findIndex(c => c.id === state.params.channel)
+    if (index === 0) {
+      index = state.sidebar.channels.length - 1
+    } else {
+      index--
+    }
+    emitter.emit('sidebar.switchchannel', state.sidebar.channels[index].id)
+  })
+
+  emitter.on('sidebar.downchannel', () => {
+    let index = state.sidebar.channels.findIndex(c => c.id === state.params.channel)
+    if (index === state.sidebar.channels.length - 1) {
+      index = 0
+    } else {
+      index++
+    }
+    emitter.emit('sidebar.switchchannel', state.sidebar.channels[index].id)
+  })
+
   // event: channel added
   emitter.on('ws.channel/new', ({ channel }) => {
     state.sidebar.channels.push(channel)
