@@ -182,13 +182,12 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       storage: multer.diskStorage({
         destination: (req, file, cb) => {
-          const path = dbDir + '/uploads/' + shortid()
-          const dir = __dirname + path
+          const uploadPath = path.resolve(dbDir, 'uploads/' + shortid())
 
-          req[middleware.vars].path = path
+          req[middleware.vars].path = uploadPath
 
-          mkdir(dir)
-            .then(() => cb(null, dir))
+          mkdir(uploadPath)
+            .then(() => cb(null, uploadPath))
             .catch(error => cb(error))
         },
 
@@ -214,6 +213,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
     // TODO: delete old images
     app.post('/api/upload-image', [
+      ...middleware.loadSessionID('sessionID'),
       ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
       //...middleware.requireBeAdmin('sessionUser'),
       (req, res) => uploadSingleImage(req, res, err => {
@@ -222,9 +222,8 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
             error: Object.assign({}, errors.UPLOAD_FAILED, {message: err.message})
           })
         } else {
-          const { path } = req[middleware.vars]
           res.status(200).json({
-            path
+            path: '/' + path.relative(dbDir, req[middleware.vars].path)
           })
         }
       })
@@ -764,8 +763,9 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   ])
 
   app.post('/api/account-settings', [
-    ...middleware.loadVarFromBody('email'),
+    ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'user'),
+    ...middleware.loadVarFromBody('email'),
 
     async (request, response) => {
       const { email, user } = request[middleware.vars]

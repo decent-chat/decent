@@ -31,6 +31,15 @@ async function fetchHelper(state, path, fetchConfig = {}) {
   return result
 }
 
+function generateQueryString(query) {
+  const esc = encodeURIComponent
+  return Object.keys(query).length > 0
+    ? '?' + Object.keys(query)
+      .map(k => esc(k) + '=' + esc(query[k]))
+      .join('&')
+    : ''
+}
+
 module.exports = {
   get(state, path, query = {}) {
     // Set the session ID if it's set on the state, but only if not already
@@ -39,14 +48,19 @@ module.exports = {
       query.sessionID = state.session.id
     }
 
-    const esc = encodeURIComponent
-    const queryString = Object.keys(query).length > 0
-      ? '?' + Object.keys(query)
-        .map(k => esc(k) + '=' + esc(query[k]))
-        .join('&')
-      : ''
+    return fetchHelper(state, path + generateQueryString(query))
+  },
 
-    return fetchHelper(state, path + queryString)
+  delete(state, path, query = {}) {
+    // DELETE takes a query string, not a body (so, no "POST" data).
+
+    if (state.session.id && !query.sessionID) {
+      query.sessionID = state.session.id
+    }
+
+    return fetchHelper(state, path + generateQueryString(query), {
+      method: 'delete'
+    })
   },
 
   post(state, path, data = {}) {
@@ -58,6 +72,22 @@ module.exports = {
 
     return fetchHelper(state, path, {
       method: 'post',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+  },
+
+  patch(state, path, changes = {}) {
+    // PATCH takes a body, like POST.
+
+    if (state.session.id && !data.sessionID) {
+      data.sessionID = state.session.id
+    }
+
+    return fetchHelper(state, path, {
+      method: 'patch',
       headers: {
         'Content-Type': 'application/json'
       },

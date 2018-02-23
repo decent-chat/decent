@@ -14,10 +14,8 @@ const component = (state, emit) => {
     if (text.length === 0) return
     textarea.value = ''
 
-    await api.post(state, 'send-message', {
-      text,
-      channelID: state.params.channel,
-      sessionID: state.session.id,
+    await api.post(state, 'messages', {
+      text, channelID: state.params.channel,
     })
   }
 
@@ -57,15 +55,15 @@ const component = (state, emit) => {
     progressBar.classList.add('moving')
 
     try {
+      console.log(state.session.id)
       const { path } = await api.postRaw(state, 'upload-image?sessionID=' + state.session.id, formData)
 
       progressBar.style.width = '90%'
 
       // send a message with the image in it
-      await api.post(state, 'send-message', {
+      await api.post(state, 'messages', {
         text: `![](${state.secure ? 'https' : 'http'}://${state.params.host}${path})`,
-        channelID: state.params.channel,
-        sessionID: state.session.id,
+        channelID: state.params.channel
       })
 
       progressBar.style.width = '100%'

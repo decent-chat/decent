@@ -172,7 +172,7 @@ const store = (state, emitter) => {
 
     // fetch messages before the oldest message we have. if we don't have an oldest message (i.e. list.length == 0)
     // then we will just fetch the latest messages via no `before` parameter
-    const { messages } = await api.get(state, `channel/${state.params.channel}/latest-messages`,
+    const { messages } = await api.get(state, `channels/${state.params.channel}/messages`,
       messageID === null
       ? {}
       : direction === 'older' ? { before: messageID } : { after: messageID }
@@ -251,7 +251,7 @@ const store = (state, emitter) => {
     // message that is jumped to)
     const context = 50
 
-    const messagesAPI = `channel/${state.params.channel}/latest-messages`
+    const messagesAPI = `channels/${state.params.channel}/messages`
 
     const { messages: oldMessages } = await api.get(
       state, messagesAPI, { before: messageID, limit: context / 2 }

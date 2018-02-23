@@ -41,9 +41,9 @@ const store = (state, emitter) => {
     }
 
     {
-      const result = await api.get(state, 'server-settings')
+      const { authorizationMessage } = await api.get(state, 'settings')
 
-      state.authorizedUsers.authorizationMessage = result.authorizationMessage
+      state.authorizedUsers.authorizationMessage = authorizationMessage
     }
 
     state.authorizedUsers.fetching = false
@@ -54,11 +54,7 @@ const store = (state, emitter) => {
   emitter.on('authorizedUsers.saveMessage', async () => {
     const authorizationMessage = document.getElementById(`${prefix}message`).value
 
-    await api.post(state, 'server-settings', {
-      patch: {
-        authorizationMessage
-      }
-    })
+    await api.patch(state, 'settings', {authorizationMessage})
 
     state.authorizedUsers.authMessageSaved = true
 

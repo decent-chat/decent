@@ -30,9 +30,7 @@ const store = (state, emitter) => {
   emitter.on('accountSettings.fetchSessions', async () => {
     state.accountSettings.fetchingSessions = true
 
-    const { sessions } = await api.get(state, 'user-session-list', {
-      sessionID: state.session.id
-    })
+    const { sessions } = await api.get(state, 'sessions')
 
     sessions.sort((a, b) => b.dateCreated - a.dateCreated)
 
@@ -49,13 +47,11 @@ const store = (state, emitter) => {
       // fetch the list again, just to be up to date - deleting all sessions
       // should delete ALL sessions, not just the ones that existed when the
       // settings page was opened
-      const { sessions } = await api.get(state, 'user-session-list', {
-        sessionID: state.session.id
-      })
+      const { sessions } = await api.get(state, 'sessions')
 
-      await api.post(state, 'delete-sessions', {
-        sessionIDs: sessions.map(session => session.id)
-      })
+      await Promise.all(sessions.map(session => {
+        return api.delete(state, 'sessions/' + session.id)
+      }))
 
       emitter.emit('sidebar.logout')
     }
@@ -122,9 +118,7 @@ const component = (state, emit) => {
           s => s.id !== session.id
         )
 
-        await api.post(state, 'delete-sessions', {
-          sessionIDs: [session.id]
-        })
+        await api.delete(state, 'sessions/' + session.id)
 
         if (session.id === state.session.id) {
           emit('sidebar.logout')
@@ -158,11 +152,6 @@ const component = (state, emit) => {
     <div class='styled-input'>
       <label for='${prefix}username'>Username</label>
       <input id='${prefix}username' type='text' disabled value=${state.session.user.username}/>
-    </div>
-
-    <div class='styled-input'>
-      <label>Password</label>
-      <button class='styled-button no-bg' onclick=${() => alert('not implemented')}>Change password</button>
     </div>
 
     <div class='styled-input avatar'>
