@@ -99,10 +99,7 @@ const component = (state, emit) => {
       })
 
       try {
-        await api.post(state, 'emotes', {
-          shortcode, imageURL,
-          sessionID: state.session.id,
-        })
+        await api.post(state, 'emotes', {shortcode, imageURL})
       } catch (error) {
         modal.showError(error.message)
         modal.disable(false)
@@ -117,11 +114,7 @@ const component = (state, emit) => {
   const rows = state.emotes.list.map(emote => {
     const deleteEmote = async () => {
       state.emotes.list = state.emotes.list.filter(e => e.shortcode !== emote.shortcode)
-
-      await api.delete(state, 'emotes/' + emote.shortcode, {
-        sessionID: state.session.id,
-      })
-
+      await api.delete(state, 'emotes/' + emote.shortcode)
       emit('render')
     }
 

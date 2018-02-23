@@ -75,10 +75,7 @@ const component = (state, emit) => {
       statusEl.innerText = 'Saving...'
 
       try {
-        const { avatarURL } = await api.post(state, 'account-settings', {
-          email,
-          sessionID: state.session.id,
-        })
+        const { avatarURL } = await api.post(state, 'account-settings', {email})
 
         Object.assign(state.session.user, {
           email, avatarURL,
