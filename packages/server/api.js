@@ -1076,6 +1076,10 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     })
   })
 
+  app.use('/api/*', (request, response, next) => {
+    response.status(404).json({error: errors.NOT_FOUND})
+  })
+
   wss.on('connection', socket => {
     const socketData = {
       sessionID: null,
