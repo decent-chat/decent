@@ -12,14 +12,13 @@
             user-select: none;
 
   & > section {
-    margin-bottom: 16px;
+    margin: 16px;
 
     & > .subtitle {
       display: flex;
       position: relative;
 
       align-items: center;
-      margin: 16px;
       margin-bottom: 4px;
 
       z-index: 10;
@@ -52,7 +51,7 @@
       position: relative;
 
       align-items: center;
-      margin: 8px 16px;
+      margin: 8px 0;
       padding: 12px 16px;
 
       color: var(--gray-100);
@@ -118,7 +117,7 @@
     & > .list {
       display: flex;
       flex-direction: column;
-      margin: 8px 16px;
+      margin: 8px 0;
 
       & > .item {
         display: flex;
@@ -201,7 +200,6 @@
     & > .session {
       display: flex;
       align-items: center;
-      padding: 0 16px;
 
       font-size: 14px;
       font-weight: normal;
