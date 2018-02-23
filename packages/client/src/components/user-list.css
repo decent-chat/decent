@@ -36,8 +36,14 @@
       background: var(--green);
     }
 
-    &.offline .icon::after {
-      background: var(--gray-500);
+    &.offline {
+      .username, .icon {
+        opacity: 0.4;
+      }
+
+      .icon::after {
+        background: var(--gray-500);
+      }
     }
   }
 }

@@ -101,7 +101,7 @@ const component = (state, emit) => {
                 <div class='icon'>
                   <img src=${user.avatarURL}>
                 </div>
-                ${user.username}
+                <span class='username'>${user.username}</span>
               </div>
             `
           })}
