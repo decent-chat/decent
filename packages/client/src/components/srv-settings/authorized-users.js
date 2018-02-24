@@ -31,11 +31,11 @@ const store = (state, emitter) => {
 
     state.authorizedUsers.fetching = true
 
-    const { users, unauthorizedUsers } = await api.get(state, 'user-list')
+    const { users, unauthorizedUsers } = await api.get(state, 'users')
     state.authorizedUsers.authorizedList = users
     state.authorizedUsers.unauthorizedList = unauthorizedUsers
 
-    const { authorizationMessage } = await api.get(state, 'settings')
+    const { settings: { authorizationMessage } } = await api.get(state, 'settings')
     state.authorizedUsers.authorizationMessage = authorizationMessage
 
     state.authorizedUsers.fetching = false
@@ -46,8 +46,9 @@ const store = (state, emitter) => {
   emitter.on('authorizedUsers.saveMessage', async () => {
     const authorizationMessage = document.getElementById(`${prefix}message`).value
 
-    await api.patch(state, 'settings', {authorizationMessage})
+    await api.post(state, 'settings', {authorizationMessage})
 
+    state.authorizedUsers.authorizationMessage = authorizationMessage
     state.authorizedUsers.authMessageSaved = true
 
     emitter.emit('render')
