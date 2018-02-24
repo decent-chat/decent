@@ -22,7 +22,7 @@ const store = (state, emitter) => {
       return
     }
 
-    if (state.serverRequiresAuthorization && !state.session.id) {
+    if (!state.sessionAuthorized) {
       return
     }
 
@@ -46,9 +46,9 @@ const store = (state, emitter) => {
   // If the user list is fetched before the websocket has properly connected,
   // the API will say that our session's user is not logged in. But it'll emit
   // that we've logged in *before we're even listening for users to come online*,
-  // which means we'll miss that event. We use this "session user loaded" event
-  // as a workaround to deal with that.
-  emitter.on('sessionuserloaded', () => {
+  // which means we'll miss that event. We use this login event (emitted after
+  // the session user is loaded) as a workaround to deal with that.
+  emitter.on('login', () => {
     if (state.session.user) {
       if (state.userList.users) {
         state.userList.users.find(u => u.id === state.session.user.id).online = true

@@ -27,6 +27,14 @@ async function fetchHelper(state, path, fetchConfig = {}) {
   // if we get an error object, throw
   if (result.error) {
     // { message, data }
+
+    /*
+    console.log('error ---- ' + result.error.code)
+    console.log('fetch config:', fetchConfig)
+    console.log('sessionid:', state.session.id)
+    console.log('path:', path)
+    */
+
     throw Object.assign(new Error(result.error.message), {
       code: result.error.code,
       data: result,

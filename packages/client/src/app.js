@@ -60,7 +60,6 @@ app.use((state, emitter) => {
       if (key === 'user') {
         if (target.id !== value) {
           state.ws.send('pongdata', { sessionID: value })
-          emitter.emit('sessionuserloaded')
         }
       }
 
