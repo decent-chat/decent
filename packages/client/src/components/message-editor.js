@@ -103,7 +103,7 @@ const component = (state, emit) => {
 
     // Hack!!! - Select the textarea *soon*. We assume that the component is
     // rendered and on the page by 25ms from now.
-    setInterval(() => {
+    setTimeout(() => {
       textarea.focus()
     }, 25)
 
