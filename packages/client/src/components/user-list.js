@@ -22,9 +22,21 @@ const store = (state, emitter) => {
       return
     }
 
+    if (state.serverRequiresAuthorization && !state.session.id) {
+      return
+    }
+
     state.userList.fetching = true
 
-    state.userList.users = (await api.get(state, 'users')).users
+    try {
+      state.userList.users = (await api.get(state, 'users')).users
+    } catch (error) {
+      if (error.code === 'AUTHORIZATION_ERROR') {
+        state.userList.users = null
+      } else {
+        throw error
+      }
+    }
 
     state.userList.fetching = false
     emitter.emit('render')
@@ -38,7 +50,13 @@ const store = (state, emitter) => {
   // as a workaround to deal with that.
   emitter.on('sessionuserloaded', () => {
     if (state.session.user) {
-      state.userList.users.find(u => u.id === state.session.user.id).online = true
+      if (state.userList.users) {
+        state.userList.users.find(u => u.id === state.session.user.id).online = true
+      } else if (state.serverRequiresAuthorization) {
+        // If the server requires authorization, now is a good time to fetch the
+        // user list.
+        emitter.emit('userlist.fetch')
+      }
     }
   })
 
@@ -109,8 +127,10 @@ const component = (state, emit) => {
             `
           })}
         </div>
-      ` : html`
+      ` : state.userList.fetching ? html`
         <div class='text'>Loading.</div>
+      ` : html`
+        <div class='text'>User list not fetched.</div>
       `}
     </section>
   </aside>`
