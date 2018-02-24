@@ -89,6 +89,17 @@ const store = (state, emitter) => {
       emitter.emit('render')
     }
   })
+
+  emitter.on('ws.user/gone', data => {
+    if (state.userList.users) {
+      const index = state.userList.users.findIndex(u => u.id === data.userID)
+
+      if (index >= 0) {
+        state.userList.users.splice(index, 1)
+        emitter.emit('render')
+      }
+    }
+  })
 }
 
 const prefixSidebar = css('./sidebar.css')

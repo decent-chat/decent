@@ -993,9 +993,13 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         return
       }
 
-      await db.users.update({_id: userID}, {
-        $set: {authorized: false}
-      })
+      if (await db.users.findOne({_id: userID, authorized: true})) {
+        await db.users.update({_id: userID}, {
+          $set: {authorized: false}
+        })
+
+        sendToAllSockets('user/gone', {userID})
+      }
 
       response.status(200).json({})
     }

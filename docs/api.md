@@ -896,7 +896,12 @@ Sent to all clients when a channel is [deleted](#delete-channel). Passed data is
 <a name='user-new'></a>
 ## user/new
 
-Sent to all clients when a user is created, or instead when they are authorized, if [authorization](#authorization) is required. Passed data is in the format `{ user }`.
+Sent to all clients when a user is created, or instead when they are authorized, if the server [requires authorization](#authorization). Passed data is in the format `{ user }`.
+
+<a name='user-gone'></a>
+## user/gone
+
+Sent to all clients when a user is deleted, or also when they are deauthorized, if the server [requires authorization](#authorization). Passed data is in the format `{ userID }`.
 
 <a name='user-online'></a>
 ## user/online
