@@ -901,7 +901,7 @@ Sent to all clients when a user is created, or instead when they are authorized,
 <a name='user-gone'></a>
 ## user/gone
 
-Sent to all clients when a user is deleted, or also when they are deauthorized, if the server [requires authorization](#authorization). Passed data is in the format `{ userID }`.
+Sent to all clients when a user is deleted, or when a user is deauthorized, if the server [requires authorization](#authorization). Passed data is in the format `{ userID }`.
 
 <a name='user-online'></a>
 ## user/online
