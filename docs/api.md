@@ -125,21 +125,25 @@ GET /api/settings
 <- }
 ```
 
-### Modify settings [PATCH /api/settings]
+### Modify settings [POST /api/settings]
 + requires admin session
 + `name` (string; optional)
 + `authorizationMessage` (string; optional)
 
-Returns `{}` if successful. Updates settings with new values provided.
+Returns `{ results }` if successful, where `results` is an object describing the result of each changed setting. Updates settings with new values provided.
 
 ```js
-PATCH /api/settings
+POST /api/settings
 
 -> {
 ->   "name": "My Server"
 -> }
 
-<- {}
+<- {
+<-   "result": {
+<-     "name": "updated"
+<-   }
+<- }
 ```
 
 ---

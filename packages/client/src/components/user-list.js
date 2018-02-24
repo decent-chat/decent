@@ -22,9 +22,21 @@ const store = (state, emitter) => {
       return
     }
 
+    if (!state.sessionAuthorized) {
+      return
+    }
+
     state.userList.fetching = true
 
-    state.userList.users = (await api.get(state, 'users')).users
+    try {
+      state.userList.users = (await api.get(state, 'users')).users
+    } catch (error) {
+      if (error.code === 'AUTHORIZATION_ERROR') {
+        state.userList.users = null
+      } else {
+        throw error
+      }
+    }
 
     state.userList.fetching = false
     emitter.emit('render')
@@ -34,11 +46,17 @@ const store = (state, emitter) => {
   // If the user list is fetched before the websocket has properly connected,
   // the API will say that our session's user is not logged in. But it'll emit
   // that we've logged in *before we're even listening for users to come online*,
-  // which means we'll miss that event. We use this "session user loaded" event
-  // as a workaround to deal with that.
-  emitter.on('sessionuserloaded', () => {
+  // which means we'll miss that event. We use this login event (emitted after
+  // the session user is loaded) as a workaround to deal with that.
+  emitter.on('login', () => {
     if (state.session.user) {
-      state.userList.users.find(u => u.id === state.session.user.id).online = true
+      if (state.userList.users) {
+        state.userList.users.find(u => u.id === state.session.user.id).online = true
+      } else if (state.serverRequiresAuthorization) {
+        // If the server requires authorization, now is a good time to fetch the
+        // user list.
+        emitter.emit('userlist.fetch')
+      }
     }
   })
 
@@ -115,8 +133,10 @@ const component = (state, emit) => {
             `
           })}
         </div>
-      ` : html`
+      ` : state.userList.fetching ? html`
         <div class='text'>Loading.</div>
+      ` : html`
+        <div class='text'>User list not fetched.</div>
       `}
     </section>
   </aside>`

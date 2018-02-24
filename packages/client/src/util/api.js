@@ -27,6 +27,14 @@ async function fetchHelper(state, path, fetchConfig = {}) {
   // if we get an error object, throw
   if (result.error) {
     // { message, data }
+
+    /*
+    console.log('error ---- ' + result.error.code)
+    console.log('fetch config:', fetchConfig)
+    console.log('sessionid:', state.session.id)
+    console.log('path:', path)
+    */
+
     throw Object.assign(new Error(result.error.message), {
       code: result.error.code,
       data: result,
@@ -67,23 +75,12 @@ module.exports = {
     })
   },
 
-  patch(state, path, changes = {}) {
-    // PATCH takes a body, like POST.
-    return fetchHelper(state, path, {
-      method: 'patch',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    })
-  },
-
   postRaw(state, path, body) {
     if (!body) return Promise.reject(new Error('Body not provided'))
 
     return fetchHelper(state, path, {
       method: 'post',
-      body,
+      body
     })
   },
 
