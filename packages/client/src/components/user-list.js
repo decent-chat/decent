@@ -86,6 +86,7 @@ const store = (state, emitter) => {
   emitter.on('ws.user/new', data => {
     if (state.userList.users) {
       state.userList.users.push(data.user)
+      emitter.emit('render')
     }
   })
 }
