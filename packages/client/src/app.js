@@ -214,6 +214,10 @@ for (const [ name, s ] of Object.entries(srvSettings)) {
 
   // server account settings page
   app.route('/servers/:host/account', (state, emit) => {
+    if (!state.session.user) {
+      return notFound(state, emit)
+    }
+
     return html`<div id='app'>
       ${sidebar.component(state, emit)}
       <main>
@@ -224,7 +228,7 @@ for (const [ name, s ] of Object.entries(srvSettings)) {
 
   // server settings (admins only) page
   app.route('/servers/:host/settings/:setting', (state, emit) => {
-    if (state.session.id === null || state.session.user.permissionLevel !== 'admin' || !srvSettings[state.params.setting]) {
+    if (!state.session.id || state.session.user.permissionLevel !== 'admin' || !srvSettings[state.params.setting]) {
       return notFound(state, emit)
     }
 
