@@ -870,6 +870,22 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         lastReadChannelDates: {}
       })
 
+      // Note that we run serialize.user twice here -- once, to send to the
+      // general public of connected (authorized-user) sockets, and again,
+      // which is sent back as the HTTP response to POST /api/users. The first
+      // one doesn't contain some private data that the second one does (like
+      // the (unset) email).
+
+      // Only tell client sockets that a user has been created if the server
+      // isn't using authorization. After all, if the user isn't authorized
+      // (which it isn't, upon being created), other users won't be able to
+      // interact with it until it is.
+      if (await shouldUseAuthorization() === false) {
+        sendToAllSockets('user/new', {
+          user: await serialize.user(user)
+        })
+      }
+
       response.status(201).json({
         user: await serialize.user(user, user)
       })

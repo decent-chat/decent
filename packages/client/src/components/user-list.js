@@ -64,6 +64,12 @@ const store = (state, emitter) => {
       }
     }
   })
+
+  emitter.on('ws.user/new', data => {
+    if (state.userList.users) {
+      state.userList.users.push(data.user)
+    }
+  })
 }
 
 const prefixSidebar = css('./sidebar.css')
