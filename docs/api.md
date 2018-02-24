@@ -813,6 +813,40 @@ GET /api/username-available/patrick
 <- }
 ```
 
+<a name='authorize-user'></a>
+### Authorize a user [POST /api/authorize-user]
++ requires admin session
++ userID (ID)
+
+Note that this endpoint will error (`AUTHORIZATION_ERROR`) if the server does not [require authorization](#authorization).
+
+```js
+POST /api/authorize-user
+
+-> {
+->   "userID": "123456"
+-> }
+
+<- {}
+```
+
+<a name='authorize-user'></a>
+### Deauthorize a user [POST /api/deauthorize-user]
++ requires admin session
++ userID (ID) - can't be you
+
+Note that this endpoint will error (`AUTHORIZATION_ERROR`) if the server does not [require authorization](#authorization) or if you attempt to deauthorize yourself.
+
+```js
+POST /api/deauthorize-user
+
+-> {
+->   "userID": "123456"
+-> }
+
+<- {}
+```
+
 ---
 
 # Websocket Events
