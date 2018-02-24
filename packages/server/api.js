@@ -105,8 +105,10 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         [
           ['GET', /^\/$/],
           ['POST', /^\/sessions$/],
+          ['GET', /^\/sessions\//],
           ['POST', /^\/users$/],
           ['GET', /^\/username-available/],
+          ['GET', /^\/properties$/],
         ].find(([ m, re ]) => request.method === m && re.test(request.path))
       )) {
         request[middleware.vars].shouldVerify = true
