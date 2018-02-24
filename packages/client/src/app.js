@@ -224,7 +224,7 @@ for (const [ name, s ] of Object.entries(srvSettings)) {
 
   // server settings (admins only) page
   app.route('/servers/:host/settings/:setting', (state, emit) => {
-    if (state.session.id === null || state.session.user.permissionLevel !== 'admin' || !srvSettings[state.params.setting]) {
+    if (!state.session.id || state.session.user.permissionLevel !== 'admin' || !srvSettings[state.params.setting]) {
       return notFound(state, emit)
     }
 
