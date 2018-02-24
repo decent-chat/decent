@@ -316,19 +316,17 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  app.patch('/api/settings', [
-    ...middleware.loadVarFromBody('patch'),
+  app.post('/api/settings', [
+    ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requireBeAdmin('sessionUser'),
 
     async (request, response) => {
-      const { patch } = request[middleware.vars]
-
       const serverSettings = await db.settings.findOne({_id: serverSettingsID})
 
       const results = {}
 
-      for (const [ key, value ] of Object.entries(patch)) {
+      for (const [ key, value ] of Object.entries(request.body)) {
         results[key] = await setSetting(db.settings, serverSettingsID, key, value)
       }
 

@@ -75,23 +75,12 @@ module.exports = {
     })
   },
 
-  patch(state, path, changes = {}) {
-    // PATCH takes a body, like POST.
-    return fetchHelper(state, path, {
-      method: 'patch',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    })
-  },
-
   postRaw(state, path, body) {
     if (!body) return Promise.reject(new Error('Body not provided'))
 
     return fetchHelper(state, path, {
       method: 'post',
-      body,
+      body
     })
   },
 
