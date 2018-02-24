@@ -963,9 +963,15 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     async function(request, response) {
       const { userID } = request[middleware.vars]
 
-      await db.users.update({_id: userID}, {
-        $set: {authorized: true}
-      })
+      if (await db.users.findOne({_id: userID, authorized: false})) {
+        await db.users.update({_id: userID}, {
+          $set: {authorized: true}
+        })
+
+        sendToAllSockets('user/new', {
+          user: await serialize.user(await db.users.findOne({_id: userID}))
+        })
+      }
 
       response.status(200).json({})
     }
