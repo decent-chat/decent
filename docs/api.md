@@ -740,7 +740,7 @@ GET /api/users?sessionID=adminsid123
 + `username` ([name](#names)) - Must be unique
 + `password` (string) - Errors if shorter than 6 characters
 
-Responds with `{ user }` if successful, where `user` is the new user object. Note the given password is passed as a plain string and is stored in the database as a bcrypt-hashed and salted string (and not in any plaintext form). Log in with [POST /api/sessions](#login).
+Responds with `{ user }` if successful, where `user` is the new user object. If the server does not [require authorization](#authorization), [user/new](#user-new) is emitted. Note the given password is passed as a plain string and is stored in the database as a bcrypt-hashed and salted string (and not in any plaintext form). Log in with [POST /api/sessions](#login).
 
 ```js
 POST /api/users
@@ -892,6 +892,16 @@ Sent to all clients when a channel is [renamed](#rename-channel). Passed data is
 ## channel/delete
 
 Sent to all clients when a channel is [deleted](#delete-channel). Passed data is in the format `{ channelID }`.
+
+<a name='user-new'></a>
+## user/new
+
+Sent to all clients when a user is created, or instead when they are authorized, if the server [requires authorization](#authorization). Passed data is in the format `{ user }`.
+
+<a name='user-gone'></a>
+## user/gone
+
+Sent to all clients when a user is deleted, or when a user is deauthorized, if the server [requires authorization](#authorization). Passed data is in the format `{ userID }`.
 
 <a name='user-online'></a>
 ## user/online

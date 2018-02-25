@@ -870,6 +870,22 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         lastReadChannelDates: {}
       })
 
+      // Note that we run serialize.user twice here -- once, to send to the
+      // general public of connected (authorized-user) sockets, and again,
+      // which is sent back as the HTTP response to POST /api/users. The first
+      // one doesn't contain some private data that the second one does (like
+      // the (unset) email).
+
+      // Only tell client sockets that a user has been created if the server
+      // isn't using authorization. After all, if the user isn't authorized
+      // (which it isn't, upon being created), other users won't be able to
+      // interact with it until it is.
+      if (await shouldUseAuthorization() === false) {
+        sendToAllSockets('user/new', {
+          user: await serialize.user(user)
+        })
+      }
+
       response.status(201).json({
         user: await serialize.user(user, user)
       })
@@ -947,9 +963,15 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     async function(request, response) {
       const { userID } = request[middleware.vars]
 
-      await db.users.update({_id: userID}, {
-        $set: {authorized: true}
-      })
+      if (await db.users.findOne({_id: userID, authorized: false})) {
+        await db.users.update({_id: userID}, {
+          $set: {authorized: true}
+        })
+
+        sendToAllSockets('user/new', {
+          user: await serialize.user(await db.users.findOne({_id: userID}))
+        })
+      }
 
       response.status(200).json({})
     }
@@ -971,9 +993,13 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         return
       }
 
-      await db.users.update({_id: userID}, {
-        $set: {authorized: false}
-      })
+      if (await db.users.findOne({_id: userID, authorized: true})) {
+        await db.users.update({_id: userID}, {
+          $set: {authorized: false}
+        })
+
+        sendToAllSockets('user/gone', {userID})
+      }
 
       response.status(200).json({})
     }
