@@ -75,7 +75,7 @@ const component = (state, emit) => {
       emit('authorizedUsers.fetch')
     }
 
-    return html`<div class='Page authorized-users'>
+    return html`<div class='Page AuthorizedUsers'>
       <h1 class='Page-title'>Authorized users <span class='Page-subtitle'>on ${state.params.host}</span></h1>
 
       Loading...
@@ -89,7 +89,7 @@ const component = (state, emit) => {
       </td>
 
       <td>
-        ${user.username} <span class='authorized-users user-id'>(ID: <span>${user.id}</span>)</span>
+        ${user.username} <span class='AuthorizedUsers-userID'>(ID: <span>${user.id}</span>)</span>
       </td>
 
       ${actionTD}
@@ -155,7 +155,7 @@ const component = (state, emit) => {
 
   textarea.isSameNode = el => el.id === textarea.id
 
-  return html`<div class='Page authorized-users'>
+  return html`<div class='Page AuthorizedUsers'>
     <h1 class='Page-title'>Authorized users <span class='Page-subtitle'>on ${state.params.host}</span></h1>
 
     <p>
@@ -163,7 +163,7 @@ const component = (state, emit) => {
       view channels, etc. until authorized again.
     </p>
 
-    <table>
+    <table class='AuthorizedUsers-table'>
       <tbody>
         ${authorizedRows}
       </tbody>
@@ -176,7 +176,7 @@ const component = (state, emit) => {
       Once you've authorized them, they will be able to.
     </p>
 
-    <table>
+    <table class='AuthorizedUsers-table'>
       <tbody>
         ${unauthorizedRows}
       </tbody>

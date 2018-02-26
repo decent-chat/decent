@@ -65,7 +65,7 @@ const component = (state, emit) => {
 
   const save = async () => {
     const email = document.getElementById('acc-settings-email').value.trim() || null
-    const statusEl = document.querySelector(`.acc-settings > .submit > .status`)
+    const statusEl = document.querySelector(`.AccountSettings-submit-status`)
 
     // update if unchanged
     if (email !== state.session.user.email) {
@@ -128,7 +128,7 @@ const component = (state, emit) => {
             ${session.id === state.session.id ? '(Current)' : ''}
           </td>
           <td>
-            <span class='session-id'>${session.id}</span>
+            <span class='AccountSettings-sessionID'>${session.id}</span>
           </td>
           <td><button class='Button --no-bg --red' onclick=${deleteSession}>Delete</button></td>
         </tr>
@@ -140,31 +140,31 @@ const component = (state, emit) => {
     })
   }
 
-  return html`<div class='Page acc-settings'>
-    <h1 class='Page-title'>Account settings <span class='Page-subtitle'>for ${state.params.host}</span></h1>
+  return html`<div class='Page AccountSettings'>
+    <h1 class='Page-title AccountSettings-title'>Account settings <span class='Page-subtitle'>for ${state.params.host}</span></h1>
 
-    <div class='Button'>
+    <div class='Input AccountSettings-input'>
       <label for='acc-settings-username'>Username</label>
       <input id='acc-settings-username' type='text' disabled value=${state.session.user.username}/>
     </div>
 
-    <div class='Input avatar'>
-      <label for='acc-settings=email'>Avatar</label>
+    <div class='Input AccountSettings-input --avatar'>
+      <label for='acc-settings-email'>Avatar</label>
 
       <input id='acc-settings-email' type='email' placeholder='Email address' value=${state.session.user.email || ''}/>
       <img src=${state.session.user.avatarURL}/>
     </div>
 
     <p>
-      We use <a class='link' href='https://www.libravatar.org/'>Libravatar</a> for avatars, which falls back to Gravatar.
+      We use <a class='Link' href='https://www.libravatar.org/'>Libravatar</a> for avatars, which falls back to Gravatar.
     </p>
 
-    <div class='submit'>
-      <span class='status'></span>
-      <button class='Button save' onclick=${save}>Save</button>
+    <div class='AccountSettings-submit'>
+      <span class='AccountSettings-submit-status'></span>
+      <button class='Button' onclick=${save}>Save</button>
     </div>
 
-    <h2>Login sessions</h2>
+    <h2 class='AccountSettings-loginSessionsTitle'>Login sessions</h2>
     ${state.accountSettings.fetching ? html`
       <p>Loading sessions...</p>
     ` : html`

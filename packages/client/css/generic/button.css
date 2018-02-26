@@ -12,6 +12,8 @@
 
   :not([disabled]) { cursor: pointer; }
 
+  &.\--red { background-color: var(--red); color: white; }
+
   &.\--no-bg {
     color: var(--blue);
     background: transparent;
@@ -22,9 +24,5 @@
     &:hover:not([disabled]) {
       text-decoration: underline;
     }
-  }
-
-  &:not(&.\--no-bg) {
-    &.\--red { background-color: var(--red); color: white; }
   }
 }

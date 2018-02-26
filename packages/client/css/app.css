@@ -1,17 +1,21 @@
-@import 'account-settings.css';
-@import 'authorized-users.css';
-@import 'emotes.css';
-@import 'message-editor.css';
-@import 'message-group.css';
-@import 'messages.css';
+@import 'specific/message-editor.css';
+@import 'specific/message-group.css';
+@import 'specific/messages.css';
 
-@import 'page.css';
-@import 'input.css';
-@import 'button.css';
+/* Intended for use anywhere, more utilities than components */
+@import 'generic/page.css';
+@import 'generic/input.css';
+@import 'generic/button.css';
 
-@import 'sidebar.css';
-@import 'user-list.css';
-@import 'modal.css';
+/* One-time use or intended for use in a specific position in the document */
+@import 'specific/sidebar.css';
+@import 'specific/user-list.css';
+@import 'specific/modal.css';
+
+/* Pages */
+@import 'pages/emote-settings.css';
+@import 'pages/account-settings.css';
+@import 'pages/authorized-users.css';
 
 body {
   margin: 0;
@@ -76,7 +80,7 @@ body {
   animation: 3s infinite normal wiggle;
 }
 
-a:any-link.link {
+a:any-link.link, .Link {
   color: var(--blue);
   text-decoration: underline;
 }
