@@ -681,6 +681,7 @@ Model:
 
   "avatarURL": string,
   "permissionLevel": "admin" | "member",
+  "flair": string,
 
   "online": boolean,
 
@@ -740,7 +741,7 @@ GET /api/users?sessionID=adminsid123
 + `username` ([name](#names)) - Must be unique
 + `password` (string) - Errors if shorter than 6 characters
 
-Responds with `{ user }` if successful, where `user` is the new user object. If the server does not [require authorization](#authorization), [user/new](#user-new) is emitted. Note the given password is passed as a plain string and is stored in the database as a bcrypt-hashed and salted string (and not in any plaintext form). Log in with [POST /api/sessions](#login).
+Responds with `{ user }` if successful, where `user` is the new user object. Note the given password is passed as a plain string and is stored in the database as a bcrypt-hashed and salted string (and not in any plaintext form). Log in with [POST /api/sessions](#login).
 
 ```js
 POST /api/users
@@ -780,23 +781,48 @@ GET /api/users/1
 
 <a name='update-user'></a>
 ### Update user details [PATCH /api/users/:id]
-+ requires session representing this user
++ requires session representing this user or admin session
 + **in-url** id (ID) - The user ID to patch
+
+The following parameters are available to both admin sessions and sessions representing the user being updated:
+
 + `password` (object; optional):
   * `new` (string) - Errors if shorter than 6 characters
   * `old` (string)
 + `email` (string; optional) - Not public
++ `flair` (string; optional) - Displayed beside username in chat
 
-Returns `{}` and applies changes, assuming a valid session for this user is provided. Errors are provided as usual.
+You can also provide an admin session in order to update the following:
+
++ `permissionLevel`: ("admin" or "member"; optional)
++ `authorized`: (boolean; optional) - Errors (`AUTHORIZATION_ERROR`) if the server does not [require authorization](#authorization)
+
+Returns `{}` and applies changes, assuming a valid session for this user (or an admin) is provided and no errors occur.
 
 ```js
 PATCH /api/users/1
+
+(with session representing user id 1)
 
 -> {
 ->   "password": {
 ->     "old": "abcdef",
 ->     "new": "secure"
 ->   }
+-> }
+
+<- {}
+```
+
+```js
+PATCH /api/users/12
+
+(with session representing an admin)
+
+-> {
+->   "permissionLevel": "admin",
+->   "authorized": true,
+->   "flair": "html computer sciencer"
 -> }
 
 <- {}
@@ -815,40 +841,6 @@ GET /api/username-available/patrick
 <- {
 <-   "available": false
 <- }
-```
-
-<a name='authorize-user'></a>
-### Authorize a user [POST /api/authorize-user]
-+ requires admin session
-+ userID (ID)
-
-Note that this endpoint will error (`AUTHORIZATION_ERROR`) if the server does not [require authorization](#authorization).
-
-```js
-POST /api/authorize-user
-
--> {
-->   "userID": "123456"
--> }
-
-<- {}
-```
-
-<a name='authorize-user'></a>
-### Deauthorize a user [POST /api/deauthorize-user]
-+ requires admin session
-+ userID (ID) - can't be you
-
-Note that this endpoint will error (`AUTHORIZATION_ERROR`) if the server does not [require authorization](#authorization) or if you attempt to deauthorize yourself.
-
-```js
-POST /api/deauthorize-user
-
--> {
-->   "userID": "123456"
--> }
-
-<- {}
 ```
 
 ---
