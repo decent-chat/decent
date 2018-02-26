@@ -1,4 +1,4 @@
-.msg-editor {
+.MessageEditor {
   display: flex;
   align-items: flex-end;
 
@@ -8,62 +8,62 @@
 
   position: relative;
 
-  &.logged-out {
+  &.\--disabled {
     color: var(--gray-300);
   }
+}
 
-  & > textarea {
-    flex: 1 1 0;
+.MessageEditor-textarea {
+  flex: 1 1 0;
 
-    padding: 16px;
-    margin-right: 16px;
+  padding: 16px;
+  margin-right: 16px;
 
-    height: 58px;
-    min-height: 58px;
-    max-height: 400px;
-    overflow-y: auto;
+  height: 58px;
+  min-height: 58px;
+  max-height: 400px;
+  overflow-y: auto;
 
-    font: inherit;
+  font: inherit;
 
-    color: var(--gray-100);
-    background: var(--gray-900);
+  color: var(--gray-100);
+  background: var(--gray-900);
 
-    border-radius: 4px;
-    outline: none;
-    border: 1px solid var(--gray-500);
-  }
+  border-radius: 4px;
+  outline: none;
+  border: 1px solid var(--gray-500);
+}
 
-  & > button {
-    width: 58px;
-    height: 58px;
+.MessageEditor-sendButton {
+  width: 58px;
+  height: 58px;
 
-    color: transparent;
-    text-indent: -99999px;
+  color: transparent;
+  text-indent: -99999px;
 
-    background: var(--blue);
-    border: none;
-    outline: none;
-    border-radius: 4px;
-    background-image: url('/img/send.svg');
-    background-size: default;
-    background-position: center;
+  background: var(--blue);
+  border: none;
+  outline: none;
+  border-radius: 4px;
+  background-image: url('/img/send.svg');
+  background-size: default;
+  background-position: center;
 
-    cursor: pointer;
-  }
+  cursor: pointer;
+}
 
-  & > .progress-bar {
-    position: absolute;
-    right: 0;
-    left: 0;
-    bottom: 0;
+.MessageEditor-progressBar {
+  position: absolute;
+  right: 0;
+  left: 0;
+  bottom: 0;
 
-    width: 0;
-    height: 4px;
-    &:not(.moving) { width: 0 !important; }
+  width: 0;
+  height: 4px;
+  &:not(.is-moving) { width: 0 !important; }
 
-    transition: width 500ms, background 200ms;
+  transition: width 500ms, background 200ms;
 
-    background: transparent;
-    &.moving { background: var(--blue); }
-  }
+  background: transparent;
+  &.is-moving { background: var(--blue); }
 }

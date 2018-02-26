@@ -3,7 +3,7 @@ const html = require('choo/html')
 const api = require('../util/api')
 
 const component = (state, emit) => {
-  const textarea = html`<textarea placeholder='Enter a message...'></textarea>`
+  const textarea = html`<textarea class='MessageEditor-textarea' placeholder='Enter a message...'></textarea>`
 
   async function send() {
     const text = textarea.value.trim()
@@ -44,11 +44,11 @@ const component = (state, emit) => {
     }
   })
 
-  const progressBar = html`<div class='progress-bar'></div>`
+  const progressBar = html`<div class='MessageEditor-progressBar'></div>`
 
   textarea.addEventListener('paste', async evt => {
     if (!evt.clipboardData) return
-    if (progressBar.classList.contains('moving')) return
+    if (progressBar.classList.contains('is-moving')) return
 
     const img = evt.clipboardData.files[0]
 
@@ -61,7 +61,7 @@ const component = (state, emit) => {
     formData.append('image', img)
 
     progressBar.style.width = '60%'
-    progressBar.classList.add('moving')
+    progressBar.classList.add('is-moving')
 
     try {
       console.log(state.session.id)
@@ -80,14 +80,14 @@ const component = (state, emit) => {
     } catch (err) {
       console.error(err)
     } finally {
-      progressBar.classList.remove('moving')
+      progressBar.classList.remove('is-moving')
     }
   })
 
   if (state.session.id) {
-    const editor = html`<div class='msg-editor'>
+    const editor = html`<div class='MessageEditor'>
       ${textarea}
-      <button onclick=${send}>Send</button>
+      <button class='MessageEditor-sendButton' onclick=${send}>Send</button>
       ${progressBar}
     </div>`
 
@@ -106,7 +106,7 @@ const component = (state, emit) => {
 
     return editor
   } else {
-    return html`<div class='msg-editor logged-out'>
+    return html`<div class='MessageEditor --disabled'>
       You must be logged in to send messages
     </div>`
   }
