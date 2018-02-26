@@ -125,24 +125,14 @@ This is essentially our own flavour of BEM.
 <div class='Image is-loading'></div>
 ```
 
-* Use `&-child` for children
+* Use `&-childName` for children
 
 ```html
-<style>
-  .Message {
-    &-author {
-      /* ... */
-    }
-
-    &-content {
-      /* ... */
-    }
-  }
-</style>
-
 <div class='Message --from-system'>
   <span class='Message-author'>
     System
+
+    <img class='Message-author-avatar'/> <!-- children of children! -->
   </span>
 
   <span class='Message-content'>

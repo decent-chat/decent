@@ -382,20 +382,20 @@ const store = (state, emitter) => {
 }
 
 const component = (state, emit) => {
-  return html`<aside class='sidebar'>
-    <section class='server'>
-      <div class='subtitle'>
+  return html`<aside class='Sidebar'>
+    <section class='Sidebar-section'>
+      <div class='Sidebar-section-title'>
         <h4>Servers</h4>
         <button class=${state.sidebar.servers.length === 0 ? 'wiggle' : ''} onclick=${() => emit('sidebar.addserver')}>+ Add</button>
       </div>
 
       ${state.sidebar.servers.length ? html`<div
-        class='server-dropdown ${state.sidebar.serverDropdownOpen ? 'open' : (state.params.host ? '' : 'wiggle')}'
+        class='ServerDropdown ${state.sidebar.serverDropdownOpen ? 'is-open' : (state.params.host ? '' : 'wiggle')}'
         onclick=${e => { emit('sidebar.toggleserverdropdown'); e.stopPropagation() } }>
           <div>${state.params.host || 'Select a server...'}</div>
-          <div class='panel'>
+          <div class='ServerDropdown-panel'>
             ${state.sidebar.servers.map(host => html`<div
-              class='option ${host === state.params.host ? 'active' : ''}'
+              class='ServerDropdown-option ${host === state.params.host ? 'is-active' : ''}'
               onclick=${() => emit('sidebar.switchserver', host)}>
                 ${host}
             </div>`)}
@@ -405,20 +405,20 @@ const component = (state, emit) => {
 
       ${state.params.host ? (() => {
         if (state.session.user) {
-          return html`<div class='session'>
-            <div class='text'>
+          return html`<div class='SessionInfo'>
+            <div class='SessionInfo-text'>
               Logged in as
-              <a class='username' onclick=${() => emit('pushState', `/servers/${state.params.host}/account`)}>${state.session.user.username}</a>
+              <a class='SessionInfo-usernameLink' onclick=${() => emit('pushState', `/servers/${state.params.host}/account`)}>${state.session.user.username}</a>
             </div>
 
-            <button onclick=${() => emit('sidebar.logout')}>Logout</button>
+            <button class='SessionInfo-button' onclick=${() => emit('sidebar.logout')}>Logout</button>
           </div>`
         } else {
-          return html`<div class='session'>
-            <div class='text'>Logged out</div>
+          return html`<div class='SessionInfo'>
+            <div class='SessionInfo-text'>Logged out</div>
 
-            <button onclick=${() => emit('sidebar.register')}>Register</button>
-            <button class='minor' onclick=${() => emit('sidebar.login')}>Login</button>
+            <button class='SessionInfo-button' onclick=${() => emit('sidebar.register')}>Register</button>
+            <button class='SessionInfo-button --minor' onclick=${() => emit('sidebar.login')}>Login</button>
           </div>`
         }
       })() : html`<span></span>`}
@@ -428,20 +428,20 @@ const component = (state, emit) => {
       // authorized. Otherwise, it'll be set to null.
       state.sessionAuthorized !== false &&
         state.sidebar.channels !== null &&
-        (!state.serverRequiresAuthorization || state.sessionAuthorized) ? html`<section>
-      <div class='subtitle'>
+        (!state.serverRequiresAuthorization || state.sessionAuthorized) ? html`<section class='Sidebar-section'>
+      <div class='Sidebar-section-title'>
         <h4>Channels</h4>
         ${state.session.user && state.session.user.permissionLevel === 'admin'
           ? html`<button onclick=${() => emit('sidebar.createchannel')}>+ Create</button>`
           : html`<span></span>`}
       </div>
 
-      <div class='list'>
+      <div class='Sidebar-list'>
         ${state.sidebar.channels.map(channel => {
-          const classList = [ 'item', 'channel' ]
+          const classList = [ 'Sidebar-list-item', '--icon-channel' ]
 
-          if (channel.id === state.params.channel) classList.push('active')
-          if (channel.unreadMessageCount) classList.push('unread')
+          if (channel.id === state.params.channel) classList.push('is-active')
+          if (channel.unreadMessageCount) classList.push('is-unread')
 
           return html`<a class=${classList.join(' ')} onclick=${() => emit('sidebar.switchchannel', channel.id)}>
             ${channel.name}
@@ -450,21 +450,21 @@ const component = (state, emit) => {
       </div>
     </section>` : html`<span></span>`}
 
-    ${state.sessionAuthorized === false ? html`<section>
-      <div class='subtitle'>
+    ${state.sessionAuthorized === false ? html`<section class='Sidebar-section'>
+      <div class='Sidebar-section-title'>
         <h4>Unauthorized</h4>
       </div>
-      <div class='content'>
+      <div class='Sidebar-section-content'>
         <p>${raw(mrk(state)(state.authorizationMessage).html())}</p>
       </div>
     </section>` : html`<span></span>`}
 
-    ${state.session.user && state.session.user.permissionLevel === 'admin' ? html`<section>
-      <div class='subtitle'>
+    ${state.session.user && state.session.user.permissionLevel === 'admin' ? html`<section class='Sidebar-section'>
+      <div class='Sidebar-section-title'>
         <h4>Server settings</h4>
       </div>
 
-      <div class='list'>
+      <div class='Sidebar-list'>
         ${[
           'Emotes',
           state.serverRequiresAuthorization ? 'Authorized Users' : null
@@ -475,7 +475,7 @@ const component = (state, emit) => {
           }[name]
 
           return html`<a
-            class='item setting ${(state.params.setting || null) === id ? 'active' : ''}'
+            class='Sidebar-list-item --icon-setting ${(state.params.setting || null) === id ? 'is-active' : ''}'
             onclick=${() => emit('pushState', `/servers/${state.params.host}/settings/${id}`)}>
 
             ${name}

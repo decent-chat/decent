@@ -1,23 +1,26 @@
-.user-list {
-  & .user {
-    & .icon {
-      position: relative;
-      width: 28px;
-      height: 28px;
-      margin-right: 12px;
-      border-radius: 4px;
+.UserList {}
 
-      & img {
-        width: inherit;
-        height: inherit;
-        border-radius: inherit;
-      }
-    }
-
-    &.offline {
-      & .username, & .icon {
-        opacity: 0.4;
-      }
+.UserList-user {
+  &.is-offline {
+    & .UserList-user-avatar,
+    & .UserList-user-username {
+      opacity: 0.4;
     }
   }
 }
+
+.UserList-user-avatar {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  margin-right: 12px;
+  border-radius: 4px;
+
+  & img {
+    width: inherit;
+    height: inherit;
+    border-radius: inherit;
+  }
+}
+
+.UserList-user-username {}
