@@ -75,8 +75,8 @@ const component = (state, emit) => {
       emit('authorizedUsers.fetch')
     }
 
-    return html`<div class='page authorized-users'>
-      <h1>Authorized users <span class='subtitle'>on ${state.params.host}</span></h1>
+    return html`<div class='Page authorized-users'>
+      <h1 class='Page-title'>Authorized users <span class='Page-subtitle'>on ${state.params.host}</span></h1>
 
       Loading...
     </div>`
@@ -155,8 +155,8 @@ const component = (state, emit) => {
 
   textarea.isSameNode = el => el.id === textarea.id
 
-  return html`<div class='page authorized-users'>
-    <h1>Authorized users <span class='subtitle'>on ${state.params.host}</span></h1>
+  return html`<div class='Page authorized-users'>
+    <h1 class='Page-title'>Authorized users <span class='Page-subtitle'>on ${state.params.host}</span></h1>
 
     <p>
       De-authorize users below. They won't be able to read or send messages,

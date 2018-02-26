@@ -1,0 +1,27 @@
+.Page {
+  padding: 36px;
+  height: 100%;
+  overflow-y: auto;
+
+  /* since bottom padding doesn't actually do anything, we need to add a
+     margin onto the bottom element
+     (this only works as long as the bottom element in the page is a block-
+     level element, but hopefully that will always be the case) */
+  & > :last-child {
+    margin-bottom: 36px;
+  }
+}
+
+.Page-title {
+  margin-top: 0;
+
+  font-size: 32px;
+  color: var(--gray-100);
+
+  letter-spacing: -1px;
+}
+
+.Page-subtitle {
+  color: var(--gray-300);
+  font-size: 24px;
+}

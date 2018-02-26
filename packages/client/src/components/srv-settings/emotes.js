@@ -38,7 +38,7 @@ const component = (state, emit) => {
       emit('emotes.fetch')
     }
 
-    return html`<div class='page emote-settings'>
+    return html`<div class='Page emote-settings'>
       <h1>Emotes <span class='subtitle'>on ${state.params.host}</span></h1>
 
       Loading...
@@ -134,8 +134,8 @@ const component = (state, emit) => {
     return row
   })
 
-  return html`<div class='page emote-settings'>
-    <h1>Emotes <span class='subtitle'>on ${state.params.host}</span></h1>
+  return html`<div class='Page emote-settings'>
+    <h1 class='Page-title'>Emotes <span class='Page-subtitle'>on ${state.params.host}</span></h1>
 
     <table>
       <tbody>
@@ -144,7 +144,7 @@ const component = (state, emit) => {
     </table>
 
     <div class='submit'>
-      <button class='Button add' onclick=${addEmote}>Add</button>
+      <button class='Button' onclick=${addEmote}>Add</button>
     </div>
   </div>`
 }

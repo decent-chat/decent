@@ -168,8 +168,8 @@ for (const [ name, s ] of Object.entries(srvSettings)) {
   const notFound = (state, emit) => html`<div id='app'>
     ${sidebar.component(state, emit)}
     <main>
-      <div class='page'>
-        <h3> Not found </h3>
+      <div class='Page'>
+        <h3 class='Page-title'>Not found</h3>
       </div>
     </main>
   </div>`

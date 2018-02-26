@@ -58,7 +58,7 @@ const store = (state, emitter) => {
 const component = (state, emit) => {
   if (!state.session) {
     // not logged in
-    return html`<div class='page'>
+    return html`<div class='Page'>
       Not logged in.
     </div>`
   }
@@ -140,8 +140,8 @@ const component = (state, emit) => {
     })
   }
 
-  return html`<div class='page acc-settings'>
-    <h1>Account settings <span class='subtitle'>for ${state.params.host}</span></h1>
+  return html`<div class='Page acc-settings'>
+    <h1 class='Page-title'>Account settings <span class='Page-subtitle'>for ${state.params.host}</span></h1>
 
     <div class='Button'>
       <label for='acc-settings-username'>Username</label>

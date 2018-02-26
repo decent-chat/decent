@@ -4,13 +4,14 @@
 @import 'message-editor.css';
 @import 'message-group.css';
 @import 'messages.css';
-@import 'modal.css';
 
+@import 'page.css';
 @import 'input.css';
 @import 'button.css';
 
 @import 'sidebar.css';
 @import 'user-list.css';
+@import 'modal.css';
 
 body {
   margin: 0;
@@ -70,36 +71,9 @@ body {
   }
 }
 
+/* TODO: apply this based on state of elements (.is-empty), not as its own class */
 .wiggle {
   animation: 3s infinite normal wiggle;
-}
-
-.page {
-  padding: 36px;
-  height: 100%;
-  overflow-y: auto;
-
-  & > h1 {
-    margin-top: 0;
-
-    font-size: 32px;
-    color: var(--gray-100);
-
-    letter-spacing: -1px;
-
-    & > .subtitle {
-      color: var(--gray-300);
-      font-size: 24px;
-    }
-  }
-
-  /* since bottom padding doesn't actually do anything, we need to add a
-     margin onto the bottom element
-     (this only works as long as the bottom element in the page is a block-
-     level element, but hopefully that will always be the case) */
-  & > :last-child {
-    margin-bottom: 36px;
-  }
 }
 
 a:any-link.link {
