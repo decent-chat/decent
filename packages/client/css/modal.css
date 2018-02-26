@@ -1,4 +1,4 @@
-.modal {
+.Modal {
   display: block;
 
   position: fixed;
@@ -13,56 +13,56 @@
 
   z-index: 950;
   box-shadow: 0 1px 8px #00000044;
+}
 
-  & > .close-button {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    width: 19px;
-    height: 19px;
-    background: url('/img/x.svg') center center / contain;
-    cursor: pointer;
-  }
+.Modal-close-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 19px;
+  height: 19px;
+  background: url('/img/x.svg') center center / contain;
+  cursor: pointer;
+}
 
-  & > .header {
-    padding: 69px;
-    padding-bottom: 16px;
+.Modal-title {
+  padding: 69px;
+  padding-bottom: 16px;
 
-    color: var(--gray-100);
-    background: var(--gray-700);
+  color: var(--gray-100);
+  background: var(--gray-700);
 
-    font-size: 24px;
+  font-size: 24px;
 
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-       -moz-user-select: none;
-            user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
+}
 
-    & > .subtitle {
-      color: var(--gray-300);
-      font-size: 16px;
+.Modal-subtitle {
+  color: var(--gray-300);
+  font-size: 16px;
 
-      margin-left: 6px;
-    }
-  }
+  margin-left: 6px;
+}
 
-  & > .content {
-    padding: 56px;
-    padding-top: 24px;
-    padding-bottom: 69px;
+.Modal-content {
+  padding: 56px;
+  padding-top: 24px;
+  padding-bottom: 69px;
 
-    width: 315px;
-  }
+  width: 315px;
+}
 
-  & .error {
-    font-weight: bold;
-    color: var(--red);
+.Modal-error {
+  font-weight: bold;
+  color: var(--red);
 
-    margin-left: 13px;
-    margin-bottom: 16px;
+  margin-left: 13px;
+  margin-bottom: 16px;
 
-    min-height: 24px;
-  }
+  min-height: 24px;
 }
 
 #modal-page-cover.visible {

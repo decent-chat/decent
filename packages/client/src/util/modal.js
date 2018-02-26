@@ -16,7 +16,7 @@ class Modal extends Nanobus {
   constructor(opts) {
     super('modal')
 
-    const content = html`<div class='content'></div>`
+    const content = html`<div class='Modal-content'></div>`
 
     // add inputs to content
     let j = 1
@@ -60,13 +60,13 @@ class Modal extends Nanobus {
     content.appendChild(btn)
 
     // add error element
-    this.errorEl = html`<div class='error'></div>`
+    this.errorEl = html`<div class='Modal-error'></div>`
     content.prepend(this.errorEl)
 
-    // construct #modal element
-    this.el = html`<div class='modal'>
-      <div class='close-button' onclick=${this.close.bind(this)}></div>
-      <div class='header'>${opts.title} <span class='subtitle'>${opts.subtitle || ''}</span></div>
+    // construct modal element
+    this.el = html`<div class='Modal'>
+      <div class='Modal-closeButton' onclick=${this.close.bind(this)}></div>
+      <div class='Modal-title'>${opts.title} <span class='Modal-subtitle'>${opts.subtitle || ''}</span></div>
       ${content}
     </div>`
 
