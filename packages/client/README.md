@@ -26,5 +26,7 @@ Serve `index.html`, `dist` and `img` over HTTP:
 ```
 At the same time use `python3 -m http.server` (or similar) to serve your build of the client.
 
+Please follow our [codestyle](../../CONTRIBUTING.md) when contributing :)
+
 ### license
 GPL-3.0

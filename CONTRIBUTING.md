@@ -1,11 +1,11 @@
 # Contributing
 
-## Codestyle
+## JavaScript Codestyle
 
 * Two spaces for indentation
 
 ```diff
-  { 
+  {
 -     console.log('4 spaces')
 +   console.log('2 spaces')
   }
@@ -74,4 +74,88 @@
 -   3
 +   3,
   ]
+```
+
+## CSS Naming Conventions
+
+This is essentially our own flavour of BEM.
+
+* Use `.ComponentName` for components
+
+```html
+<style>
+  .Button {
+    color: var(--Button-fg);
+    background: var(--Button-bg);
+  }
+</style>
+
+<a class='Button'>Click me!</a>
+```
+
+* Use `&.\--modifier` for modifiers
+
+```html
+<style>
+  .Button {
+    color: var(--Button-fg);
+    background: var(--Button-bg);
+
+    &.\--invert {
+      color: var(--Button-bg);
+      background: var(--Button-fg);
+    }
+  }
+</style>
+
+<a class='Button --invert'>I'm more important</a>
+```
+
+* Use `&.is-state` for states (ie. temporary)
+
+```html
+<style>
+  .Image {
+    &.is-loading {
+      /* ... */
+    }
+  }
+</style>
+
+<div class='Image is-loading'></div>
+```
+
+* Use `&-child` for children
+
+```html
+<style>
+  .Message {
+    &-author {
+      /* ... */
+    }
+
+    &-content {
+      /* ... */
+    }
+  }
+</style>
+
+<div class='Message --from-system'>
+  <span class='Message-author'>
+    System
+  </span>
+
+  <span class='Message-content'>
+    <i>Sam</i> joined the channel.
+  </span>
+</div>
+```
+
+* Use prescriptive variable names
+
+```diff
+  :root {
+-   --color-dark: #121212;
++   --Sidebar-bg: #121212;
+  }
 ```
