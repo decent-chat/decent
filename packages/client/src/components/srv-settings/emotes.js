@@ -125,7 +125,7 @@ const component = (state, emit) => {
       </td>
 
       <td>
-        <button class='styled-button no-bg red' onclick=${deleteEmote}>Delete</button>
+        <button class='Button --no-bg --red' onclick=${deleteEmote}>Delete</button>
       </td>
     </tr>`
 
@@ -144,7 +144,7 @@ const component = (state, emit) => {
     </table>
 
     <div class='submit'>
-      <button class='styled-button add' onclick=${addEmote}>Add</button>
+      <button class='Button add' onclick=${addEmote}>Add</button>
     </div>
   </div>`
 }

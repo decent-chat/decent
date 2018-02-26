@@ -113,7 +113,7 @@ const component = (state, emit) => {
     user => html`
       <td>
         <button
-          class='styled-button no-bg red'
+          class='Button --no-bg --red'
           disabled=${user.id === state.session.user.id}
           title=${user.id === state.session.user.id
             ? 'You can\'t deauthorize yourself.' : ''}
@@ -127,7 +127,7 @@ const component = (state, emit) => {
     user => html`
       <td>
         <button
-          class='styled-button no-bg blue'
+          class='Button --no-bg'
           onclick=${() => emit('authorizedUsers.authorizeUser', user.id)}
         >Authorize</button>
       </td>
@@ -147,7 +147,7 @@ const component = (state, emit) => {
       id='authorized-users-essage'
       placeholder='Authorization message'
       maxlength='800'
-      class='styled-textarea'
+      class='Textarea'
       onchange=${considerEmittingChanged}
       onkeyup=${considerEmittingChanged}
     >${state.authorizedUsers.authorizationMessage}</textarea>
@@ -191,7 +191,7 @@ const component = (state, emit) => {
     <p>${textarea}</p>
 
     <p>
-      <button class='styled-button' onclick=${() => emit('authorizedUsers.saveMessage')}>Save message</button>
+      <button class='Button' onclick=${() => emit('authorizedUsers.saveMessage')}>Save message</button>
       ${state.authorizedUsers.authMessageSaved ? html`<span class='status'>Saved.</span>` : ''}
     </p>
   </div>`

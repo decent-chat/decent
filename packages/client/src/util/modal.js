@@ -6,7 +6,7 @@ const html = require('choo/html')
 const constructStyledInput = (name, i, j) => {
   const id = `modal-input-${name}`
 
-  return html`<div class='styled-input'>
+  return html`<div class='Input'>
     <label for=${id}>${i.label}</label>
     <input id=${id} type=${i.type || 'text'} placeholder=${i.placeholder || ''} tabindex=${j} accept=${i.accept || '*'}/>
   </div>`
@@ -56,7 +56,7 @@ class Modal extends Nanobus {
     }
 
     // add submit button to content
-    const btn = html`<input type='submit' class='styled-button' value=${opts.button || 'Submit'} onclick=${this.submit.bind(this)} tabindex=${j}>`
+    const btn = html`<input type='submit' class='Button' value=${opts.button || 'Submit'} onclick=${this.submit.bind(this)} tabindex=${j}>`
     content.appendChild(btn)
 
     // add error element

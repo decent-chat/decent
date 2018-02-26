@@ -130,7 +130,7 @@ const component = (state, emit) => {
           <td>
             <span class='session-id'>${session.id}</span>
           </td>
-          <td><button class='styled-button no-bg red' onclick=${deleteSession}>Delete</button></td>
+          <td><button class='Button --no-bg --red' onclick=${deleteSession}>Delete</button></td>
         </tr>
       `
 
@@ -143,12 +143,12 @@ const component = (state, emit) => {
   return html`<div class='page acc-settings'>
     <h1>Account settings <span class='subtitle'>for ${state.params.host}</span></h1>
 
-    <div class='styled-input'>
+    <div class='Button'>
       <label for='acc-settings-username'>Username</label>
       <input id='acc-settings-username' type='text' disabled value=${state.session.user.username}/>
     </div>
 
-    <div class='styled-input avatar'>
+    <div class='Input avatar'>
       <label for='acc-settings=email'>Avatar</label>
 
       <input id='acc-settings-email' type='email' placeholder='Email address' value=${state.session.user.email || ''}/>
@@ -161,7 +161,7 @@ const component = (state, emit) => {
 
     <div class='submit'>
       <span class='status'></span>
-      <button class='styled-button save' onclick=${save}>Save</button>
+      <button class='Button save' onclick=${save}>Save</button>
     </div>
 
     <h2>Login sessions</h2>
@@ -173,7 +173,7 @@ const component = (state, emit) => {
           These are your login sessions. <strong>The blurred-out codes should <em>never</em> be shared - they give <em>anybody</em> full access to your account.</strong> Old login sessions (any older than 30 days) are automatically deleted, so you'll need to login roughly once a month (if you're not the type to log out every time).
         </p>
         <p><button
-          class='styled-button red'
+          class='Button --red'
           onclick=${() => emit('accountSettings.deleteAllSessions')}
         >Delete all login sessions</button></p>
         <table>
