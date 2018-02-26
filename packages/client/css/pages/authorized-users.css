@@ -1,24 +1,24 @@
-.authorized-users {
-  & .user-id {
-    color: var(--gray-300);
-    float: right;
-    margin-left: 10px;
+.AuthorizedUsers {}
 
-    & > span {
-      font-family: monospace;
-    }
+.AuthorizedUsers-userID {
+  color: var(--gray-300);
+  float: right;
+  margin-left: 10px;
+
+  & > span {
+    font-family: monospace;
+  }
+}
+
+.AuthorizedUsers-table {
+  line-height: 3;
+
+  & img {
+    vertical-align: -10px;
+    margin: 0 -5px;
   }
 
-  & table {
-    line-height: 3;
-
-    & img {
-      vertical-align: -10px;
-      margin: 0 -5px;
-    }
-
-    & td:nth-child(2) {
-      min-width: 300px;
-    }
+  & td:nth-child(2) {
+    min-width: 300px;
   }
 }
