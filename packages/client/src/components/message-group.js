@@ -1,17 +1,15 @@
 // message group component
-const css = require('sheetify')
 const raw = require('choo/html/raw')
 const html = require('choo/html')
 const mrk = require('../util/mrk')
 const { timeAgo } = require('../util/date')
 
-css('prismjs/themes/prism.css')
-const prefix = css('./message-group.css')
+//css('prismjs/themes/prism.css')
 
 // times are updated outside of choo because we don't need to
 // diff the entire tree just to modify times
 const updateTimes = () => {
-  const times = document.querySelectorAll(`.${prefix} time.needs-update`)
+  const times = document.querySelectorAll(`.msg-group time.needs-update`)
 
   for (const time of times) {
     const date = timeAgo(parseInt(time.dataset.date))
@@ -41,7 +39,7 @@ const component = (state, emit, group) => {
     </time>`
   }
 
-  return html`<div class=${prefix} id=${group.id}>
+  return html`<div class='msg-group' id=${group.id}>
     <img class='icon' src=${group.authorAvatarURL}/>
     <div class='content'>
       <div class='info'>
@@ -77,4 +75,4 @@ const component = (state, emit, group) => {
 // every minute, update time elements (e.g. "2 mins")
 setInterval(updateTimes, 60 * 1000)
 
-module.exports = { component, prefix }
+module.exports = { component }

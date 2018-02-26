@@ -2,9 +2,6 @@
 
 const Nanobus = require('nanobus')
 const html = require('choo/html')
-const css = require('sheetify')
-
-css('./modal.css')
 
 const constructStyledInput = (name, i, j) => {
   const id = `modal-input-${name}`

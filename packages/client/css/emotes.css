@@ -1,4 +1,4 @@
-:host {
+.emote-settings {
   & td:nth-child(2) {
     min-width: 100px;
   }

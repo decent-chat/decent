@@ -1,9 +1,6 @@
 const html = require('choo/html')
-const css = require('sheetify')
 const { api } = require('../util')
 const { timeAgo } = require('../util/date')
-
-const prefix = css('./account-settings.css')
 
 const store = (state, emitter) => {
   const reset = () => state.accountSettings = {
@@ -67,8 +64,8 @@ const component = (state, emit) => {
   }
 
   const save = async () => {
-    const email = document.getElementById(prefix + 'email').value.trim() || null
-    const statusEl = document.querySelector(`.${prefix} > .submit > .status`)
+    const email = document.getElementById('acc-settings-email').value.trim() || null
+    const statusEl = document.querySelector(`.acc-settings > .submit > .status`)
 
     // update if unchanged
     if (email !== state.session.user.email) {
@@ -143,18 +140,18 @@ const component = (state, emit) => {
     })
   }
 
-  return html`<div class='page ${prefix}'>
+  return html`<div class='page acc-settings'>
     <h1>Account settings <span class='subtitle'>for ${state.params.host}</span></h1>
 
     <div class='styled-input'>
-      <label for='${prefix}username'>Username</label>
-      <input id='${prefix}username' type='text' disabled value=${state.session.user.username}/>
+      <label for='acc-settings-username'>Username</label>
+      <input id='acc-settings-username' type='text' disabled value=${state.session.user.username}/>
     </div>
 
     <div class='styled-input avatar'>
-      <label for='${prefix}email'>Avatar</label>
+      <label for='acc-settings=email'>Avatar</label>
 
-      <input id='${prefix}email' type='email' placeholder='Email address' value=${state.session.user.email || ''}/>
+      <input id='acc-settings-email' type='email' placeholder='Email address' value=${state.session.user.email || ''}/>
       <img src=${state.session.user.avatarURL}/>
     </div>
 
@@ -189,4 +186,4 @@ const component = (state, emit) => {
   </div>`
 }
 
-module.exports = { store, component, prefix }
+module.exports = { store, component }

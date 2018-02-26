@@ -1,8 +1,5 @@
 const html = require('choo/html')
-const css = require('sheetify')
 const { api, Modal } = require('../../util')
-
-const prefix = css('./emotes.css')
 
 const store = (state, emitter) => {
   const reset = () => state.emotes = {
@@ -41,7 +38,7 @@ const component = (state, emit) => {
       emit('emotes.fetch')
     }
 
-    return html`<div class='page ${prefix}'>
+    return html`<div class='page emote-settings'>
       <h1>Emotes <span class='subtitle'>on ${state.params.host}</span></h1>
 
       Loading...
@@ -137,7 +134,7 @@ const component = (state, emit) => {
     return row
   })
 
-  return html`<div class='page ${prefix}'>
+  return html`<div class='page emote-settings'>
     <h1>Emotes <span class='subtitle'>on ${state.params.host}</span></h1>
 
     <table>
@@ -152,4 +149,4 @@ const component = (state, emit) => {
   </div>`
 }
 
-module.exports = { store, component, prefix }
+module.exports = { store, component }

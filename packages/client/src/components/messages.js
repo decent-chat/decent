@@ -1,5 +1,4 @@
 // message list component
-const css = require('sheetify')
 const html = require('choo/html')
 const api = require('../util/api')
 const messageGroup = require('./message-group')
@@ -87,7 +86,7 @@ const store = (state, emitter) => {
 
     // this component's element
     get el() {
-      return document.querySelector('.' + prefix)
+      return document.querySelector('.msgs')
     },
 
     // returns true if we are ~scrolled to the bottom of chat
@@ -105,12 +104,12 @@ const store = (state, emitter) => {
 
     // oldest message-group element
     get oldestGroupEl() {
-      return document.querySelector('.' + messageGroup.prefix + ':first-child')
+      return document.querySelector('.msg-group:first-child')
     },
 
     // newest message-group element
     get newestGroupEl() {
-      return document.querySelector('.' + messageGroup.prefix + ':last-child')
+      return document.querySelector('.msg-group:last-child')
     },
 
     // scroll to message smoothly
@@ -382,8 +381,6 @@ const store = (state, emitter) => {
   })
 }
 
-const prefix = css('./messages.css')
-
 const component = (state, emit) => {
   const { list: messages, fetching } = state.messages
 
@@ -417,15 +414,15 @@ const component = (state, emit) => {
   }
 
   if (messages === null) {
-    return html`<div class=${prefix}>Messages not loaded.</div>`
+    return html`<div class='msgs'>Messages not loaded.</div>`
   } else {
     const groups = state.messages.groupsCached
 
-    return html`<div class='${prefix} has-messages' onscroll=${handleScroll}>
+    return html`<div class='msgs has-messages' onscroll=${handleScroll}>
       ${groups.map(group =>
           messageGroup.component(state, emit, group))}
     </div>`
   }
 }
 
-module.exports = { store, component, prefix }
+module.exports = { store, component }

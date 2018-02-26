@@ -1,9 +1,6 @@
 // message editor component
 const html = require('choo/html')
-const css = require('sheetify')
 const api = require('../util/api')
-
-const prefix = css('./message-editor.css')
 
 const component = (state, emit) => {
   const textarea = html`<textarea placeholder='Enter a message...'></textarea>`
@@ -88,7 +85,7 @@ const component = (state, emit) => {
   })
 
   if (state.session.id) {
-    const editor = html`<div class=${prefix}>
+    const editor = html`<div class='msg-editor'>
       ${textarea}
       <button onclick=${send}>Send</button>
       ${progressBar}
@@ -109,10 +106,10 @@ const component = (state, emit) => {
 
     return editor
   } else {
-    return html`<div class='${prefix} logged-out'>
+    return html`<div class='msg-editor logged-out'>
       You must be logged in to send messages
     </div>`
   }
 }
 
-module.exports = { component, prefix }
+module.exports = { component }

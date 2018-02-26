@@ -1,7 +1,6 @@
 const choo = require('choo')
 const devtools = require('choo-devtools')
 const html = require('choo/html')
-const css = require('sheetify')
 
 // import util
 const util = require('./util')
@@ -247,5 +246,3 @@ for (const [ name, s ] of Object.entries(srvSettings)) {
 
 // mount app
 app.mount('#app')
-
-css('./app.css')

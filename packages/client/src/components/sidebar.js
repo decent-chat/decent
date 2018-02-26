@@ -1,11 +1,8 @@
 // sidebar component
 const html = require('choo/html')
 const raw = require('choo/html/raw')
-const css = require('sheetify')
 const mrk = require('../util/mrk')
 const { Modal, api, storage } = require('../util')
-
-const prefix = css('./sidebar.css')
 
 const store = (state, emitter) => {
   const reset = () => state.sidebar = {
@@ -385,7 +382,7 @@ const store = (state, emitter) => {
 }
 
 const component = (state, emit) => {
-  return html`<aside class=${prefix}>
+  return html`<aside class='sidebar'>
     <section class='server'>
       <div class='subtitle'>
         <h4>Servers</h4>
@@ -489,4 +486,4 @@ const component = (state, emit) => {
   </aside>`
 }
 
-module.exports = { store, component, prefix }
+module.exports = { store, component }

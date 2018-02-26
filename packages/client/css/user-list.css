@@ -1,13 +1,13 @@
-:host {
-  .user {
-    .icon {
+.user-list {
+  & .user {
+    & .icon {
       position: relative;
       width: 28px;
       height: 28px;
       margin-right: 12px;
       border-radius: 4px;
 
-      img {
+      & img {
         width: inherit;
         height: inherit;
         border-radius: inherit;
@@ -15,7 +15,7 @@
     }
 
     &.offline {
-      .username, .icon {
+      & .username, & .icon {
         opacity: 0.4;
       }
     }

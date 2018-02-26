@@ -1,4 +1,3 @@
-const css = require('sheetify')
 const html = require('choo/html')
 const api = require('../util/api')
 
@@ -102,11 +101,8 @@ const store = (state, emitter) => {
   })
 }
 
-const prefixSidebar = css('./sidebar.css')
-const prefixUserList = css('./user-list.css')
-
 const component = (state, emit) => {
-  return html`<aside class='${prefixSidebar} ${prefixUserList}'>
+  return html`<aside class='sidebar user-list'>
     <section>
       <div class='subtitle'>
         <h4>Users</h4>

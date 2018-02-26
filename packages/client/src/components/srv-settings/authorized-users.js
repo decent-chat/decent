@@ -1,8 +1,5 @@
 const html = require('choo/html')
-const css = require('sheetify')
 const { api } = require('../../util')
-
-const prefix = css('./authorized-users.css')
 
 const store = (state, emitter) => {
   const reset = () => state.authorizedUsers = {
@@ -44,7 +41,7 @@ const store = (state, emitter) => {
   })
 
   emitter.on('authorizedUsers.saveMessage', async () => {
-    const authorizationMessage = document.getElementById(`${prefix}message`).value
+    const authorizationMessage = document.getElementById(`authorized-users-message`).value
 
     await api.post(state, 'settings', {authorizationMessage})
 
@@ -78,7 +75,7 @@ const component = (state, emit) => {
       emit('authorizedUsers.fetch')
     }
 
-    return html`<div class='page ${prefix}'>
+    return html`<div class='page authorized-users'>
       <h1>Authorized users <span class='subtitle'>on ${state.params.host}</span></h1>
 
       Loading...
@@ -92,7 +89,7 @@ const component = (state, emit) => {
       </td>
 
       <td>
-        ${user.username} <span class='${prefix} user-id'>(ID: <span>${user.id}</span>)</span>
+        ${user.username} <span class='authorized-users user-id'>(ID: <span>${user.id}</span>)</span>
       </td>
 
       ${actionTD}
@@ -147,7 +144,7 @@ const component = (state, emit) => {
 
   const textarea = html`
     <textarea
-      id='${prefix}message'
+      id='authorized-users-essage'
       placeholder='Authorization message'
       maxlength='800'
       class='styled-textarea'
@@ -158,7 +155,7 @@ const component = (state, emit) => {
 
   textarea.isSameNode = el => el.id === textarea.id
 
-  return html`<div class='page ${prefix}'>
+  return html`<div class='page authorized-users'>
     <h1>Authorized users <span class='subtitle'>on ${state.params.host}</span></h1>
 
     <p>
@@ -200,4 +197,4 @@ const component = (state, emit) => {
   </div>`
 }
 
-module.exports = { store, component, prefix }
+module.exports = { store, component }

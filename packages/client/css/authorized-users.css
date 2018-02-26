@@ -1,4 +1,4 @@
-:host {
+.authorized-users {
   & .user-id {
     color: var(--gray-300);
     float: right;
