@@ -111,11 +111,11 @@ const withState = state => {
   })
 
   Object.assign(mrk.htmlify, {
-    link: ({ metadata }) => `<a target='_blank' rel='noopener noreferrer' href='${mrk.escapeHTML(metadata.href).replace('javascript:', '')}'>
+    link: ({ metadata }) => `<a class='Link' target='_blank' rel='noopener noreferrer' href='${mrk.escapeHTML(metadata.href).replace('javascript:', '')}'>
       ${mrk.escapeHTML(metadata.name)}
     </a>`,
 
-    autolink: ({ text }) => `<a target='_blank' rel='noopener noreferrer' href='${mrk.escapeHTML(text)}'>
+    autolink: ({ text }) => `<a class='Link' target='_blank' rel='noopener noreferrer' href='${mrk.escapeHTML(text)}'>
       ${mrk.escapeHTML(text)}
     </a>`,
 
@@ -123,17 +123,17 @@ const withState = state => {
       const src = mrk.escapeHTML(metadata.src)
       const alt = mrk.escapeHTML(metadata.alt)
 
-      return `<a href='${src}' target='_blank' class='image'>
+      return `<a href='${src}' target='_blank' class='Message-image'>
         <img src='${src}' alt='${alt}'s/>
       </a>`
     },
 
     codeblock({ metadata }) {
-      return `<pre><code class='codeblock language-${mrk.escapeHTML(metadata.lang).replace(/ /g, '-')}'>${mrk.escapeHTML(metadata.code)}</code></pre>`
+      return `<pre><code class='Message-codeblock'>${mrk.escapeHTML(metadata.code)}</code></pre>`
     },
 
     channelref({ metadata, text }) {
-      return `<a class='channel-ref' data-server='${mrk.escapeHTML(metadata.server)}' data-channel='${mrk.escapeHTML(metadata.channel)}'>
+      return `<a class='Message-foreignReference' data-server='${mrk.escapeHTML(metadata.server)}' data-channel='${mrk.escapeHTML(metadata.channel)}'>
         ${mrk.escapeHTML(text)}
       </a>`
     },
@@ -142,7 +142,7 @@ const withState = state => {
       const emote = (state.emotes.list || []).find(e => e.shortcode === text.substr(1, text.length - 2))
 
       if (emote) {
-        return `<img class='emote' src=${'//' + state.params.host + emote.imageURL} alt=${emote.shortcode}/>`
+        return `<img class='Message-emote' src=${'//' + state.params.host + emote.imageURL} alt=${emote.shortcode}/>`
       } else {
         return mrk.escapeHTML(text)
       }

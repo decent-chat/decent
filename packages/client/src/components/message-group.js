@@ -1,10 +1,7 @@
-// message group component
 const raw = require('choo/html/raw')
 const html = require('choo/html')
 const mrk = require('../util/mrk')
 const { timeAgo } = require('../util/date')
-
-//css('prismjs/themes/prism.css')
 
 // times are updated outside of choo because we don't need to
 // diff the entire tree just to modify times
@@ -39,22 +36,22 @@ const component = (state, emit, group) => {
     </time>`
   }
 
-  return html`<div class='msg-group' id=${group.id}>
-    <img class='icon' src=${group.authorAvatarURL}/>
-    <div class='content'>
-      <div class='info'>
-        <div class='username'>${group.authorUsername}</div>
+  return html`<div class='MessageGroup' id=${group.id}>
+    <img class='MessageGroup-authorAvatar' src=${group.authorAvatarURL}/>
+    <div class='MessageGroup-contents'>
+      <div class='MessageGroup-info'>
+        <div class='MessageGroup-authorUsername'>${group.authorUsername}</div>
         ${timeEl(group.messages[0].date)}
       </div>
 
       ${group.messages.map(msg => {
-        const el = html`<div class='message' id=${'msg-' + msg.id}>
+        const el = html`<div class='Message' id=${'msg-' + msg.id}>
           ${raw(mrk(state)(msg.text).html())}
         </div>`
 
         el.isSameNode = k => k.id === el.id
 
-        for (const ref of el.querySelectorAll('a.channel-ref')) {
+        for (const ref of el.querySelectorAll('a.foreignReference')) {
           const { server, channel } = ref.dataset
 
           ref.onclick = () => {

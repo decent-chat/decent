@@ -1,0 +1,58 @@
+.Message {
+  &.\--jumped-to {
+    animation: jumped-message 4s;
+  }
+}
+
+.Message-image img {
+  max-height: 400px;
+  max-width: 100%;
+}
+
+.Message-foreignReference {
+  display: inline-block;
+
+  padding: 4px 6px;
+  margin: 4px;
+
+  border-radius: 6px;
+
+  background: var(--green-a2);
+  color: var(--green);
+  &:hover { background: var(--green-a3); }
+
+  cursor: pointer;
+
+  &[data-server=''] {
+    background: var(--blue-a2);
+    color: var(--blue);
+    &:hover { background: var(--blue-a3); }
+  }
+}
+
+.Message-emote {
+  min-height: 22px;
+  min-width: 22px;
+
+  object-fit: contain;
+  width: 1rem;
+
+  margin: 0 .05em 0 .1em;
+  vertical-align: -.4em;
+}
+
+/* note: this animation name is used in the JavaScript code,
+   so take care if renaming it */
+@keyframes jumped-message {
+  from {
+    background-color: transparent;
+  }
+
+  10% {
+    background-color: rgba(50, 180, 255, 80);
+  }
+
+  to {
+    background-color: transparent;
+  }
+}

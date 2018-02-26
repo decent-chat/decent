@@ -2,7 +2,6 @@
 const html = require('choo/html')
 const api = require('../util/api')
 const messageGroup = require('./message-group')
-const prism = require('prismjs')
 
 // groups messages where:
 //  * the messages have the same author
@@ -292,11 +291,6 @@ const store = (state, emitter) => {
     }, 155)
   })
 
-  emitter.on('messages.fetchcomplete', () => {
-    // highlight code blocks
-    prism.highlightAllUnder(state.messages.el)
-  })
-
   // when the url changes, load the new channel
   // FIXME: don't assume that the channel actually changed
   emitter.on('routeready', () => {
@@ -341,8 +335,6 @@ const store = (state, emitter) => {
       if (atBottom) {
         const el = state.messages.newestGroupEl
 
-        prism.highlightAllUnder(el)
-
         el.scrollIntoView({
           behavior: 'instant',
           block: 'end',
@@ -374,10 +366,6 @@ const store = (state, emitter) => {
     Object.assign(msgInList, msg)
 
     emitter.emit('render')
-
-    setTimeout(() => {
-      prism.highlightAllUnder(document.querySelector('#msg-' + msg.id))
-    }, 25)
   })
 }
 
@@ -414,11 +402,11 @@ const component = (state, emit) => {
   }
 
   if (messages === null) {
-    return html`<div class='msgs'>Messages not loaded.</div>`
+    return html`<div class='MessageList --unloaded'>Messages not loaded.</div>`
   } else {
     const groups = state.messages.groupsCached
 
-    return html`<div class='msgs has-messages' onscroll=${handleScroll}>
+    return html`<div class='MessageList --loaded' onscroll=${handleScroll}>
       ${groups.map(group =>
           messageGroup.component(state, emit, group))}
     </div>`

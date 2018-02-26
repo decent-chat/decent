@@ -1,16 +1,17 @@
-@import 'specific/message-editor.css';
-@import 'specific/message-group.css';
-@import 'specific/messages.css';
-
 /* Intended for use anywhere, more utilities than components */
 @import 'generic/page.css';
 @import 'generic/input.css';
 @import 'generic/button.css';
 
+@import 'generic/message-editor.css';
+@import 'generic/message-group.css';
+@import 'generic/message.css';
+
 /* One-time use or intended for use in a specific position in the document */
 @import 'specific/sidebar.css';
 @import 'specific/user-list.css';
 @import 'specific/modal.css';
+@import 'specific/message-list.css';
 
 /* Pages */
 @import 'pages/emote-settings.css';

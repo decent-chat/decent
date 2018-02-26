@@ -1,11 +1,11 @@
-.msgs {
+.MessageList {
   padding: 16px;
 
   word-wrap: break-word;
   overflow-x: hidden;
   overflow-y: auto;
 
-  &.has-messages {
+  &.\--loaded {
     padding-top: 300px; /* for scrollback to feel nicer */
   }
 }
