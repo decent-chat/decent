@@ -149,3 +149,10 @@ This is essentially our own flavour of BEM.
 +   --Sidebar-bg: #121212;
   }
 ```
+
+* Never leave off the leading zero in decimals
+
+```diff
+- color: rgba(0, 0, 0, .6);
++ color: rgba(0, 0, 0, 0.6);
+```
