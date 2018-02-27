@@ -12,7 +12,7 @@
   overflow: hidden;
 
   z-index: 950;
-  box-shadow: 0 1px 8px #00000044;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.27);
 }
 
 .Modal-close-button {
