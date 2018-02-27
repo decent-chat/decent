@@ -1,0 +1,35 @@
+.MessageGroup {
+  display: flex;
+
+  align-items: flex-start;
+  margin-bottom: 16px;
+
+  color: var(--page-fg);
+}
+
+.MessageGroup-authorAvatar {
+  width: 48px;
+  height: 48px;
+
+  margin-right: 16px;
+  border-radius: 4px;
+}
+
+.MessageGroup-info {
+  margin-bottom: 4px;
+
+  & time {
+    display: inline-block;
+    color: var(--page-dim-fg);
+  }
+}
+
+.MessageGroup-authorUsername {
+  display: inline-block;
+  margin-right: 4px;
+
+  font-weight: bold;
+  text-align: right;
+}
+
+.MessageGroup-contents {}

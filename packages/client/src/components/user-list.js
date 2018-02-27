@@ -1,4 +1,3 @@
-const css = require('sheetify')
 const html = require('choo/html')
 const api = require('../util/api')
 
@@ -102,17 +101,14 @@ const store = (state, emitter) => {
   })
 }
 
-const prefixSidebar = css('./sidebar.css')
-const prefixUserList = css('./user-list.css')
-
 const component = (state, emit) => {
-  return html`<aside class='${prefixSidebar} ${prefixUserList}'>
-    <section>
-      <div class='subtitle'>
+  return html`<aside class='Sidebar --on-right'>
+    <section class='Sidebar-section'>
+      <div class='Sidebar-section-title'>
         <h4>Users</h4>
       </div>
       ${state.userList.users ? html`
-        <div class='list'>
+        <div class='Sidebar-list UserList'>
           ${state.userList.users.slice().sort((a, b) => {
             if (a.online && !b.online) {
               return -1
@@ -134,21 +130,21 @@ const component = (state, emit) => {
           }).map(user => {
             return html`
               <div
-                class='item user ${user.online ? 'online' : 'offline'}'
+                class='Sidebar-list-item UserList-user ${user.online ? 'is-online' : 'is-offline'}'
                 title='${user.username} (${user.online ? 'Online' : 'Offline'})'
               >
-                <div class='icon'>
+                <div class='UserList-user-avatar'>
                   <img src=${user.avatarURL}>
                 </div>
-                <span class='username'>${user.username}</span>
+                <span class='UserList-user-username'>${user.username}</span>
               </div>
             `
           })}
         </div>
       ` : state.userList.fetching ? html`
-        <div class='text'>Loading.</div>
+        <div class='Sidebar-section-content'>Loading.</div>
       ` : html`
-        <div class='text'>User list not fetched.</div>
+        <div class='Sidebar-section-content'>User list not fetched.</div>
       `}
     </section>
   </aside>`

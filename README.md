@@ -85,7 +85,7 @@ decent> set requireAuthorization on
 ## Contributing
 > **Important**: You'll need to [install from git](#from-source) rather than npm to contribute!
 
-See [CONTRIBUTING](CONTRIBUTING.md) for code-style guidelines so we don't have to ask you to fix your PRs. Thanks!
+See [CONTRIBUTING](CONTRIBUTING.md) for codestyle guidelines so we don't have to ask you to fix your PRs. Thanks!
 
 This repository is a [lerna monorepo](https://github.com/lerna/lerna), consisting of:
 * [@decent/server](https://github.com/decent-chat/decent/tree/master/packages/server) - implementation of the Decent server API

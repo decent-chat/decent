@@ -1,8 +1,5 @@
 const html = require('choo/html')
-const css = require('sheetify')
 const { api } = require('../../util')
-
-const prefix = css('./authorized-users.css')
 
 const store = (state, emitter) => {
   const reset = () => state.authorizedUsers = {
@@ -44,7 +41,7 @@ const store = (state, emitter) => {
   })
 
   emitter.on('authorizedUsers.saveMessage', async () => {
-    const authorizationMessage = document.getElementById(`${prefix}message`).value
+    const authorizationMessage = document.getElementById(`authorized-users-message`).value
 
     await api.post(state, 'settings', {authorizationMessage})
 
@@ -78,8 +75,8 @@ const component = (state, emit) => {
       emit('authorizedUsers.fetch')
     }
 
-    return html`<div class='page ${prefix}'>
-      <h1>Authorized users <span class='subtitle'>on ${state.params.host}</span></h1>
+    return html`<div class='Page AuthorizedUsers'>
+      <h1 class='Page-title'>Authorized users <span class='Page-subtitle'>on ${state.params.host}</span></h1>
 
       Loading...
     </div>`
@@ -92,7 +89,7 @@ const component = (state, emit) => {
       </td>
 
       <td>
-        ${user.username} <span class='${prefix} user-id'>(ID: <span>${user.id}</span>)</span>
+        ${user.username} <span class='AuthorizedUsers-userID'>(ID: <span>${user.id}</span>)</span>
       </td>
 
       ${actionTD}
@@ -116,7 +113,7 @@ const component = (state, emit) => {
     user => html`
       <td>
         <button
-          class='styled-button no-bg red'
+          class='Button --no-bg --red'
           disabled=${user.id === state.session.user.id}
           title=${user.id === state.session.user.id
             ? 'You can\'t deauthorize yourself.' : ''}
@@ -130,7 +127,7 @@ const component = (state, emit) => {
     user => html`
       <td>
         <button
-          class='styled-button no-bg blue'
+          class='Button --no-bg'
           onclick=${() => emit('authorizedUsers.authorizeUser', user.id)}
         >Authorize</button>
       </td>
@@ -147,10 +144,10 @@ const component = (state, emit) => {
 
   const textarea = html`
     <textarea
-      id='${prefix}message'
+      id='authorized-users-essage'
       placeholder='Authorization message'
       maxlength='800'
-      class='styled-textarea'
+      class='Textarea'
       onchange=${considerEmittingChanged}
       onkeyup=${considerEmittingChanged}
     >${state.authorizedUsers.authorizationMessage}</textarea>
@@ -158,15 +155,15 @@ const component = (state, emit) => {
 
   textarea.isSameNode = el => el.id === textarea.id
 
-  return html`<div class='page ${prefix}'>
-    <h1>Authorized users <span class='subtitle'>on ${state.params.host}</span></h1>
+  return html`<div class='Page AuthorizedUsers'>
+    <h1 class='Page-title'>Authorized users <span class='Page-subtitle'>on ${state.params.host}</span></h1>
 
     <p>
       De-authorize users below. They won't be able to read or send messages,
       view channels, etc. until authorized again.
     </p>
 
-    <table>
+    <table class='AuthorizedUsers-table Table'>
       <tbody>
         ${authorizedRows}
       </tbody>
@@ -179,7 +176,7 @@ const component = (state, emit) => {
       Once you've authorized them, they will be able to.
     </p>
 
-    <table>
+    <table class='AuthorizedUsers-table Table'>
       <tbody>
         ${unauthorizedRows}
       </tbody>
@@ -194,10 +191,10 @@ const component = (state, emit) => {
     <p>${textarea}</p>
 
     <p>
-      <button class='styled-button' onclick=${() => emit('authorizedUsers.saveMessage')}>Save message</button>
+      <button class='Button' onclick=${() => emit('authorizedUsers.saveMessage')}>Save message</button>
       ${state.authorizedUsers.authMessageSaved ? html`<span class='status'>Saved.</span>` : ''}
     </p>
   </div>`
 }
 
-module.exports = { store, component, prefix }
+module.exports = { store, component }

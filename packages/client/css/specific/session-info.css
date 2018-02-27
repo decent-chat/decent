@@ -1,0 +1,45 @@
+.SessionInfo {
+  display: flex;
+  align-items: center;
+
+  font-size: 14px;
+  font-weight: normal;
+  color: var(--sidebar-fg);
+}
+
+.SessionInfo-text {
+  margin-right: auto;
+}
+
+.SessionInfo-username {
+  margin-left: 5px;
+}
+
+.SessionInfo-button {
+  padding: 6px 8px;
+
+  background: var(--blue-a2);
+  color: var(--blue);
+
+  cursor: pointer;
+  font-size: 12px;
+
+  border-radius: 4px;
+  border: 0;
+
+  &:hover {
+    background: var(--blue-a3);
+  }
+
+  &.\--minor {
+    margin-left: 8px;
+
+    background: var(--gray-700);
+    color: var(--gray-300);
+
+    &:hover {
+      background: var(--gray-700);
+      color: var(--gray-100);
+    }
+  }
+}

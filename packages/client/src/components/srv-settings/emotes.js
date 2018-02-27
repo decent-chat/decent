@@ -1,8 +1,5 @@
 const html = require('choo/html')
-const css = require('sheetify')
 const { api, Modal } = require('../../util')
-
-const prefix = css('./emotes.css')
 
 const store = (state, emitter) => {
   const reset = () => state.emotes = {
@@ -41,7 +38,7 @@ const component = (state, emit) => {
       emit('emotes.fetch')
     }
 
-    return html`<div class='page ${prefix}'>
+    return html`<div class='Page emote-settings'>
       <h1>Emotes <span class='subtitle'>on ${state.params.host}</span></h1>
 
       Loading...
@@ -128,7 +125,7 @@ const component = (state, emit) => {
       </td>
 
       <td>
-        <button class='styled-button no-bg red' onclick=${deleteEmote}>Delete</button>
+        <button class='Button --no-bg --red' onclick=${deleteEmote}>Delete</button>
       </td>
     </tr>`
 
@@ -137,19 +134,19 @@ const component = (state, emit) => {
     return row
   })
 
-  return html`<div class='page ${prefix}'>
-    <h1>Emotes <span class='subtitle'>on ${state.params.host}</span></h1>
+  return html`<div class='Page EmoteSettings'>
+    <h1 class='Page-title'>Emotes <span class='Page-subtitle'>on ${state.params.host}</span></h1>
 
-    <table>
+    <table class='Table'>
       <tbody>
         ${rows}
       </tbody>
     </table>
 
     <div class='submit'>
-      <button class='styled-button add' onclick=${addEmote}>Add</button>
+      <button class='Button' onclick=${addEmote}>Add</button>
     </div>
   </div>`
 }
 
-module.exports = { store, component, prefix }
+module.exports = { store, component }

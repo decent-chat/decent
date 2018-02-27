@@ -15,25 +15,23 @@
   "dependencies": {
     "choo": "^6.6.1",
     "choo-devtools": "^2.3.3",
+    "concurrently": "^3.5.1",
+    "cssnano": "^4.0.0-rc.2",
     "mrk.js": "^1.0.1",
     "nanobus": "^4.3.2",
-    "prismjs": "^1.9.0"
+    "postcss-cli": "^5.0.0"
   },
   "devDependencies": {
     "browserify": "^15.1.0",
-    "css-extract": "^1.2.0",
-    "dependency-check": "^2.10.0",
-    "pretty-bytes-cli": "^2.0.0",
-    "sheetify": "^6.2.0",
-    "sheetify-nested": "^1.0.2",
-    "tinyify": "^2.4.0",
+    "postcss-import": "^11.1.0",
+    "postcss-nesting": "^4.2.1",
+    "uglify-es": "^3.3.9",
     "watchify": "^3.9.0",
     "yo-yoify": "^4.3.0"
   },
   "scripts": {
-    "build": "rm dist/*; browserify src/app.js -o dist/bundle.js -g yo-yoify -t [ sheetify -u sheetify-nested ] -p [ css-extract -o dist/bundle.css ] -p tinyify && cat dist/bundle.js | gzip --best > dist/bundle.js.gz && cat dist/bundle.js.gz | wc -c | pretty-bytes",
-    "watch": "rm dist/*; watchify src/app.js -o dist/bundle.js -d -t [ sheetify -u sheetify-nested ] -p [ css-extract -o dist/bundle.css ] -v",
-    "prepublishOnly": "npm run build",
-    "test": "dependency-check . --entry src/app.js --missing --unused --no-dev -i sheetify"
+    "build": "browserify src/app.js -g yo-yoify | uglifyjs --compress --mangle -o dist/bundle.js && postcss css/app.css -o dist/bundle.css",
+    "watch": "concurrently \"watchify src/app.js -o dist/bundle.js -d -v\" \"postcss css/app.css -o dist/bundle.css -w --verbose\" ",
+    "prepublishOnly": "npm run build"
   }
 }
