@@ -80,7 +80,7 @@
 
 This is essentially our own flavour of BEM.
 
-* Use `.ComponentName` for components
+* Use pascal-case `.ComponentName` for components
 
 ```html
 <style>
@@ -125,7 +125,7 @@ This is essentially our own flavour of BEM.
 <div class='Image is-loading'></div>
 ```
 
-* Use `&-childName` for children
+* Use camel-case `&-childName` for children
 
 ```html
 <div class='Message --from-system'>
