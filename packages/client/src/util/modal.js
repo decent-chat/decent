@@ -2,14 +2,11 @@
 
 const Nanobus = require('nanobus')
 const html = require('choo/html')
-const css = require('sheetify')
-
-css('./modal.css')
 
 const constructStyledInput = (name, i, j) => {
   const id = `modal-input-${name}`
 
-  return html`<div class='styled-input'>
+  return html`<div class='Input'>
     <label for=${id}>${i.label}</label>
     <input id=${id} type=${i.type || 'text'} placeholder=${i.placeholder || ''} tabindex=${j} accept=${i.accept || '*'}/>
   </div>`
@@ -19,7 +16,7 @@ class Modal extends Nanobus {
   constructor(opts) {
     super('modal')
 
-    const content = html`<div class='content'></div>`
+    const content = html`<div class='Modal-content'></div>`
 
     // add inputs to content
     let j = 1
@@ -59,17 +56,17 @@ class Modal extends Nanobus {
     }
 
     // add submit button to content
-    const btn = html`<input type='submit' class='styled-button' value=${opts.button || 'Submit'} onclick=${this.submit.bind(this)} tabindex=${j}>`
+    const btn = html`<input type='submit' class='Button' value=${opts.button || 'Submit'} onclick=${this.submit.bind(this)} tabindex=${j}>`
     content.appendChild(btn)
 
     // add error element
-    this.errorEl = html`<div class='error'></div>`
+    this.errorEl = html`<div class='Modal-error'></div>`
     content.prepend(this.errorEl)
 
-    // construct #modal element
-    this.el = html`<div class='modal'>
-      <div class='close-button' onclick=${this.close.bind(this)}></div>
-      <div class='header'>${opts.title} <span class='subtitle'>${opts.subtitle || ''}</span></div>
+    // construct modal element
+    this.el = html`<div class='Modal'>
+      <div class='Modal-closeButton' onclick=${this.close.bind(this)}></div>
+      <div class='Modal-title'>${opts.title} <span class='Modal-subtitle'>${opts.subtitle || ''}</span></div>
       ${content}
     </div>`
 

@@ -1,17 +1,12 @@
-// message group component
-const css = require('sheetify')
 const raw = require('choo/html/raw')
 const html = require('choo/html')
 const mrk = require('../util/mrk')
 const { timeAgo } = require('../util/date')
 
-css('prismjs/themes/prism.css')
-const prefix = css('./message-group.css')
-
 // times are updated outside of choo because we don't need to
 // diff the entire tree just to modify times
 const updateTimes = () => {
-  const times = document.querySelectorAll(`.${prefix} time.needs-update`)
+  const times = document.querySelectorAll(`.msg-group time.needs-update`)
 
   for (const time of times) {
     const date = timeAgo(parseInt(time.dataset.date))
@@ -41,22 +36,22 @@ const component = (state, emit, group) => {
     </time>`
   }
 
-  return html`<div class=${prefix} id=${group.id}>
-    <img class='icon' src=${group.authorAvatarURL}/>
-    <div class='content'>
-      <div class='info'>
-        <div class='username'>${group.authorUsername}</div>
+  return html`<div class='MessageGroup' id=${group.id}>
+    <img class='MessageGroup-authorAvatar' src=${group.authorAvatarURL}/>
+    <div class='MessageGroup-contents'>
+      <div class='MessageGroup-info'>
+        <div class='MessageGroup-authorUsername'>${group.authorUsername}</div>
         ${timeEl(group.messages[0].date)}
       </div>
 
       ${group.messages.map(msg => {
-        const el = html`<div class='message' id=${'msg-' + msg.id}>
+        const el = html`<div class='Message' id=${'msg-' + msg.id}>
           ${raw(mrk(state)(msg.text).html())}
         </div>`
 
         el.isSameNode = k => k.id === el.id
 
-        for (const ref of el.querySelectorAll('a.channel-ref')) {
+        for (const ref of el.querySelectorAll('a.foreignReference')) {
           const { server, channel } = ref.dataset
 
           ref.onclick = () => {
@@ -77,4 +72,4 @@ const component = (state, emit, group) => {
 // every minute, update time elements (e.g. "2 mins")
 setInterval(updateTimes, 60 * 1000)
 
-module.exports = { component, prefix }
+module.exports = { component }

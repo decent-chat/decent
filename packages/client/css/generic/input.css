@@ -1,0 +1,74 @@
+:root {
+  --input-fg: var(--gray-100);
+  --input-bg: var(--gray-900);
+
+  --input-border-color: var(--gray-500);
+  --input-disabled-bg: var(--gray-700);
+}
+
+.Input {
+  margin-bottom: 16px;
+
+  & label {
+    display: block;
+    color: var(--page-dim-fg);
+
+    font-weight: bold;
+    font-size: 16px;
+
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    margin-left: 13px;
+
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+       -moz-user-select: none;
+            user-select: none;
+  }
+
+  & input {
+    width: 280px;
+    padding: 13px 16px;
+
+    font-family: inherit;
+    font-size: 18px;
+
+    color: var(--input-fg);
+    background: var(--input-bg);
+
+    border: 0;
+    border-bottom: 1px solid var(--input-border-color);
+    &:focus { border-color: var(--accent); }
+
+    &[disabled] {
+      cursor: not-allowed;
+      background: var(--input-disabled-bg);
+      opacity: 0.8;
+    }
+  }
+}
+
+.Textarea {
+  width: 90%;
+  max-width: 600px;
+  padding: 13px 16px;
+
+  min-height: 160px;
+  resize: vertical;
+
+  font-family: inherit;
+  font-size: 18px;
+
+  color: var(--input-fg);
+  background: var(--input-bg);
+
+  border: 0;
+  border-bottom: 1px solid var(--input-border-color);
+  &:focus { border-color: var(--accent); }
+
+  &[disabled] {
+    cursor: not-allowed;
+    background: var(--input-disabled-bg);
+    opacity: 0.8;
+  }
+}
