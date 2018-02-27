@@ -85,7 +85,7 @@ const store = (state, emitter) => {
 
     // this component's element
     get el() {
-      return document.querySelector('.msgs')
+      return document.querySelector('.MessageList')
     },
 
     // returns true if we are ~scrolled to the bottom of chat
@@ -103,12 +103,12 @@ const store = (state, emitter) => {
 
     // oldest message-group element
     get oldestGroupEl() {
-      return document.querySelector('.msg-group:first-child')
+      return document.querySelector('.MessageGroup:first-child')
     },
 
     // newest message-group element
     get newestGroupEl() {
-      return document.querySelector('.msg-group:last-child')
+      return document.querySelector('.MessageGroup:last-child')
     },
 
     // scroll to message smoothly
