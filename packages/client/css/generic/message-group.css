@@ -4,7 +4,7 @@
   align-items: flex-start;
   margin-bottom: 16px;
 
-  color: var(--gray-100);
+  color: var(--page-fg);
 }
 
 .MessageGroup-authorAvatar {
@@ -20,7 +20,7 @@
 
   & time {
     display: inline-block;
-    color: var(--gray-300);
+    color: var(--page-dim-fg);
   }
 }
 

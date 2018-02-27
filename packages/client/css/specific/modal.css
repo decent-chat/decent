@@ -1,3 +1,11 @@
+:root {
+  --modal-bg: var(--gray-900);
+
+  --modal-header-fg: var(--gray-100);
+  --modal-header-bg: var(--gray-700);
+  --modal-header-dim-fg: var(--gray-300);
+}
+
 .Modal {
   display: block;
 
@@ -29,8 +37,8 @@
   padding: 69px;
   padding-bottom: 16px;
 
-  color: var(--gray-100);
-  background: var(--gray-700);
+  color: var(--modal-header-fg);
+  background: var(--modal-header-bg);
 
   font-size: 24px;
 
@@ -41,7 +49,7 @@
 }
 
 .Modal-subtitle {
-  color: var(--gray-300);
+  color: var(--modal-header-dim-fg);
   font-size: 16px;
 
   margin-left: 6px;

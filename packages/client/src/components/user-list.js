@@ -102,7 +102,7 @@ const store = (state, emitter) => {
 }
 
 const component = (state, emit) => {
-  return html`<aside class='Sidebar'>
+  return html`<aside class='Sidebar --on-right'>
     <section class='Sidebar-section'>
       <div class='Sidebar-section-title'>
         <h4>Users</h4>

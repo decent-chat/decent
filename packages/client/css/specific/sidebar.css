@@ -1,18 +1,37 @@
 @import 'server-dropdown.css';
 @import 'session-info.css';
 
+:root {
+  --sidebar-fg: var(--gray-300);
+  --sidebar-bg: var(--gray-900);
+
+  --sidebar-border-color: var(--gray-500);
+  --sidebar-icon-color: var(--gray-500);
+
+  --sidebar-list-item-fg: var(--gray-100);
+  --sidebar-list-item-bg: var(--sidebar-bg);
+
+  --sidebar-list-item-hoverfg: var(--sidebar-list-item-fg);
+  --sidebar-list-item-hoverbg: var(--gray-700);
+
+  --sidebar-list-item-activefg: var(--gray-900);
+  --sidebar-list-item-activebg: var(--accent);
+}
+
 .Sidebar {
   flex: 0 0 300px;
   overflow-y: auto;
 
-  background: var(--gray-900);
-  border-top: 6px solid var(--blue);
-  border-right: 1px solid var(--gray-500);
+  background: var(--sidebar-bg);
+  border-top: 6px solid var(--accent);
 
   -webkit-touch-callout: none;
     -webkit-user-select: none;
        -moz-user-select: none;
             user-select: none;
+
+  &.\--on-left { border-right: 1px solid var(--sidebar-border-color); }
+  &.\--on-right { border-left: 1px solid var(--sidebar-border-color); }
 }
 
 .Sidebar-list {
@@ -30,11 +49,23 @@
   margin-bottom: 4px;
 
   font-size: 16px;
-  color: var(--gray-100);
   text-decoration: none;
 
   cursor: pointer;
   border-radius: 4px;
+
+  color: var(--sidebar-list-item-fg);
+  background: var(--sidebar-list-item-bg);
+
+  &:hover {
+    color: var(--sidebar-list-item-hoverfg);
+    background: var(--sidebar-list-item-hoverbg);
+  }
+
+  &.is-active {
+    color: var(--sidebar-list-item-activefg);
+    background: var(--sidebar-list-item-activebg);
+  }
 
   &.\--icon-channel::before {
     display: inline;
@@ -44,7 +75,7 @@
     margin-left: -4px;
 
     font-weight: bold;
-    color: var(--gray-500);
+    color: var(--sidebar-icon-color);
   }
 
   &.\--icon-setting::before {
@@ -56,15 +87,8 @@
     margin-right: 8px;
     margin-left: -4px;
 
+    /* TODO: use --sidebar-icon-color for the color of this icon, somehow */
     background: url('/img/cog.svg') center center / contain no-repeat;
-  }
-
-  &:hover { background: var(--gray-700); }
-  &.is-active {
-    background: var(--blue);
-    color: var(--gray-900);
-
-    &::before { color: var(--light-blue); }
   }
 
   &.is-unread::after {
@@ -78,12 +102,9 @@
     height: 6px;
 
     border-radius: 99px;
-    background: var(--red);
-    border: 2px solid var(--gray-900);
+    background: var(--unread-dot-color);
+    border: 2px solid var(--unread-dot-border-color);
   }
-
-  &.is-unread:hover::after { border-color: var(--gray-700); }
-  &.is-unread.active:hover::after { border-color: var(--blue); }
 }
 
 .Sidebar-section {
@@ -101,7 +122,7 @@
 
   & > h4 {
     text-transform: uppercase;
-    color: var(--gray-300);
+    color: var(--sidebar-fg);
 
     margin: 0;
   }
@@ -123,7 +144,7 @@
 }
 
 .Sidebar-section-content {
-  color: var(--gray-300);
+  color: var(--sidebar-fg);
 
   font-size: 14px;
 

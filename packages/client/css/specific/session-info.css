@@ -4,18 +4,14 @@
 
   font-size: 14px;
   font-weight: normal;
-  color: var(--gray-300);
+  color: var(--sidebar-fg);
 }
 
 .SessionInfo-text {
   margin-right: auto;
 }
 
-.SessionInfo-usernameLink {
-  color: var(--gray-100);
-  cursor: pointer;
-  text-decoration: underline;
-
+.SessionInfo-username {
   margin-left: 5px;
 }
 

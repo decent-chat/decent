@@ -1,3 +1,12 @@
+:root {
+  --page-fg: var(--gray-100);
+  --page-dim-fg: var(--gray-300);
+  --page-bg: var(--gray-700);
+
+  --page-title-fg: var(--gray-100);
+  --page-subtitle-fg: var(--gray-300);
+}
+
 .Page {
   padding: 36px;
   height: 100%;
@@ -16,12 +25,12 @@
   margin-top: 0;
 
   font-size: 32px;
-  color: var(--gray-100);
+  color: var(--page-title-fg);
 
   letter-spacing: -1px;
 }
 
 .Page-subtitle {
-  color: var(--gray-300);
+  color: var(--page-subtitle-fg);
   font-size: 24px;
 }

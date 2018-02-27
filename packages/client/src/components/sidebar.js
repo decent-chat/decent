@@ -382,7 +382,7 @@ const store = (state, emitter) => {
 }
 
 const component = (state, emit) => {
-  return html`<aside class='Sidebar'>
+  return html`<aside class='Sidebar --on-left'>
     <section class='Sidebar-section'>
       <div class='Sidebar-section-title'>
         <h4>Servers</h4>
@@ -408,7 +408,7 @@ const component = (state, emit) => {
           return html`<div class='SessionInfo'>
             <div class='SessionInfo-text'>
               Logged in as
-              <a class='SessionInfo-usernameLink' onclick=${() => emit('pushState', `/servers/${state.params.host}/account`)}>${state.session.user.username}</a>
+              <a class='SessionInfo-username Link' onclick=${() => emit('pushState', `/servers/${state.params.host}/account`)}>${state.session.user.username}</a>
             </div>
 
             <button class='SessionInfo-button' onclick=${() => emit('sidebar.logout')}>Logout</button>

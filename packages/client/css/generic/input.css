@@ -1,9 +1,17 @@
+:root {
+  --input-fg: var(--gray-100);
+  --input-bg: var(--gray-900);
+
+  --input-border-color: var(--gray-500);
+  --input-disabled-bg: var(--gray-700);
+}
+
 .Input {
   margin-bottom: 16px;
 
   & label {
     display: block;
-    color: var(--gray-300);
+    color: var(--page-dim-fg);
 
     font-weight: bold;
     font-size: 16px;
@@ -25,16 +33,16 @@
     font-family: inherit;
     font-size: 18px;
 
-    color: var(--gray-100);
-    background: var(--gray-900);
+    color: var(--input-fg);
+    background: var(--input-bg);
 
     border: 0;
-    border-bottom: 1px solid var(--gray-500);
-    &:focus { border-color: var(--blue); }
+    border-bottom: 1px solid var(--input-border-color);
+    &:focus { border-color: var(--accent); }
 
     &[disabled] {
       cursor: not-allowed;
-      background: var(--gray-700);
+      background: var(--input-disabled-bg);
       opacity: 0.8;
     }
   }
@@ -51,16 +59,16 @@
   font-family: inherit;
   font-size: 18px;
 
-  color: var(--gray-100);
-  background: var(--gray-900);
+  color: var(--input-fg);
+  background: var(--input-bg);
 
   border: 0;
-  border-bottom: 1px solid var(--gray-500);
-  &:focus { border-color: var(--blue); }
+  border-bottom: 1px solid var(--input-border-color);
+  &:focus { border-color: var(--accent); }
 
   &[disabled] {
     cursor: not-allowed;
-    background: var(--gray-700);
-    opacity: .8;
+    background: var(--input-disabled-bg);
+    opacity: 0.8;
   }
 }
