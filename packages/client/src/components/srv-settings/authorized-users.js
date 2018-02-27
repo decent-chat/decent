@@ -163,7 +163,7 @@ const component = (state, emit) => {
       view channels, etc. until authorized again.
     </p>
 
-    <table class='AuthorizedUsers-table'>
+    <table class='AuthorizedUsers-table Table'>
       <tbody>
         ${authorizedRows}
       </tbody>
@@ -176,7 +176,7 @@ const component = (state, emit) => {
       Once you've authorized them, they will be able to.
     </p>
 
-    <table class='AuthorizedUsers-table'>
+    <table class='AuthorizedUsers-table Table'>
       <tbody>
         ${unauthorizedRows}
       </tbody>

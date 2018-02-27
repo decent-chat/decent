@@ -2,6 +2,7 @@
 @import 'generic/page.css';
 @import 'generic/input.css';
 @import 'generic/button.css';
+@import 'generic/table.css';
 
 @import 'generic/message-editor.css';
 @import 'generic/message-group.css';
@@ -81,6 +82,7 @@ body {
   animation: 3s infinite normal wiggle;
 }
 
+/* TODO: migrate all a.link elements to .Link */
 a:any-link.link, .Link {
   color: var(--blue);
   text-decoration: underline;
@@ -88,19 +90,3 @@ a:any-link.link, .Link {
 
 ::-moz-selection { background: #b3d4fc; }
 ::selection { background: #b3d4fc; }
-
-table, th, td {
-  border: 1px solid var(--gray-500);
-  border-collapse: collapse;
-
-  background: var(--gray-900);
-}
-
-th, td {
-  padding: 0 14px;
-}
-
-/* Center images properly: https://stackoverflow.com/questions/2452280/ */
-th img, td img {
-  vertical-align: top;
-}

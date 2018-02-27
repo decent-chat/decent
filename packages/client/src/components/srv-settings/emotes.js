@@ -137,7 +137,7 @@ const component = (state, emit) => {
   return html`<div class='Page EmoteSettings'>
     <h1 class='Page-title'>Emotes <span class='Page-subtitle'>on ${state.params.host}</span></h1>
 
-    <table>
+    <table class='Table'>
       <tbody>
         ${rows}
       </tbody>
