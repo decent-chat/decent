@@ -32,6 +32,4 @@
   text-align: right;
 }
 
-.MessageGroup-contents {
-  width: calc(100% - 48px - 16px);
-}
+.MessageGroup-contents {}
