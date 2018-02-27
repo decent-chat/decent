@@ -199,6 +199,12 @@ const store = (state, emitter) => {
     // Don't switch to the channel if we're already viewing it!
     if (!(state.route === '/servers/:host/channels/:channel' && state.params.channel === id)) {
       emitter.emit('pushState', `/servers/${state.params.host}/channels/${id}`)
+
+      // Mark the channel as read
+      const channel = state.sidebar.channels.find(channel => channel.id === id)
+      channel.unreadMessageCount = 0
+
+      api.post(state, `channels/${id}/mark-read`)
     }
   })
 
@@ -245,6 +251,15 @@ const store = (state, emitter) => {
       // changing the state will re-render, so no need to also emit render
       emitter.emit('pushState', `/servers/${state.params.host}`)
     } else {
+      emitter.emit('render')
+    }
+  })
+
+  emitter.on('ws.message/new', ({ message }) => {
+    const channel = state.sidebar.channels.find(channel => channel.id === message.channelID)
+
+    if (channel.id !== state.params.channel) {
+      channel.unreadMessageCount++
       emitter.emit('render')
     }
   })
