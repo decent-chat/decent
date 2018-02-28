@@ -242,13 +242,13 @@ test('PATCH /api/users/:id', t => {
       body: JSON.stringify({
         sessionID: userSessionID,
 
-        flair: 'Better than all the other test users',
+        flair: 'Best of all the test users',
         password: {old: 'password', new: 'betterpassword'},
       })
     })
 
     updatedUser = await getUser()
-    t.is(updatedUser.flair, 'Better than all the other test users')
+    t.is(updatedUser.flair, 'Best of all the test users')
     t.is(updatedUser.email, undefined)
 
     // Changing flair and permissionLevel (as admin!)
