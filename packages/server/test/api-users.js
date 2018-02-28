@@ -107,11 +107,11 @@ test('GET /api/users (with authorization)', t => {
     const { user: member, sessionID: memberSessionID } = await makeUser(server, port)
     const { user: unauthUser, sessionID: unauthSessionID } = await makeUser(server, port)
 
-    await fetch(port, '/authorize-user', {
-      method: 'POST',
+    await fetch(port, '/users/' + member.id, {
+      method: 'PATCH',
       body: JSON.stringify({
         sessionID: adminSessionID,
-        userID: member.id
+        authorized: true
       })
     })
 

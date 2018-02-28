@@ -921,24 +921,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  const authUserMiddleware = [
-    async function(request, response, next) {
-      if (await shouldUseAuthorization()) {
-        next()
-      } else {
-        response.status(400).json({
-          error: errors.AUTHORIZATION_ERROR
-        })
-      }
-    },
-
-    ...middleware.loadVarFromBody('userID'),
-    ...middleware.loadSessionID('sessionID'),
-    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-    ...middleware.requireBeAdmin('sessionUser'),
-    ...middleware.getUserFromID('userID', '_')
-  ]
-
   app.patch('/api/users/:userID', [
     ...middleware.loadVarFromParams('userID'),
     ...middleware.loadSessionID('sessionID'),
@@ -1101,54 +1083,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       response.status(200).json({})
     },
-  ])
-
-  app.post('/api/authorize-user', [
-    ...authUserMiddleware,
-
-    async function(request, response) {
-      const { userID } = request[middleware.vars]
-
-      if (await db.users.findOne({_id: userID, authorized: false})) {
-        await db.users.update({_id: userID}, {
-          $set: {authorized: true}
-        })
-
-        sendToAllSockets('user/new', {
-          user: await serialize.user(await db.users.findOne({_id: userID}))
-        })
-      }
-
-      response.status(200).json({})
-    }
-  ])
-
-  app.post('/api/deauthorize-user', [
-    ...authUserMiddleware,
-
-    async function(request, response) {
-      const { userID, sessionUser } = request[middleware.vars]
-
-      if (sessionUser._id === userID) {
-        response.status(400).json({
-          error: Object.assign({}, errors.AUTHORIZATION_ERROR, {
-            message: 'You can\'t deauthorize yourself.'
-          })
-        })
-
-        return
-      }
-
-      if (await db.users.findOne({_id: userID, authorized: true})) {
-        await db.users.update({_id: userID}, {
-          $set: {authorized: false}
-        })
-
-        sendToAllSockets('user/gone', {userID})
-      }
-
-      response.status(200).json({})
-    }
   ])
 
   app.get('/api/sessions', [
