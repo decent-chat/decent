@@ -996,11 +996,24 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         }
       }
 
-      if (typeof email !== 'undefined' && typeof email !== 'string' && email !== null) {
-        // String - an email address, hopefully. We don't verify it though.
-        return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-          message: 'email should be null, or a String.',
-        })})
+      if (typeof email !== 'undefined') {
+        if (typeof email !== 'string' && email !== null) {
+          // String - an email address, hopefully. We don't verify it though.
+          return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+            message: 'email should be null, or a String.',
+          })})
+        }
+
+        if (typeof email === 'string') {
+          email = email.toLowerCase()
+
+          if (email.length > 50) {
+            // Reject, that's rediculous,
+            return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+              message: 'If you email is actually longer than 50 characters, please tell us and we\'ll update the limit :)',
+            })})
+          }
+        }
       }
 
       if (typeof flair !== 'undefined' && flair !== null) {
