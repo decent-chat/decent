@@ -1055,7 +1055,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         }
       }
 
-      if (typeof permissionLevel !== 'undefined' && permissonLevel !== 'admin' && permissionLevel !== 'member') {
+      if (typeof permissionLevel !== 'undefined' && permissionLevel !== 'admin' && permissionLevel !== 'member') {
         // "admin" | "member"
         return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
           message: 'permissionLevel should be "admin" or "member".',
@@ -1086,8 +1086,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       } = request[middleware.vars]
 
       if (password) {
-        console.log(password)
-
         const salt = await bcrypt.genSalt()
         const passwordHash = await bcrypt.hash(password.new, salt)
 
