@@ -131,7 +131,9 @@ const component = (state, emit) => {
             return html`
               <div
                 class='Sidebar-list-item UserList-user ${user.online ? 'is-online' : 'is-offline'}'
-                title='${user.username} (${user.online ? 'Online' : 'Offline'})'
+                title='${user.username} (${user.online ? 'Online' : 'Offline'})${
+                  user.flair ? '\nFlair: ' + user.flair : ''
+                }'
               >
                 <div class='UserList-user-avatar'>
                   <img class='Avatar' src=${user.avatarURL}>
