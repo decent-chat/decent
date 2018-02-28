@@ -71,12 +71,25 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   }
 
-  const markChannelAsRead = async function(userID, channelID) {
-    await db.users.update({_id: userID}, {
+  const markChannelAsRead = async function(userObj, channelID) {
+    await db.users.update({_id: userObj._id}, {
       $set: {
         [`lastReadChannelDates.${channelID}`]: Date.now()
       }
     })
+
+    const updatedChannel = await db.channels.findOne({_id: channelID})
+
+    for (const [ socket, socketData ] of connectedSocketsMap.entries()) {
+      if (socketData.userID === userObj._id) {
+        socket.send(JSON.stringify({
+          evt: 'channel/update',
+          data: {
+            channel: await serialize.channel(updatedChannel, userObj),
+          },
+        }))
+      }
+    }
   }
 
   app.use(bodyParser.json())
@@ -377,7 +390,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       })
 
       // Sending a message should also mark the channel as read for that user:
-      await markChannelAsRead(sessionUser._id, channelID)
+      await markChannelAsRead(sessionUser, channelID)
 
       response.status(201).json({
         messageID: message._id
@@ -591,7 +604,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     ...middleware.getChannelFromID('channelID', '_'), // To verify the channel exists.
 
     async (request, response) => {
-      const { channelID, name } = request[middleware.vars]
+      const { channelID, name, sessionUser } = request[middleware.vars]
 
       if (await db.channels.findOne({name})) {
         response.status(400).json({
@@ -603,8 +616,8 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       await db.channels.update({_id: channelID}, {$set: {name}})
 
-      sendToAllSockets('channel/rename', {
-        channelID, newName: name
+      sendToAllSockets('channel/update', {
+        channel: await serialize.channel(await db.channels.findOne({_id: channelID}), sessionUser),
       })
 
       response.status(200).json({})
@@ -645,7 +658,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     async (request, response) => {
       const { sessionUser, channelID } = request[middleware.vars]
 
-      await markChannelAsRead(sessionUser._id, channelID)
+      await markChannelAsRead(sessionUser, channelID)
 
       response.status(200).json({})
     }

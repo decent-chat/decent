@@ -235,10 +235,10 @@ const store = (state, emitter) => {
     emitter.emit('render')
   })
 
-  // event: channel renamed
-  emitter.on('ws.channel/rename', ({ channelID, newName }) => {
-    const channel = state.sidebar.channels.find(c => channelID === c.id)
-    channel.name = newName
+  // event: channel updated (renamed, marked as read, etc.)
+  emitter.on('ws.channel/update', ({ channel }) => {
+    const channelIndex = state.sidebar.channels.findIndex(c => channel.id === c.id)
+    state.sidebar.channels[channelIndex] = channel
 
     emitter.emit('render')
   })
@@ -397,6 +397,23 @@ const store = (state, emitter) => {
 }
 
 const component = (state, emit) => {
+  let docTitle = state.params.host || 'Decent' // TODO: use the actual server name
+
+  if (state.params.channel && state.sidebar.channels) {
+    // We're in a channel - reflect that in document.title
+    const channel = state.sidebar.channels.find(c => c.id === state.params.channel)
+
+    if (channel) docTitle = `#${channel.name} - ${docTitle}`
+  }
+
+  const totalUnreadMessageCount = state.sidebar.channels
+    ? state.sidebar.channels.reduce((count, channel) => count + (channel.unreadMessageCount || 0), 0)
+    : 0
+
+  document.title = totalUnreadMessageCount > 0
+    ? `(${totalUnreadMessageCount}) ${docTitle}`
+    : docTitle
+
   return html`<aside class='Sidebar --on-left'>
     <section class='Sidebar-section'>
       <div class='Sidebar-section-title'>

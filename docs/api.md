@@ -486,7 +486,7 @@ Model:
 
 Related events:
 * [channel/new](#channel-new)
-* [channel/rename](#channel-rename)
+* [channel/update](#channel-update)
 * [channel/delete](#channel-delete)
 
 <a name='channel-list'></a>
@@ -553,7 +553,7 @@ May return [an error](#errors), including MUST_BE_ADMIN, NAME_ALREADY_TAKEN, and
 + **in-url** id (ID) - The ID of the channel.
 + name (name) - The new name of the channel
 
-Returns `{}` if successful, emitting [channel/rename](#channel-rename).
+Returns `{}` if successful, emitting [channel/update](#channel-update).
 
 ```js
 PATCH /api/channels/5678
@@ -583,7 +583,7 @@ DELETE /api/channels/5678
 + requires session
 + **in-url** id (ID) - The ID of the channel.
 
-Marks the channel as read (ie. sets `unreadMessageCount` to 0), returning `{}`.
+Marks the channel as read (ie. sets `unreadMessageCount` to 0), returning `{}`. Emits [channel/update](#channel-update) to all sockets authenticated to the same user that requested this endpoint (ie. to _you_).
 
 ```js
 POST /api/channels/5678/mark-read
@@ -887,10 +887,10 @@ Sent to all clients when any message is [edited](#edit-message). Passed data is 
 
 Sent to all clients when a channel is [created](#create-channel). Passed data is in the format `{ channel }`, where `channel` is a [channel](#channels) representing the new channel.
 
-<a name='channel-rename'></a>
-## channel/rename
+<a name='channel-update'></a>
+## channel/update
 
-Sent to all clients when a channel is [renamed](#rename-channel). Passed data is in the format `{ channelID, newName }`.
+Sent to all clients when a channel is updated ([renamed](#rename-channel), [marked as read](#mark-channel-as-read), etc). Passed data is in the format `{ channel }`, including `channel.unreadMessageCount` if the socket is actively [ponging sessionIDs](#pongdata).
 
 <a name='channel-delete'></a>
 ## channel/delete
