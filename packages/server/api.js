@@ -976,7 +976,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         requestFromAdmin, password, email, flair, permissionLevel, authorized,
       } = request[middleware.vars]
 
-      if (!requestFromAdmin && typeof permissionLevel !== 'undefined' || typeof authorized !== 'undefined') {
+      if (!requestFromAdmin && (typeof permissionLevel !== 'undefined' || typeof authorized !== 'undefined')) {
         // permissionLevel and authorized require an admin session to be provided!
 
         return response.status(403).json({error: Object.assign({}, errors.MUST_BE_ADMIN, {
