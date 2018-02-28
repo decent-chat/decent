@@ -1007,10 +1007,9 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         if (typeof email === 'string') {
           email = email.toLowerCase()
 
-          if (email.length > 50) {
-            // Reject, that's rediculous,
+          if (email.length > 254) {
             return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-              message: 'If you email is actually longer than 50 characters, please tell us and we\'ll update the limit :)',
+              message: 'email too long (>254 characters)',
             })})
           }
         }
