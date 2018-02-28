@@ -1021,7 +1021,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         const validOldPass = await bcrypt.compare(password.new, user.passwordHash)
 
         if (!validOldPass) {
-          // XXX: why does this cause ECONNRESET??
           return response.status(400).json({error: errors.INCORRECT_PASSWORD})
         }
 

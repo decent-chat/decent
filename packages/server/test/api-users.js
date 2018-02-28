@@ -197,7 +197,7 @@ test('PATCH /api/users/:id', t => {
     const { admin, sessionID: adminSessionID } = await makeAdmin(server, port)
 
     const getUser = () => fetch(port, '/users/' + user.id, {
-      body: JSON.stringify({sessionID: userSessionID}),
+      sessionID: userSessionID
     }).then(resp => resp.user)
 
     let updatedUser, response
@@ -233,7 +233,7 @@ test('PATCH /api/users/:id', t => {
       t.is(error.code, 'INCORRECT_PASSWORD')
 
       updatedUser = await getUser()
-      t.not(updatedUser.user.email, 'test_user@decent.chat') // Should be no-op
+      t.not(updatedUser.email, 'test_user@decent.chat') // Should be no-op
     }
 
     // Changing password and flair
