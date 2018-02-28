@@ -166,7 +166,7 @@ const component = (state, emit) => {
 
     <div class='Input --horizontal AccountSettings-input'>
       <label for='acc-settings-flair'>Flair</label>
-      <input id='acc-settings-flair' type='text' placeholder='Is awesome!' value=${state.session.user.flair || ''}/>
+      <input id='acc-settings-flair' type='text' placeholder='(None)' maxlength=32 value=${state.session.user.flair || ''}/>
     </div>
 
     <div class='AccountSettings-submit'>

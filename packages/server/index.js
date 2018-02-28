@@ -52,11 +52,11 @@ async function main(port = 3000, dbDir) {
   app.enable('trust proxy')
   if (dbDir !== main.DB_IN_MEMORY) app.use('/uploads', express.static(dbDir + '/uploads'))
   await settings.setupDefaultSettings(db.settings)
-  await attachAPI(app, {wss, db, dbDir})
+  const { util, serialize, sendToAllSockets } = await attachAPI(app, {wss, db, dbDir})
 
   await new Promise(resolve => httpServer.listen(port, resolve))
 
-  return { settings, db, app, httpServer, wss, kill: () => {
+  return { settings, db, app, httpServer, wss, sendToAllSockets, util, serialize, kill: () => {
     return Promise.all([
       p(httpServer.close),
       p(wss.close),

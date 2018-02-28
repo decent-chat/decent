@@ -996,19 +996,19 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         }
       }
 
-      if (typeof email !== 'undefined' && typeof email !== 'string') {
+      if (typeof email !== 'undefined' && typeof email !== 'string' && email !== null) {
         // String - an email address, hopefully. We don't verify it though.
         return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-          message: 'email should be a String.',
+          message: 'email should be null, or a String.',
         })})
       }
 
-      if (typeof flair !== 'undefined') {
+      if (typeof flair !== 'undefined' && flair !== null) {
         // String, max length 32.
 
         if (typeof flair !== 'string') {
           return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-            message: 'flair should be a String.',
+            message: 'flair should be null, or a String.',
           })})
         }
 
@@ -1320,6 +1320,8 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
   setInterval(pruneOldSessions, 5 * 60 * 1000) // Every 5min.
   pruneOldSessions()
+
+  return {util, serialize, sendToAllSockets}
 }
 
 Object.assign(module.exports, { DB_IN_MEMORY })

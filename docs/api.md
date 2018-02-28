@@ -793,8 +793,8 @@ The following parameters are available to both admin sessions and sessions repre
 + `password` (object; optional):
   * `new` (string) - Errors if shorter than 6 characters
   * `old` (string) - Errors if it doesn't match user's existing password
-+ `email` (string; optional) - Not public, used to generate avatar URL
-+ `flair` (string; optional) - Displayed beside username in chat, errors if longer than 32 characters
++ `email` (string | null; optional) - Not public, used to generate avatar URL
++ `flair` (string | null; optional) - Displayed beside username in chat, errors if longer than 32 characters
 
 You can provide an admin session in order to update the following, also:
 
@@ -826,10 +826,12 @@ PATCH /api/users/12
 -> {
 ->   "permissionLevel": "admin",
 ->   "authorized": true,
-->   "flair": "html computer sciencer"
+->   "flair": null
 -> }
 
 <- {}
+
+('flair: null' removes the user's flair.)
 ```
 
 <a name='check-username-available'></a>
