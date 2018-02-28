@@ -1095,11 +1095,13 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         })
       }
 
-      await db.users.update({_id: userID}, {
-        $set: {
-          authorized, email, flair, permissionLevel,
-        },
-      })
+      const $set = {}
+      if (typeof authorized !== 'undefined') $set.authorized = authorized
+      if (typeof email !== 'undefined') $set.email = email
+      if (typeof flair !== 'undefined') $set.flair = flair
+      if (typeof permissionLevel !== 'undefined') $set.permissionLevel = permissionLevel
+
+      await db.users.update({_id: userID}, {$set})
 
       sendToAllSockets('user/update', {
         user: await serialize.user(await db.users.findOne({_id: userID})),
