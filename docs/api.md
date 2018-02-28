@@ -685,12 +685,12 @@ Model:
 
   "avatarURL": string,
   "permissionLevel": "admin" | "member",
-  "flair": string, // "" by default
+  "flair": string | null,
 
   "online": boolean,
 
   "authorized": boolean, // Only present if useAuthorization is true
-  "email": string, // Only provided if this user is you; defaults to ""
+  "email": string | null;, // Only provided if the requested user is the same as the sessionID provides
 }
 ```
 
