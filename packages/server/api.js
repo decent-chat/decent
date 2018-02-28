@@ -1063,7 +1063,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     // Perform mutation
     async (request, response) => {
       const {
-        userID,
+        userID, user: oldUser,
         password, email, flair, permissionLevel, authorized,
       } = request[middleware.vars]
 
@@ -1084,9 +1084,20 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       await db.users.update({_id: userID}, {$set})
 
-      sendToAllSockets('user/update', {
-        user: await serialize.user(await db.users.findOne({_id: userID})),
-      })
+      const serializedUser = await serialize.user(await db.users.findOne({_id: userID}))
+
+      // If whether the user is authorized or not has changed, emit the
+      // respective events.
+      if (oldUser.authorized === false && authorized === true) {
+        sendToAllSockets('user/new', {user: serializedUser})
+      } else if (oldUser.authorized === true && authorized === false) {
+        sendToAllSockets('user/gone', {userID})
+      }
+
+      // If a user was deauthorized, don't send an update event.
+      if (serializedUser.authorized) {
+        sendToAllSockets('user/update', {user: serializedUser})
+      }
 
       response.status(200).json({})
     },
