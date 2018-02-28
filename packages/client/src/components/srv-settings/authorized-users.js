@@ -85,7 +85,7 @@ const component = (state, emit) => {
   const makeUserRow = (user, actionTD) => {
     const row = html`<tr data-userid=${user.id}>
       <td>
-        <img width='32' height='32' src=${user.avatarURL}/>
+        <img class='Avatar' width='32' height='32' src=${user.avatarURL}/>
       </td>
 
       <td>

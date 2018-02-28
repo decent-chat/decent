@@ -134,7 +134,7 @@ const component = (state, emit) => {
                 title='${user.username} (${user.online ? 'Online' : 'Offline'})'
               >
                 <div class='UserList-user-avatar'>
-                  <img src=${user.avatarURL}>
+                  <img class='Avatar' src=${user.avatarURL}>
                 </div>
                 <span class='UserList-user-username'>${user.username}</span>
               </div>

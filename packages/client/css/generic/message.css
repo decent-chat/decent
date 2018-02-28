@@ -41,6 +41,10 @@
   vertical-align: -.4em;
 }
 
+.Message.\--big-emotes .Message-emote {
+  width: 4rem;
+}
+
 /* note: this animation name is used in the JavaScript code,
    so take care if renaming it */
 @keyframes jumped-message {

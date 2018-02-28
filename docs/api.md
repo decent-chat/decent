@@ -112,6 +112,8 @@ Model:
 ```
 
 ### Retrieve all settings [GET /api/settings]
+* never requires session
+
 Returns `{ settings }`, where `settings` is an object representing server-specific settings.
 
 ```js
@@ -165,6 +167,8 @@ Model:
 ```
 
 ### Retrieve all properties [GET /api/properties]
+* never requires session
+
 Returns `{ properties }`, where `properties` is an object representing server-specific properties.
 
 ```js

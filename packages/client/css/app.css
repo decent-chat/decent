@@ -7,6 +7,7 @@
 @import 'generic/message-editor.css';
 @import 'generic/message-group.css';
 @import 'generic/message.css';
+@import 'generic/avatar.css';
 
 /* One-time use or intended for use in a specific position in the document */
 @import 'specific/sidebar.css';
