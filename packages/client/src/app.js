@@ -116,7 +116,8 @@ app.use((state, emitter) => {
         break handleHostChange
       }
 
-      const { properties: { useSecure, useAuthorization, authorizationMessage } } = await api.get(state, 'properties')
+      const { properties: { useSecure, useAuthorization } } = await api.get(state, 'properties')
+      const { settings: { authorizationMessage } } = await api.get(state, 'settings')
 
       state.serverRequiresAuthorization = useAuthorization
       state.secure = useSecure
