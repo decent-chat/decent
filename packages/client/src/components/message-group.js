@@ -45,8 +45,11 @@ const component = (state, emit, group) => {
       </div>
 
       ${group.messages.map(msg => {
-        const el = html`<div class='Message' id=${'msg-' + msg.id}>
-          ${raw(mrk(state)(msg.text).html())}
+        const mrked = mrk(state)(msg.text)
+        const bigEmotes = mrked.tokens.length <= 16 && !mrked.tokens.find(t => t.name !== 'emote')
+
+        const el = html`<div class='Message ${bigEmotes ? '--big-emotes' : ''}' id=${'msg-' + msg.id}>
+          ${raw(mrked.html())}
         </div>`
 
         el.isSameNode = k => k.id === el.id
