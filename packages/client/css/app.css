@@ -40,6 +40,7 @@
   --accent: var(--blue);
   --unread-dot-color: var(--red);
   --unread-dot-border-color: var(--gray-900);
+  --avatar-borderRadius: 5%;
 }
 
 body {

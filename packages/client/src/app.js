@@ -156,14 +156,18 @@ app.use((state, emitter) => {
   })
 })
 
-app.use(messages.store)
-app.use(sidebar.store)
-app.use(userList.store)
-app.use(accountSettings.store)
+const components = [
+  messages, messageEditor, sidebar, userList, accountSettings,
+  ...Object.values(srvSettings), ...Object.values(prefs),
+]
 
-for (const [ name, s ] of Object.entries(Object.assign({}, prefs, srvSettings))) {
+for (const s of components) {
   if (s.store) {
     app.use(s.store)
+  }
+
+  if (s.onload) {
+    app.emitter.on('DOMContentLoaded', s.onload)
   }
 }
 

@@ -143,12 +143,12 @@ const component = (state, emit) => {
   return html`<div class='Page AccountSettings'>
     <h1 class='Page-title AccountSettings-title'>Account settings <span class='Page-subtitle'>for ${state.params.host}</span></h1>
 
-    <div class='Input AccountSettings-input'>
+    <div class='Input --horizontal AccountSettings-input'>
       <label for='acc-settings-username'>Username</label>
       <input id='acc-settings-username' type='text' disabled value=${state.session.user.username}/>
     </div>
 
-    <div class='Input AccountSettings-input --avatar'>
+    <div class='Input --horizontal AccountSettings-input --avatar'>
       <label for='acc-settings-email'>Avatar</label>
 
       <input id='acc-settings-email' type='email' placeholder='Email address' value=${state.session.user.email || ''}/>

@@ -11,19 +11,6 @@
 }
 
 .AccountSettings-input {
-  display: flex;
-  flex-direction: row;
-
-  & > label {
-    width: 150px;
-    line-height: 50px;
-
-    margin: 0;
-    margin-right: 14px;
-
-    text-align: right;
-  }
-
   & > p {
     line-height: 1.6;
     margin-left: 13px;
@@ -54,6 +41,15 @@
     }
   }
 
+  & > .save {
+    margin-left: 24px;
+    padding: 14px 24px;
+
+    font-size: 18px;
+    background: var(--green);
+  }
+}
+
 .AccountSettings-submit {
   display: block;
   margin: 80px 0 20px auto;
@@ -62,15 +58,6 @@
 
 .AccountSettings-submit-status {
   color: var(--red);
-}
-
-  & > .save {
-    margin-left: 24px;
-    padding: 14px 24px;
-
-    font-size: 18px;
-    background: var(--green);
-  }
 }
 
 .AccountSettings-loginSessionsTitle {
