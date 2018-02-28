@@ -152,7 +152,7 @@ const component = (state, emit) => {
       <label for='acc-settings-email'>Avatar</label>
 
       <input id='acc-settings-email' type='email' placeholder='Email address' value=${state.session.user.email || ''}/>
-      <img src=${state.session.user.avatarURL}/>
+      <img class='Avatar' src=${state.session.user.avatarURL}/>
     </div>
 
     <p>

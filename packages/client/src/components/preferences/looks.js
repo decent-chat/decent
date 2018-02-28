@@ -36,7 +36,7 @@ const component = (state, emit) => {
 }
 
 const apply = looks => {
-  document.body.style.setProperty('--avatar-borderRadius', looks.circleAvatars ? '100%' : '5%')
+  document.body.style.setProperty('--avatar-border-radius', looks.circleAvatars ? '100%' : '5%')
 }
 
 module.exports = {

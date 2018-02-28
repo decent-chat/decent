@@ -7,6 +7,7 @@
 @import 'generic/message-editor.css';
 @import 'generic/message-group.css';
 @import 'generic/message.css';
+@import 'generic/avatar.css';
 
 /* One-time use or intended for use in a specific position in the document */
 @import 'specific/sidebar.css';
@@ -40,7 +41,6 @@
   --accent: var(--blue);
   --unread-dot-color: var(--red);
   --unread-dot-border-color: var(--gray-900);
-  --avatar-borderRadius: 5%;
 }
 
 body {

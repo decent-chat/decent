@@ -37,7 +37,7 @@ const component = (state, emit, group) => {
   }
 
   return html`<div class='MessageGroup' id=${group.id}>
-    <img class='MessageGroup-authorAvatar' src=${group.authorAvatarURL}/>
+    <img class='Avatar MessageGroup-authorAvatar' src=${group.authorAvatarURL}/>
     <div class='MessageGroup-contents'>
       <div class='MessageGroup-info'>
         <div class='MessageGroup-authorUsername'>${group.authorUsername}</div>
