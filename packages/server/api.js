@@ -1018,7 +1018,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         }
 
         // Check that 'old' is actually the old password of this user.
-        const validOldPass = await bcrypt.compare(password.new, user.passwordHash)
+        const validOldPass = await bcrypt.compare(password.old, user.passwordHash)
 
         if (!validOldPass) {
           return response.status(400).json({error: errors.INCORRECT_PASSWORD})
