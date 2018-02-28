@@ -840,13 +840,13 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         return
       }
 
-      const salt = await bcrypt.genSalt()
-      const passwordHash = await bcrypt.hash(password, salt)
+      const passwordHash = await bcrypt.hash(password)
 
       const user = await db.users.insert({
         username,
-        passwordHash, salt,
+        passwordHash,
         email: null,
+        flair: null,
         permissionLevel: 'member',
         authorized: false,
         lastReadChannelDates: {}
@@ -1050,8 +1050,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       } = request[middleware.vars]
 
       if (password) {
-        const salt = await bcrypt.genSalt()
-        const passwordHash = await bcrypt.hash(password.new, salt)
+        const passwordHash = await bcrypt.hash(password.new)
 
         await db.users.update({_id: userID}, {
           $set: { password: passwordHash },
@@ -1109,7 +1108,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
     async (request, response) => {
       const { username, password, user } = request[middleware.vars]
-      const { salt, passwordHash } = user
+      const { passwordHash } = user
 
       if (await bcrypt.compare(password, passwordHash)) {
         const session = await db.sessions.insert({
