@@ -59,7 +59,7 @@ test('serialize.user', t => {
     }
 
     const serialized = await serialize.user(user)
-    const baseProperties = ['id', 'username', 'avatarURL', 'permissionLevel', 'online']
+    const baseProperties = ['id', 'username', 'flair', 'avatarURL', 'permissionLevel', 'online']
     t.deepEqual(Object.keys(serialized), baseProperties)
     t.is(serialized.id, 'user1')
     t.is(serialized.username, 'user')
