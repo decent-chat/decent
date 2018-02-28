@@ -506,10 +506,10 @@ const component = (state, emit) => {
 
       <div class='Sidebar-list'>
         ${[
-          'Looks',
+          'Appearance',
         ].filter(Boolean).map(name => {
           const id = {
-            'Looks': 'looks',
+            'Appearance': 'appearance',
           }[name]
 
           return html`<a
