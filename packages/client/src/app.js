@@ -20,7 +20,7 @@ const srvSettings = {
   authorizedUsers: require('./components/srv-settings/authorized-users'),
 }
 const prefs = {
-  looks: require('./components/preferences/looks'),
+  appearance: require('./components/preferences/appearance'),
 }
 
 // create app
