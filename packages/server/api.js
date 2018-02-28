@@ -764,26 +764,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  app.post('/api/account-settings', [
-    ...middleware.loadSessionID('sessionID'),
-    ...middleware.getSessionUserFromID('sessionID', 'user'),
-    ...middleware.loadVarFromBody('email'),
-
-    async (request, response) => {
-      const { email, user } = request[middleware.vars]
-
-      await db.users.update({ _id: user._id }, {
-        $set: {
-          email,
-        }
-      })
-
-      response.status(200).json({
-        avatarURL: emailToAvatarURL(email),
-      })
-    }
-  ])
-
   app.get('/api/users', [
     ...middleware.runIfCondition(() => shouldUseAuthorization(), [
       ...middleware.loadSessionID('sessionID', false),
