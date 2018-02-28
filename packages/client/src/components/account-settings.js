@@ -65,17 +65,22 @@ const component = (state, emit) => {
 
   const save = async () => {
     const email = document.getElementById('acc-settings-email').value.trim() || null
+    const flair = document.getElementById('acc-settings-flair').value.trim() || null
     const statusEl = document.querySelector(`.AccountSettings-submit-status`)
 
     // update if unchanged
-    if (email !== state.session.user.email) {
+    if (email !== state.session.user.email || flair !== state.session.user.flair) {
       statusEl.innerText = 'Saving...'
 
       try {
-        const { avatarURL } = await api.post(state, 'account-settings', {email})
+        await api.patch(state, `users/${state.session.user.id}`, {
+          email, flair
+        })
+
+        const { user: { avatarURL } } = await api.get(state, `users/${state.session.user.id}`)
 
         Object.assign(state.session.user, {
-          email, avatarURL,
+          email, avatarURL, flair,
         })
 
         emit('render')
@@ -158,6 +163,11 @@ const component = (state, emit) => {
     <p>
       We use <a class='Link' href='https://www.libravatar.org/'>Libravatar</a> for avatars, which falls back to Gravatar.
     </p>
+
+    <div class='Input --horizontal AccountSettings-input'>
+      <label for='acc-settings-flair'>Flair</label>
+      <input id='acc-settings-flair' type='text' placeholder='Is awesome!' value=${state.session.user.flair || ''}/>
+    </div>
 
     <div class='AccountSettings-submit'>
       <span class='AccountSettings-submit-status'></span>
