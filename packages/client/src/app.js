@@ -19,6 +19,9 @@ const srvSettings = {
   emotes: require('./components/srv-settings/emotes'),
   authorizedUsers: require('./components/srv-settings/authorized-users'),
 }
+const prefs = {
+  looks: require('./components/preferences/looks'),
+}
 
 // create app
 const app = choo()
@@ -158,7 +161,7 @@ app.use(sidebar.store)
 app.use(userList.store)
 app.use(accountSettings.store)
 
-for (const [ name, s ] of Object.entries(srvSettings)) {
+for (const [ name, s ] of Object.entries(Object.assign({}, prefs, srvSettings))) {
   if (s.store) {
     app.use(s.store)
   }
@@ -240,6 +243,20 @@ for (const [ name, s ] of Object.entries(srvSettings)) {
       ${sidebar.component(state, emit)}
       <main>
         ${srvSettings[state.params.setting].component(state, emit)}
+      </main>
+    </div>`
+  })
+
+  // preferences page
+  app.route('/servers/:host/prefs/:pref', (state, emit) => {
+    if (!prefs[state.params.pref]) {
+      return notFound(state, emit)
+    }
+
+    return html`<div id='app'>
+      ${sidebar.component(state, emit)}
+      <main>
+        ${prefs[state.params.pref].component(state, emit)}
       </main>
     </div>`
   })

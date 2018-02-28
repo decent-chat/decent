@@ -498,6 +498,29 @@ const component = (state, emit) => {
         })}
       </div>
     </section>` : html`<span></span>`}
+
+    <section class='Sidebar-section'>
+      <div class='Sidebar-section-title'>
+        <h4>Preferences</h4>
+      </div>
+
+      <div class='Sidebar-list'>
+        ${[
+          'Looks',
+        ].filter(Boolean).map(name => {
+          const id = {
+            'Looks': 'looks',
+          }[name]
+
+          return html`<a
+            class='Sidebar-list-item --icon-setting ${(state.params.pref || null) === id ? 'is-active' : ''}'
+            onclick=${() => emit('pushState', `/servers/${state.params.host}/prefs/${id}`)}>
+
+            ${name}
+          </a>`
+        })}
+      </div>
+    </section>
   </aside>`
 }
 
