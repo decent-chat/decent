@@ -1,0 +1,7 @@
+:root {
+  --avatar-border-radius: 5%;
+}
+
+.Avatar {
+  border-radius: var(--avatar-border-radius);
+}

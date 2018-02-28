@@ -46,6 +46,25 @@
       opacity: 0.8;
     }
   }
+
+  &.\--horizontal {
+    display: flex;
+    flex-direction: row;
+
+    & > label {
+      width: 150px;
+      line-height: 50px;
+
+      margin: 0;
+      margin-right: 14px;
+
+      text-align: right;
+    }
+
+    & > input[type=checkbox] {
+      width: initial;
+    }
+  }
 }
 
 .Textarea {
