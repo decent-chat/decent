@@ -21,7 +21,8 @@ async function fetchHelper(state, path, fetchConfig = {}) {
   }
 
   const protocol = secure ? 'https://' : '//'
-  const result = await fetch(protocol + host + '/api/' + path, fetchConfig)
+  const endURL = protocol + host + '/api/' + path
+  const result = await fetch(endURL, fetchConfig)
     .then(res => res.json())
 
   // if we get an error object, throw
@@ -38,6 +39,9 @@ async function fetchHelper(state, path, fetchConfig = {}) {
     throw Object.assign(new Error(result.error.message), {
       code: result.error.code,
       data: result,
+      requestPath: path,
+      requestFetchConfig: fetchConfig,
+      requestEndURL: endURL
     })
   }
 
@@ -68,6 +72,16 @@ module.exports = {
   post(state, path, data = {}) {
     return fetchHelper(state, path, {
       method: 'post',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+  },
+
+  patch(state, path, data = {}) {
+    return fetchHelper(state, path, {
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'
       },

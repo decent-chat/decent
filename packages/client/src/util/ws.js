@@ -45,7 +45,9 @@ class WS extends Nanobus {
       this.socket.addEventListener('message', event => {
         const { evt, data } = JSON.parse(event.data)
 
-        console.debug('<-', evt, data)
+        if (evt !== 'pingdata') {
+          console.debug('<-', evt, data)
+        }
 
         // pass socket messages over to this nanobus
         this.emit(evt, data)
@@ -88,7 +90,9 @@ class WS extends Nanobus {
   send(evt, data) {
     const payload = JSON.stringify({ evt, data })
 
-    console.debug('->', evt, data)
+    if (evt !== 'pongdata') {
+      console.debug('->', evt, data)
+    }
 
     this.socket.send(payload)
   }
