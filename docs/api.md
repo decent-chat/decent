@@ -745,7 +745,7 @@ GET /api/users?sessionID=adminsid123
 + `username` ([name](#names)) - Must be unique
 + `password` (string) - Errors if shorter than 6 characters
 
-Responds with `{ user }` if successful, where `user` is the new user object. Note the given password is passed as a plain string and is stored in the database as a bcrypt-hashed and salted string (and not in any plaintext form). Log in with [POST /api/sessions](#login).
+Responds with `{ user }` if successful, where `user` is the new user object. If the server does not [require authorization](#authorization), [user/new](#user-new) is emitted. Note the given password is passed as a plain string and is stored in the database as a bcrypt-hashed and salted string (and not in any plaintext form). Log in with [POST /api/sessions](#login).
 
 ```js
 POST /api/users
@@ -792,9 +792,9 @@ The following parameters are available to both admin sessions and sessions repre
 
 + `password` (object; optional):
   * `new` (string) - Errors if shorter than 6 characters
-  * `old` (string)
-+ `email` (string; optional) - Not public
-+ `flair` (string; optional) - Displayed beside username in chat
+  * `old` (string) - Errors if it doesn't match user's existing password
++ `email` (string; optional) - Not public, used to generate avatar URL
++ `flair` (string; optional) - Displayed beside username in chat, errors if longer than 32 characters
 
 You can provide an admin session in order to update the following, also:
 
