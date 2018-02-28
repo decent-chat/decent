@@ -99,6 +99,18 @@ const store = (state, emitter) => {
       }
     }
   })
+
+  emitter.on('ws.user/update', data => {
+    if (state.userList.users) {
+      const index = state.userList.users.findIndex(u => u.id === data.user.id)
+
+      if (index >= 0) {
+        state.userList.users.splice(index, 1)
+        state.userList.users.push(data.user)
+        emitter.emit('render')
+      }
+    }
+  })
 }
 
 const component = (state, emit) => {
