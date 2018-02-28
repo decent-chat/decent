@@ -695,8 +695,11 @@ Model:
 ```
 
 Related events:
+* [user/new](#user-new)
 * [user/online](#user-online)
-* [user/offline](#cuser-offline)
+* [user/offline](#user-offline)
+* [user/gone](#user-gone)
+* [user/update](#user-update)
 
 <a name='user-list'></a>
 ### Fetch users [GET /api/users]
