@@ -235,10 +235,10 @@ const store = (state, emitter) => {
     emitter.emit('render')
   })
 
-  // event: channel renamed
-  emitter.on('ws.channel/rename', ({ channelID, newName }) => {
-    const channel = state.sidebar.channels.find(c => channelID === c.id)
-    channel.name = newName
+  // event: channel updated (renamed, marked as read, etc.)
+  emitter.on('ws.channel/update', ({ channel }) => {
+    const channelIndex = state.sidebar.channels.findIndex(c => channel.id === c.id)
+    state.sidebar.channels[channelIndex] = channel
 
     emitter.emit('render')
   })
