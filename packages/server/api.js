@@ -846,6 +846,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         username,
         passwordHash,
         email: null,
+        flair: null,
         permissionLevel: 'member',
         authorized: false,
         lastReadChannelDates: {}
