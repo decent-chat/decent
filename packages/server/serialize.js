@@ -9,6 +9,7 @@ module.exports = function makeSerializers({util, db}) {
       id: m._id,
       authorUsername: m.authorUsername,
       authorID: m.authorID,
+      authorFlair: m.authorFlair || '',
       authorAvatarURL: emailToAvatarURL(m.authorEmail || m.authorID),
       text: m.text,
       date: m.date,
