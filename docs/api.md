@@ -681,12 +681,12 @@ Model:
 
   "avatarURL": string,
   "permissionLevel": "admin" | "member",
-  "flair": string,
+  "flair": string, // "" by default
 
   "online": boolean,
 
   "authorized": boolean, // Only present if useAuthorization is true
-  "email": string, // Only provided if this user is you
+  "email": string, // Only provided if this user is you; defaults to ""
 }
 ```
 
@@ -792,12 +792,12 @@ The following parameters are available to both admin sessions and sessions repre
 + `email` (string; optional) - Not public
 + `flair` (string; optional) - Displayed beside username in chat
 
-You can also provide an admin session in order to update the following:
+You can provide an admin session in order to update the following, also:
 
 + `permissionLevel`: ("admin" or "member"; optional)
 + `authorized`: (boolean; optional) - Errors (`AUTHORIZATION_ERROR`) if the server does not [require authorization](#authorization)
 
-Returns `{}` and applies changes, assuming a valid session for this user (or an admin) is provided and no errors occur.
+Returns `{}` and applies changes, assuming a valid session for this user (or an admin) is provided and no errors occur. Also emits [user/update](#user-update).
 
 ```js
 PATCH /api/users/1
@@ -904,6 +904,11 @@ Sent to all clients when a user becomes online. This is whenever a socket [tells
 ## user/offline
 
 Sent to all clients when a user becomes offline. This is whenever the last socket of a user who is online terminates. Passed data is in the format `{ userID }`.
+
+<a name='user-update'></a>
+## user/update
+
+Sent to all clients when a user is mutated using [PATCH /api/users/:userID](#update-user). Passed data is in the format `{ user }`.
 
 <a name='emote-new'></a>
 ## emote/new

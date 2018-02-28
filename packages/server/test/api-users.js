@@ -152,19 +152,19 @@ test('GET /api/users (with authorization)', t => {
   })
 })
 
-test('GET /api/user/:id', t => {
+test('GET /api/users/:id', t => {
   return testWithServer(portForApiUserTests++, async ({ server, port }) => {
     const { user: { id: userID }, sessionID } = await makeUser(server, port)
 
-    const response = await fetch(port, '/user/' + userID)
+    const response = await fetch(port, '/users/' + userID)
     t.deepEqual(Object.keys(response), ['user'])
     t.is(response.user.id, userID)
 
-    const response2 = await fetch(port, `/user/${userID}?sessionID=${sessionID}`)
+    const response2 = await fetch(port, `/users/${userID}?sessionID=${sessionID}`)
     t.is(response2.user.email, null)
 
     try {
-      await fetch(port, '/user/a')
+      await fetch(port, '/users/a')
       t.fail('Could fetch user that does not exist')
     } catch (error) {
       t.is(error.code, 'NOT_FOUND')
@@ -188,5 +188,82 @@ test('GET /api/username-available/:username', t => {
     } catch (error) {
       t.is(error.code, 'INVALID_NAME')
     }
+  })
+})
+
+test('PATCH /api/users/:id', t => {
+  return testWithServer(portForApiUserTests++, async ({ server, port }) => {
+    const { user, sessionID: userSessionID } = await makeUser(server, port, 'test_user', 'password')
+    const { admin, sessionID: adminSessionID } = await makeAdmin(server, port)
+
+    const getUser = () => fetch(port, '/users/' + user.id, {
+      body: JSON.stringify({sessionID: userSessionID}),
+    }).then(resp => resp.user)
+
+    let updatedUser, response
+
+    // Attempting without sessionID
+    try {
+      await fetch(port, `/users/${user.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          email: 'test_user@decent.chat',
+        })
+      })
+
+      t.fail()
+    } catch (error) {
+      t.is(error.code, 'INCOMPLETE_PARAMETERS')
+    }
+
+    // Changing password (incorrectly)
+    try {
+      await fetch(port, `/users/${user.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          sessionID: userSessionID,
+
+          email: 'test_user@decent.chat', // The entire request should be a no-op if anything fails
+          password: {old: 'wrong', new: 'betterpassword'},
+        })
+      })
+
+      t.fail()
+    } catch (error) {
+      t.is(error.code, 'INCORRECT_PASSWORD')
+
+      updatedUser = await getUser()
+      t.not(updatedUser.user.email, 'test_user@decent.chat') // Should be no-op
+    }
+
+    // Changing password and flair
+    await fetch(port, `/users/${user.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        sessionID: userSessionID,
+
+        flair: 'Better than all the other test users',
+        password: {old: 'password', new: 'betterpassword'},
+      })
+    })
+
+    updatedUser = await getUser()
+    t.is(updatedUser.flair, 'Better than all the other test users')
+    t.is(updatedUser.email, undefined)
+
+    // Changing flair and permissionLevel (as admin!)
+    await fetch(port, `/users/${user.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        sessionID: adminSessionID,
+
+        flair: 'Best admin',
+        permissionLevel: 'admin',
+      })
+    })
+
+    updatedUser = await getUser()
+    t.is(updatedUser.flair, 'Best admin')
+    t.is(updatedUser.permissionLevel, 'admin')
   })
 })

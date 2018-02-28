@@ -892,7 +892,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  app.get('/api/user/:userID', [
+  app.get('/api/users/:userID', [
     ...middleware.loadVarFromParams('userID'),
     ...middleware.loadSessionID('sessionID', false),
     ...middleware.runIfVarExists('sessionID',
@@ -956,6 +956,160 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     ...middleware.requireBeAdmin('sessionUser'),
     ...middleware.getUserFromID('userID', '_')
   ]
+
+  app.patch('/api/users/:userID', [
+    ...middleware.loadVarFromParams('userID'),
+    ...middleware.loadSessionID('sessionID'),
+
+    ...middleware.getUserFromID('userID', 'user'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+
+    // Session-check
+    async (request, response, next) => {
+      const { user, sessionUser } = request[middleware.vars]
+
+      if (sessionUser.permissionLevel === 'admin') {
+        request[middleware.vars].requestFromAdmin = true
+        next()
+      } else if (user.id === sessionUser.id) {
+        request[middleware.vars].requestFromAdmin = false
+        next()
+      } else {
+        response.status(403).json({
+          error: Object.assign({}, errors.NOT_YOURS, {message: 'You cannot modify someone else\'s data.'})
+        })
+      }
+    },
+
+    ...middleware.loadVarFromQueryOrBody('password', false),
+    ...middleware.loadVarFromQueryOrBody('email', false),
+    ...middleware.loadVarFromQueryOrBody('flair', false),
+    ...middleware.loadVarFromQueryOrBody('permissionLevel', false),
+    ...middleware.loadVarFromQueryOrBody('authorized', false),
+
+    // Typecheck/permission-check
+    async (request, response, next) => {
+      const {
+        user, sessionUser,
+        requestFromAdmin, password, email, flair, permissionLevel, authorized,
+      } = request[middleware.vars]
+
+      if (!requestFromAdmin && typeof permissionLevel !== 'undefined' || typeof authorized !== 'undefined') {
+        // permissionLevel and authorized require an admin session to be provided!
+
+        return response.status(403).json({error: Object.assign({}, errors.MUST_BE_ADMIN, {
+          message: 'permissionLevel/authorized cannot be changed without an admin session',
+        })})
+      }
+
+      if (typeof password !== 'undefined') {
+        // { old: String, new: String }
+
+        if (typeof password.old !== 'string') {
+          return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+            message: 'password.old should be a String.',
+          })})
+        }
+
+        if (typeof password.new !== 'string') {
+          return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+            message: 'password.new should be a String.',
+          })})
+        }
+
+        // Check that 'old' is actually the old password of this user.
+        const validOldPass = await bcrypt.compare(password.new, user.passwordHash)
+
+        if (!validOldPass) {
+          // XXX: why does this cause ECONNRESET??
+          return response.status(400).json({error: errors.INCORRECT_PASSWORD})
+        }
+
+        // Check that 'new' is long enough.
+        if (password.new.length < 6) {
+          return response.status(400).json({
+            error: errors.SHORT_PASSWORD
+          })
+        }
+      }
+
+      if (typeof email !== 'undefined' && typeof email !== 'string') {
+        // String - an email address, hopefully. We don't verify it though.
+        return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+          message: 'email should be a String.',
+        })})
+      }
+
+      if (typeof flair !== 'undefined') {
+        // String, max length 32.
+
+        if (typeof flair !== 'string') {
+          return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+            message: 'flair should be a String.',
+          })})
+        }
+
+        if (flair.length > 32) {
+          return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+            message: 'flair should not be longer than 32 characters.',
+          })})
+        }
+      }
+
+      if (typeof permissionLevel !== 'undefined' && permissonLevel !== 'admin' && permissionLevel !== 'member') {
+        // "admin" | "member"
+        return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+          message: 'permissionLevel should be "admin" or "member".',
+        })})
+      }
+
+      if (typeof authorized !== 'undefined') {
+        if (!await shouldUseAuthorization()) {
+          return response.status(400).json({error: errors.AUTHORIZATION_ERROR})
+        }
+
+        if (typeof authorized !== 'boolean') {
+          // Boolean.
+          return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+            message: 'authorized should be a Boolean.',
+          })})
+        }
+      }
+
+      next()
+    },
+
+    // Perform mutation
+    async (request, response) => {
+      const {
+        userID,
+        password, email, flair, permissionLevel, authorized,
+      } = request[middleware.vars]
+
+      if (password) {
+        console.log(password)
+
+        const salt = await bcrypt.genSalt()
+        const passwordHash = await bcrypt.hash(password.new, salt)
+
+        await db.users.update({_id: userID}, {
+          $set: { password: passwordHash },
+        })
+      }
+
+      await db.users.update({_id: userID}, {
+        $set: {
+          authorized, email, flair, permissionLevel,
+        },
+      })
+
+      sendToAllSockets('user/update', {
+        user: await serialize.user(await db.users.findOne({_id: userID})),
+      })
+
+      response.status(200).json({})
+    },
+  ])
 
   app.post('/api/authorize-user', [
     ...authUserMiddleware,
