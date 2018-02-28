@@ -41,7 +41,9 @@ const component = (state, emit, group) => {
     <div class='MessageGroup-contents'>
       <div class='MessageGroup-info'>
         <div class='MessageGroup-authorUsername'>${group.authorUsername}</div>
-        <div class='MessageGroup-authorFlair'>Flair</div>
+        ${group.authorFlair ? html`
+          <div class='MessageGroup-authorFlair'>${group.authorFlair}</div>
+        ` : ''}
         ${timeEl(group.messages[0].date)}
       </div>
 
