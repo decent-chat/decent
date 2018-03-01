@@ -1,8 +1,8 @@
 .Table, .Table th, .Table td {
-  border: 1px solid var(--gray-500);
+  border: 1px solid var(--table-border-color, var(--gray-500));
   border-collapse: collapse;
 
-  background: var(--gray-900);
+  background: var(--table-bg, var(--gray-900));
 }
 
 .Table th, .Table td {

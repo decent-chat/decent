@@ -15,7 +15,7 @@
   transform: translate(-50%, -50%);
   max-width: calc(100% - 48px);
 
-  background: var(--gray-900);
+  background: var(--modal-bg);
   border-radius: 4px;
   overflow: hidden;
 

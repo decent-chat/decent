@@ -1,5 +1,5 @@
 .AccountSettings {
-  background: var(--gray-900);
+  background: var(--page-alt-bg);
   max-width: 700px;
 
   padding-right: 80px;
@@ -35,7 +35,7 @@
       color: var(--gray-300);
 
       & a {
-        color: var(--gray-100);
+        color: var(--page-dim-fg);
       }
     }
   }
@@ -66,14 +66,14 @@
 }
 
 .AccountSettings-sessionID {
-  color: var(--gray-100);
+  color: var(--page-dim-fg);
   font-family: monospace;
   white-space: nowrap;
   filter: blur(5px);
 
   &:hover {
     filter: blur(0);
-    color: var(--gray-300);
+    color: var(--page-fg);
     transition: filter 300ms, color 300ms;
   }
 }

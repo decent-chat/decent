@@ -34,7 +34,7 @@
   &.\--minor {
     margin-left: 8px;
 
-    background: var(--gray-700);
+    background: var(--page-bg);
     color: var(--gray-300);
 
     &:hover {
