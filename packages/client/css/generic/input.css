@@ -51,7 +51,7 @@
     display: flex;
     flex-direction: row;
 
-    & > label {
+    & label {
       width: 150px;
       line-height: 50px;
 
@@ -61,8 +61,13 @@
       text-align: right;
     }
 
-    & > input[type=checkbox] {
+    & input[type=checkbox] {
       width: initial;
+    }
+
+    & select {
+      height: 32px;
+      margin-top: 9px;
     }
   }
 }

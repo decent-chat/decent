@@ -176,7 +176,7 @@ const component = (state, emit) => {
           class='Button --red'
           onclick=${() => emit('accountSettings.deleteAllSessions')}
         >Delete all login sessions</button></p>
-        <table>
+        <table class='Table'>
           <tbody>
             ${sessionRows}
           </tbody>

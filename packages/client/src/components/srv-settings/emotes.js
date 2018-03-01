@@ -143,6 +143,8 @@ const component = (state, emit) => {
       </tbody>
     </table>
 
+    <br/>
+
     <div class='submit'>
       <button class='Button' onclick=${addEmote}>Add</button>
     </div>
