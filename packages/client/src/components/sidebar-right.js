@@ -1,17 +1,30 @@
 const html = require('choo/html')
-const api = require('../util/api')
+const { svg, api } = require('../util')
+const messageGroup = require('./message-group')
 
 const store = (state, emitter) => {
-  const reset = () => state.userList = {
-    users: null,
-    fetching: false,
-    oldHost: null
+  const reset = () => {
+    state.sidebarRight = {tab: 'users'}
+
+    state.userList = {
+      users: null,
+      fetching: false,
+      oldHost: null,
+    }
+
+    state.mentions = {} // TODO
+
+    state.pins = {fetched: false, fetching: false, messages: []}
   }
 
   reset()
 
   emitter.on('route', () => {
     if (state.params.host && state.params.host !== state.userList.oldHost) {
+      state.pins.fetched = false
+      state.pins.fetching = false
+      state.pins.messages = []
+
       emitter.emit('userlist.fetch')
     }
   })
@@ -111,15 +124,24 @@ const store = (state, emitter) => {
       }
     }
   })
+
+  emitter.on('ws.channel/pins/add', ({ message }) => {
+    state.pins.messages.push(message)
+    emitter.emit('render')
+  })
+
+  emitter.on('ws.channel/pins/remove', ({ messageID }) => {
+    state.pins.messages = state.pins.messages.filter(m => m.id !== messageID)
+    emitter.emit('render')
+  })
 }
 
 const component = (state, emit) => {
-  return html`<aside class='Sidebar --on-right'>
-    <section class='Sidebar-section'>
-      <div class='Sidebar-section-title'>
-        <h4>Users</h4>
-      </div>
-      ${state.userList.users ? html`
+  let content = document.createTextNode('')
+
+  switch (state.sidebarRight.tab) {
+    case 'users':
+      content = state.userList.users ? html`
         <div class='Sidebar-list UserList'>
           ${state.userList.users.slice().sort((a, b) => {
             if (a.online && !b.online) {
@@ -143,9 +165,7 @@ const component = (state, emit) => {
             return html`
               <div
                 class='Sidebar-list-item UserList-user ${user.online ? 'is-online' : 'is-offline'}'
-                title='${user.username} (${user.online ? 'Online' : 'Offline'})${
-                  user.flair ? '\nFlair: ' + user.flair : ''
-                }'
+                title='${user.username}${user.flair ? ` {${user.flair}}` : ''} (${user.online ? 'Online' : 'Offline'})'
               >
                 <div class='UserList-user-avatar'>
                   <img class='Avatar' src=${user.avatarURL}>
@@ -155,11 +175,91 @@ const component = (state, emit) => {
             `
           })}
         </div>
-      ` : state.userList.fetching ? html`
-        <div class='Sidebar-section-content'>Loading.</div>
       ` : html`
-        <div class='Sidebar-section-content'>User list not fetched.</div>
-      `}
+        <div class='Sidebar-section-content Loading'></div>
+      `
+
+      break
+
+    case 'mentions': break // TODO
+
+    case 'pins':
+      if (state.pins.fetched === false && state.pins.fetching === false) {
+        state.pins.fetching = true
+
+        api.get(state, `channels/${state.params.channel}/pins`).then(({ pins }) => {
+          state.pins.fetched = true
+          state.pins.fetching = false
+          state.pins.messages = pins
+
+          emit('render')
+        })
+      }
+
+      content = state.pins.fetching ? html`
+        <div class='Sidebar-section-content Loading'></div>
+      ` : html`
+        <div class='Sidebar-list'>
+          ${state.pins.messages.map(message => {
+            const group = messageGroup.component(state, emit, {
+              id: 'pinned-message-' + message.id,
+              authorUsername: message.authorUsername,
+              authorAvatarURL: message.authorAvatarURL,
+              authorFlair: message.authorFlair,
+              date: message.date,
+              messages: [message],
+            }, {withActions: false, showFlair: false, msgIDprefix: 'pinned-msg-'})
+
+            group.style.pointerEvents = 'none'
+
+            return html`
+              <div class='Sidebar-list-item' onclick=${() => {
+                emit('messages.jumptomessage', message.id)
+              }}>
+                ${group}
+              </div>
+            `
+          })}
+        </div>
+      `
+  }
+
+  return html`<aside class='Sidebar --on-right'>
+    ${(() => {
+      const el = html`<div class='Tabs'></div>`
+      const tabs = Object.assign({
+        users: {name: 'Users', icon: require('../../img/users.svg')},
+      }, state.params.channel ? {
+        mentions: {name: 'Mentions', icon: require('../../img/at-sign.svg')},
+        pins: {name: 'Pins', icon: require('../../img/paperclip.svg')},
+      } : {})
+
+      if (!Object.keys(tabs).includes(state.sidebarRight.tab)) {
+        state.sidebarRight.tab = 'users'
+      }
+
+      for (const [ id, { name, icon } ] of Object.entries(tabs)) {
+        const tab = html`<div class='Tabs-tab'>
+          ${svg(icon, {class: 'Tabs-tab-icon'})}
+          <span class='Tabs-tab-text'>${name}</span>
+        </div>`
+
+        if (state.sidebarRight.tab === id) {
+          tab.classList.add('--is-active')
+        } else {
+          tab.onclick = () => {
+            state.sidebarRight.tab = id
+            emit('render')
+          }
+        }
+
+        el.appendChild(tab)
+      }
+
+      return el
+    })()}
+    <section class='Sidebar-section'>
+      ${content}
     </section>
   </aside>`
 }

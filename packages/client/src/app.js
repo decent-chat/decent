@@ -12,8 +12,8 @@ Object.assign(window, { util })
 // import root-level components
 const messages = require('./components/messages')
 const messageEditor = require('./components/message-editor')
-const sidebar = require('./components/sidebar')
-const userList = require('./components/user-list')
+const sidebarLeft = require('./components/sidebar-left')
+const sidebarRight = require('./components/sidebar-right')
 const accountSettings = require('./components/account-settings')
 const srvSettings = {
   emotes: require('./components/srv-settings/emotes'),
@@ -165,7 +165,7 @@ app.use((state, emitter) => {
 })
 
 const components = [
-  messages, messageEditor, sidebar, userList, accountSettings,
+  messages, messageEditor, sidebarLeft, sidebarRight, accountSettings,
   ...Object.values(srvSettings), ...Object.values(prefs),
 ]
 
@@ -182,7 +182,7 @@ for (const s of components) {
 // declare routes
 {
   const notFound = (state, emit) => html`<div id='app'>
-    ${sidebar.component(state, emit)}
+    ${sidebarLeft.component(state, emit)}
     <main>
       <div class='Page'>
         <h3 class='Page-title'>Not found</h3>
@@ -200,7 +200,7 @@ for (const s of components) {
     state.session = null
 
     return html`<div id='app'>
-      ${sidebar.component(state, emit)}
+      ${sidebarLeft.component(state, emit)}
       <main></main>
     </div>`
   })
@@ -208,21 +208,21 @@ for (const s of components) {
   // server
   app.route('/servers/:host', (state, emit) => {
     return html`<div id='app'>
-      ${sidebar.component(state, emit)}
+      ${sidebarLeft.component(state, emit)}
       <main></main>
-      ${userList.component(state, emit)}
+      ${sidebarRight.component(state, emit)}
     </div>`
   })
 
   // server with channel open
   app.route('/servers/:host/channels/:channel', (state, emit) => {
     return html`<div id='app'>
-      ${sidebar.component(state, emit)}
+      ${sidebarLeft.component(state, emit)}
       <main>
         ${messages.component(state, emit)}
         ${state.messages.list !== null ? messageEditor.component(state, emit) : html`<span></span>`}
       </main>
-      ${userList.component(state, emit)}
+      ${sidebarRight.component(state, emit)}
     </div>`
   })
 
@@ -233,7 +233,7 @@ for (const s of components) {
     }
 
     return html`<div id='app'>
-      ${sidebar.component(state, emit)}
+      ${sidebarLeft.component(state, emit)}
       <main>
         ${accountSettings.component(state, emit)}
       </main>
@@ -252,7 +252,7 @@ for (const s of components) {
     }
 
     return html`<div id='app'>
-      ${sidebar.component(state, emit)}
+      ${sidebarLeft.component(state, emit)}
       <main>
         ${srvSettings[state.params.setting].component(state, emit)}
       </main>
@@ -266,7 +266,7 @@ for (const s of components) {
     }
 
     return html`<div id='app'>
-      ${sidebar.component(state, emit)}
+      ${sidebarLeft.component(state, emit)}
       <main>
         ${prefs[state.params.pref].component(state, emit)}
       </main>
