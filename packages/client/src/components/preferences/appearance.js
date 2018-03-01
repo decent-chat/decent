@@ -133,8 +133,11 @@ const apply = appearance => {
       '--input-border-color': '#3c4144',
       '--input-disabled-bg': '#3c4144',
 
-      '--flair-bg': 'var(--gray-200)',
+      '--flair-bg': '#25292f',
       '--flair-fg': 'var(--gray-500)',
+
+      '--mention-of-you-fg': '#f6e416',
+      '--mention-of-you-bg': 'rgba(246, 228, 22, 0.2)',
 
       '--loading-icon': 'url("../img/message-solid-white.svg")',
     },
