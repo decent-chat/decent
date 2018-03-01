@@ -58,7 +58,7 @@ module.exports = function makeSerializers({util, db}) {
           obj.oldestUnreadMessageID = null
         } else {
           const msg = await getOldestUnreadMessageInChannel(sessionUser, c._id)
-          obj.oldestUnreadMessageID = msg ? await serialize.message(msg, sessionUser) : null
+          obj.oldestUnreadMessageID = msg ? msg._id : null
         }
       }
 
