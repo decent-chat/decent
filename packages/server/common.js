@@ -97,13 +97,30 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
     return count
   }
 
+  const getOldestUnreadMessageInChannel = async function(userObj, channelID) {
+    let date = 0
+    const { lastReadChannelDates } = userObj
+    if (lastReadChannelDates) {
+      if (channelID in lastReadChannelDates) {
+        date = lastReadChannelDates[channelID]
+      }
+    }
+
+    const message = await db.messages.findOne({
+      date: {$gt: date},
+      channelID
+    })
+
+    return message
+  }
+
   return {
     isNameValid,
     getUserIDBySessionID, getUserBySessionID,
     md5,
     isUserOnline, isUserAuthorized,
     emailToAvatarURL,
-    getUnreadMessageCountInChannel,
+    getUnreadMessageCountInChannel, getOldestUnreadMessageInChannel,
     shouldUseAuthorization
   }
 }

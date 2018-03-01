@@ -123,7 +123,7 @@ test('serialize.channel', t => {
     const { messageID: msg2 } = await makeMessage(server, port, 'Hello.', channelID)
     const user = await makeUser(server, port)
     const serialized2 = await serialize.channel(channel, user)
-    t.deepEqual(Object.keys(serialized2), ['id', 'name', 'unreadMessageCount'])
+    t.deepEqual(Object.keys(serialized2), ['id', 'name', 'unreadMessageCount', 'oldestUnreadMessageID'])
     t.is(serialized2.unreadMessageCount, 2)
   })
 })
