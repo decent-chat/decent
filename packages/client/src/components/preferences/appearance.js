@@ -109,6 +109,13 @@ const apply = appearance => {
       '--serverDropdown-item-activefg': 'var(--gray-700)',
       '--serverDropdown-item-activebg': '#25292f',
 
+      '--tab-fg': 'var(--gray-300)',
+      '--tab-bg': '#1c1e23',
+      '--tab-border-color': 'var(--gray-100)',
+
+      '--tab-activefg': 'var(--gray-500)',
+      '--tab-activebg': '#25292f',
+
       '--page-fg': 'var(--gray-500)',
       '--page-bg': 'var(--gray-100)',
       '--page-alt-bg': 'var(--gray-100)',
@@ -128,6 +135,8 @@ const apply = appearance => {
 
       '--flair-bg': 'var(--gray-200)',
       '--flair-fg': 'var(--gray-500)',
+
+      '--loading-icon': 'url("../img/message-solid-white.svg")',
     },
   }
 

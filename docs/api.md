@@ -475,18 +475,28 @@ Model:
 {
   "id": ID,
   "name": string, // Does not include a hash
+}
+```
 
+<a id='channel-extra-data'></a>
+#### Extra data
+This data is only present if a valid, logged-in session ID is provided to channel-returning endpoints.
+```js
+{
   // Number of 'unread' messages, capped at 200. Unread messages are
   // simply messages that were sent more recently than the last time
-  // the channel was marked read by this user. *Not present if no session
-  // is provided!*
-  "unreadMessageCount": number
+  // the channel was marked read by this user.
+  "unreadMessageCount": number,
+
+  "oldestUnreadMessageID": ID | null,
 }
 ```
 
 Related events:
 * [channel/new](#channel-new)
 * [channel/update](#channel-update)
+* [channel/pins/add](#channel-pins-add)
+* [channel/pins/remove](#channel-pins-remove)
 * [channel/delete](#channel-delete)
 
 <a name='channel-list'></a>
@@ -531,10 +541,10 @@ May return [an error](#errors): MUST_BE_ADMIN, NAME_ALREADY_TAKEN, INVALID_NAME.
 
 <a name='get-channel'></a>
 ### Retrieve a channel [GET /api/channels/:id]
-+ returns extra data (`unreadMessageCount`) with session
++ returns [extra data](#channel-extra-data) with session
 + **in-url** id (ID) - The ID of the channel.
 
-Returns `{ channel }`. Note `unreadMessageCount` will only be returned if this endpoint receives a session.
+Returns `{ channel }`. Note [extra data](#channel-extra-data) will only be returned if this endpoint receives a logged-in session ID.
 
 ```js
 GET /api/channels/5678
@@ -583,7 +593,7 @@ DELETE /api/channels/5678
 + requires session
 + **in-url** id (ID) - The ID of the channel.
 
-Marks the channel as read (ie. sets `unreadMessageCount` to 0), returning `{}`. Emits [channel/update](#channel-update) to all sockets authenticated to the same user that requested this endpoint (ie. to _you_).
+Marks the channel as read (ie. sets `unreadMessageCount` to 0), returning `{}`. Emits [channel/update](#channel-update) including [extra data](#channel-extra-data) if this socket is authenticated.
 
 ```js
 POST /api/channels/5678/mark-read
@@ -661,7 +671,7 @@ GET /api/channels/5678/pins
 + **in-url** id (ID)
 + `messageID` (ID) - The message to pin to this channel.
 
-Returns `{}` if successful.
+Returns `{}` if successful. Emits [channel/pins/add](#channel-pins-add).
 
 ```js
 POST /api/channels/5678/pins
@@ -669,6 +679,20 @@ POST /api/channels/5678/pins
 -> {
 ->   "messageID": "1234"
 -> }
+
+<- {}
+```
+
+<a name='unpin'></a>
+### Unpin a message [DELETE /api/channels/:channelID/pins/:messageID]
++ requires admin session
++ **in-url** channelID (ID)
++ **in-url** messageID (ID) - The ID of the message to unpin. Errors if not pinned.
+
+Returns `{}` if successful. Emits [channel/pins/remove](#channel-pins-remove).
+
+```js
+DELETE /api/channels/5678/pins/1234
 
 <- {}
 ```
@@ -888,6 +912,16 @@ Sent to all clients when a channel is [created](#create-channel). Passed data is
 ## channel/update
 
 Sent to all clients when a channel is updated ([renamed](#rename-channel), [marked as read](#mark-channel-as-read), etc). Passed data is in the format `{ channel }`, including `channel.unreadMessageCount` if the socket is actively [ponging sessionIDs](#pongdata).
+
+<a name='channel-pins-add'></a>
+## channel/pins/add
+
+Sent to all clients when a message is [pinned](#pin) to a channel. Passed data is in the format `{ message }`, where `message` is the message that was pinned.
+
+<a name='channel-pins-remove'></a>
+## channel/pins/remove
+
+Sent to all clients when a message is [unpinned](#unpin) from a channel. Passed data is in the format `{ messageID }`, where `messageID` is the ID of the message that was unpinned.
 
 <a name='channel-delete'></a>
 ## channel/delete

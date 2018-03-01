@@ -49,4 +49,7 @@
   background: var(--flair-bg);
 }
 
-.MessageGroup-contents {}
+.MessageGroup-contents {
+  width: 100%;
+  overflow-x: auto;
+}

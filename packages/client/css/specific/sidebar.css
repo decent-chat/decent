@@ -23,14 +23,16 @@
   overflow-y: auto;
 
   background: var(--sidebar-bg);
-  border-top: 6px solid var(--accent);
 
   -webkit-touch-callout: none;
     -webkit-user-select: none;
        -moz-user-select: none;
             user-select: none;
 
-  &.\--on-left { border-right: 1px solid var(--sidebar-border-color); }
+  &.\--on-left {
+    border-right: 1px solid var(--sidebar-border-color);
+    border-top: 6px solid var(--accent);
+  }
   &.\--on-right { border-left: 1px solid var(--sidebar-border-color); }
 }
 
