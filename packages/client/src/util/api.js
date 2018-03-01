@@ -89,6 +89,16 @@ module.exports = {
     })
   },
 
+  delete(state, path, data = {}) {
+    return fetchHelper(state, path, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+  },
+
   postRaw(state, path, body) {
     if (!body) return Promise.reject(new Error('Body not provided'))
 

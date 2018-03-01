@@ -325,6 +325,32 @@ test('POST /api/channels/:id/pins', t => {
   })
 })
 
+test('DELETE /api/channels/:channelID/pins/:messageID', t => {
+  return testWithServer(portForApiChannelTests++, async ({ server, port }) => {
+    const { channelID, sessionID } = await makeChannel(server, port)
+    const { messageID } = await makeMessage(server, port, undefined, channelID)
+
+    await fetch(port, `/channels/${channelID}/pins`, {
+      method: 'POST',
+      body: JSON.stringify({sessionID, messageID})
+    })
+
+    await fetch(port, `/channels/${channelID}/pins/${messageID}`, {
+      method: 'DELETE',
+      body: JSON.stringify({sessionID})
+    })
+
+    const { pins } = await fetch(port, `/channels/${channelID}/pins`, {
+      method: 'GET',
+      headers: {
+        'X-Session-ID': sessionID,
+      }
+    })
+
+    t.is(pins.length, 0)
+  })
+})
+
 test('GET /api/channels/:id/pins', t => {
   return testWithServer(portForApiChannelTests++, async ({ server, port }) => {
     const { channelID, sessionID } = await makeChannel(server, port)

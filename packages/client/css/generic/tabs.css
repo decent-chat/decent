@@ -4,7 +4,7 @@
   --tab-border-color: var(--gray-500);
 
   --tab-activefg: var(--tab-fg);
-  --tab-activebg: var(--gray-900);
+  --tab-activebg: var(--sidebar-bg);
 }
 
 .Tabs {
@@ -26,18 +26,23 @@
   border-bottom: 1px solid var(--tab-border-color);
 
   cursor: pointer;
+  font-size: .95rem;
 
   &:last-of-type {
     border-right: none;
   }
 
-  &.--active {
+  &.--is-active {
     color: var(--tab-activefg);
     background: var(--tab-activebg);
 
     box-shadow: inset 0 4px 0 var(--accent);
     border-bottom-color: transparent;
     cursor: default;
+  }
+
+  &:hover {
+    color: var(--tab-activefg);
   }
 }
 

@@ -114,7 +114,7 @@ const apply = appearance => {
       '--tab-border-color': 'var(--gray-100)',
 
       '--tab-activefg': 'var(--gray-500)',
-      '--tab-activebg': 'var(--gray-100)',
+      '--tab-activebg': '#25292f',
 
       '--page-fg': 'var(--gray-500)',
       '--page-bg': 'var(--gray-100)',

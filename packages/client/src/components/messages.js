@@ -189,6 +189,11 @@ const store = (state, emitter) => {
         ...(state.messages.list || []),
         ...(direction === 'newer' ? messages : [])
       ]
+
+      // remove messages that are really far from the viewport
+      if (direction === 'older') state.messages.list.splice(-1, state.messages.list.length - 100)
+      if (direction === 'newer') state.messages.list.splice(0,  state.messages.list.length - 100)
+
       state.messages.groupsCached = groupMessages(state.messages.list)
 
       // render the new messages!
@@ -239,6 +244,8 @@ const store = (state, emitter) => {
     if (!state.sessionAuthorized) return
 
     state.messages.fetching = true
+    state.messages.list = null
+    emitter.emit('render')
 
     // hard-coded number of messages to fetch as context
     // if context = 50, at most 25 messages before the jumped message will be gotten,
@@ -261,8 +268,8 @@ const store = (state, emitter) => {
       state, messagesAPI, { after: messageID, limit: context - oldMessages.length }
     )
 
-    const jumpMessage = await api.get(
-      state, `message/${messageID}`
+    const { message: jumpMessage } = await api.get(
+      state, `messages/${messageID}`
     )
 
     // overwrite the existing messages list - when jumping to a message, it's
@@ -282,10 +289,10 @@ const store = (state, emitter) => {
       jumpMessageEl.scrollIntoView({behavior: 'instant'})
       state.messages.handleScroll = true
 
-      jumpMessageEl.classList.add('jumped-to')
+      jumpMessageEl.classList.add('--jumped-to')
       jumpMessageEl.addEventListener('animationend', evt => {
         if (evt.animationName === 'jumped-message') {
-          jumpMessageEl.classList.remove('jumped-to')
+          jumpMessageEl.classList.remove('--jumped-to')
         }
       })
 
@@ -299,13 +306,17 @@ const store = (state, emitter) => {
     emitter.emit('messages.reset')
 
     if (state.params.channel) {
-      emitter.emit('messages.fetch', 'older')
+      const channel = state.sidebar.channels ? state.sidebar.channels.find(c => c.id === state.params.channel) : {}
+
+      if (channel.oldestUnreadMessageID) emitter.emit('messages.jumptomessage', channel.oldestUnreadMessageID)
+      else emitter.emit('messages.fetch', 'older')
     }
   })
 
   emitter.on('login', () => {
     if (state.serverRequiresAuthorization && state.params.channel) {
-      emitter.emit('messages.fetch', 'older')
+      if (channel.oldestUnreadMessageID) emitter.emit('messages.jumptomessage', channel.oldestUnreadMessageID)
+      else emitter.emit('messages.fetch', 'older')
     }
   })
 
@@ -323,6 +334,7 @@ const store = (state, emitter) => {
   // event: new message
   emitter.on('ws.message/new', ({ message }) => {
     if (message.channelID !== state.params.channel) return
+    if (!state.messages.scrolledToEnd) return // TODO: display "unread messages" thing
 
     const groups = state.messages.groupsCached
     const atBottom = state.messages.isScrolledToBottom()
@@ -354,6 +366,14 @@ const store = (state, emitter) => {
         }
       }
     }, 25)
+  })
+
+  // event: delete message
+  emitter.on('ws.message/delete', ({ messageID }) => {
+    state.messages.list = state.messages.list.filter(m => m.id !== messageID)
+    state.messages.groupsCached = groupMessages(state.messages.list)
+
+    emitter.emit('render')
   })
 
   // event: edit message
@@ -404,7 +424,7 @@ const component = (state, emit) => {
   }
 
   if (messages === null) {
-    return html`<div class='MessageList --unloaded'>Messages not loaded.</div>`
+    return html`<div class='MessageList --unloaded'>Loading.</div>`
   } else {
     const groups = state.messages.groupsCached
 

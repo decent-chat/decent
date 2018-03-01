@@ -509,6 +509,25 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       // We don't want to send back the message itself, obviously!
       sendToAllSockets('message/delete', {messageID: message._id})
 
+      // If this message is pinned to any channel, unpin it, because it just
+      // got deleted!
+      const channelWithPin = await db.channels.findOne({
+        pinnedMessageIDs: {$elemMatch: message._id},
+      })
+
+      if (channelWithPin) {
+        channelWithPin.pinnedMessageIDs = channelWithPin.pinnedMessageIDs
+          .filter(msg => msg !== message._id)
+
+        await db.channels.update({_id: channelWithPin._id}, {
+          $set: {
+            pinnedMessageIDs: channelWithPin.pinnedMessageIDs,
+          }
+        })
+
+        sendToAllSockets('channel/pins/remove', {messageID: message._id})
+      }
+
       response.status(200).json({})
     }
   ])
@@ -518,7 +537,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     ...middleware.getMessageFromID('messageID', 'message'),
 
     async (request, response) => {
-      const { message, sessionUser } = request[middleware.vars]
+      const { message } = request[middleware.vars]
 
       response.status(200).json({
         message: await serialize.message(message)
@@ -728,6 +747,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
     async (request, response) => {
       const { channel } = request[middleware.vars]
+
       response.status(200).json({
         pins: (await Promise.all(
           channel.pinnedMessageIDs.map(id =>
@@ -757,7 +777,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     },
 
     async (request, response) => {
-      const { messageID, channel } = request[middleware.vars]
+      const { messageID, message, channel } = request[middleware.vars]
 
       if (channel.pinnedMessageIDs.includes(messageID)) {
         response.status(500).json({
@@ -773,6 +793,48 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         }
       })
 
+      sendToAllSockets('channel/pins/add', {message: await serialize.message(message)})
+      response.status(200).json({})
+    }
+  ])
+
+  app.delete('/api/channels/:channelID/pins/:messageID', [
+    ...middleware.loadSessionID('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.loadVarFromParams('channelID'),
+    ...middleware.getChannelFromID('channelID', 'channel'),
+    ...middleware.loadVarFromParams('messageID'),
+    ...middleware.getMessageFromID('messageID', 'message'),
+    (request, response, next) => {
+      const { message, channelID } = request[middleware.vars]
+      if (message.channelID === channelID) {
+        next()
+      } else {
+        response.status(400).json({error: errors.NOT_FROM_SAME_CHANNEL})
+      }
+    },
+
+    async (request, response) => {
+      const { messageID, message, channel } = request[middleware.vars]
+
+      if (!channel.pinnedMessageIDs.includes(messageID)) {
+        response.status(404).json({
+          error: errors.NOT_FOUND
+        })
+
+        return
+      }
+
+      channel.pinnedMessageIDs = channel.pinnedMessageIDs.filter(msg => msg !== messageID)
+
+      await db.channels.update({_id: channel._id}, {
+        $set: {
+          pinnedMessageIDs: channel.pinnedMessageIDs,
+        }
+      })
+
+      sendToAllSockets('channel/pins/remove', {messageID})
       response.status(200).json({})
     }
   ])

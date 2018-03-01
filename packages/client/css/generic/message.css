@@ -1,6 +1,58 @@
 .Message {
+  display: flex;
+  width: 100%;
+
   &.\--jumped-to {
     animation: jumped-message 4s;
+  }
+}
+
+.Message-content {
+  flex: 1;
+  overflow-x: auto;
+}
+
+.Message-actions {
+  flex: 0;
+  display: flex;
+
+  opacity: 0;
+  transition: opacity 250ms ease-out;
+}
+
+.Message:hover .Message-actions { opacity: 1 }
+
+.Message-actions-action {
+  margin-left: 4px;
+
+  width: 1em;
+  height: 1em;
+  cursor: pointer;
+
+  & svg {
+    width: inherit;
+    height: inherit;
+    stroke: var(--page-dim-fg);
+  }
+
+  &:hover svg {
+    stroke: var(--page-fg);
+  }
+}
+
+/* note: this animation name is used in the JavaScript code,
+   so take care if renaming it */
+@keyframes jumped-message {
+  from {
+    background-color: transparent;
+  }
+
+  10% {
+    background-color: rgba(50, 180, 255, 80);
+  }
+
+  to {
+    background-color: transparent;
   }
 }
 
@@ -43,20 +95,4 @@
 
 .Message.\--big-emotes .Message-emote {
   width: 4rem;
-}
-
-/* note: this animation name is used in the JavaScript code,
-   so take care if renaming it */
-@keyframes jumped-message {
-  from {
-    background-color: transparent;
-  }
-
-  10% {
-    background-color: rgba(50, 180, 255, 80);
-  }
-
-  to {
-    background-color: transparent;
-  }
 }

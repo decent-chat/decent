@@ -487,6 +487,7 @@ Model:
 Related events:
 * [channel/new](#channel-new)
 * [channel/update](#channel-update)
+* [channel/pins-update](#channel-pins-update)
 * [channel/delete](#channel-delete)
 
 <a name='channel-list'></a>
@@ -661,7 +662,7 @@ GET /api/channels/5678/pins
 + **in-url** id (ID)
 + `messageID` (ID) - The message to pin to this channel.
 
-Returns `{}` if successful.
+Returns `{}` if successful. Emits [channel/pins-update](#channel-pins-update).
 
 ```js
 POST /api/channels/5678/pins
@@ -669,6 +670,20 @@ POST /api/channels/5678/pins
 -> {
 ->   "messageID": "1234"
 -> }
+
+<- {}
+```
+
+<a name='unpin'></a>
+### Unpin a message [DELETE /api/channels/:channelID/pins/:messageID]
++ requires admin session
++ **in-url** channelID (ID)
++ **in-url** messageID (ID) - The ID of the message to unpin. Errors if not pinned.
+
+Returns `{}` if successful. Emits [channel/pins-update](#channel-pins-update).
+
+```js
+DELETE /api/channels/5678/pins/1234
 
 <- {}
 ```
@@ -888,6 +903,16 @@ Sent to all clients when a channel is [created](#create-channel). Passed data is
 ## channel/update
 
 Sent to all clients when a channel is updated ([renamed](#rename-channel), [marked as read](#mark-channel-as-read), etc). Passed data is in the format `{ channel }`, including `channel.unreadMessageCount` if the socket is actively [ponging sessionIDs](#pongdata).
+
+<a name='channel-pins-add'></a>
+## channel/pins/add
+
+Sent to all clients when a message is [pinned](#pin) to a channel. Passed data is in the format `{ message }`, where `message` is the message that was pinned.
+
+<a name='channel-pins-remove'></a>
+## channel/pins/remove
+
+Sent to all clients when a message is [unpinned](#unpin) from a channel. Passed data is in the format `{ messageID }`, where `messageID` is the ID of the message that was unpinned.
 
 <a name='channel-delete'></a>
 ## channel/delete
