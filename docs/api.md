@@ -495,7 +495,8 @@ This data is only present if a valid, logged-in session ID is provided to channe
 Related events:
 * [channel/new](#channel-new)
 * [channel/update](#channel-update)
-* [channel/pins-update](#channel-pins-update)
+* [channel/pins/add](#channel-pins-add)
+* [channel/pins/remove](#channel-pins-remove)
 * [channel/delete](#channel-delete)
 
 <a name='channel-list'></a>
@@ -670,7 +671,7 @@ GET /api/channels/5678/pins
 + **in-url** id (ID)
 + `messageID` (ID) - The message to pin to this channel.
 
-Returns `{}` if successful. Emits [channel/pins-update](#channel-pins-update).
+Returns `{}` if successful. Emits [channel/pins/add](#channel-pins-add).
 
 ```js
 POST /api/channels/5678/pins
@@ -688,7 +689,7 @@ POST /api/channels/5678/pins
 + **in-url** channelID (ID)
 + **in-url** messageID (ID) - The ID of the message to unpin. Errors if not pinned.
 
-Returns `{}` if successful. Emits [channel/pins-update](#channel-pins-update).
+Returns `{}` if successful. Emits [channel/pins/remove](#channel-pins-remove).
 
 ```js
 DELETE /api/channels/5678/pins/1234
