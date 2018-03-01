@@ -1018,7 +1018,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         }
 
         if (typeof email === 'string') {
-          email = email.toLowerCase()
+          request[middleware.vars].email = email.toLowerCase()
 
           if (email.length > 254) {
             return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
