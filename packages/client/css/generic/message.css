@@ -1,4 +1,7 @@
 .Message {
+  line-height: 1.4;
+  margin-bottom: 1em;
+
   &.\--jumped-to {
     animation: jumped-message 4s;
   }
