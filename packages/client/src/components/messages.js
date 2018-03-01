@@ -427,7 +427,7 @@ const component = (state, emit) => {
   }
 
   if (messages === null) {
-    return html`<div class='MessageList --unloaded'>Loading.</div>`
+    return html`<div class='MessageList --unloaded Loading'></div>`
   } else {
     const groups = state.messages.groupsCached
 

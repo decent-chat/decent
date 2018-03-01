@@ -176,7 +176,7 @@ const component = (state, emit) => {
           })}
         </div>
       ` : html`
-        <div class='Sidebar-section-content'>Loading.</div>
+        <div class='Sidebar-section-content Loading'></div>
       `
 
       break
@@ -197,9 +197,7 @@ const component = (state, emit) => {
       }
 
       content = state.pins.fetching ? html`
-        <div class='Sidebar-section-content'>
-          Loading.
-        </div>
+        <div class='Sidebar-section-content Loading'></div>
       ` : html`
         <div class='Sidebar-list'>
           ${state.pins.messages.map(message => {

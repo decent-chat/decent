@@ -135,6 +135,8 @@ const apply = appearance => {
 
       '--flair-bg': 'var(--gray-200)',
       '--flair-fg': 'var(--gray-500)',
+
+      '--loading-icon': 'url("../img/message-solid-white.svg")',
     },
   }
 

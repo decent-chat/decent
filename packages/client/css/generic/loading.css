@@ -1,0 +1,28 @@
+:root {
+  --loading-icon: url(../img/message-solid-black.svg);
+}
+
+.Loading {
+  background-image: var(--loading-icon) !important;
+  background-size: 24px 24px;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+
+  animation: loading 800ms infinite;
+
+  min-height: 300px;
+}
+
+@keyframes loading {
+  0% {
+    background-size: 24px 24px;
+  }
+
+  20% {
+    background-size: 48px 48px;
+  }
+
+  100% {
+    background-size: 24px 24px;
+  }
+}

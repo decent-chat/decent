@@ -10,6 +10,8 @@
 @import 'generic/message.css';
 @import 'generic/avatar.css';
 
+@import 'generic/loading.css';
+
 /* One-time use or intended for use in a specific position in the document */
 @import 'specific/sidebar.css';
 @import 'specific/user-list.css';
