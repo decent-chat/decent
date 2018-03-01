@@ -1,3 +1,8 @@
+:root {
+  --mention-of-you-fg: var(--gray-100);
+  --mention-of-you-bg: rgba(255, 207, 0, 0.6);
+}
+
 .Message {
   display: flex;
   width: 100%;
@@ -114,4 +119,21 @@
 
 .Message.\--big-emotes .Message-emote {
   width: 4rem;
+}
+
+.Message-mention {
+  display: inline-block;
+
+  padding: 4px 0.7em;
+  margin: 4px;
+
+  border-radius: 2em;
+
+  color: var(--page-dim-fg);
+  background: var(--sidebar-bg);
+
+  &.\--of-you {
+    color: var(--mention-of-you-fg);
+    background: var(--mention-of-you-bg);
+  }
 }

@@ -23,7 +23,7 @@ test('serialize.message', t => {
 
     const serialized = await serialize.message(message)
 
-    t.deepEqual(Object.keys(serialized), ['id', 'authorUsername', 'authorID', 'authorFlair', 'authorAvatarURL', 'text', 'date', 'editDate', 'channelID', 'reactions'])
+    t.deepEqual(Object.keys(serialized), ['id', 'authorUsername', 'authorID', 'authorFlair', 'authorAvatarURL', 'text', 'date', 'editDate', 'channelID', 'reactions', 'mentionedUserIDs'])
     t.is(serialized.id, '123')
     t.is(serialized.authorUsername, 'jen')
     t.is(serialized.authorID, '234')
@@ -33,6 +33,7 @@ test('serialize.message', t => {
     t.is(serialized.date, date)
     t.is(serialized.editDate, editDate)
     t.is(serialized.channelID, '345')
+    t.deepEqual(serialized.mentionedUserIDs, [])
     t.deepEqual(serialized.reactions, reactions)
 
     const message2 = Object.assign({}, message)
@@ -61,7 +62,7 @@ test('serialize.user', t => {
     }
 
     const serialized = await serialize.user(user)
-    const baseProperties = ['id', 'username', 'flair', 'avatarURL', 'permissionLevel', 'online']
+    const baseProperties = ['id', 'username', 'flair', 'avatarURL', 'permissionLevel', 'online', 'mentions']
     t.deepEqual(Object.keys(serialized), baseProperties)
     t.is(serialized.id, 'user1')
     t.is(serialized.username, 'user')

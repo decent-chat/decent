@@ -26,6 +26,14 @@ const component = (state, emit, group, { withActions = true, showFlair = true, m
     return html`<div></div>`
   }
 
+  if (state.userList.users === null) {
+    // UserList hasn't been loaded yet, so we won't render anything until that's done
+
+    if (!state.userList.fetching) emit('userlist.fetch')
+
+    return html`<div></div>`
+  }
+
   const editMsg = msg => evt => {
     // TODO
   }

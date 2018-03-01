@@ -36,7 +36,8 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     emailToAvatarURL,
     isUserOnline,
     shouldUseAuthorization, isUserAuthorized,
-    getUnreadMessageCountInChannel
+    getUnreadMessageCountInChannel,
+    getMentionsFromMessageContent,
   } = util
 
   const sendToAllSockets = function(evt, data, sendToUnauthorized = false) {
@@ -46,6 +47,56 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       // unauthorized user).
       if (sendToUnauthorized || socketData.authorized === true) {
         socket.send(JSON.stringify({ evt, data }))
+      }
+    }
+  }
+
+  const handleMentionsInMessage = async function (message) {
+    for (let userID of await getMentionsFromMessageContent(message.text)) {
+      // Add message ID to user.mentions if its not already there
+      await db.users.update({_id: userID}, {
+        $addToSet: {
+          mentionedInMessageIDs: message._id,
+        },
+      })
+
+      // Notify the user of their mention
+      for (const [ socket, socketData ] of connectedSocketsMap.entries()) {
+        if (socketData.userID === userID) {
+          socket.send(JSON.stringify({
+            evt: 'user/mentions/add',
+            data: {
+              message: await serialize.message(message),
+            },
+          }))
+        }
+      }
+    }
+  }
+
+  const handleUnmentionsInMessage = async function (message, newText) {
+    const mentionedOld = await getMentionsFromMessageContent(message.text)
+    const mentionedNew = await getMentionsFromMessageContent(newText)
+    const unmentionedInNew = mentionedOld.filter(id => !mentionedNew.includes(id))
+
+    for (let userID of unmentionedInNew) {
+      // Remove msg ID from user mentions
+      await db.users.update({_id: userID}, {
+        $pull: {
+          mentionedInMessageIDs: message._id,
+        },
+      })
+
+      // Notify the user of their unmention
+      for (const [ socket, socketData ] of connectedSocketsMap.entries()) {
+        if (socketData.userID === userID) {
+          socket.send(JSON.stringify({
+            evt: 'user/mentions/remove',
+            data: {
+              messageID: message.id,
+            },
+          }))
+        }
       }
     }
   }
@@ -392,6 +443,8 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         message: await serialize.message(message)
       })
 
+      await handleMentionsInMessage(message)
+
       // Sending a message should also mark the channel as read for that user:
       await markChannelAsRead(sessionUser, channelID, false)
 
@@ -467,6 +520,8 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         return
       }
 
+      await handleUnmentionsInMessage(oldMessage, text)
+
       const [ numAffected, newMessage ] = await db.messages.update({_id: oldMessage._id}, {
         $set: {
           text,
@@ -478,6 +533,8 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       })
 
       sendToAllSockets('message/edit', {message: await serialize.message(newMessage)})
+
+      await handleMentionsInMessage(newMessage)
 
       response.status(200).json({})
     }
@@ -507,6 +564,8 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       // exists (from getMessageFromID earlier, to check if the session user
       // was its author).
       await db.messages.remove({_id: message._id})
+
+      await handleUnmentionsInMessage(message, '')
 
       // We don't want to send back the message itself, obviously!
       sendToAllSockets('message/delete', {messageID: message._id})
@@ -926,7 +985,8 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         flair: null,
         permissionLevel: 'member',
         authorized: false,
-        lastReadChannelDates: {}
+        lastReadChannelDates: {},
+        mentionedInMessageIDs: [],
       })
 
       // Note that we run serialize.user twice here -- once, to send to the

@@ -17,7 +17,7 @@
     "choo-devtools": "^2.3.3",
     "concurrently": "^3.5.1",
     "cssnano": "^4.0.0-rc.2",
-    "mrk.js": "^1.0.1",
+    "mrk.js": "^2.0.0",
     "nanobus": "^4.3.2",
     "postcss-cli": "^5.0.0"
   },

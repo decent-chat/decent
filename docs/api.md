@@ -383,9 +383,12 @@ Model:
   "dateCreated": number,
   "dateEdited": number | null,
 
-  "reactions": [ Reaction ]
+  "reactions": [ Reaction ],
+  "mentionedUserIDs": [ ID ]
 }
 ```
+
+Note that message mentions live in the message content (`text`) as `<@USER_ID>`, where `USER_ID` is the ID of the user that is being mentioned; these appear in `mentionedUserIDs` of messages for ease of access.
 
 Related events:
 * [message/new](#message-new)
@@ -713,8 +716,10 @@ Model:
 
   "online": boolean,
 
+  "mentions": [ Message ] // List of messages that mention this user
+
   "authorized": boolean, // Only present if useAuthorization is true
-  "email": string | null;, // Only provided if the requested user is the same as the sessionID provides
+  "email": string | null, // Only provided if the requested user is the same as the sessionID provides
 }
 ```
 
@@ -724,6 +729,8 @@ Related events:
 * [user/offline](#user-offline)
 * [user/gone](#user-gone)
 * [user/update](#user-update)
+* [user/mentions/add](#user-mentions-add)
+* [user/mentions/remove](#user-mentions-remove)
 
 <a name='user-list'></a>
 ### Fetch users [GET /api/users]
@@ -952,6 +959,16 @@ Sent to all clients when a user becomes offline. This is whenever the last socke
 ## user/update
 
 Sent to all clients when a user is mutated using [PATCH /api/users/:userID](#update-user). Passed data is in the format `{ user }`.
+
+<a name='user-mentions-add'></a>
+## user/mentions/add
+
+When a user is mentioned, this is sent to all sockets authenticated as them. Passed data is in the format `{ message }`, where `message` is the new / just edited mesage that mentioned the user.
+
+<a name='user-mentions-remove'></a>
+## user/mentions/remove
+
+When a message is deleted or edited to remove the mention of a user, all sockets authenticated as the unmentioned user are sent this event. Passed data is in the format `{ messageID }`, where `messageID` is the ID of the message that just stopped mentioning the user.
 
 <a name='emote-new'></a>
 ## emote/new
