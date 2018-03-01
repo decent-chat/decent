@@ -66,16 +66,23 @@ const withState = state => {
       return true
     },
 
-    channelref({ read, readUntil, look }, meta) {
+    foreignReference({ read, readUntil, look }, meta) {
       let server = ''
       let c
       if (look() === '+') {
         read()
 
         while (c = look()) {
-          if (c === '#' || c === ' ' || c === '') break
+          if (/[a-z0-9\-.:]/i.test(c) === false) break
           server += read()
         }
+
+        const hasPortNo = server.indexOf(':') !== -1
+        const hasTLD = server.indexOf('.') !== -1
+        const endsInBadChar = /[0-9\-.:]/.test(server[server.length - 1])
+
+        if (!hasPortNo && !hasTLD) return false
+        if (!hasPortNo && endsInBadChar) return false
       }
 
       let channel = ''
@@ -83,14 +90,14 @@ const withState = state => {
         read()
 
         while (c = look()) {
-          if (c === ' ' || c === '') break
+          if (/[a-zA-Z0-9-_]/.test(c) === false) break
           channel += read()
         }
       }
 
       if (!channel && !server) return false
 
-      meta({ server, channel })
+      meta({server, channel})
 
       return true
     },
@@ -132,7 +139,7 @@ const withState = state => {
       return `<pre><code class='Message-codeblock'>${mrk.escapeHTML(metadata.code)}</code></pre>`
     },
 
-    channelref({ metadata, text }) {
+    foreignReference({ metadata, text }) {
       return `<a class='Message-foreignReference' data-server='${mrk.escapeHTML(metadata.server)}' data-channel='${mrk.escapeHTML(metadata.channel)}'>
         ${mrk.escapeHTML(text)}
       </a>`
@@ -142,7 +149,7 @@ const withState = state => {
       const emote = (state.emotes.list || []).find(e => e.shortcode === text.substr(1, text.length - 2))
 
       if (emote) {
-        return `<img class='Message-emote' src=${'//' + state.params.host + emote.imageURL} alt=${emote.shortcode}/>`
+        return `<img class='Message-emote' src=${'//' + state.params.host + emote.imageURL} title=':${emote.shortcode}:' alt=${emote.shortcode}/>`
       } else {
         return mrk.escapeHTML(text)
       }

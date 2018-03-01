@@ -46,7 +46,10 @@ const component = (state, emit, group) => {
 
       ${group.messages.map(msg => {
         const mrked = mrk(state)(msg.text)
-        const bigEmotes = mrked.tokens.length <= 16 && !mrked.tokens.find(t => t.name !== 'emote')
+
+        const tokensWithoutEmptyText = mrked.tokens.filter(t => !(t.name === 'text' && t.text === ' '))
+        const bigEmotes = !tokensWithoutEmptyText.find(t => t.name !== 'emote')
+          && tokensWithoutEmptyText.length <= 3
 
         const el = html`<div class='Message ${bigEmotes ? '--big-emotes' : ''}' id=${'msg-' + msg.id}>
           ${raw(mrked.html())}
