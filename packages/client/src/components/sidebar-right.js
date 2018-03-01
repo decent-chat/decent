@@ -227,10 +227,15 @@ const component = (state, emit) => {
   return html`<aside class='Sidebar --on-right'>
     ${(() => {
       const el = html`<div class='Tabs'></div>`
-      const tabs = {
+      const tabs = Object.assign({
         users: {name: 'Users', icon: require('../../img/users.svg')},
+      }, state.params.channel ? {
         mentions: {name: 'Mentions', icon: require('../../img/at-sign.svg')},
         pins: {name: 'Pins', icon: require('../../img/paperclip.svg')},
+      } : {})
+
+      if (!Object.keys(tabs).includes(state.sidebarRight.tab)) {
+        state.sidebarRight.tab = 'users'
       }
 
       for (const [ id, { name, icon } ] of Object.entries(tabs)) {
