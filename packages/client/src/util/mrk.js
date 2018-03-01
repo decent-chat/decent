@@ -146,7 +146,7 @@ const withState = state => {
       const emote = (state.emotes.list || []).find(e => e.shortcode === text.substr(1, text.length - 2))
 
       if (emote) {
-        return `<img class='Message-emote' src=${'//' + state.params.host + emote.imageURL} alt=${emote.shortcode}/>`
+        return `<img class='Message-emote' src=${'//' + state.params.host + emote.imageURL} title=':${emote.shortcode}:' alt=${emote.shortcode}/>`
       } else {
         return mrk.escapeHTML(text)
       }
