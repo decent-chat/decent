@@ -119,3 +119,13 @@ test('getUnreadMessageCountInChannel', t => {
     t.is(await util.getUnreadMessageCountInChannel(user, channelID), 200)
   })
 })
+
+test('getMentionsFromMessageContent', async t => {
+  return testWithServer(portForCommonTests++, async ({ util, server, port }) => {
+    const { user: { id: userID } } = await makeUser(server, port)
+
+    t.deepEqual(await util.getMentionsFromMessageContent(`Hey, <@${userID}>!`), [userID])
+    t.deepEqual(await util.getMentionsFromMessageContent(`Hey, <@1234>!`), [])
+    t.deepEqual(await util.getMentionsFromMessageContent(`\`<@${userID}>\``), [])
+  })
+})

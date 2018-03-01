@@ -2,6 +2,7 @@
 
 const memoize = require('memoizee')
 const crypto = require('crypto')
+const mrk = require('mrk.js/async')
 const { serverPropertiesID } = require('./settings')
 
 module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
@@ -114,6 +115,77 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
     return message
   }
 
+  const getMentionsFromMessageContent = async function(text) {
+    const { tokens } = await mrk({
+      extendPatterns: {
+        // We parse code and codeblocks here as well as mentions so we don't see
+        // things like `console.log('@florrie')` as having a mention in it.
+
+        code({ read, has }) {
+          if(read() === '`') {
+            if (read() === '`') return false
+
+            // Eat up every character until another backtick
+            let escaped = false, char, n
+
+            while (char = read()) {
+              if (char === '\\' && !escaped) escaped = true
+              else if (char === '`' && !escaped) return true
+              else escaped = false
+            }
+          }
+        },
+
+        codeblock({ read, readUntil, look }, meta) {
+          if (read(3) !== '```') return
+
+          let numBackticks = 3
+          while (look() === '`') {
+            numBackticks++
+            read()
+          }
+
+          // All characters up to newline following the intial
+          // set of backticks represent the language of the code
+          let lang = readUntil('\n')
+          read()
+
+          // Final fence
+          let code = ''
+          while (look(numBackticks) !== '`'.repeat(numBackticks)) {
+            if (look().length === 0) return false // We've reached the end
+            code += read()
+          }
+
+          read(numBackticks)
+          if (look() !== '\n' && look() !== '') return false
+
+          // Set metadata
+          meta({ lang, code })
+
+          return true
+        },
+
+        async mention({ read, readUntil }, meta) {
+          if (read(2) !== '<@') return false
+
+          const userID = readUntil('>')
+          const user = await db.users.findOne({_id: userID})
+
+          if (!user) return false
+
+          meta({userID: userID})
+
+          return read(1) === '>'
+        },
+      },
+    })(text)
+
+    return tokens
+      .filter(tok => tok.name === 'mention')
+      .map(tok => tok.metadata.userID)
+  }
+
   return {
     isNameValid,
     getUserIDBySessionID, getUserBySessionID,
@@ -121,6 +193,7 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
     isUserOnline, isUserAuthorized,
     emailToAvatarURL,
     getUnreadMessageCountInChannel, getOldestUnreadMessageInChannel,
-    shouldUseAuthorization
+    shouldUseAuthorization,
+    getMentionsFromMessageContent,
   }
 }
