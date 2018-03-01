@@ -73,13 +73,16 @@ const withState = state => {
         read()
 
         while (c = look()) {
-          if (/[a-z0-9\-.]/i.test(c) === false) break
+          if (/[a-z0-9\-.:]/i.test(c) === false) break
           server += read()
         }
 
-        if (server.indexOf('.') === 0 || /[0-9\-.]/.test(server[server.length - 1])) {
-          return false
-        }
+        const hasPortNo = server.indexOf(':') !== -1
+        const hasTLD = server.indexOf('.') !== -1
+        const endsInBadChar = /[0-9\-.:]/.test(server[server.length - 1])
+
+        if (!hasPortNo && !hasTLD) return false
+        if (!hasPortNo && endsInBadChar) return false
       }
 
       let channel = ''
