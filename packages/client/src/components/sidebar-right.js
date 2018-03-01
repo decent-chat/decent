@@ -1,5 +1,5 @@
 const html = require('choo/html')
-const api = require('../util/api')
+const { svg, api } = require('../util')
 
 const store = (state, emitter) => {
   const reset = () => state.userList = {
@@ -102,19 +102,20 @@ const store = (state, emitter) => {
 }
 
 const component = (state, emit) => {
+  // TODO @ PullJosh: use single quotes rather than doubles in HTML, thanks!
   return html`<aside class='Sidebar --on-right'>
-    <div class="Tabs">
-      <div class="Tabs-tab --active">
-        <img class="Tabs-tab-icon" src="/img/users.svg">
-        <span class="Tabs-tab-text">Users</span>
+    <div class='Tabs'>
+      <div class='Tabs-tab --active'>
+        ${svg(require('../../img/users.svg'), {class: 'Tabs-tab-icon'})}
+        <span class='Tabs-tab-text'>Users</span>
       </div>
-      <div class="Tabs-tab">
-        <img class="Tabs-tab-icon" src="/img/message.svg">
-        <span class="Tabs-tab-text">Mentions</span>
+      <div class='Tabs-tab'>
+        ${svg(require('../../img/message.svg'), {class: 'Tabs-tab-icon'})}
+        <span class='Tabs-tab-text'>Mentions</span>
       </div>
-      <div class="Tabs-tab">
-        <img class="Tabs-tab-icon" src="/img/pin.svg">
-        <span class="Tabs-tab-text">Pins</span>
+      <div class='Tabs-tab'>
+        ${svg(require('../../img/pin.svg'), {class: 'Tabs-tab-icon'})}
+        <span class='Tabs-tab-text'>Pins</span>
       </div>
     </div>
     <section class='Sidebar-section'>

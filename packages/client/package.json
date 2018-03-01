@@ -25,13 +25,14 @@
     "browserify": "^15.1.0",
     "postcss-import": "^11.1.0",
     "postcss-nesting": "^4.2.1",
+    "stringify": "^5.2.0",
     "uglify-es": "^3.3.9",
     "watchify": "^3.9.0",
     "yo-yoify": "^4.3.0"
   },
   "scripts": {
-    "build": "browserify src/app.js -g yo-yoify | uglifyjs --compress --mangle -o dist/bundle.js && postcss css/app.css -o dist/bundle.css",
-    "watch": "concurrently \"watchify src/app.js -o dist/bundle.js -d -v\" \"postcss css/app.css -o dist/bundle.css -w --verbose\" ",
+    "build": "browserify src/app.js -t [ stringify --extensions [.svg] ] -g yo-yoify | uglifyjs --compress --mangle -o dist/bundle.js && postcss css/app.css -o dist/bundle.css",
+    "watch": "concurrently \"watchify src/app.js -o dist/bundle.js  -t [ stringify --extensions [.svg] ] -d -v\" \"postcss css/app.css -o dist/bundle.css -w --verbose\" ",
     "prepublishOnly": "npm run build"
   }
 }
