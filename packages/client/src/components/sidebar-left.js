@@ -200,11 +200,9 @@ const store = (state, emitter) => {
     if (!(state.route === '/servers/:host/channels/:channel' && state.params.channel === id)) {
       emitter.emit('pushState', `/servers/${state.params.host}/channels/${id}`)
 
-      // Mark the channel as read
+      // Mark the channel as read locally
       const channel = state.sidebar.channels.find(channel => channel.id === id)
       channel.unreadMessageCount = 0
-
-      api.post(state, `channels/${id}/mark-read`)
     }
   })
 

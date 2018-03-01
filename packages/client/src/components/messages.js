@@ -229,6 +229,9 @@ const store = (state, emitter) => {
         state.messages.scrolledToBeginning = true
       } else {
         state.messages.scrolledToEnd = true
+
+        // We reached the end of the channel - mark it as read.
+        await api.post(state, `channels/${state.params.channel}/mark-read`)
       }
 
       if (!state.messages.list) {
@@ -302,11 +305,11 @@ const store = (state, emitter) => {
 
   // when the url changes, load the new channel
   // FIXME: don't assume that the channel actually changed
-  emitter.on('routeready', () => {
+  emitter.on('routeready', async () => {
     emitter.emit('messages.reset')
 
     if (state.params.channel) {
-      const channel = state.sidebar.channels ? state.sidebar.channels.find(c => c.id === state.params.channel) : {}
+      const { channel } = await api.get(state, 'channels/' + state.params.channel)
 
       if (channel.oldestUnreadMessageID) emitter.emit('messages.jumptomessage', channel.oldestUnreadMessageID)
       else emitter.emit('messages.fetch', 'older')
