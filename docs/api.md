@@ -475,12 +475,20 @@ Model:
 {
   "id": ID,
   "name": string, // Does not include a hash
+}
+```
 
+<a id='channel-extra-data'></a>
+#### Extra data
+This data is only present if a valid, logged-in session ID is provided to channel-returning endpoints.
+```js
+{
   // Number of 'unread' messages, capped at 200. Unread messages are
   // simply messages that were sent more recently than the last time
-  // the channel was marked read by this user. *Not present if no session
-  // is provided!*
-  "unreadMessageCount": number
+  // the channel was marked read by this user.
+  "unreadMessageCount": number,
+
+  "oldestUnreadMessageID": ID | null,
 }
 ```
 
@@ -531,10 +539,10 @@ May return [an error](#errors): MUST_BE_ADMIN, NAME_ALREADY_TAKEN, INVALID_NAME.
 
 <a name='get-channel'></a>
 ### Retrieve a channel [GET /api/channels/:id]
-+ returns extra data (`unreadMessageCount`) with session
++ returns [extra data](#channel-extra-data) with session
 + **in-url** id (ID) - The ID of the channel.
 
-Returns `{ channel }`. Note `unreadMessageCount` will only be returned if this endpoint receives a session.
+Returns `{ channel }`. Note [extra data](#channel-extra-data) will only be returned if this endpoint receives a logged-in session ID.
 
 ```js
 GET /api/channels/5678
@@ -583,7 +591,7 @@ DELETE /api/channels/5678
 + requires session
 + **in-url** id (ID) - The ID of the channel.
 
-Marks the channel as read (ie. sets `unreadMessageCount` to 0), returning `{}`. Emits [channel/update](#channel-update) to all sockets authenticated to the same user that requested this endpoint (ie. to _you_).
+Marks the channel as read (ie. sets `unreadMessageCount` to 0), returning `{}`. Emits [channel/update](#channel-update) including [extra data](#channel-extra-data) if this socket is authenticated.
 
 ```js
 POST /api/channels/5678/mark-read

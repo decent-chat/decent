@@ -1,7 +1,7 @@
 module.exports = function makeSerializers({util, db}) {
   const {
     emailToAvatarURL, isUserOnline, shouldUseAuthorization, getUserBySessionID,
-    getUnreadMessageCountInChannel
+    getUnreadMessageCountInChannel, getOldestUnreadMessageInChannel,
   } = util
 
   const serialize = {
@@ -52,6 +52,14 @@ module.exports = function makeSerializers({util, db}) {
 
       if (sessionUser) {
         obj.unreadMessageCount = await getUnreadMessageCountInChannel(sessionUser, c._id)
+
+
+        if (obj.unreadMessageCount === 0) {
+          obj.oldestUnreadMessageID = null
+        } else {
+          const msg = await getOldestUnreadMessageInChannel(sessionUser, c._id)
+          obj.oldestUnreadMessageID = msg ? await serialize.message(msg, sessionUser) : null
+        }
       }
 
       return obj
