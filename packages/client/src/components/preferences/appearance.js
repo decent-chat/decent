@@ -125,6 +125,9 @@ const apply = appearance => {
       '--input-bg': 'var(--gray-100)',
       '--input-border-color': '#3c4144',
       '--input-disabled-bg': '#3c4144',
+
+      '--flair-bg': 'var(--gray-200)',
+      '--flair-fg': 'var(--gray-500)',
     },
   }
 
