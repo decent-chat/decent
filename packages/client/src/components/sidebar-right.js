@@ -103,6 +103,20 @@ const store = (state, emitter) => {
 
 const component = (state, emit) => {
   return html`<aside class='Sidebar --on-right'>
+    <div class="Tabs">
+      <div class="Tabs-tab --active">
+        <img class="Tabs-tab-icon" src="/img/users.svg">
+        <span class="Tabs-tab-text">Users</span>
+      </div>
+      <div class="Tabs-tab">
+        <img class="Tabs-tab-icon" src="/img/message.svg">
+        <span class="Tabs-tab-text">Mentions</span>
+      </div>
+      <div class="Tabs-tab">
+        <img class="Tabs-tab-icon" src="/img/pin.svg">
+        <span class="Tabs-tab-text">Pins</span>
+      </div>
+    </div>
     <section class='Sidebar-section'>
       <div class='Sidebar-section-title'>
         <h4>Users</h4>
