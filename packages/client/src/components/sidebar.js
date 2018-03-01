@@ -382,6 +382,14 @@ const store = (state, emitter) => {
   emitter.on('login', () => emitter.emit('sidebar.fetchchannels'))
   emitter.on('logout', () => emitter.emit('sidebar.fetchchannels'))
 
+  // Reload session when the session user is potentially deleted/deauthorized
+  emitter.on('ws.user/gone', async ({ userID }) => {
+    if (state.session && userID === state.session.user.id) {
+      await loadSessionID(state.session.id)
+      emitter.emit('render')
+    }
+  })
+
   async function loadSessionID(sessionID) {
     const { user } = await api.get(state, 'sessions/' + sessionID)
     if (user) {

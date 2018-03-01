@@ -31,11 +31,19 @@ decentServer(port).then(function (server) {
 
 Spawns a Decent server. To use a volatile, in-memory datastore, pass `decentServer.DB_IN_MEMORY` as `databaseDir`.
 
+#### `await server.kill()`
+Kills the server. Returns a Promise.
+
+**Below interface is unstable and will likely change between releases (ie. not following SemVer). Be careful.**
+
 #### `server.app`
 Running express server.
 
 #### `server.wss`
 Running [websocket server](https://github.com/websockets/ws/blob/HEAD/doc/ws.md).
+
+### `server.sendToAllSockets(evt: String, data)`
+Emits `{ evt, data }` to all connected sockets.
 
 #### `server.httpServer`
 Running http.server; essentially a combination of `server.app` and `server.wss`.
@@ -54,6 +62,12 @@ server.db = {
 
 ### `server.settings`
 See [settings.js](https://github.com/decent-chat/decent/tree/master/packages/server/settings.js).
+
+### `server.serialize`
+See [serialize.js](https://github.com/decent-chat/decent/tree/master/packages/server/serialize.js). Comes pre-made, so you can do `server.serialize.user({...})`.
+
+### `server.util`
+See [common.js](https://github.com/decent-chat/decent/tree/master/packages/server/common.js). Also comes pre-made.
 
 ### license
 GPL-3.0

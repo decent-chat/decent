@@ -9,6 +9,7 @@ module.exports = function makeSerializers({util, db}) {
       id: m._id,
       authorUsername: m.authorUsername,
       authorID: m.authorID,
+      authorFlair: m.authorFlair || '',
       authorAvatarURL: emailToAvatarURL(m.authorEmail || m.authorID),
       text: m.text,
       date: m.date,
@@ -21,6 +22,7 @@ module.exports = function makeSerializers({util, db}) {
       const obj = {
         id: u._id,
         username: u.username,
+        flair: u.flair,
         avatarURL: emailToAvatarURL(u.email || u._id),
         permissionLevel: u.permissionLevel,
         online: isUserOnline(u._id)

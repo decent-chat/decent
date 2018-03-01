@@ -1,3 +1,8 @@
+:root {
+  --flair-fg: var(--gray-200);
+  --flair-bg: var(--gray-500);
+}
+
 .MessageGroup {
   display: flex;
 
@@ -30,6 +35,18 @@
 
   font-weight: bold;
   text-align: right;
+}
+
+.MessageGroup-authorFlair {
+  display: inline-block;
+
+  margin: 0 6px;
+  padding: 2px 8px;
+
+  border-radius: 4px;
+
+  color: var(--flair-fg);
+  background: var(--flair-bg);
 }
 
 .MessageGroup-contents {}

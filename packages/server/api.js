@@ -378,6 +378,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         authorID: sessionUser._id,
         authorUsername: sessionUser.username,
         authorEmail: sessionUser.email,
+        authorFlair: sessionUser.flair,
         text: request.body.text,
         date: Date.now(),
         editDate: null,
@@ -776,26 +777,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  app.post('/api/account-settings', [
-    ...middleware.loadSessionID('sessionID'),
-    ...middleware.getSessionUserFromID('sessionID', 'user'),
-    ...middleware.loadVarFromBody('email'),
-
-    async (request, response) => {
-      const { email, user } = request[middleware.vars]
-
-      await db.users.update({ _id: user._id }, {
-        $set: {
-          email,
-        }
-      })
-
-      response.status(200).json({
-        avatarURL: emailToAvatarURL(email),
-      })
-    }
-  ])
-
   app.get('/api/users', [
     ...middleware.runIfCondition(() => shouldUseAuthorization(), [
       ...middleware.loadSessionID('sessionID', false),
@@ -872,13 +853,13 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         return
       }
 
-      const salt = await bcrypt.genSalt()
-      const passwordHash = await bcrypt.hash(password, salt)
+      const passwordHash = await bcrypt.hash(password)
 
       const user = await db.users.insert({
         username,
-        passwordHash, salt,
+        passwordHash,
         email: null,
+        flair: null,
         permissionLevel: 'member',
         authorized: false,
         lastReadChannelDates: {}
@@ -906,7 +887,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  app.get('/api/user/:userID', [
+  app.get('/api/users/:userID', [
     ...middleware.loadVarFromParams('userID'),
     ...middleware.loadSessionID('sessionID', false),
     ...middleware.runIfVarExists('sessionID',
@@ -953,70 +934,179 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  const authUserMiddleware = [
-    async function(request, response, next) {
-      if (await shouldUseAuthorization()) {
+  app.patch('/api/users/:userID', [
+    ...middleware.loadVarFromParams('userID'),
+    ...middleware.loadSessionID('sessionID'),
+
+    ...middleware.getUserFromID('userID', 'user'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+
+    // Session-check
+    async (request, response, next) => {
+      const { user, sessionUser } = request[middleware.vars]
+
+      if (sessionUser.permissionLevel === 'admin') {
+        request[middleware.vars].requestFromAdmin = true
+        next()
+      } else if (user.id === sessionUser.id) {
+        request[middleware.vars].requestFromAdmin = false
         next()
       } else {
-        response.status(400).json({
-          error: errors.AUTHORIZATION_ERROR
+        response.status(403).json({
+          error: Object.assign({}, errors.NOT_YOURS, {message: 'You cannot modify someone else\'s data.'})
         })
       }
     },
 
-    ...middleware.loadVarFromBody('userID'),
-    ...middleware.loadSessionID('sessionID'),
-    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-    ...middleware.requireBeAdmin('sessionUser'),
-    ...middleware.getUserFromID('userID', '_')
-  ]
+    ...middleware.loadVarFromQueryOrBody('password', false),
+    ...middleware.loadVarFromQueryOrBody('email', false),
+    ...middleware.loadVarFromQueryOrBody('flair', false),
+    ...middleware.loadVarFromQueryOrBody('permissionLevel', false),
+    ...middleware.loadVarFromQueryOrBody('authorized', false),
 
-  app.post('/api/authorize-user', [
-    ...authUserMiddleware,
+    // Typecheck/permission-check
+    async (request, response, next) => {
+      const {
+        user, sessionUser,
+        requestFromAdmin, password, email, flair, permissionLevel, authorized,
+      } = request[middleware.vars]
 
-    async function(request, response) {
-      const { userID } = request[middleware.vars]
+      if (!requestFromAdmin && (typeof permissionLevel !== 'undefined' || typeof authorized !== 'undefined')) {
+        // permissionLevel and authorized require an admin session to be provided!
 
-      if (await db.users.findOne({_id: userID, authorized: false})) {
-        await db.users.update({_id: userID}, {
-          $set: {authorized: true}
-        })
-
-        sendToAllSockets('user/new', {
-          user: await serialize.user(await db.users.findOne({_id: userID}))
-        })
+        return response.status(403).json({error: Object.assign({}, errors.MUST_BE_ADMIN, {
+          message: 'permissionLevel/authorized cannot be changed without an admin session',
+        })})
       }
 
-      response.status(200).json({})
-    }
-  ])
+      if (typeof password !== 'undefined') {
+        // { old: String, new: String }
 
-  app.post('/api/deauthorize-user', [
-    ...authUserMiddleware,
+        if (typeof password.old !== 'string') {
+          return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+            message: 'password.old should be a String.',
+          })})
+        }
 
-    async function(request, response) {
-      const { userID, sessionUser } = request[middleware.vars]
+        if (typeof password.new !== 'string') {
+          return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+            message: 'password.new should be a String.',
+          })})
+        }
 
-      if (sessionUser._id === userID) {
-        response.status(400).json({
-          error: Object.assign({}, errors.AUTHORIZATION_ERROR, {
-            message: 'You can\'t deauthorize yourself.'
+        // Check that 'old' is actually the old password of this user.
+        const validOldPass = await bcrypt.compare(password.old, user.passwordHash)
+
+        if (!validOldPass) {
+          return response.status(400).json({error: errors.INCORRECT_PASSWORD})
+        }
+
+        // Check that 'new' is long enough.
+        if (password.new.length < 6) {
+          return response.status(400).json({
+            error: errors.SHORT_PASSWORD
           })
-        })
-
-        return
+        }
       }
 
-      if (await db.users.findOne({_id: userID, authorized: true})) {
-        await db.users.update({_id: userID}, {
-          $set: {authorized: false}
-        })
+      if (typeof email !== 'undefined') {
+        if (typeof email !== 'string' && email !== null) {
+          // String - an email address, hopefully. We don't verify it though.
+          return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+            message: 'email should be null, or a String.',
+          })})
+        }
 
+        if (typeof email === 'string') {
+          email = email.toLowerCase()
+
+          if (email.length > 254) {
+            return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+              message: 'email too long (>254 characters)',
+            })})
+          }
+        }
+      }
+
+      if (typeof flair !== 'undefined' && flair !== null) {
+        // String, max length 32.
+
+        if (typeof flair !== 'string') {
+          return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+            message: 'flair should be null, or a String.',
+          })})
+        }
+
+        if (flair.length > 32) {
+          return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+            message: 'flair should not be longer than 32 characters.',
+          })})
+        }
+      }
+
+      if (typeof permissionLevel !== 'undefined' && permissionLevel !== 'admin' && permissionLevel !== 'member') {
+        // "admin" | "member"
+        return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+          message: 'permissionLevel should be "admin" or "member".',
+        })})
+      }
+
+      if (typeof authorized !== 'undefined') {
+        if (!await shouldUseAuthorization()) {
+          return response.status(400).json({error: errors.AUTHORIZATION_ERROR})
+        }
+
+        if (typeof authorized !== 'boolean') {
+          // Boolean.
+          return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+            message: 'authorized should be a Boolean.',
+          })})
+        }
+      }
+
+      next()
+    },
+
+    // Perform mutation
+    async (request, response) => {
+      const {
+        userID, user: oldUser,
+        password, email, flair, permissionLevel, authorized,
+      } = request[middleware.vars]
+
+      if (password) {
+        const passwordHash = await bcrypt.hash(password.new)
+
+        await db.users.update({_id: userID}, {
+          $set: { password: passwordHash },
+        })
+      }
+
+      const $set = {}
+      if (typeof authorized !== 'undefined') $set.authorized = authorized
+      if (typeof email !== 'undefined') $set.email = email
+      if (typeof flair !== 'undefined') $set.flair = flair
+      if (typeof permissionLevel !== 'undefined') $set.permissionLevel = permissionLevel
+
+      await db.users.update({_id: userID}, {$set})
+
+      const serializedUser = await serialize.user(await db.users.findOne({_id: userID}))
+
+      // If whether the user is authorized or not has changed, emit the
+      // respective events.
+      if (oldUser.authorized === false && authorized === true) {
+        sendToAllSockets('user/new', {user: serializedUser})
+      } else if (oldUser.authorized === true && authorized === false) {
         sendToAllSockets('user/gone', {userID})
       }
 
+      // If a user was deauthorized, don't send an update event.
+      if (serializedUser.authorized) {
+        sendToAllSockets('user/update', {user: serializedUser})
+      }
+
       response.status(200).json({})
-    }
+    },
   ])
 
   app.get('/api/sessions', [
@@ -1043,7 +1133,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
     async (request, response) => {
       const { username, password, user } = request[middleware.vars]
-      const { salt, passwordHash } = user
+      const { passwordHash } = user
 
       if (await bcrypt.compare(password, passwordHash)) {
         const session = await db.sessions.insert({
@@ -1255,6 +1345,8 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
   setInterval(pruneOldSessions, 5 * 60 * 1000) // Every 5min.
   pruneOldSessions()
+
+  return {util, serialize, sendToAllSockets}
 }
 
 Object.assign(module.exports, { DB_IN_MEMORY })

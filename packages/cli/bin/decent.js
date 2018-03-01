@@ -9,7 +9,7 @@ const fixWS = require('fix-whitespace')
 const port = parseInt(process.argv[2]) || 3000
 const dbDir = process.argv[3] || server.DB_IN_MEMORY
 
-server(port, dbDir).then(async ({ settings, app, db }) => {
+server(port, dbDir).then(async ({ settings, app, db, serialize, sendToAllSockets }) => {
   console.log(`Listening on port ${port} (try "license" or "help" for info)`)
 
   if (dbDir === server.DB_IN_MEMORY) {
@@ -44,12 +44,13 @@ server(port, dbDir).then(async ({ settings, app, db }) => {
             - license: shows license information (hint: it's GPL 3.0!)
             - make-admin: makes an already-registered user an admin and
               authorizes them as a member of the server.
+            - unmake-admin: demotes an admin to member status.
             - get-property: shows a server property.
             - set-property: sets a server property.
-              ("-property" can be omitted from both of these, and
-                "show" is an alias for "get".)
             - list-properties: lists all server properties and their
               values.
+              ("-property" can be omitted from these, and
+               "show" is an alias for "get".)
           `)
 
           break
@@ -157,7 +158,40 @@ server(port, dbDir).then(async ({ settings, app, db }) => {
             }
           })
 
+          user.authorized = true
+          user.permissionLevel = 'admin'
+          sendToAllSockets('user/update', {user: await serialize.user(user)})
+
           console.log(`Made ${username} an admin.`)
+
+          break
+        }
+
+        case 'unmake-admin': {
+          if (parts.length !== 2) {
+            console.error('Expected (unmake-admin <username>)')
+            break
+          }
+
+          const username = parts[1]
+
+          const user = await db.users.findOne({username})
+
+          if (!user || user.permissionLevel !== 'admin') {
+            console.error('Error: There is no admin with username ' + username)
+            break
+          }
+
+          await db.users.update({username}, {
+            $set: {
+              permissionLevel: 'member',
+            }
+          })
+
+          user.permissionLevel = 'member'
+          sendToAllSockets('user/update', {user: await serialize.user(user)})
+
+          console.log(`Demoted ${username} from admin to member.`)
 
           break
         }

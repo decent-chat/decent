@@ -41,12 +41,18 @@ const component = (state, emit, group) => {
     <div class='MessageGroup-contents'>
       <div class='MessageGroup-info'>
         <div class='MessageGroup-authorUsername'>${group.authorUsername}</div>
+        ${group.authorFlair ? html`
+          <div class='MessageGroup-authorFlair'>${group.authorFlair}</div>
+        ` : ''}
         ${timeEl(group.messages[0].date)}
       </div>
 
       ${group.messages.map(msg => {
         const mrked = mrk(state)(msg.text)
-        const bigEmotes = mrked.tokens.length <= 16 && !mrked.tokens.find(t => t.name !== 'emote')
+
+        const tokensWithoutEmptyText = mrked.tokens.filter(t => !(t.name === 'text' && t.text === ' '))
+        const bigEmotes = !tokensWithoutEmptyText.find(t => t.name !== 'emote')
+          && tokensWithoutEmptyText.length <= 3
 
         const el = html`<div class='Message ${bigEmotes ? '--big-emotes' : ''}' id=${'msg-' + msg.id}>
           ${raw(mrked.html())}
