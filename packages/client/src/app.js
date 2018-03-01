@@ -97,6 +97,14 @@ app.use((state, emitter) => {
     }
   })
 
+  // React to server-sent updates of state.session.user
+  emitter.on('ws.user/update', ({ user }) => {
+    if (state.session && user.id === state.session.user.id) {
+      state.session.user = user
+      emitter.emit('render')
+    }
+  })
+
   // publish state for debugging/experimenting as well
   window.state = state
 

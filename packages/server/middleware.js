@@ -180,7 +180,7 @@ module.exports.makeMiddleware = function({db, util}) {
           sessionID = request.headers['x-session-id'] // All headers are lowercase.
         } else if (shouldError) {
           // No session ID given - just quit here.
-          response.status(400).json({error: Object.assign(
+          response.status(401).json({error: Object.assign(
             {}, errors.INCOMPLETE_PARAMETERS, {missing: 'sessionID'}
           )})
           return

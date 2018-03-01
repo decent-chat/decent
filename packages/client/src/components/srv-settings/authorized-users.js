@@ -52,13 +52,13 @@ const store = (state, emitter) => {
   })
 
   emitter.on('authorizedUsers.authorizeUser', async userID => {
-    await api.post(state, 'authorize-user', {userID})
+    await api.patch(state, `users/${userID}`, {authorized: true})
 
     emitter.emit('authorizedUsers.fetch')
   })
 
   emitter.on('authorizedUsers.deauthorizeUser', async userID => {
-    await api.post(state, 'deauthorize-user', {userID})
+    await api.patch(state, `users/${userID}`, {authorized: false})
 
     emitter.emit('authorizedUsers.fetch')
   })

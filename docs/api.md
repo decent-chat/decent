@@ -685,17 +685,21 @@ Model:
 
   "avatarURL": string,
   "permissionLevel": "admin" | "member",
+  "flair": string | null,
 
   "online": boolean,
 
   "authorized": boolean, // Only present if useAuthorization is true
-  "email": string, // Only provided if this user is you
+  "email": string | null;, // Only provided if the requested user is the same as the sessionID provides
 }
 ```
 
 Related events:
+* [user/new](#user-new)
 * [user/online](#user-online)
-* [user/offline](#cuser-offline)
+* [user/offline](#user-offline)
+* [user/gone](#user-gone)
+* [user/update](#user-update)
 
 <a name='user-list'></a>
 ### Fetch users [GET /api/users]
@@ -784,17 +788,28 @@ GET /api/users/1
 
 <a name='update-user'></a>
 ### Update user details [PATCH /api/users/:id]
-+ requires session representing this user
++ requires session representing this user or admin session
 + **in-url** id (ID) - The user ID to patch
+
+The following parameters are available to both admin sessions and sessions representing the user being updated:
+
 + `password` (object; optional):
   * `new` (string) - Errors if shorter than 6 characters
-  * `old` (string)
-+ `email` (string; optional) - Not public
+  * `old` (string) - Errors if it doesn't match user's existing password
++ `email` (string | null; optional) - Not public, used to generate avatar URL
++ `flair` (string | null; optional) - Displayed beside username in chat, errors if longer than 32 characters
 
-Returns `{}` and applies changes, assuming a valid session for this user is provided. Errors are provided as usual.
+You can provide an admin session in order to update the following, also:
+
++ `permissionLevel`: ("admin" or "member"; optional)
++ `authorized`: (boolean; optional) - Errors (`AUTHORIZATION_ERROR`) if the server does not [require authorization](#authorization)
+
+Returns `{}` and applies changes, assuming a valid session for this user (or an admin) is provided and no errors occur. Also emits [user/update](#user-update).
 
 ```js
 PATCH /api/users/1
+
+(with session representing user id 1)
 
 -> {
 ->   "password": {
@@ -804,6 +819,22 @@ PATCH /api/users/1
 -> }
 
 <- {}
+```
+
+```js
+PATCH /api/users/12
+
+(with session representing an admin)
+
+-> {
+->   "permissionLevel": "admin",
+->   "authorized": true,
+->   "flair": null
+-> }
+
+<- {}
+
+('flair: null' removes the user's flair.)
 ```
 
 <a name='check-username-available'></a>
@@ -819,40 +850,6 @@ GET /api/username-available/patrick
 <- {
 <-   "available": false
 <- }
-```
-
-<a name='authorize-user'></a>
-### Authorize a user [POST /api/authorize-user]
-+ requires admin session
-+ userID (ID)
-
-Note that this endpoint will error (`AUTHORIZATION_ERROR`) if the server does not [require authorization](#authorization).
-
-```js
-POST /api/authorize-user
-
--> {
-->   "userID": "123456"
--> }
-
-<- {}
-```
-
-<a name='authorize-user'></a>
-### Deauthorize a user [POST /api/deauthorize-user]
-+ requires admin session
-+ userID (ID) - can't be you
-
-Note that this endpoint will error (`AUTHORIZATION_ERROR`) if the server does not [require authorization](#authorization) or if you attempt to deauthorize yourself.
-
-```js
-POST /api/deauthorize-user
-
--> {
-->   "userID": "123456"
--> }
-
-<- {}
 ```
 
 ---
@@ -916,6 +913,11 @@ Sent to all clients when a user becomes online. This is whenever a socket [tells
 ## user/offline
 
 Sent to all clients when a user becomes offline. This is whenever the last socket of a user who is online terminates. Passed data is in the format `{ userID }`.
+
+<a name='user-update'></a>
+## user/update
+
+Sent to all clients when a user is mutated using [PATCH /api/users/:userID](#update-user). Passed data is in the format `{ user }`.
 
 <a name='emote-new'></a>
 ## emote/new

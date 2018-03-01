@@ -99,6 +99,18 @@ const store = (state, emitter) => {
       }
     }
   })
+
+  emitter.on('ws.user/update', data => {
+    if (state.userList.users) {
+      const index = state.userList.users.findIndex(u => u.id === data.user.id)
+
+      if (index >= 0) {
+        state.userList.users.splice(index, 1)
+        state.userList.users.push(data.user)
+        emitter.emit('render')
+      }
+    }
+  })
 }
 
 const component = (state, emit) => {
@@ -131,7 +143,9 @@ const component = (state, emit) => {
             return html`
               <div
                 class='Sidebar-list-item UserList-user ${user.online ? 'is-online' : 'is-offline'}'
-                title='${user.username} (${user.online ? 'Online' : 'Offline'})'
+                title='${user.username} (${user.online ? 'Online' : 'Offline'})${
+                  user.flair ? '\nFlair: ' + user.flair : ''
+                }'
               >
                 <div class='UserList-user-avatar'>
                   <img class='Avatar' src=${user.avatarURL}>

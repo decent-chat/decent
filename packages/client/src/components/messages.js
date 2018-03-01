@@ -18,6 +18,7 @@ const groupMessages = (msgs, startingGroups = []) => {
 
     const useLastGroup = typeof group !== 'undefined'
       && group.authorID === msg.authorID
+      && group.authorFlair === msg.authorFlair
       && group.messages.length <= 20
       && (msg.date - group.messages[group.messages.length - 1].date) < apart
 
@@ -27,6 +28,7 @@ const groupMessages = (msgs, startingGroups = []) => {
       groups.push({
         authorID: msg.authorID,
         authorUsername: msg.authorUsername,
+        authorFlair: msg.authorFlair,
         authorAvatarURL: msg.authorAvatarURL,
         messages: [ msg ],
         id: 'msg-group-' + msg.date,
