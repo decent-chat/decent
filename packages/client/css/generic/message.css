@@ -8,9 +8,25 @@
 }
 
 .Message-content {
-  flex: 1;
+  flex-grow: 0;
+  flex-shrink: 1;
+
   overflow-x: auto;
 }
+
+.Message-fillerLine {
+  flex: 1;
+
+  margin-left: 4px;
+
+  height: .5em;
+  border-bottom: 1px dotted var(--page-dim-fg);
+
+  opacity: 0;
+  transition: opacity 250ms ease-out;
+}
+
+.Message:hover .Message-fillerLine { opacity: 0.5 }
 
 .Message-actions {
   flex: 0;
