@@ -52,7 +52,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   }
 
   const handleMentionsInMessage = async function (message) {
-    for (let userID of await getMentionsFromMessageContent(message.text)) {
+    for (let userID of new Set(await getMentionsFromMessageContent(message.text))) {
       // Add message ID to user.mentions if its not already there
       await db.users.update({_id: userID}, {
         $addToSet: {
