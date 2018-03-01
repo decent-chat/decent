@@ -71,23 +71,25 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   }
 
-  const markChannelAsRead = async function(userObj, channelID) {
+  const markChannelAsRead = async function(userObj, channelID, emitEvent = true) {
     await db.users.update({_id: userObj._id}, {
       $set: {
         [`lastReadChannelDates.${channelID}`]: Date.now()
       }
     })
 
-    const updatedChannel = await db.channels.findOne({_id: channelID})
+    if (emitEvent) {
+      const updatedChannel = await db.channels.findOne({_id: channelID})
 
-    for (const [ socket, socketData ] of connectedSocketsMap.entries()) {
-      if (socketData.userID === userObj._id) {
-        socket.send(JSON.stringify({
-          evt: 'channel/update',
-          data: {
-            channel: await serialize.channel(updatedChannel, userObj),
-          },
-        }))
+      for (const [ socket, socketData ] of connectedSocketsMap.entries()) {
+        if (socketData.userID === userObj._id) {
+          socket.send(JSON.stringify({
+            evt: 'channel/update',
+            data: {
+              channel: await serialize.channel(updatedChannel, userObj),
+            },
+          }))
+        }
       }
     }
   }
@@ -380,7 +382,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         authorEmail: sessionUser.email,
         authorFlair: sessionUser.flair,
         text: request.body.text,
-        date: Date.now(),
+        date: Date.now() - 1,
         editDate: null,
         channelID: channelID,
         reactions: {}
@@ -391,7 +393,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       })
 
       // Sending a message should also mark the channel as read for that user:
-      await markChannelAsRead(sessionUser, channelID)
+      await markChannelAsRead(sessionUser, channelID, false)
 
       response.status(201).json({
         messageID: message._id
