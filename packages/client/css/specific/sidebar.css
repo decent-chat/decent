@@ -62,11 +62,19 @@
   &:hover {
     color: var(--sidebar-list-item-hoverfg);
     background: var(--sidebar-list-item-hoverbg);
+
+    &.is-unread::after {
+      border-color: var(--sidebar-list-item-hoverbg);
+    }
   }
 
   &.is-active {
     color: var(--sidebar-list-item-activefg);
     background: var(--sidebar-list-item-activebg);
+
+    &.is-unread::after {
+      border-color: var(--sidebar-list-item-activebg);
+    }
   }
 
   &.\--icon-channel::before {
