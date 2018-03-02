@@ -1,6 +1,13 @@
 # Decent API Specification 0.1.0
 
+**Terminology**
+- [Names](#names)
+- [Errors](#errors)
+- [Mentions](#mentions)
+- [Colors](#colors)
+
 **Communicating with the API**
+* [Session IDs](#session-ids)
 * [HTTP Endpoints](#http-endpoints)
   - [Settings](#settings)
   - [Properties](#properties)
@@ -11,39 +18,17 @@
   - [Users](#users)
 * [WebSocket Events](#websocket-events)
 
-**Misc**
-* Authentication
-  - [Session IDs](#session-ids)
-  - [Authorization](#authorization)
-* Terminology
-  - [Names](#names)
-  - [Errors](#errors)
-  - [Mentions](#mentions)
-
 ---
 
-# Authenticating with the API
-
-## Session IDs
+# Session IDs
 When a request is made to the API, the server searches for a session ID given in the request using:
 * `sessionID` in POST body
 * `?sessionID` in query string
 * `X-Session-ID` header
 
-Endpoints labeled _requires session_ will [error](#errors) if no session or an invalid session is provided. _requires admin session_ means that the session's user must be an admin.
+Endpoints **not** labeled _does not require session_ will [error](#errors) if no session or an invalid session is provided.
 
-## Authorization
-Authorization is a simple form of privacy which prevents clients from interacting with the server API without being authorized to do so (usually manually, by a human). This limits interaction to specific users, which may be wanted so that the server is "private".
-
-It should be noted that **enabling authorization does not encrypt messages or user data**; it simply limits who can access that data via the API.
-
-Authorization is a server property and can only be enabled via the command line:
-
-```
-> set requireAuthorization on|off
-```
-
-**This will cause all endpoints except those marked _never requires session_ to require [authentication](#session-ids).**
+Other endpoints may require the session user to posess a particular [permission](#permissions) or set of permissions.
 
 ---
 
@@ -95,7 +80,7 @@ Mentions target a single user only and are formatted as `<@userID>`, where `user
 All endpoints respond in JSON, and those which take POST bodies expect it to be formatted using JSON.
 
 ## Retrieve server version [GET /api]
-+ never requires session
++ does not require session
 
 Returns `{ decentVersion }`. Should be used to check to see if a particular server is compatible with this spec. Note that Decent follows [SemVer](https://semver.org/), so unless the MAJOR (first) portion of the version number is different to what you expect communication should work fine.
 
@@ -114,13 +99,12 @@ GET /api/
 Model:
 ```
 {
-  "name": string,
-  "authorizationMessage": string
+  "name": string
 }
 ```
 
 ### Retrieve all settings [GET /api/settings]
-* never requires session
++ does not require session
 
 Returns `{ settings }`, where `settings` is an object representing server-specific settings.
 
@@ -129,16 +113,14 @@ GET /api/settings
 
 <- {
 <-   "settings": {
-<-     "name": "Unnamed Decent chat server",
-<-     "authorizationMessage": "Unauthorized - contact this server's webmaster to authorize your account for interacting with the server."
+<-     "name": "Unnamed Decent chat server"
 <-   }
 <- }
 ```
 
 ### Modify settings [POST /api/settings]
-+ requires admin session
++ requires [permission](#permissions): MANAGE_SERVER
 + `name` (string; optional)
-+ `authorizationMessage` (string; optional)
 
 Returns `{ results }` if successful, where `results` is an object describing the result of each changed setting. Updates settings with new values provided.
 
@@ -166,16 +148,12 @@ Model:
 ```js
 {
   // If true, always use HTTPS to access the server.
-  "useSecure": boolean,
-
-  // If true, authorization is enabled. This means almost all endpoints
-  // expect a session ID to be provided!
-  "useAuthorization": boolean
+  "useSecure": boolean
 }
 ```
 
 ### Retrieve all properties [GET /api/properties]
-* never requires session
++ does not require session
 
 Returns `{ properties }`, where `properties` is an object representing server-specific properties.
 
@@ -184,16 +162,17 @@ GET /api/properties
 
 <- {
 <-   "properties": {
-<-     "useSecure": false,
-<-     "useAuthorization": false
+<-     "useSecure": false
 <-   }
 <- }
 ```
 
 ---
 
-## Upload an image [POST /api/upload-image]
-+ requires session
+## Misc
+
+### Upload an image [POST /api/upload-image]
++ requires [permission](#permissions): UPLOAD_IMAGES
 + expects form data (`multipart/form-data`)
   * `image` (gif/jpeg/png) - The image to upload. Max size: 10MB
 
@@ -242,7 +221,7 @@ GET /api/emotes
 
 <a name='new-emote'></a>
 ### Add a new emote [POST /api/emotes]
-+ requires admin session
++ requires [permission](#permissions): MANAGE_EMOTES
 + `imageURL` (string)
 + `shortcode` (Name) - Should not include colons (`:`).
 
@@ -272,7 +251,7 @@ POST /api/emotes
 
 <a name='delete-emote'></a>
 ### Delete an existing emote [DELETE /api/emotes/:shortcode]
-+ requires admin session
++ requires [permission](#permissions): MANAGE_EMOTES
 + **in-url** shortcode (string)
 
 Returns `{}` if successful. Emits [emote/delete](#emote-delete).
@@ -316,7 +295,7 @@ GET /api/sessions
 
 <a name='login'></a>
 ### Login [POST /api/sessions]
-+ never requires session
++ does not require session
 + `username` (string)
 + `password` (string)
 
@@ -336,7 +315,7 @@ POST /api/sessions
 ```
 
 ### Fetch session details [GET /api/sessions/:id]
-+ never requires session (provided in the URL)
++ does not require session (provided in the URL)
 + **in-url** id (string)
 
 Responds with `{ session, user }` upon success, where `session` is a [session](#sessions) and `user` is the [user](#users) this session represents.
@@ -359,7 +338,7 @@ GET /api/sessions/12345678-ABCDEFGH
 
 <a name='logout'></a>
 ### Logout [DELETE /api/sessions/:id]
-+ never requires session (if you know the ID, it's yours)
++ does not require session (if you know the ID, it's yours)
 + **in-url** id (string)
 
 Responds with `{}` upon success. Any further requests using the provided session ID will fail.
@@ -407,7 +386,7 @@ Related events:
 
 <a name='send-message'></a>
 ### Send a message [POST /api/messages]
-+ requires session
++ requires [channel permission](#channel-permissions) for `channelID`: SEND_MESSAGES
 + `channelID` (ID) - The parent channel of the new message
 + `text` (string) - The content of the message
 
@@ -428,7 +407,7 @@ POST /api/messages
 
 <a name='get-message'></a>
 ### Retrieve a message [GET /api/messages/:id]
-+ requires session
++ requires [channel permission](#channel-permissions): SEND_MESSAGES
 + **in-url** id (ID) - The ID of the message to retrieve
 
 Returns `{ message }` where `message` is a [message object](#messages-api-messages).
@@ -446,7 +425,7 @@ GET /api/messages/1234
 
 <a name='edit-message'></a>
 ### Edit a message [PATCH /api/messages/:id]
-+ requires session
++ requires ownership of message `id`
 + **in-url** id (ID) - The ID of the message to edit
 + `text` (string) - The new content of the message
 
@@ -466,7 +445,9 @@ This endpoint will return a NOT_YOURS [error](#errors) if you do not own the mes
 
 <a name='delete-message'></a>
 ### Delete a message [DELETE /api/messages/:id]
-+ requires session
++ requires one of:
+  * ownership of message `id`
+  * [channel permission](#channel-permissions) for `channelID` of message `id`: DELETE_MESSAGES
 + **in-url** id (ID) - The ID of the message to delete
 
 Emits [message/delete](#message-delete) and returns `{}`.
@@ -514,7 +495,9 @@ Related events:
 
 <a name='channel-list'></a>
 ### Get list of channels [GET /api/channels]
-+ returns extra data (`unreadMessageCount`) with session
++ does not require session, however:
+  * channels where you do not have the SEE [permission](#channel-permissions) will not be returned
+  * returns [extra data](#channel-extra-data) with session
 
 Returns `{ channels }`, where channels is an array of channels. Note `unreadMessageCount` will only be returned if this endpoint receives a session.
 
@@ -533,7 +516,7 @@ GET /api/channels
 
 <a name='create-channel'></a>
 ### Create a channel [POST /api/channels]
-+ requires admin session
++ requires [permission](#permissions): MANAGE_CHANNELS
 + `name` (name) - The name of the channel.
 
 On success, emits [channel/new](#channel-new) and returns `{ channelID }`.
@@ -554,7 +537,8 @@ May return [an error](#errors): MUST_BE_ADMIN, NAME_ALREADY_TAKEN, INVALID_NAME.
 
 <a name='get-channel'></a>
 ### Retrieve a channel [GET /api/channels/:id]
-+ returns [extra data](#channel-extra-data) with session
++ does not require session, however:
+  * returns [extra data](#channel-extra-data) with session
 + **in-url** id (ID) - The ID of the channel.
 
 Returns `{ channel }`. Note [extra data](#channel-extra-data) will only be returned if this endpoint receives a logged-in session ID.
@@ -572,7 +556,7 @@ May return [an error](#errors), including MUST_BE_ADMIN, NAME_ALREADY_TAKEN, and
 
 <a name='rename-channel'></a>
 ### Rename a channel [PATCH /api/channels/:id]
-+ requires admin session
++ requires [permission](#permissions): MANAGE_CHANNELS
 + **in-url** id (ID) - The ID of the channel.
 + name (name) - The new name of the channel
 
@@ -590,7 +574,7 @@ PATCH /api/channels/5678
 
 <a name='delete-channel'></a>
 ### Delete a channel [DELETE /api/channels/:id]
-+ requires admin session
++ requires [permission](#permissions): MANAGE_CHANNELS
 + **in-url** id (ID) - The ID of the channel to delete.
 
 Returns `{}` if successful. Emits [channel/delete](#channel-delete).
@@ -603,7 +587,7 @@ DELETE /api/channels/5678
 
 <a name='mark-channel-as-read'></a>
 ### Mark a channel as read [POST /api/channels/:id/mark-read]
-+ requires session
++ requires [channel permission](#channel-permissions) for channel `id`: READ_MESSAGES
 + **in-url** id (ID) - The ID of the channel.
 
 Marks the channel as read (ie. sets `unreadMessageCount` to 0), returning `{}`. Emits [channel/update](#channel-update) including [extra data](#channel-extra-data) if this socket is authenticated.
@@ -616,6 +600,7 @@ POST /api/channels/5678/mark-read
 
 <a name='get-messages-in-channel'></a>
 ### Get messages in channel [GET /api/channels/:id/messages]
++ requires [channel permission](#permissions) for channel `id`: READ_MESSAGES
 + **in-url** id (ID) - The ID of the channel to fetch messages of.
 + `before` (ID; optional) - The ID of the message right **after** the range of messages you want.
 + `after` (ID; optional) - The ID of the message right **before** the range of messages you want.
@@ -660,6 +645,7 @@ GET /api/channels/5678/messages?after=1234
 
 <a name='get-pins'></a>
 ### Retrieve all pinned messages [GET /api/channels/:id/pins]
++ requires [channel permission](#permissions) for channel `id`: READ_MESSAGES
 + **in-url** id (ID)
 
 Returns `{ pins }`, where pins is an array of [messages](#messages) that have been pinned to this channel.
@@ -680,7 +666,7 @@ GET /api/channels/5678/pins
 
 <a name='pin'></a>
 ### Pin a message [POST /api/channels/:id/pins]
-+ requires admin session
++ requires [channel permission](#permissions) for channel `id`: MANAGE_PINS
 + **in-url** id (ID)
 + `messageID` (ID) - The message to pin to this channel.
 
@@ -698,7 +684,7 @@ POST /api/channels/5678/pins
 
 <a name='unpin'></a>
 ### Unpin a message [DELETE /api/channels/:channelID/pins/:messageID]
-+ requires admin session
++ requires [channel permission](#permissions) for channel `id`: MANAGE_PINS
 + **in-url** channelID (ID)
 + **in-url** messageID (ID) - The ID of the message to unpin. Errors if not pinned.
 
@@ -721,12 +707,11 @@ Model:
   "username": Name,
 
   "avatarURL": string,
-  "permissionLevel": "admin" | "member",
   "flair": string | null,
 
   "online": boolean,
+  "permissions": int, // Bitfield generated by ORing the user's role permissions
 
-  "authorized": boolean, // Only present if useAuthorization is true
   "email": string | null // Only provided if the requested user is the same as the sessionID provides
 }
 ```
@@ -742,9 +727,7 @@ Related events:
 
 <a name='user-list'></a>
 ### Fetch users [GET /api/users]
-+ returns extra data (`unauthorizedUsers`) with admin session
-
-Returns `{ users }`, where `users` is an array of [users](#users). If an admin session is given, also returns `unauthorizedUsers`, an array of users who have not yet been authorized.
+Returns `{ users }`, where `users` is an array of [users](#users).
 
 ```js
 GET /api/users
@@ -770,20 +753,13 @@ GET /api/users?sessionID=adminsid123
 <-       "username": "test-user",
 <-       // ...
 <-     }
-<-   ],
-<-   "unauthorizedUsers": [
-<-     {
-<-       "id": "5678",
-<-       "username": "pls-let-me-join-pls-pls",
-<-       // ...
-<-     }
 <-   ]
 <- }
 ```
 
 <a name='register'></a>
 ### Register (create new user) [POST /api/users]
-+ never requires session
++ does not require session
 + `username` ([name](#names)) - Must be unique
 + `password` (string) - Errors if shorter than 6 characters
 
@@ -808,7 +784,8 @@ POST /api/users
 
 <a name='get-user'></a>
 ### Retrieve a user by ID [GET /api/users/:id]
-+ may return extra data (`email`) with session
++ does not require session, howerver:
+  * returns extra data (`email`) with session representing user `id`
 + **in-url** id (ID) - The user ID to fetch
 
 Returns `{ user }`.
@@ -827,6 +804,8 @@ GET /api/users/1
 
 <a name='get-mentions'></a>
 ### List [mentions](#mentions) of a user [GET /api/users/:id/mentions]
++ does not require session, however:
+  * only returns messages where you have the SEE and READ_MESSAGES [permissions](#channel-permissions) for the message's channel
 + **in-url** id (ID) - The user ID to fetch the mentions of
 + `limit` (int <= 50; default `50`) - The maximum number of mentions to fetch.
 + `skip` (int; default `0`) - Skips the first n mentions before returning
@@ -852,10 +831,10 @@ GET /api/users/1/mentions?limit=1
 
 <a name='update-user'></a>
 ### Update user details [PATCH /api/users/:id]
-+ requires session representing this user or admin session
++ requires session (see below)
 + **in-url** id (ID) - The user ID to patch
 
-The following parameters are available to both admin sessions and sessions representing the user being updated:
+**The following parameters are available to sessions that represent the user being updated, or have the UPDATE_OTHERS [permission](#permissions):**
 
 + `password` (object; optional):
   * `new` (string) - Errors if shorter than 6 characters
@@ -863,10 +842,10 @@ The following parameters are available to both admin sessions and sessions repre
 + `email` (string | null; optional) - Not public, used to generate avatar URL
 + `flair` (string | null; optional) - Displayed beside username in chat, errors if longer than 50 characters
 
-You can provide an admin session in order to update the following, also:
+**The following parameters are available to sessions with the MANAGE_ROLES [permission](#permissions):**
 
-+ `permissionLevel`: ("admin" or "member"; optional)
-+ `authorized`: (boolean; optional) - Errors (`AUTHORIZATION_ERROR`) if the server does not [require authorization](#authorization)
++ `roles`: (array of [role IDs](#roles); optional) - Used to generate `user.permissions`)
+  * requires MANAGE_ROLES [permission](#permission)
 
 Returns `{}` and applies changes, assuming a valid session for this user (or an admin) is provided and no errors occur. Also emits [user/update](#user-update).
 
@@ -891,8 +870,7 @@ PATCH /api/users/12
 (with session representing an admin)
 
 -> {
-->   "permissionLevel": "admin",
-->   "authorized": true,
+->   "roles": [ "id-of-role", "id-of-role-2" ],
 ->   "flair": null
 -> }
 
@@ -901,9 +879,29 @@ PATCH /api/users/12
 ('flair: null' removes the user's flair.)
 ```
 
+<a name='get-user'></a>
+### Retrieve a user by ID [GET /api/users/:id]
++ does not require session, however:
+  * if the provided session represents the user `id`, returns extra data (`email`)
++ **in-url** id (ID) - The user ID to fetch
+
+Returns `{ user }`.
+
+```js
+GET /api/users/1
+
+<- {
+<-   "user": {
+<-     "id": "1",
+<-     "username": "admin",
+<-     // ...
+<-   }
+<- }
+```
+
 <a name='check-username-available'></a>
 ### Check if a username is available [GET /api/username-available/:username]
-+ never requires session
++ does not require session
 + **in-url** username (name)
 
 On success, returns `{ available }`, where available is a boolean for if the username is available or not. May return the [error](#errors) INVALID_NAME.
@@ -971,12 +969,12 @@ Sent to all clients when a channel is [deleted](#delete-channel). Passed data is
 <a name='user-new'></a>
 ## user/new
 
-Sent to all clients when a user is created, or instead when they are authorized, if the server [requires authorization](#authorization). Passed data is in the format `{ user }`.
+Sent to all clients when a user is created. Passed data is in the format `{ user }`.
 
 <a name='user-gone'></a>
 ## user/gone
 
-Sent to all clients when a user is deleted, or when a user is deauthorized, if the server [requires authorization](#authorization). Passed data is in the format `{ userID }`.
+Sent to all clients when a user is deleted. Passed data is in the format `{ userID }`.
 
 <a name='user-online'></a>
 ## user/online
