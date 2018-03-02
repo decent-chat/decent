@@ -806,8 +806,8 @@ DELETE /api/channels/5678/pins/1234
 
 Sent to all clients when a user is created. Passed data is in the format `{ user }`.
 
-<a name='user-gone'></a>
-### user/gone
+<a name='user-delete'></a>
+### user/delete
 
 Sent to all clients when a user is deleted. Passed data is in the format `{ userID }`.
 
@@ -1013,6 +1013,13 @@ GET /api/users/1
 <-   }
 <- }
 ```
+
+<a name='delete-user'></a>
+### Delete a user [DELETE /api/users/:id]
++ requires [permission](#permission): DELETE_USERS
++ **in-url** id (ID) - The user to delete
+
+Returns `{}` and emits [user/delete](#user-delete).
 
 <a name='check-username-available'></a>
 ### Check if a username is available [GET /api/username-available/:username]
