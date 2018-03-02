@@ -7,6 +7,7 @@
 
   --sidebar-border-color: var(--gray-500);
   --sidebar-icon-color: var(--gray-500);
+  --sidebar-icon-color-active: #afceff;
 
   --sidebar-list-item-fg: var(--gray-100);
   --sidebar-list-item-bg: var(--sidebar-bg);
@@ -71,6 +72,10 @@
   &.is-active {
     color: var(--sidebar-list-item-activefg);
     background: var(--sidebar-list-item-activebg);
+
+    &.\--icon-channel::before {
+      color: var(--sidebar-icon-color-active);
+    }
 
     &.is-unread::after {
       border-color: var(--sidebar-list-item-activebg);
