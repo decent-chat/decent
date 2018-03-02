@@ -283,7 +283,7 @@ Model:
 ```js
 {
   "id": string,
-  "dateCreated": number,
+  "dateCreated": number
 }
 ```
 
@@ -477,7 +477,7 @@ Model:
 ```js
 {
   "id": ID,
-  "name": string, // Does not include a hash
+  "name": string // Does not include a hash
 }
 ```
 
@@ -719,7 +719,7 @@ Model:
   "mentions": [ Message ] // List of messages that mention this user
 
   "authorized": boolean, // Only present if useAuthorization is true
-  "email": string | null, // Only provided if the requested user is the same as the sessionID provides
+  "email": string | null // Only provided if the requested user is the same as the sessionID provides
 }
 ```
 
