@@ -1051,7 +1051,7 @@ GET /api/users/1
 ```
 
 <a name='get-user-permissions'></a>
-### Get a user's permissions {GET /api/users/:id/permissions]
+### Get a user's permissions [GET /api/users/:id/permissions]
 + does not require session
 + **in-url** id (ID) - The user ID to fetch
 
