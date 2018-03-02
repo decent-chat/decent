@@ -1,51 +1,53 @@
-# Decent API Specification 0.1.0
+### Decent API Specification
+> Version: **1.0.0-preview**
 
-**Terminology**
-* [Names](#names)
-* [Errors](#errors)
-* [Mentions](#mentions)
-* [Colors](#colors)
-* [Permissions](#permissions)
+Implementors of this specification must support the following two forms of transport:
 
-**Communicating with the API**
-* [Session IDs](#session-ids)
-* [HTTP Endpoints](#http-endpoints)
-  - [Settings](#settings)
-  - [Properties](#properties)
-  - [Emotes](#emotes)
-  - [Sessions](#sessions)
-  - [Messages](#messages)
-  - [Channels](#channels)
-  - [Users](#users)
-  - [Roles](#roles)
-* [WebSocket Events](#websocket-events)
+* **HTTP(S) endpoints** - For client->server requests
+
+The HTTP API is accessed via `/api/`. All endpoints respond in JSON, and those which take request bodies expect it to also be formatted using JSON. Implementors may choose an appropriate HTTP status code for responses.
+
+* **WebSocket events** - For server->client event notifications
+
+Messages sent to and from sockets must be JSON strings, following the format `{ evt, data }`, where `evt` is a name representing the meaning of the event, and `data` is an optional property specifying any additional data related to the event.
 
 ---
 
-# Session IDs
-When a request is made to the API, the server searches for a session ID given in the request using:
-* `sessionID` in POST body
+# API
+
+## Authentication
+
+Clients should authenticate using both of the following methods at the same time.
+
+<details><summary><b>With HTTP(S)</b> - per-request</summary>
+
+When a request is made to the API, the server searches for a [session ID](#sessions) given in the request using:
+* `sessionID` in request body
 * `?sessionID` in query string
 * `X-Session-ID` header
 
 Endpoints **not** labeled _does not require session_ will [error](#errors) if no session or an invalid session is provided.
-
 Other endpoints may require the session user to posess a particular [permission](#permissions) or set of permissions.
 
----
+</details>
 
-# Terminology
+<details><summary><b>With WebSockets</b> - ping/pong periodically</summary>
 
-## Names
-Several parts of the API expect names (`Name`) to be given. These names will eventually be displayed to users, and so must follow a basic guideline for being formatted.
+## pingdata
 
-Names are strings, consisting only of alphanumeric characters, underscores (`_`), dots (`.`), and dashes (`-`). Names cannot be `""`. In regex form: `/[a-zA-Z0-9._-]+/`
+Sent periodically (typically every 10 seconds) by the server, as well as immediately upon the client socket connecting. Clients should respond with a `pongdata` event, as described below.
 
-**When a name which does not follow these guidelines is given to an endpoint, an INVALID_NAME [error](#errors) will be returned and the request will have no action.**
+## pongdata
+
+Should be **sent from clients** in response to `pingdata`. Notifies the server of any information related to the particular socket. Passed data should include:
+
+* `sessionID`, if the client is "logged in" or keeping track of a session ID. This is used for keeping track of which users are online.
+
+</details>
 
 ## Errors
 
-Nearly all [HTTP endpoints](#http-endpoints) return errors situationally. Generally, when the processing of a request errors, its response will have the `error` property, which will follow the form `{ code, message }`.
+Nearly all HTTP endpoints return errors situationally. Generally, when the processing of a request errors, its response will have the `error` property, which will follow the form `{ code, message }`.
 
 The `message` property is a string of a human-readable English message briefly explaining what went wrong, and the `code` is a permanent identifier string for the type of error that happened. Checking `code` is useful for displaying custom messages or behavior when particular errors occur.
 
@@ -66,29 +68,6 @@ The `message` property is a string of a human-readable English message briefly e
 | NAME_ALREADY_TAKEN     | The passed name is already used by something else   |
 | SHORT_PASSWORD         | Password is too short                               |
 | INCORRECT_PASSWORD     | Incorrect password                                  |
-
-</details>
-
-## Mentions
-
-Mentions target a single user only and are formatted as `<@userID>`, where `userID` is the ID of the user who is being mentioned. Mentions are stored per-user on the server.
-
-## Colors
-
-Many things can have color given to them, for example [roles](#roles). We use a **color constant** string for this purpose.
-
-<details><summary><b>Color constants</b></summary>
-
-| Color constant | Recommended RGB |
-| --------------:| --------------- |
-| RED            | #b60205         |
-| ORANGE         | #d93f0b         |
-| YELLOW         | #fbca04         |
-| GREEN          | #0e8a16         |
-| TEAL           | #006b75         |
-| BLUE           | #1d76db         |
-| PURPLE         | #7f488c         |
-| GREY           | #575E75         |
 
 </details>
 
@@ -131,13 +110,11 @@ Below is a table of all channel permissions.
 
 </details>
 
----
+## Miscellaneous
 
-# HTTP Endpoints
+<details><summary>Endpoints</summary>
 
-All endpoints respond in JSON, and those which take POST bodies expect it to be formatted using JSON.
-
-## Retrieve server version [GET /api]
+### Retrieve server version [GET /api]
 + does not require session
 
 Returns `{ decentVersion }`. Should be used to check to see if a particular server is compatible with this spec. Note that Decent follows [SemVer](https://semver.org/), so unless the MAJOR (first) portion of the version number is different to what you expect communication should work fine.
@@ -150,16 +127,37 @@ GET /api/
 <- }
 ```
 
----
+<a id='upload-image'></a>
+### Upload an image [POST /api/upload-image]
++ requires [permission](#permissions): UPLOAD_IMAGES
++ expects form data (`multipart/form-data`)
+  * `image` (gif/jpeg/png) - The image to upload. Max size: 10MB
+
+Returns `{ path }`, where `path` is a relative URL to the uploaded image file.
+
+```js
+POST /api/upload-image
+
+-> (form data)
+
+<- {
+<-   "path": "/uploads/1234/image.png"
+<- }
+```
+
+This endpoint may return [an error](#errors), namely FAILED, NO, or NOT_ALLOWED.
+
+</details>
 
 ## Settings
 
-Model:
-```
+```json
 {
   "name": string
 }
 ```
+
+<details><summary>Endpoints</summary>
 
 ### Retrieve all settings [GET /api/settings]
 + does not require session
@@ -196,19 +194,20 @@ POST /api/settings
 <- }
 ```
 
----
+</details>
 
 ## Properties
 
 Properties can only be modified on the command line.
 
-Model:
 ```js
 {
   // If true, always use HTTPS to access the server.
   "useSecure": boolean
 }
 ```
+
+<details><summary>Endpoints</summary>
 
 ### Retrieve all properties [GET /api/properties]
 + does not require session
@@ -225,35 +224,10 @@ GET /api/properties
 <- }
 ```
 
----
-
-## Misc
-
-<a id='upload-image'></a>
-### Upload an image [POST /api/upload-image]
-+ requires [permission](#permissions): UPLOAD_IMAGES
-+ expects form data (`multipart/form-data`)
-  * `image` (gif/jpeg/png) - The image to upload. Max size: 10MB
-
-Returns `{ path }`, where `path` is a relative URL to the uploaded image file.
-
-```js
-POST /api/upload-image
-
--> (form data)
-
-<- {
-<-   "path": "/uploads/1234/image.png"
-<- }
-```
-
-This endpoint may return [an error](#errors), namely FAILED, NO, or NOT_ALLOWED.
-
----
+</details>
 
 ## Emotes
 
-Model:
 ```js
 {
   "shortcode": Name, // Without colons
@@ -261,9 +235,14 @@ Model:
 }
 ```
 
-Related events:
+<details><summary>Events</summary>
+
 * [emote/new](#emote-new)
 * [emote/delete](#emote-delete)
+
+</details>
+
+<details><summary>Endpoints</summary>
 
 <a name='list-emotes'></a>
 ### List emotes [GET /api/emotes]
@@ -321,17 +300,18 @@ DELETE /api/emotes/package
 <- {}
 ```
 
----
+</details>
 
 ## Sessions
 
-Model:
 ```js
 {
   "id": string,
   "dateCreated": number // Unix time at creation
 }
 ```
+
+<details><summary>Endpoints</summary>
 
 <a name='get-sessions'></a>
 ### Fetch the current user's sessions [GET /api/sessions]
@@ -408,11 +388,10 @@ DELETE /api/sessions/12345678-ABCDEFGH
 <- {}
 ```
 
----
+</details>
 
 ## Messages
 
-Model:
 ```js
 {
   "id": ID,
@@ -436,12 +415,25 @@ Model:
 }
 ```
 
-Note that [message mentions](#mentions) live in the message content (`text`). `mentionedUserIDs` is derived from the content of the message.
+**Mentions**
 
-Related events:
-* [message/new](#message-new)
-* [message/edit](#message-edit)
-* [message/delete](#message-delete)
+Mentions target a single user only and are formatted as `<@userID>`, where `userID` is the ID of the user who is being mentioned. Mentions are stored per-user on the server. `mentionedUserIDs` is derived from the content of the message.
+
+<details><summary>Events</summary>
+
+<a name='message-new'></a>
+## message/new
+
+Sent to all clients whenever a message is [sent](#send-message) to any channel in the server. Passed data is in the format `{ message }`, where `message` is a [message](#messages) representing the new message.
+
+<a name='message-edit'></a>
+## message/edit
+
+Sent to all clients when any message is [edited](#edit-message). Passed data is in the format `{ message }`, where `message` is a [message](#messages) representing the new message.
+
+</details>
+
+<details><summary>Endpoints</summary>
 
 <a name='send-message'></a>
 ### Send a message [POST /api/messages]
@@ -519,11 +511,10 @@ DELETE /api/messages/1234
 
 This endpoint may return a NOT_YOURS [error](#errors) if you do not own the message in question. Note that admins may delete any message. Emits [user/mentions/remove](#user-mentions-remove) to all previously-[mentioned](#mentions) users.
 
----
+</details>
 
 ## Channels
 
-Model:
 ```js
 {
   "id": ID,
@@ -545,12 +536,36 @@ This data is only present if a valid, logged-in session ID is provided to channe
 }
 ```
 
-Related events:
-* [channel/new](#channel-new)
-* [channel/update](#channel-update)
-* [channel/pins/add](#channel-pins-add)
-* [channel/pins/remove](#channel-pins-remove)
-* [channel/delete](#channel-delete)
+<details><summary>Events</summary>
+
+<a name='channel-new'></a>
+## channel/new
+
+Sent to all clients when a channel is [created](#create-channel). Passed data is in the format `{ channel }`, where `channel` is a [channel](#channels) representing the new channel.
+
+<a name='channel-update'></a>
+## channel/update
+
+Sent to all clients when a channel is updated ([renamed](#rename-channel), [marked as read](#mark-channel-as-read), etc). Passed data is in the format `{ channel }`, including `channel.unreadMessageCount` if the socket is actively [ponging sessionIDs](#pongdata).
+
+<a name='channel-pins-add'></a>
+## channel/pins/add
+
+Sent to all clients when a message is [pinned](#pin) to a channel. Passed data is in the format `{ message }`, where `message` is the message that was pinned.
+
+<a name='channel-pins-remove'></a>
+## channel/pins/remove
+
+Sent to all clients when a message is [unpinned](#unpin) from a channel. Passed data is in the format `{ messageID }`, where `messageID` is the ID of the message that was unpinned.
+
+<a name='channel-delete'></a>
+## channel/delete
+
+Sent to all clients when a channel is [deleted](#delete-channel). Passed data is in the format `{ channelID }`.
+
+</details>
+
+<details><summary>Endpoints</summary>
 
 <a name='channel-list'></a>
 ### Get list of channels [GET /api/channels]
@@ -755,11 +770,10 @@ DELETE /api/channels/5678/pins/1234
 <- {}
 ```
 
----
+</details>
 
 ## Users
 
-Model:
 ```js
 {
   "id": ID,
@@ -775,14 +789,46 @@ Model:
 }
 ```
 
-Related events:
-* [user/new](#user-new)
-* [user/online](#user-online)
-* [user/offline](#user-offline)
-* [user/gone](#user-gone)
-* [user/update](#user-update)
-* [user/mentions/add](#user-mentions-add)
-* [user/mentions/remove](#user-mentions-remove)
+<details><summary>Events</summary>
+
+<a name='user-new'></a>
+## user/new
+
+Sent to all clients when a user is created. Passed data is in the format `{ user }`.
+
+<a name='user-gone'></a>
+## user/gone
+
+Sent to all clients when a user is deleted. Passed data is in the format `{ userID }`.
+
+<a name='user-online'></a>
+## user/online
+
+Sent to all clients when a user becomes online. This is whenever a socket [tells the server](#pongdata) that its session ID is that of a user who was not already online before. Passed data is in the format `{ userID }`.
+
+<a name='user-offline'></a>
+## user/offline
+
+Sent to all clients when a user becomes offline. This is whenever the last socket of a user who is online terminates. Passed data is in the format `{ userID }`.
+
+<a name='user-update'></a>
+## user/update
+
+Sent to all clients when a user is mutated using [PATCH /api/users/:userID](#update-user). Passed data is in the format `{ user }`.
+
+<a name='user-mentions-add'></a>
+## user/mentions/add
+
+When a user is [mentioned](#mentions), this is sent to all sockets authenticated as them. Passed data is in the format `{ message }`, where `message` is the new / just edited mesage that mentioned the user.
+
+<a name='user-mentions-remove'></a>
+## user/mentions/remove
+
+When a message is deleted or edited to remove [the mention of a user](#mentions), all sockets authenticated as the unmentioned user are sent this event. Passed data is in the format `{ messageID }`, where `messageID` is the ID of the message that just stopped mentioning the user.
+
+</details>
+
+<details><summary>Endpoints</summary>
 
 <a name='user-list'></a>
 ### Fetch users [GET /api/users]
@@ -973,11 +1019,10 @@ GET /api/username-available/patrick
 <- }
 ```
 
----
+</details>
 
 ## Roles
 
-Model:
 ```js
 {
   "name": string,
@@ -988,14 +1033,30 @@ Model:
 }
 ```
 
-See also:
-* [Permissions](#permissions)
-* [PATCH /api/users/:id](#update-user)
+**See also**
 
-Related events:
-* [role/new](#role-new)
-* [role/update](#role-update)
-* [role/delete](#role-delete)
+* [Permissions](#permissions)
+
+<details><summary>Events</summary>
+
+<a name='role-new'></a>
+## role/new
+
+Sent to all clients when a role is [added](#new-role). Passed data is in the format `{ role }`.
+
+<a name='role-update'></a>
+## role/update
+
+Sent to all clients when a role is [updated](#update-role). Passed data is in the format `{ role }`.
+
+<a name='role-delete'></a>
+## role/delete
+
+Sent to all clients when a role is [deleted](#delete-role). Passed data is in the format `{ roleID }`.
+
+</details>
+
+<details><summary><b>Roles</b></summary>
 
 <a name='list-roles'></a>
 ### List roles [GET /api/roles]
@@ -1045,114 +1106,4 @@ Returns `{}` and emits [role/update](#role-update) if successful. May emit [user
 
 Returns `{}` if successful. Emits [role/delete](#role-delete).
 
----
-
-# Websocket Events
-These are the events which are used to send (and receive) data specific to individual connections to the server, and for "live" updates (e.g. rather than having the client poll the server for new messages every 5 seconds, the server emits a message to the client's web socket whenever a new message appears).
-
-This project uses a WebSocket system which is similar to [socket.io](https://socket.io/) (though more simple). Messages sent to and from clients are JSON strings following the format `{ evt, data }`, where `evt` is a name representing the meaning of the event, and `data` is an optional property specifying any additional data related to the event.
-
-## pingdata
-
-Sent periodically (typically every 10 seconds) by the server, as well as immediately upon the client socket connecting. Clients should respond with a `pongdata` event, as described below.
-
-## pongdata
-
-Should be **sent from clients** in response to `pingdata`. Notifies the server of any information related to the particular socket. Passed data should include:
-
-* `sessionID`, if the client is "logged in" or keeping track of a session ID. This is used for keeping track of which users are online.
-
-<a name='message-new'></a>
-## message/new
-
-Sent to all clients whenever a message is [sent](#send-message) to any channel in the server. Passed data is in the format `{ message }`, where `message` is a [message](#messages) representing the new message.
-
-<a name='message-edit'></a>
-## message/edit
-
-Sent to all clients when any message is [edited](#edit-message). Passed data is in the format `{ message }`, where `message` is a [message](#messages) representing the new message.
-
-<a name='channel-new'></a>
-## channel/new
-
-Sent to all clients when a channel is [created](#create-channel). Passed data is in the format `{ channel }`, where `channel` is a [channel](#channels) representing the new channel.
-
-<a name='channel-update'></a>
-## channel/update
-
-Sent to all clients when a channel is updated ([renamed](#rename-channel), [marked as read](#mark-channel-as-read), etc). Passed data is in the format `{ channel }`, including `channel.unreadMessageCount` if the socket is actively [ponging sessionIDs](#pongdata).
-
-<a name='channel-pins-add'></a>
-## channel/pins/add
-
-Sent to all clients when a message is [pinned](#pin) to a channel. Passed data is in the format `{ message }`, where `message` is the message that was pinned.
-
-<a name='channel-pins-remove'></a>
-## channel/pins/remove
-
-Sent to all clients when a message is [unpinned](#unpin) from a channel. Passed data is in the format `{ messageID }`, where `messageID` is the ID of the message that was unpinned.
-
-<a name='channel-delete'></a>
-## channel/delete
-
-Sent to all clients when a channel is [deleted](#delete-channel). Passed data is in the format `{ channelID }`.
-
-<a name='user-new'></a>
-## user/new
-
-Sent to all clients when a user is created. Passed data is in the format `{ user }`.
-
-<a name='user-gone'></a>
-## user/gone
-
-Sent to all clients when a user is deleted. Passed data is in the format `{ userID }`.
-
-<a name='user-online'></a>
-## user/online
-
-Sent to all clients when a user becomes online. This is whenever a socket [tells the server](#pongdata) that its session ID is that of a user who was not already online before. Passed data is in the format `{ userID }`.
-
-<a name='user-offline'></a>
-## user/offline
-
-Sent to all clients when a user becomes offline. This is whenever the last socket of a user who is online terminates. Passed data is in the format `{ userID }`.
-
-<a name='user-update'></a>
-## user/update
-
-Sent to all clients when a user is mutated using [PATCH /api/users/:userID](#update-user). Passed data is in the format `{ user }`.
-
-<a name='user-mentions-add'></a>
-## user/mentions/add
-
-When a user is [mentioned](#mentions), this is sent to all sockets authenticated as them. Passed data is in the format `{ message }`, where `message` is the new / just edited mesage that mentioned the user.
-
-<a name='user-mentions-remove'></a>
-## user/mentions/remove
-
-When a message is deleted or edited to remove [the mention of a user](#mentions), all sockets authenticated as the unmentioned user are sent this event. Passed data is in the format `{ messageID }`, where `messageID` is the ID of the message that just stopped mentioning the user.
-
-<a name='emote-new'></a>
-## emote/new
-
-Sent to all clients when an emote is [added](#add-emote). Passed data is in the format `{ emote }`, where `emote` is the new [emote](#emotes).
-
-<a name='emote-delete'></a>
-## emote/delete
-
-Sent to all clients when an emote is [deleted](#delete-emote). Passed data is in the format `{ shortcode }`, where `shortcode` is the deleted [emote](#emotes)'s shortcode.
-
-<a name='role-new'></a>
-## role/new
-
-Sent to all clients when a role is [added](#new-role). Passed data is in the format `{ role }`.
-
-<a name='role-update'></a>
-## role/update
-
-Sent to all clients when a role is [updated](#update-role). Passed data is in the format `{ role }`.
-
-<a name='role-delete'></a>
-## role/delete
-
-Sent to all clients when a role is [deleted](#delete-role). Passed data is in the format `{ roleID }`.
+</details>
