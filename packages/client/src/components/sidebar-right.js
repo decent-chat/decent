@@ -175,6 +175,13 @@ const component = (state, emit) => {
               <div
                 class='Sidebar-list-item UserList-user ${user.online ? 'is-online' : 'is-offline'}'
                 title='${user.username}${user.flair ? ` {${user.flair}}` : ''} (${user.online ? 'Online' : 'Offline'})'
+                onclick=${() => {
+                  const textarea = document.querySelector('.MessageEditor-textarea')
+
+                  if (textarea) {
+                    textarea.value += '@' + user.username
+                  }
+                }}
               >
                 <div class='UserList-user-avatar'>
                   <img class='Avatar' src=${user.avatarURL}>
