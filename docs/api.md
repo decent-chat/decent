@@ -1073,7 +1073,7 @@ Sent to all clients when a role is [deleted](#delete-role). Passed data is in th
 
 </details>
 
-<details><summary><b>Roles</b></summary>
+<details><summary>Endpoints</summary>
 
 <a name='list-roles'></a>
 ### List roles [GET /api/roles]
