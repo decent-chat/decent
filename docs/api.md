@@ -414,7 +414,7 @@ DELETE /api/sessions/12345678-ABCDEFGH
   "dateCreated": number,
   "dateEdited": number | null,
 
-  "reactions": [ Reaction ],
+  "pinned": boolean,
   "mentionedUserIDs": [ ID ]
 }
 ```
