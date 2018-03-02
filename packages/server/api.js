@@ -52,7 +52,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   }
 
   const handleMentionsInMessage = async function (message) {
-    for (let userID of new Set(await getMentionsFromMessageContent(message.text))) {
+    for (const userID of new Set(await getMentionsFromMessageContent(message.text))) {
       // Add message ID to user.mentions if its not already there
       await db.users.update({_id: userID}, {
         $addToSet: {
@@ -79,7 +79,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     const mentionedNew = await getMentionsFromMessageContent(newText)
     const unmentionedInNew = mentionedOld.filter(id => !mentionedNew.includes(id))
 
-    for (let userID of unmentionedInNew) {
+    for (const userID of unmentionedInNew) {
       // Remove msg ID from user mentions
       await db.users.update({_id: userID}, {
         $pull: {
