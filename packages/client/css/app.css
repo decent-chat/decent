@@ -63,6 +63,8 @@ body {
   color: var(--page-fg);
   background: var(--page-bg);
 
+  height: 100vh;
+
   & > main {
     display: flex;
     flex-direction: column;

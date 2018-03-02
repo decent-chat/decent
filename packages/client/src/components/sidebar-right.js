@@ -207,7 +207,9 @@ const component = (state, emit) => {
         <div class='Sidebar-section-content Loading'></div>
       ` : html`
         <div class='Sidebar-list'>
-          ${state.mentions.messages.map(message => {
+          ${state.mentions.messages.filter(message => {
+            return message.channelID === state.params.channel
+          }).map(message => {
             const group = messageGroup.component(state, emit, {
               id: 'mentioned-message-' + message.id,
               authorUsername: message.authorUsername,

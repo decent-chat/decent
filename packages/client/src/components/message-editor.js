@@ -78,6 +78,10 @@ const component = (state, emit) => {
       },
 
       extendHtmlify: {
+        text({ text }) {
+          return text
+        },
+
         code({ text }) {
           return text
         },

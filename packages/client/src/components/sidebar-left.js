@@ -17,6 +17,8 @@ const store = (state, emitter) => {
 
     // array of channel objects (null if not yet fetched)
     channels: null,
+
+    unreadMentions: false,
   }
 
   reset() // setup initial state
@@ -164,6 +166,40 @@ const store = (state, emitter) => {
     }
   })
 
+  let windowBlur = false
+  document.addEventListener('blur', () => windowBlur = true)
+  document.addEventListener('focus', () => windowBlur = false)
+  emitter.on('ws.user/mentions/add', ({ message }) => {
+    if (!windowBlur && message.channelID === state.params.channel) return // Already looking at it.
+
+    state.sidebar.unreadMentions = true
+    emitter.emit('render')
+
+    emitter.on('sidebar.switchchannel', f)
+    document.addEventListener('focus', i)
+
+    function f(id) {
+      if (message.channelID === id) {
+        clearUnread()
+      }
+    }
+
+    function i() {
+      if (message.channelID === state.params.channel) {
+        clearUnread()
+      } else {
+        document.removeEventListener('focus', i)
+      }
+    }
+
+    function clearUnread() {
+      state.sidebar.unreadMentions = false
+      emitter.emit('render')
+      emitter.removeListener('sidebar.switchchannel', f)
+      document.removeEventListener('focus', i)
+    }
+  })
+
   // create a channel
   emitter.on('sidebar.createchannel', () => {
     const modal = new Modal({
@@ -199,10 +235,6 @@ const store = (state, emitter) => {
     // Don't switch to the channel if we're already viewing it!
     if (!(state.route === '/servers/:host/channels/:channel' && state.params.channel === id)) {
       emitter.emit('pushState', `/servers/${state.params.host}/channels/${id}`)
-
-      // Mark the channel as read locally
-      const channel = state.sidebar.channels.find(channel => channel.id === id)
-      channel.unreadMessageCount = 0
     }
   })
 
@@ -233,10 +265,10 @@ const store = (state, emitter) => {
     emitter.emit('render')
   })
 
-  // event: channel renamed
-  emitter.on('ws.channel/rename', ({ channelID, newName }) => {
-    const channel = state.sidebar.channels.find(c => channelID === c.id)
-    channel.name = newName
+  // event: channel updated (renamed, marked as read, etc.)
+  emitter.on('ws.channel/update', ({ channel }) => {
+    const channelIndex = state.sidebar.channels.findIndex(c => channel.id === c.id)
+    state.sidebar.channels[channelIndex] = channel
 
     emitter.emit('render')
   })
@@ -380,6 +412,14 @@ const store = (state, emitter) => {
   emitter.on('login', () => emitter.emit('sidebar.fetchchannels'))
   emitter.on('logout', () => emitter.emit('sidebar.fetchchannels'))
 
+  // Reload session when the session user is potentially deleted/deauthorized
+  emitter.on('ws.user/gone', async ({ userID }) => {
+    if (state.session && userID === state.session.user.id) {
+      await loadSessionID(state.session.id)
+      emitter.emit('render')
+    }
+  })
+
   async function loadSessionID(sessionID) {
     const { user } = await api.get(state, 'sessions/' + sessionID)
     if (user) {
@@ -395,6 +435,25 @@ const store = (state, emitter) => {
 }
 
 const component = (state, emit) => {
+  let docTitle = state.params.host || 'Decent' // TODO: use the actual server name
+
+  if (state.params.channel && state.sidebar.channels) {
+    // We're in a channel - reflect that in document.title
+    const channel = state.sidebar.channels.find(c => c.id === state.params.channel)
+
+    if (channel) docTitle = `#${channel.name} - ${docTitle}`
+  }
+
+  const totalUnreadMessageCount = state.sidebar.channels
+    ? state.sidebar.channels.reduce((count, channel) => count + (channel.unreadMessageCount || 0), 0)
+    : 0
+
+  document.title = state.sidebar.unreadMentions ?
+      `[!!] ${docTitle}`
+    :  totalUnreadMessageCount > 0
+    ? `(${totalUnreadMessageCount}) ${docTitle}`
+    : docTitle
+
   return html`<aside class='Sidebar --on-left'>
     <section class='Sidebar-section'>
       <div class='Sidebar-section-title'>
