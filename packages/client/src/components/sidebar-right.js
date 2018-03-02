@@ -12,8 +12,7 @@ const store = (state, emitter) => {
       oldHost: null,
     }
 
-    state.mentions = {} // TODO
-
+    state.mentions = {fetched: false, fetching: false, messages: []}
     state.pins = {fetched: false, fetching: false, messages: []}
   }
 
@@ -134,6 +133,16 @@ const store = (state, emitter) => {
     state.pins.messages = state.pins.messages.filter(m => m.id !== messageID)
     emitter.emit('render')
   })
+
+  emitter.on('ws.user/mentions/add', ({ message }) => {
+    state.mentions.messages.unshift(message)
+    emitter.emit('render')
+  })
+
+  emitter.on('ws.user/mentions/remove', ({ messageID }) => {
+    state.mentions.messages = state.mentions.messages.filter(m => m.id !== messageID)
+    emitter.emit('render')
+  })
 }
 
 const component = (state, emit) => {
@@ -166,6 +175,18 @@ const component = (state, emit) => {
               <div
                 class='Sidebar-list-item UserList-user ${user.online ? 'is-online' : 'is-offline'}'
                 title='${user.username}${user.flair ? ` {${user.flair}}` : ''} (${user.online ? 'Online' : 'Offline'})'
+                onclick=${() => {
+                  const textarea = document.querySelector('.MessageEditor-textarea')
+
+                  if (textarea) {
+                    if (textarea.value.length > 0) {
+                      const lastChar = textarea.value[textarea.value.length - 1]
+                      if (lastChar !== ' ' && lastChar !== '\n') textarea.value += ' '
+                    }
+
+                    textarea.value += '@' + user.username + ' '
+                  }
+                }}
               >
                 <div class='UserList-user-avatar'>
                   <img class='Avatar' src=${user.avatarURL}>
@@ -181,7 +202,49 @@ const component = (state, emit) => {
 
       break
 
-    case 'mentions': break // TODO
+    case 'mentions':
+      if (state.mentions.fetched === false && state.mentions.fetching === false) {
+        state.mentions.fetching = true
+
+        api.get(state, `users/${state.session.user.id}`).then(({ user }) => {
+          state.mentions.fetched = true
+          state.mentions.fetching = false
+          state.mentions.messages = user.mentions
+
+          emit('render')
+        })
+      }
+
+      content = state.mentions.fetching ? html`
+        <div class='Sidebar-section-content Loading'></div>
+      ` : html`
+        <div class='Sidebar-list'>
+          ${state.mentions.messages.filter(message => {
+            return message.channelID === state.params.channel
+          }).map(message => {
+            const group = messageGroup.component(state, emit, {
+              id: 'mentioned-message-' + message.id,
+              authorUsername: message.authorUsername,
+              authorAvatarURL: message.authorAvatarURL,
+              authorFlair: message.authorFlair,
+              date: message.date,
+              messages: [message],
+            }, {withActions: false, showFlair: false, msgIDprefix: 'mentioned-msg-'})
+
+            group.style.pointerEvents = 'none'
+
+            return html`
+              <div class='Sidebar-list-item' onclick=${() => {
+                emit('messages.jumptomessage', message.id)
+              }}>
+                ${group}
+              </div>
+            `
+          })}
+        </div>
+      `
+
+      break
 
     case 'pins':
       if (state.pins.fetched === false && state.pins.fetching === false) {
@@ -222,6 +285,8 @@ const component = (state, emit) => {
           })}
         </div>
       `
+
+      break
   }
 
   return html`<aside class='Sidebar --on-right'>

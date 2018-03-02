@@ -15,7 +15,8 @@ module.exports = function makeSerializers({util, db}) {
       date: m.date,
       editDate: m.editDate,
       channelID: m.channelID,
-      reactions: m.reactions
+      reactions: m.reactions,
+      mentionedUserIDs: await util.getMentionsFromMessageContent(m.text),
     }),
 
     user: async (u, sessionUser = null) => {
@@ -25,7 +26,13 @@ module.exports = function makeSerializers({util, db}) {
         flair: u.flair,
         avatarURL: emailToAvatarURL(u.email || u._id),
         permissionLevel: u.permissionLevel,
-        online: isUserOnline(u._id)
+        online: isUserOnline(u._id),
+        mentions: (await Promise.all((u.mentionedInMessageIDs || []).map(async msgID => await serialize.message(await db.messages.findOne({_id: msgID}), sessionUser)))).sort((a, b) => {
+          // Sort by latest edited/created first.
+          if ((a.editDate || a.date) > (b.editDate || b.date)) return -1
+          if ((a.editDate || a.date) < (b.editDate || b.date)) return +1
+          return 0
+        }),
       }
 
       if (sessionUser && sessionUser._id === u._id) {

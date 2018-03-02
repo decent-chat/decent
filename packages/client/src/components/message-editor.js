@@ -1,6 +1,7 @@
 // message editor component
 const html = require('choo/html')
 const api = require('../util/api')
+const mrk = require('mrk.js')
 
 const component = (state, emit) => {
   const textarea = html`<textarea class='MessageEditor-textarea' placeholder='Enter a message...'></textarea>`
@@ -11,8 +12,92 @@ const component = (state, emit) => {
     if (text.length === 0) return
     textarea.value = ''
 
+    const textFormatted = mrk({
+      patterns: {
+        code({ read, has }) {
+          if(read() === '`') {
+            if (read() === '`') return false
+
+            // Eat up every character until another backtick
+            let escaped = false, char, n
+
+            while (char = read()) {
+              if (char === '\\' && !escaped) escaped = true
+              else if (char === '`' && !escaped) return true
+              else escaped = false
+            }
+          }
+        },
+
+        codeblock({ read, readUntil, look }, meta) {
+          if (read(3) !== '```') return
+
+          let numBackticks = 3
+          while (look() === '`') {
+            numBackticks++
+            read()
+          }
+
+          // All characters up to newline following the intial
+          // set of backticks represent the language of the code
+          let lang = readUntil('\n')
+          read()
+
+          // Final fence
+          let code = ''
+          while (look(numBackticks) !== '`'.repeat(numBackticks)) {
+            if (look().length === 0) return false // We've reached the end
+            code += read()
+          }
+
+          read(numBackticks)
+          if (look() !== '\n' && look() !== '') return false
+
+          // Set metadata
+          meta({ lang, code })
+
+          return true
+        },
+
+        mention({ read, look }, meta) {
+          if (read(1) !== '@') return false
+
+          let username = ''
+          while (c = look()) {
+            if (/[a-zA-Z0-9-_]/.test(c) === false) break
+            username += read()
+          }
+
+          const user = state.userList.users.find(usr => usr.username === username)
+
+          if (!user) return false
+          meta({user})
+
+          return true
+        },
+      },
+
+      htmlify: {
+        text({ text }) {
+          return text
+        },
+
+        code({ text }) {
+          return text
+        },
+
+        codeblock({ text }) {
+          return text
+        },
+
+        mention({ metadata: { user } }) {
+          return `<@${user.id}>`
+        },
+      }
+    })(text).html()
+
     await api.post(state, 'messages', {
-      text, channelID: state.params.channel,
+      text: textFormatted, channelID: state.params.channel,
     })
   }
 

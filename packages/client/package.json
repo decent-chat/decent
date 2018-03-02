@@ -17,21 +17,21 @@
     "choo-devtools": "^2.3.3",
     "concurrently": "^3.5.1",
     "cssnano": "^4.0.0-rc.2",
-    "mrk.js": "^1.0.1",
+    "mrk.js": "^2.0.0",
     "nanobus": "^4.3.2",
     "postcss-cli": "^5.0.0"
   },
   "devDependencies": {
+    "babel-minify": "^0.3.0",
     "browserify": "^15.1.0",
     "postcss-import": "^11.1.0",
     "postcss-nesting": "^4.2.1",
     "stringify": "^5.2.0",
-    "uglify-es": "^3.3.9",
     "watchify": "^3.9.0",
     "yo-yoify": "^4.3.0"
   },
   "scripts": {
-    "build": "browserify src/app.js -t [ stringify --extensions [.svg] ] -g yo-yoify | uglifyjs --compress --mangle -o dist/bundle.js && postcss css/app.css -o dist/bundle.css",
+    "build": "browserify src/app.js -t [ stringify --extensions [.svg] ] -g yo-yoify | minify -o dist/bundle.js && postcss css/app.css -o dist/bundle.css",
     "watch": "concurrently \"watchify src/app.js -o dist/bundle.js  -t [ stringify --extensions [.svg] ] -d -v\" \"postcss css/app.css -o dist/bundle.css -w --verbose\" ",
     "prepublishOnly": "npm run build"
   }
