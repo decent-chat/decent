@@ -179,7 +179,12 @@ const component = (state, emit) => {
                   const textarea = document.querySelector('.MessageEditor-textarea')
 
                   if (textarea) {
-                    textarea.value += '@' + user.username
+                    if (textarea.value.length > 0) {
+                      const lastChar = textarea.value[textarea.value.length - 1]
+                      if (lastChar !== ' ' && lastChar !== '\n') textarea.value += ' '
+                    }
+
+                    textarea.value += '@' + user.username + ' '
                   }
                 }}
               >
