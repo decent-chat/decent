@@ -1,10 +1,10 @@
 # Decent API Specification 0.1.0
 
 **Terminology**
-- [Names](#names)
-- [Errors](#errors)
-- [Mentions](#mentions)
-- [Colors](#colors)
+* [Names](#names)
+* [Errors](#errors)
+* [Mentions](#mentions)
+* [Colors](#colors)
 * [Permissions](#permissions)
 
 **Communicating with the API**
@@ -90,7 +90,7 @@ Permissions in Decent are a way to limit and grant certain abilities to users.
 
 Permissions are stored within a 32-bit integer bitfield and are calculated using bitwise operations. The total permissions integer can be determined by ORing together each individual value.
 
-<spoiler><summary>Base permissions</summary>
+<details><summary><b>Base permissions</b></summary>
 
 A set of base permissions can be configured for different [roles](#roles). When these roles are attached to users, they grant or revoke specific privileges within the entire server.
 
@@ -106,9 +106,9 @@ Below is a table of all base permissions, configured at a role level.
 | 10  | UPLOAD_IMAGES     | Allows [image uploads](#upload-image).             |
 | 20  | ALLOW_NON_UNIQUE  | Allows the creation of things with non-unique [names](#names). |
 
-</spoiler>
+</details>
 
-<spoiler id='channel-permissions'><summary>Channel permissions</summary>
+<details id='channel-permissions'><summary><b>Channel permissions</b></summary>
 
 A set of channel-specific permissions can be set for different [channels](#channels). These relate to channel-specific actions, such as being able to read messages or send messages. These are different to base permissions as they are still per-role but are also per-channel.
 
@@ -121,7 +121,7 @@ Below is a table of all channel permissions.
 | 03  | SEND_MESSAGES     | Allows for [sending messages](#send-message).      |
 | 10  | MANAGE_PINS       | Allows [updates to channel pins](#pin).            |
 
-</spoiler>
+</details>
 
 ---
 
