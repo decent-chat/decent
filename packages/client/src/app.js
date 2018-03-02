@@ -29,7 +29,6 @@ const app = choo()
 app.use(devtools())
 
 app.use((state, emitter) => {
-  state.session = null // { id, user }
   state.ws = null // WS
   state.secure = false
   state.serverRequiresAuthorization = false
@@ -57,10 +56,11 @@ app.use((state, emitter) => {
 
   state._session = new Proxy({}, {
     set: function(target, key, value) {
+      const oldValue = Reflect.get(target, key)
       const ret = Reflect.set(target, key, value)
 
-      if (key === 'user') {
-        if (target.id !== value) {
+      if (key === 'id') {
+        if (oldValue !== value) {
           state.ws.send('pongdata', { sessionID: value })
         }
       }
