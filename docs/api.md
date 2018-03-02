@@ -821,7 +821,7 @@ The following parameters are available to both admin sessions and sessions repre
   * `new` (string) - Errors if shorter than 6 characters
   * `old` (string) - Errors if it doesn't match user's existing password
 + `email` (string | null; optional) - Not public, used to generate avatar URL
-+ `flair` (string | null; optional) - Displayed beside username in chat, errors if longer than 32 characters
++ `flair` (string | null; optional) - Displayed beside username in chat, errors if longer than 50 characters
 
 You can provide an admin session in order to update the following, also:
 
