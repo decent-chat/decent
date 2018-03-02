@@ -144,7 +144,7 @@ const apply = appearance => {
   }
 
   setCSS(document.body, Object.assign({
-    '--avatar-border-radius': appearance.circleAvatars ? '100%' : '5%',
+    '--avatar-border-radius': appearance.circleAvatars ? '100%' : '4px',
   }, themes[appearance.theme]))
 }
 
