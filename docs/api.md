@@ -828,7 +828,6 @@ DELETE /api/channels/5678/pins/1234
 
   "online": boolean,
   "roles": array, // Array of string IDs for each role the user has, not including "user" or "everyone",
-  "permissions": object, // Map of computed permissions the user has
 
   "email": string | null // Only provided if the requested user is the same as the sessionID provides
 }
@@ -1046,6 +1045,26 @@ GET /api/users/1
 <-   "user": {
 <-     "id": "1",
 <-     "username": "admin",
+<-     // ...
+<-   }
+<- }
+```
+
+<a name='get-user-permissions'></a>
+### Get a user's permissions {GET /api/users/:id/permissions]
++ does not require session
++ **in-url** id (ID) - The user ID to fetch
+
+Returns `{ permissions }`, where `permissions` is a [permissions](#permissions) object.
+
+```js
+GET /api/users/1/permissions
+
+<- {
+<-   "permissions": {
+<-     "manageServer": false,
+<-     "manageUsers": false,
+<-     "readMessages": true,
 <-     // ...
 <-   }
 <- }
