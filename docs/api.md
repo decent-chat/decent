@@ -127,28 +127,16 @@ Below is a table of all base permissions.
 
 | Code              | Description                                              |
 | ----------------- | -------------------------------------------------------- |
-| manageServer      | Allows changes to [server settings](#settings).          |
-| manageUsers       | Allows for updating of users other than yourself, and allows deletion of users. |
-| manageRoles       | Allows creation/deletion/modification of [roles](#roles). |
-| manageChannels    | Allows management and editing of [channels](#channels) and their permissions. |
-| manageEmotes      | Allows for creation and removal of [emotes](#emotes).    |
-| uploadImages      | Allows [image uploads](#upload-image).                   |
-| allowNonUnique    | Allows the creation of things with non-unique [names](#names). |
-
-</details>
-
-<details id='channel-permissions'><summary><b>Channel permissions</b></summary>
-
-A set of channel-specific permissions can be set for different [channels](#channels). These relate to channel-specific actions, such as being able to read messages or send messages. These are different to base permissions as they are still per-role but are also per-channel.
-
-Below is a table of all channel permissions.
-
-| Code              | Description                                              |
-| ----------------- | -------------------------------------------------------- |
-| VIEW              | Allows for viewing of the channel in the [channel list](#channel-list). |
-| READ_MESSAGES     | Allows for viewing of channel [messages](#messages).     |
-| SEND_MESSAGES     | Allows for [sending messages](#send-message).            |
-| MANAGE_PINS       | Allows [updates to channel pins](#pin).                  |
+| `manageServer`    | Allows changes to [server settings](#settings).          |
+| `manageUsers`     | Allows for updating of users other than yourself, and allows deletion of users. |
+| `manageRoles`     | Allows creation/deletion/modification of [roles](#roles). |
+| `manageChannels`  | Allows management and editing of [channels](#channels) and their permissions. |
+| `managePins`      | Allows for [pinning](#pin) and [unpinning](#unpin) of messages. |
+| `manageEmotes`    | Allows for creation and removal of [emotes](#emotes).    |
+| `readMessages`    | Allows for viewing of channel [messages](#messages); if false, the channel does not show up in the channel list. |
+| `sendMessages`    | Allows for [sending messages](#send-message).            |
+| `uploadImages`    | Allows [image uploads](#upload-image).                   |
+| `allowNonUnique`  | Allows the creation of things with non-unique [names](#names). |
 
 </details>
 
@@ -171,7 +159,7 @@ GET /api/
 
 <a id='upload-image'></a>
 ### Upload an image [POST /api/upload-image]
-+ requires [permission](#permissions): UPLOAD_IMAGES
++ requires [permission](#permissions) `uploadImages`
 + expects form data (`multipart/form-data`)
   * `image` (gif/jpeg/png) - The image to upload. Max size: 10MB
 
@@ -217,7 +205,7 @@ GET /api/settings
 ```
 
 ### Modify settings [POST /api/settings]
-+ requires [permission](#permissions): MANAGE_SERVER
++ requires [permission](#permissions) `manageServer`
 + `name` (string; optional)
 
 Returns `{ results }` if successful, where `results` is an object describing the result of each changed setting. Updates settings with new values provided.
@@ -301,7 +289,7 @@ GET /api/emotes
 
 <a name='new-emote'></a>
 ### Add a new emote [POST /api/emotes]
-+ requires [permission](#permissions): MANAGE_EMOTES
++ requires [permission](#permissions) `manageEmotes`
 + `imageURL` (string)
 + `shortcode` (Name) - Should not include colons (`:`).
 
@@ -331,7 +319,7 @@ POST /api/emotes
 
 <a name='delete-emote'></a>
 ### Delete an existing emote [DELETE /api/emotes/:shortcode]
-+ requires [permission](#permissions): MANAGE_EMOTES
++ requires [permission](#permissions) `manageEmotes`
 + **in-url** shortcode (string)
 
 Returns `{}` if successful. Emits [emote/delete](#emote-delete).
@@ -489,7 +477,7 @@ Sent to all clients when any message is [edited](#edit-message). Passed data is 
 
 <a name='send-message'></a>
 ### Send a message [POST /api/messages]
-+ requires [channel permission](#channel-permissions) for `channelID`: SEND_MESSAGES
++ requires [permission](#permissions) `sendMessages`
 + `channelID` (ID) - The parent channel of the new message
 + `text` (string) - The content of the message
 
@@ -510,7 +498,7 @@ POST /api/messages
 
 <a name='get-message'></a>
 ### Retrieve a message [GET /api/messages/:id]
-+ requires [channel permission](#channel-permissions): SEND_MESSAGES
++ requires [permission](#permissions) `readMessages`
 + **in-url** id (ID) - The ID of the message to retrieve
 
 Returns `{ message }` where `message` is a [message object](#messages-api-messages).
@@ -550,7 +538,7 @@ This endpoint will return a NOT_YOURS [error](#errors) if you do not own the mes
 ### Delete a message [DELETE /api/messages/:id]
 + requires one of:
   * ownership of message `id`
-  * [channel permission](#channel-permissions) for `channelID` of message `id`: DELETE_MESSAGES
+  * [permission](#permissions) (for channel of specified message) `deleteMessages`
 + **in-url** id (ID) - The ID of the message to delete
 
 Emits [message/delete](#message-delete) and returns `{}`.
@@ -622,7 +610,7 @@ Sent to all clients when a channel is [deleted](#delete-channel). Passed data is
 <a name='channel-list'></a>
 ### Get list of channels [GET /api/channels]
 + does not require session, however:
-  * channels where you do not have the VIEW [channel permission](#channel-permissions) will not be returned
+  * channels where you do not have the `readMessages` [permission](#permissions) will not be returned
   * returns [extra data](#channel-extra-data) with session
 
 Returns `{ channels }`, where channels is an array of channels. Note `unreadMessageCount` will only be returned if this endpoint receives a session.
@@ -642,7 +630,7 @@ GET /api/channels
 
 <a name='create-channel'></a>
 ### Create a channel [POST /api/channels]
-+ requires [permission](#permissions): MANAGE_CHANNELS
++ requires [permission](#permissions) `manageChannels`
 + `name` (name) - The name of the channel.
 
 On success, emits [channel/new](#channel-new) and returns `{ channelID }`.
@@ -682,7 +670,7 @@ May return [an error](#errors), including MUST_BE_ADMIN, NAME_ALREADY_TAKEN, and
 
 <a name='rename-channel'></a>
 ### Rename a channel [PATCH /api/channels/:id]
-+ requires [permission](#permissions): MANAGE_CHANNELS
++ requires [permission](#permissions) `manageChannels`
 + **in-url** id (ID) - The ID of the channel.
 + name (name) - The new name of the channel
 
@@ -700,7 +688,7 @@ PATCH /api/channels/5678
 
 <a name='delete-channel'></a>
 ### Delete a channel [DELETE /api/channels/:id]
-+ requires [permission](#permissions): MANAGE_CHANNELS
++ requires [permission](#permissions) `manageChannels`
 + **in-url** id (ID) - The ID of the channel to delete.
 
 Returns `{}` if successful. Emits [channel/delete](#channel-delete).
@@ -713,7 +701,7 @@ DELETE /api/channels/5678
 
 <a name='mark-channel-as-read'></a>
 ### Mark a channel as read [POST /api/channels/:id/mark-read]
-+ requires [channel permission](#channel-permissions) for channel `id`: READ_MESSAGES
++ requires [permission](#permissions) (for specified channel) `readMessages`
 + **in-url** id (ID) - The ID of the channel.
 
 Marks the channel as read (ie. sets `unreadMessageCount` to 0), returning `{}`. Emits [channel/update](#channel-update) including [extra data](#channel-extra-data) if this socket is authenticated.
@@ -726,7 +714,7 @@ POST /api/channels/5678/mark-read
 
 <a name='get-messages-in-channel'></a>
 ### Get messages in channel [GET /api/channels/:id/messages]
-+ requires [channel permission](#permissions) for channel `id`: READ_MESSAGES
++ requires [permission](#permissions) (for specified channel) `readMessages`
 + **in-url** id (ID) - The ID of the channel to fetch messages of.
 + `before` (ID; optional) - The ID of the message right **after** the range of messages you want.
 + `after` (ID; optional) - The ID of the message right **before** the range of messages you want.
@@ -771,7 +759,7 @@ GET /api/channels/5678/messages?after=1234
 
 <a name='get-pins'></a>
 ### Retrieve all pinned messages [GET /api/channels/:id/pins]
-+ requires [channel permission](#permissions) for channel `id`: READ_MESSAGES
++ requires [permission](#permissions) (for specified channel) `readMessages`
 + **in-url** id (ID)
 
 Returns `{ pins }`, where pins is an array of [messages](#messages) that have been pinned to this channel.
@@ -792,7 +780,7 @@ GET /api/channels/5678/pins
 
 <a name='pin'></a>
 ### Pin a message [POST /api/channels/:id/pins]
-+ requires [channel permission](#permissions) for channel `id`: MANAGE_PINS
++ requires [permission](#permissions) (for specified channel) `managePins`
 + **in-url** id (ID)
 + `messageID` (ID) - The message to pin to this channel.
 
@@ -810,7 +798,7 @@ POST /api/channels/5678/pins
 
 <a name='unpin'></a>
 ### Unpin a message [DELETE /api/channels/:channelID/pins/:messageID]
-+ requires [channel permission](#permissions) for channel `id`: MANAGE_PINS
++ requires [permission](#permissions) (for specified channel) `managePins`
 + **in-url** channelID (ID)
 + **in-url** messageID (ID) - The ID of the message to unpin. Errors if not pinned.
 
@@ -963,7 +951,7 @@ GET /api/users/1
 <a name='get-mentions'></a>
 ### List [mentions](#mentions) of a user [GET /api/users/:id/mentions]
 + does not require session, however:
-  * only returns messages where you have the VIEW and READ_MESSAGES [permissions](#channel-permissions) for the message's channel
+  * only returns messages where you have the `viewMessages` [permission](#permissions) for the message's channel
 + **in-url** id (ID) - The user ID to fetch the mentions of
 + `limit` (int <= 50; default `50`) - The maximum number of mentions to fetch.
 + `skip` (int; default `0`) - Skips the first n mentions before returning
@@ -992,18 +980,20 @@ GET /api/users/1/mentions?limit=1
 + requires session (see below)
 + **in-url** id (ID) - The user ID to patch
 
-**The following parameters are available to sessions that represent the user being updated, or have the MANAGE_USERS [permission](#permissions):**
+**The following parameters are available to sessions that represent the user being updated:**
 
 + `password` (object; optional):
   * `new` (string) - Errors if shorter than 6 characters
   * `old` (string) - Errors if it doesn't match user's existing password
+
+**The following parameters are available to sessions that represent the user being updated, or have the `manageUsers` [permission](#permissions):**
+
 + `email` (string | null; optional) - Not public, used to generate avatar URL
 + `flair` (string | null; optional) - Displayed beside username in chat, errors if longer than 50 characters
 
-**The following parameters are available to sessions with the MANAGE_ROLES [permission](#permissions):**
+**The following parameters are available to sessions with the `manageRoles` [permission](#permissions):**
 
 + `roles`: (array of [role IDs](#roles); optional) - Used to generate `user.permissions`)
-  * requires MANAGE_ROLES [permission](#permission)
 
 Returns `{}` and applies changes, assuming a valid session for this user (or an admin) is provided and no errors occur. Also emits [user/update](#user-update).
 
@@ -1086,7 +1076,7 @@ GET /api/username-available/patrick
 ```js
 {
   "name": string,
-  "permissions": Permission int, // 32-bit bitfield
+  "permissions": object, // A permissions object
 
   // If true, new users will automatically get this role by default.
   "default": boolean
@@ -1128,40 +1118,37 @@ GET /api/roles
 
 <- {
 <-   "roles": [
-<-    {
-<-      "id": ID,
-<-      "name": "Everyone",
-<-      "permissions": ...,
-<-      "default": true
-<-    }
-<-  ]
+<-     {
+<-       "id": ID,
+<-       "name": "Everyone",
+<-       "permissions": ...
+<-     }
+<-   ]
 <- }
 ```
 
 <a name='new-role'></a>
 ### Add a new roles [POST /api/roles]
-+ requires [permission](#permissions): MANAGE_ROLES
++ requires [permission](#permissions) `manageRoles`
 + `name` (string) - Max length 32.
-+ `permissions` ([Permission](#permissions) int) - ORed total of this role's intended permissions
++ `permissions` ([Permissions object](#permissions)) - this role's intended permissions
   * **Cannot contain permissions that the requesting session's user does not have**
-+ `default` (boolean)
 
 Returns `{ roleID }` if successfu;, where `roleID` is the ID of the new role. Emits [role/new](#role-new).
 
 <a name='update-role'></a>
 ### Update a role [PATCH /api/roles/:id]
-+ requires [permission](#permissions): MANAGE_ROLES
++ requires [permission](#permissions) `manageRoles`
 + **in-url** id (ID)
-+ `name` (string; optional) - Max length 32/
-+ `permissions` (Permission int; optional) - See [permissions](#permissions)
++ `name` (string; optional) - Max length 32.
++ `permissions` ([Permissions object](#permissions)) - the new intended permissions for this role
   * **Cannot contain permissions that the requesting session's user does not have**
-+ `default` (boolean; optional)
 
 Returns `{}` and emits [role/update](#role-update) if successful. May emit [user/update](#user-update) as required if users' computed permissions change.
 
 <a name='delete-role'></a>
 ### Delete a role [DELETE /api/emotes/:id]
-+ requires [permission](#permissions): MANAGE_ROLES
++ requires [permission](#permissions) `manageRoles`
 + **in-url** id (ID string)
 
 Returns `{}` if successful. Emits [role/delete](#role-delete).
