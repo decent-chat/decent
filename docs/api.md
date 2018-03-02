@@ -49,21 +49,25 @@ Nearly all [HTTP endpoints](#http-endpoints) return errors situationally. Genera
 
 The `message` property is a string of a human-readable English message briefly explaining what went wrong, and the `code` is a permanent identifier string for the type of error that happened. Checking `code` is useful for displaying custom messages or behavior when particular errors occur.
 
-The following list describes each possible error code:
+<details><summary><b>Error codes</b></summary>
 
-- `NOT_FOUND` - For when you try to request a something, but it isn't found (e.g. requesting the user by the name `foobar` when there is no such user).
-- `NOT_YOURS` - For when you attempt to do something impactful (e.g. editing/deleting) to a something you aren't the owner/author of.
-- `MUST_BE_ADMIN` - For when you try to do something limited to admins, but you are not an admin.
-- `ALREADY_PERFORMED` - For when you try to do something, but you have already done that something (e.g. pinning a message you've already pinned).
-- `INCOMPLETE_PARAMETERS` - For when a property is missing from a request's parameters. The missing property's name is passed in `error.missing`.
-- `INVALID_PARAMETER_TYPE` - For when a property is given in a request's parameters, but is not the right type (e.g. passing a string instead of an array). The invalid property's name is passed in `error.invalidParameter`.
-  - Note that this is only for type-checking. Client programs should *never* get this error, regardless of user input. More specific errors, such as `SHORT_PASSWORD`, are responded for issues that might be related to user input.
-- `INVALID_SESSION_ID` - For when a session ID is passed, but there is no session with that ID. (This is for general usage where being logged in is required. For `/sessions/:sessionID`, `NOT_FOUND` is returned if there is no session with the given ID.)
-- `UPLOAD_FAILED` - For when an upload fails.
-- `NAME_ALREADY_TAKEN` - For when you try to create a something, but your passed name is already taken by another something (e.g. registering a username which is already used by someone else).
-- `SHORT_PASSWORD` - For when you attempt to register but your password is too short.
-- `INCORRECT_PASSWORD` - For when you attempt to log in but you didn't enter the right password. (Note that `NOT_FOUND` is returned if you try to log in with an unused username.)
-- `INVALID_NAME` - For when you try to make something (a user or channel, etc) with an invalid name.
+| Error code             | Meaning                                             |
+| ----------------------:|:----------------------------------------------------|
+| NOT_FOUND              | The requested thing was not found                   |
+| NOT_YOURS              | Your attempt to do something impactful was rejected because you are not the owner/author of the thing |
+| NOT_ALLOWED            | The requesting user has insufficient permissions to perform this action |
+| NO                     | The server does not support or does not want to fulfill your request |
+| ALREADY_PERFORMED      | That action has already been performed              |
+| FAILED                 | Something went wrong internally                     |
+| INCOMPLETE_PARAMETERS  | A property is missing from the request's parameters |
+| INVALID_PARAMETER_TYPE | A parameter is the wrong type                       |
+| INVALID_SESSION_ID     | There is no session with the provided session ID    |
+| INVALID_NAME           | Provided [name](#name) is invalid                   |
+| NAME_ALREADY_TAKEN     | The passed name is already used by something else   |
+| SHORT_PASSWORD         | Password is too short                               |
+| INCORRECT_PASSWORD     | Incorrect password                                  |
+
+</details>
 
 ## Mentions
 
@@ -71,7 +75,9 @@ Mentions target a single user only and are formatted as `<@userID>`, where `user
 
 ## Colors
 
-Many things can have color given to them, for example [roles](#roles). We use a **color constant** string for this purpose, which must be one of the following:
+Many things can have color given to them, for example [roles](#roles). We use a **color constant** string for this purpose.
+
+<details><summary><b>Color constants</b></summary>
 
 | Color constant | Recommended RGB |
 | --------------:| --------------- |
@@ -83,6 +89,8 @@ Many things can have color given to them, for example [roles](#roles). We use a 
 | BLUE           | #1d76db         |
 | PURPLE         | #7f488c         |
 | GREY           | #575E75         |
+
+</details>
 
 ## Permissions
 
@@ -239,7 +247,7 @@ POST /api/upload-image
 <- }
 ```
 
-This endpoint may return [an error](#errors), namely UPLOAD_FAILED or UPLOADS_DISABLED.
+This endpoint may return [an error](#errors), namely FAILED, NO, or NOT_ALLOWED.
 
 ---
 
