@@ -142,6 +142,7 @@
   & > h4 {
     text-transform: uppercase;
     color: var(--sidebar-fg);
+    font-size: 14px;
 
     margin: 0;
   }
