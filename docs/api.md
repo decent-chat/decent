@@ -5,6 +5,7 @@
 - [Errors](#errors)
 - [Mentions](#mentions)
 - [Colors](#colors)
+* [Permissions](#permissions)
 
 **Communicating with the API**
 * [Session IDs](#session-ids)
@@ -37,18 +38,12 @@ Other endpoints may require the session user to posess a particular [permission]
 ## Names
 Several parts of the API expect names (`Name`) to be given. These names will eventually be displayed to users, and so must follow a basic guideline for being formatted.
 
-Names are strings, consisting only of alphanumeric characters, underscores (`_`), dots (`.`), and dashes (`-`). Names cannot be `""`. In regex form:
-
-```
-Name :: /[a-zA-Z0-9._-]+/
-```
+Names are strings, consisting only of alphanumeric characters, underscores (`_`), dots (`.`), and dashes (`-`). Names cannot be `""`. In regex form: `/[a-zA-Z0-9._-]+/`
 
 **When a name which does not follow these guidelines is given to an endpoint, an INVALID_NAME [error](#errors) will be returned and the request will have no action.**
-```
-
-```
 
 ## Errors
+
 Nearly all [HTTP endpoints](#http-endpoints) return errors situationally. Generally, when the processing of a request errors, its response will have the `error` property, which will follow the form `{ code, message }`.
 
 The `message` property is a string of a human-readable English message briefly explaining what went wrong, and the `code` is a permanent identifier string for the type of error that happened. Checking `code` is useful for displaying custom messages or behavior when particular errors occur.
@@ -72,6 +67,60 @@ The following list describes each possible error code:
 ## Mentions
 
 Mentions target a single user only and are formatted as `<@userID>`, where `userID` is the ID of the user who is being mentioned. Mentions are stored per-user on the server.
+
+## Colors
+
+Many things can have color given to them, for example [roles](#roles). We use a **color constant** string for this purpose, which must be one of the following:
+
+| Color constant | Recommended RGB |
+| --------------:| --------------- |
+| RED            | #b60205         |
+| ORANGE         | #d93f0b         |
+| YELLOW         | #fbca04         |
+| GREEN          | #0e8a16         |
+| TEAL           | #006b75         |
+| BLUE           | #1d76db         |
+| PURPLE         | #7f488c         |
+| GREY           | #575E75         |
+
+## Permissions
+
+Permissions in Decent are a way to limit and grant certain abilities to users.
+
+Permissions are stored within a 32-bit integer bitfield and are calculated using bitwise operations. The total permissions integer can be determined by ORing together each individual value.
+
+<spoiler><summary>Base permissions</summary>
+
+A set of base permissions can be configured for different [roles](#roles). When these roles are attached to users, they grant or revoke specific privileges within the entire server.
+
+Below is a table of all base permissions, configured at a role level.
+
+| Bit | Name              | Description                                        |
+| ---:| ----------------- | -------------------------------------------------- |
+| 01  | MANAGE_SERVER     | Allows changes to [server settings](#settings).    |
+| 02  | MANAGE_OTHERS     | Allows [updates to other users](#update-user).     |
+| 03  | MANAGE_ROLES      | Allows creation/deletion/modification of [roles](#roles). |
+| 04  | MANAGE_CHANNELS   | Allows management and editing of [channels](#channels) and their permissions. |
+| 05  | MANAGE_EMOTES     | Allows for creation and removal of [emotes](#emotes). |
+| 10  | UPLOAD_IMAGES     | Allows [image uploads](#upload-image).             |
+| 20  | ALLOW_NON_UNIQUE  | Allows the creation of things with non-unique [names](#names). |
+
+</spoiler>
+
+<spoiler id='channel-permissions'><summary>Channel permissions</summary>
+
+A set of channel-specific permissions can be set for different [channels](#channels). These relate to channel-specific actions, such as being able to read messages or send messages. These are different to base permissions as they are still per-role but are also per-channel.
+
+Below is a table of all channel permissions.
+
+| Bit | Name              | Description                                        |
+| ---:| ----------------- | -------------------------------------------------- |
+| 01  | VIEW              | Allows for viewing of the channel in the [channel list](#channel-list). |
+| 02  | READ_MESSAGES     | Allows for viewing of channel [messages](#messages). |
+| 03  | SEND_MESSAGES     | Allows for [sending messages](#send-message).      |
+| 10  | MANAGE_PINS       | Allows [updates to channel pins](#pin).            |
+
+</spoiler>
 
 ---
 
@@ -171,6 +220,7 @@ GET /api/properties
 
 ## Misc
 
+<a id='upload-image'></a>
 ### Upload an image [POST /api/upload-image]
 + requires [permission](#permissions): UPLOAD_IMAGES
 + expects form data (`multipart/form-data`)
@@ -496,7 +546,7 @@ Related events:
 <a name='channel-list'></a>
 ### Get list of channels [GET /api/channels]
 + does not require session, however:
-  * channels where you do not have the SEE [permission](#channel-permissions) will not be returned
+  * channels where you do not have the VIEW [channel permission](#channel-permissions) will not be returned
   * returns [extra data](#channel-extra-data) with session
 
 Returns `{ channels }`, where channels is an array of channels. Note `unreadMessageCount` will only be returned if this endpoint receives a session.
@@ -805,7 +855,7 @@ GET /api/users/1
 <a name='get-mentions'></a>
 ### List [mentions](#mentions) of a user [GET /api/users/:id/mentions]
 + does not require session, however:
-  * only returns messages where you have the SEE and READ_MESSAGES [permissions](#channel-permissions) for the message's channel
+  * only returns messages where you have the VIEW and READ_MESSAGES [permissions](#channel-permissions) for the message's channel
 + **in-url** id (ID) - The user ID to fetch the mentions of
 + `limit` (int <= 50; default `50`) - The maximum number of mentions to fetch.
 + `skip` (int; default `0`) - Skips the first n mentions before returning
