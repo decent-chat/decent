@@ -126,7 +126,7 @@
   padding: 16px;
 
   &.\--bottom-line {
-    border-bottom: 1px solid var(--gray-700);
+    border-bottom: 1px solid var(--sidebar-border-color);
   }
 }
 

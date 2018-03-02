@@ -100,7 +100,8 @@ const apply = appearance => {
       '--sidebar-list-item-activefg': 'var(--gray-700)',
       '--sidebar-list-item-activebg': 'var(--gray-100)',
 
-      '--sidebar-icon-color-active': 'var(--gray-900)',
+      '--sidebar-icon-color': 'var(--sidebar-list-item-fg)',
+      '--sidebar-icon-color-active': 'var(--sidebar-list-item-activefg)',
 
       '--serverDropdown-fg': 'var(--gray-300)',
       '--serverDropdown-bg': '#1c1e23',
