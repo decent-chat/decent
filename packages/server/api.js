@@ -1093,7 +1093,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       }
 
       if (typeof flair !== 'undefined' && flair !== null) {
-        // String, max length 32.
+        // String, max length 50.
 
         if (typeof flair !== 'string') {
           return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
@@ -1101,9 +1101,9 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
           })})
         }
 
-        if (flair.length > 32) {
+        if (flair.length > 50) {
           return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-            message: 'flair should not be longer than 32 characters.',
+            message: 'flair should not be longer than 50 characters.',
           })})
         }
       }
