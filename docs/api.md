@@ -405,7 +405,7 @@ DELETE /api/sessions/12345678-ABCDEFGH
   "authorUsername": Name,
   "authorAvatarURL": string,
 
-  // Dates are returned as the number of seconds since UTC 2017-1-1, commonly
+  // Dates are returned as the number of seconds since UTC 1970-1-1, commonly
   // known as Unix time.
   "dateCreated": number,
   "dateEdited": number | null,
