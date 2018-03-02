@@ -17,6 +17,7 @@
   - [Messages](#messages)
   - [Channels](#channels)
   - [Users](#users)
+  - [Roles](#roles)
 * [WebSocket Events](#websocket-events)
 
 ---
@@ -966,6 +967,78 @@ GET /api/username-available/patrick
 
 ---
 
+## Roles
+
+Model:
+```js
+{
+  "name": string,
+  "permissions": Permission int, // 32-bit bitfield
+
+  // If true, new users will automatically get this role by default.
+  "default": boolean
+}
+```
+
+See also:
+* [Permissions](#permissions)
+* [PATCH /api/users/:id](#update-user)
+
+Related events:
+* [role/new](#role-new)
+* [role/update](#role-update)
+* [role/delete](#role-delete)
+
+<a name='list-roles'></a>
+### List roles [GET /api/roles]
+
+Returns `{ roles }`, where `roles` is an array of emote objects.
+
+```js
+GET /api/roles
+
+<- {
+<-   "roles": [
+<-    {
+<-      "id": ID,
+<-      "name": "Everyone",
+<-      "permissions": ...,
+<-      "default": true
+<-    }
+<-  ]
+<- }
+```
+
+<a name='new-role'></a>
+### Add a new roles [POST /api/roles]
++ requires [permission](#permissions): MANAGE_ROLES
++ `name` (string) - Max length 32.
++ `permissions` ([Permission](#permissions) int) - ORed total of this role's intended permissions
+  * **Cannot contain permissions that the requesting session's user does not have**
++ `default` (boolean)
+
+Returns `{ roleID }` if successfu;, where `roleID` is the ID of the new role. Emits [role/new](#role-new).
+
+<a name='update-role'></a>
+### Update a role [PATCH /api/roles/:id]
++ requires [permission](#permissions): MANAGE_ROLES
++ **in-url** id (ID)
++ `name` (string; optional) - Max length 32/
++ `permissions` (Permission int; optional) - See [permissions](#permissions)
+  * **Cannot contain permissions that the requesting session's user does not have**
++ `default` (boolean; optional)
+
+Returns `{}` and emits [role/update](#role-update) if successful. May emit [user/update](#user-update) as required if users' computed permissions change.
+
+<a name='delete-role'></a>
+### Delete a role [DELETE /api/emotes/:id]
++ requires [permission](#permissions): MANAGE_ROLES
++ **in-url** id (ID string)
+
+Returns `{}` if successful. Emits [role/delete](#role-delete).
+
+---
+
 # Websocket Events
 These are the events which are used to send (and receive) data specific to individual connections to the server, and for "live" updates (e.g. rather than having the client poll the server for new messages every 5 seconds, the server emits a message to the client's web socket whenever a new message appears).
 
@@ -1059,4 +1132,19 @@ Sent to all clients when an emote is [added](#add-emote). Passed data is in the 
 <a name='emote-delete'></a>
 ## emote/delete
 
-Sent to all clients when an emote is [added](#add-emote). Passed data is in the format `{ shortcode }`, where `shortcode` is the deleted [emote](#emotes)'s shortcode.
+Sent to all clients when an emote is [deleted](#delete-emote). Passed data is in the format `{ shortcode }`, where `shortcode` is the deleted [emote](#emotes)'s shortcode.
+
+<a name='role-new'></a>
+## role/new
+
+Sent to all clients when a role is [added](#new-role). Passed data is in the format `{ role }`.
+
+<a name='role-update'></a>
+## role/update
+
+Sent to all clients when a role is [updated](#update-role). Passed data is in the format `{ role }`.
+
+<a name='role-delete'></a>
+## role/delete
+
+Sent to all clients when a role is [deleted](#delete-role). Passed data is in the format `{ roleID }`.
