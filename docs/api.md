@@ -397,10 +397,14 @@ DELETE /api/sessions/12345678-ABCDEFGH
   "id": ID,
   "channelID": ID,
 
+  // The message type. See below
+  "type": string,
+
   // The content of the message
   "text": string,
 
-  // The author's details, at the time of creation
+  // The author's details, at the time of creation;
+  // if message.type = "system" these will all be null.
   "authorID": ID,
   "authorUsername": Name,
   "authorAvatarURL": string,
@@ -414,6 +418,12 @@ DELETE /api/sessions/12345678-ABCDEFGH
   "mentionedUserIDs": [ ID ]
 }
 ```
+
+#### Message types
+
+There are currently two message types, `"user"` and `"system"`. Messages sent by users are always marked `"user"`, however the server itself can choose to send system-level messages for things, such as user joins or when pins are added.
+
+System messages lack `author` fields.
 
 #### Mentions
 
