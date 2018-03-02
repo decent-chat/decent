@@ -124,6 +124,10 @@
 
 .Sidebar-section {
   padding: 16px;
+
+  &.\--bottom-line {
+    border-bottom: 1px solid var(--gray-700);
+  }
 }
 
 .Sidebar-section-title {

@@ -455,7 +455,7 @@ const component = (state, emit) => {
     : docTitle
 
   return html`<aside class='Sidebar --on-left'>
-    <section class='Sidebar-section'>
+    <section class='Sidebar-section --bottom-line'>
       <div class='Sidebar-section-title'>
         <h4>Servers</h4>
         <button class=${state.sidebar.servers.length === 0 ? 'wiggle' : ''} onclick=${() => emit('sidebar.addserver')}>+ Add</button>
