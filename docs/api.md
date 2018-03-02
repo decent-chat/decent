@@ -75,6 +75,8 @@ The `message` property is a string of a human-readable English message briefly e
 
 Permissions in Decent are a way to limit and grant certain abilities to users.
 
+<details><summary><b>How permissions work</b></summary>
+
 Permissions are stored within a map of keys (representing individual permissions) to boolean values (or undefined). For example, the following permissions object describes being able to read but not send messages:
 
 ```js
@@ -119,11 +121,13 @@ The actual priority of permission objects is determined according to the roles a
 * Server-wide permissions for the "user" or "guest" role, as above
 * Server-wide permissions for the "everyone" role (Least priority.)
 
-<details><summary><b>Base permissions</b></summary>
+</details>
 
-A set of base permissions can be configured for different [roles](#roles). When these roles are attached to users, they grant or revoke specific privileges within the entire server.
+<details><summary><b>Table of permissions</b></summary>
 
-Below is a table of all base permissions.
+A set of permissions can be configured for different [roles](#roles). When these roles are attached to users, they grant or revoke specific privileges within the entire server.
+
+Below is a table of all permissions.
 
 | Code              | Description                                              |
 | ----------------- | -------------------------------------------------------- |
