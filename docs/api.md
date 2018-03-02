@@ -441,6 +441,11 @@ Sent to all clients whenever a message is [sent](#send-message) to any channel i
 
 Sent to all clients when any message is [edited](#edit-message). Passed data is in the format `{ message }`, where `message` is a [message](#messages) representing the new message.
 
+<a name='message-delete'></a>
+### message/delete
+
+Sent to all clients when any message is [deleted](#delete-message). Passed data is in the format `{ messageID }`.
+
 </details>
 
 <details><summary>Endpoints</summary>
