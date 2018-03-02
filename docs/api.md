@@ -721,8 +721,6 @@ Model:
 
   "online": boolean,
 
-  "mentions": [ Message ] // List of messages that mention this user
-
   "authorized": boolean, // Only present if useAuthorization is true
   "email": string | null // Only provided if the requested user is the same as the sessionID provides
 }
@@ -819,6 +817,31 @@ GET /api/users/1
 <-     "username": "admin",
 <-     // ...
 <-   }
+<- }
+```
+
+<a name='get-mentions'></a>
+### List [mentions](#mentions) of a user [GET /api/users/:id/mentions]
++ **in-url** id (ID) - The user ID to fetch the mentions of
++ `limit` (int <= 50; default `50`) - The maximum number of mentions to fetch.
++ `skip` (int; default `0`) - Skips the first n mentions before returning
+
+Returns `{ mentions }`, where `mentions` is an array of [messages](#messages). Note that mentions are sorted by date: `mentions[0]` is the most recent mention.
+
+Combining `limit` and `skip` can net you simple pagination.
+
+```js
+GET /api/users/1/mentions?limit=1
+
+<- {
+<-   "mentions": [
+<-     {
+<-       "text": "Hey <@1>! How are you?"
+<-       // ...
+<-     },
+<-
+<-     // ...
+<-   ]
 <- }
 ```
 
