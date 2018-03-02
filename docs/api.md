@@ -90,6 +90,7 @@ Below is a table of all base permissions, configured at a role level.
 | 03  | MANAGE_ROLES      | Allows creation/deletion/modification of [roles](#roles). |
 | 04  | MANAGE_CHANNELS   | Allows management and editing of [channels](#channels) and their permissions. |
 | 05  | MANAGE_EMOTES     | Allows for creation and removal of [emotes](#emotes). |
+| 06  | MANAGE_USERS      | Allows user deletion
 | 10  | UPLOAD_IMAGES     | Allows [image uploads](#upload-image).             |
 | 20  | ALLOW_NON_UNIQUE  | Allows the creation of things with non-unique [names](#names). |
 
@@ -1016,7 +1017,7 @@ GET /api/users/1
 
 <a name='delete-user'></a>
 ### Delete a user [DELETE /api/users/:id]
-+ requires [permission](#permission): DELETE_USERS
++ requires [permission](#permission): MANAGE_USERS
 + **in-url** id (ID) - The user to delete
 
 Returns `{}` and emits [user/delete](#user-delete).
