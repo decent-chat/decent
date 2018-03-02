@@ -7,7 +7,7 @@ const pool = new Map() // host -> WS
 
 // WS is just nanobus wrapping a WebSocket
 class WS extends Nanobus {
-  constructor(host) {
+  constructor(host, useSecure) {
     super()
 
     this.host = host
@@ -25,7 +25,7 @@ class WS extends Nanobus {
       })
     } else {
       pool.set(host, this) // add to pool
-      this.connectTo(host)
+      this.connectTo(host, useSecure)
     }
   }
 
