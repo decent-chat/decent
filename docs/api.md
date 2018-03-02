@@ -16,7 +16,6 @@
   - [Session IDs](#session-ids)
   - [Authorization](#authorization)
 * Terminology
-  - [Dates](#dates)
   - [Names](#names)
   - [Errors](#errors)
   - [Mentions](#mentions)
@@ -50,15 +49,19 @@ Authorization is a server property and can only be enabled via the command line:
 
 # Terminology
 
-## Dates
-In this document, "dates" are integers specified according to JavaScript's [`Date.now`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/now) function. This is equal to the number of *milliseconds* elapsed since the UNIX epoch.
-
-Programming languages which expect a UNIX timestamp may stumble as they expect a number of seconds since the UNIX epoch, not a number of milliseconds.
-
 ## Names
 Several parts of the API expect names (`Name`) to be given. These names will eventually be displayed to users, and so must follow a basic guideline for being formatted.
 
-**Names may consist only of alphanumeric characters, underscores (`_`), and dashes (`-`).** When a name which does not follow these guidelines is given to an endpoint, an INVALID_NAME [error](#errors) will be returned and the request will have no action.
+Names are strings, consisting only of alphanumeric characters, underscores (`_`), dots (`.`), and dashes (`-`). Names cannot be `""`. In regex form:
+
+```
+Name :: /[a-zA-Z0-9._-]+/
+```
+
+**When a name which does not follow these guidelines is given to an endpoint, an INVALID_NAME [error](#errors) will be returned and the request will have no action.**
+```
+
+```
 
 ## Errors
 Nearly all [HTTP endpoints](#http-endpoints) return errors situationally. Generally, when the processing of a request errors, its response will have the `error` property, which will follow the form `{ code, message }`.
@@ -288,7 +291,7 @@ Model:
 ```js
 {
   "id": string,
-  "dateCreated": number
+  "dateCreated": number // Unix time at creation
 }
 ```
 
@@ -385,6 +388,8 @@ Model:
   "authorUsername": Name,
   "authorAvatarURL": string,
 
+  // Dates are returned as the number of seconds since UTC 2017-1-1, commonly
+  // known as Unix time.
   "dateCreated": number,
   "dateEdited": number | null,
 
