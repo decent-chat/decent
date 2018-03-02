@@ -75,23 +75,65 @@ The `message` property is a string of a human-readable English message briefly e
 
 Permissions in Decent are a way to limit and grant certain abilities to users.
 
-Permissions are stored within a 32-bit integer bitfield and are calculated using bitwise operations. The total permissions integer can be determined by ORing together each individual value.
+Permissions are stored within a map of keys (representing individual permissions) to boolean values (or undefined). For example, the following permissions object describes being able to read but not send messages:
+
+```js
+{
+  "readMessages": true,
+  "sendMessages": false
+}
+```
+
+Individual permissions are passed according to a cascade of roles. If two or more permission objects are applied (typically based on the roles a user has), then individual permissions are determined by the most prioritized roles. For example, consider these three permission objects:
+
+```js
+{
+  "sendMessages": false
+}
+
+{
+  "readMessages": true,
+  "sendMessages": true
+}
+
+{
+  "readMessages": false,
+  "sendMessages": false
+}
+```
+
+Suppose we consider the first, top-most object to have the greatest priority, and that the second and third each in turn have less priority.
+
+If all three permission objects are applied to a user, then to calculate the user's permissions, we start by looking at the most prioritized object. This object contains one property, `sendMessages: false`. From this, we know that the user is not permitted to send messages; this is absolutely true, regardless of any other permission objects, since this object is the most prioritized one.
+
+Then we move to the next permission object: `{readMessages: true, sendMessages: true}`. The `readMessages: true` permission tells us that the user is allowed to read messages. There is also a `sendMessages` property, but we ignore this, since we have already determined that the user is not permitted to send messages.
+
+We look at the final permission object: `{readMessages: false, sendMessages: false}`. There are two properties here, but these have both already been determined earlier, so we ignore them. Since we have gone through all permission objects applied to the user, we come to the conclusion that **the user may read but not send messages.**
+
+The actual priority of permission objects is determined according to the roles applied to the user and channel-specific permissions (which are dependent on the roles), and the order is determined as follows:
+
+* Channel-specific permissions for roles of the user (Most priority.)
+* Channel-specific permissions for the "users" role, if the user is a logged-in member of the server, or the "guest" role, if the user is not logged in
+* Channel-specific permissions for the "everyone" role
+* Server-wide permissions for roles of the user
+* Server-wide permissions for the "user" or "guest" role, as above
+* Server-wide permissions for the "everyone" role (Least priority.)
 
 <details><summary><b>Base permissions</b></summary>
 
 A set of base permissions can be configured for different [roles](#roles). When these roles are attached to users, they grant or revoke specific privileges within the entire server.
 
-Below is a table of all base permissions, configured at a role level.
+Below is a table of all base permissions.
 
-| Bit | Name              | Description                                        |
-| ---:| ----------------- | -------------------------------------------------- |
-| 01  | MANAGE_SERVER     | Allows changes to [server settings](#settings).    |
-| 02  | MANAGE_USERS      | Allows for updating of users other than yourself, and allows deletion of users. |
-| 03  | MANAGE_ROLES      | Allows creation/deletion/modification of [roles](#roles). |
-| 04  | MANAGE_CHANNELS   | Allows management and editing of [channels](#channels) and their permissions. |
-| 05  | MANAGE_EMOTES     | Allows for creation and removal of [emotes](#emotes). |
-| 10  | UPLOAD_IMAGES     | Allows [image uploads](#upload-image).             |
-| 20  | ALLOW_NON_UNIQUE  | Allows the creation of things with non-unique [names](#names). |
+| Code              | Description                                              |
+| ----------------- | -------------------------------------------------------- |
+| manageServer      | Allows changes to [server settings](#settings).          |
+| manageUsers       | Allows for updating of users other than yourself, and allows deletion of users. |
+| manageRoles       | Allows creation/deletion/modification of [roles](#roles). |
+| manageChannels    | Allows management and editing of [channels](#channels) and their permissions. |
+| manageEmotes      | Allows for creation and removal of [emotes](#emotes).    |
+| uploadImages      | Allows [image uploads](#upload-image).                   |
+| allowNonUnique    | Allows the creation of things with non-unique [names](#names). |
 
 </details>
 
@@ -101,12 +143,12 @@ A set of channel-specific permissions can be set for different [channels](#chann
 
 Below is a table of all channel permissions.
 
-| Bit | Name              | Description                                        |
-| ---:| ----------------- | -------------------------------------------------- |
-| 01  | VIEW              | Allows for viewing of the channel in the [channel list](#channel-list). |
-| 02  | READ_MESSAGES     | Allows for viewing of channel [messages](#messages). |
-| 03  | SEND_MESSAGES     | Allows for [sending messages](#send-message).      |
-| 10  | MANAGE_PINS       | Allows [updates to channel pins](#pin).            |
+| Code              | Description                                              |
+| ----------------- | -------------------------------------------------------- |
+| VIEW              | Allows for viewing of the channel in the [channel list](#channel-list). |
+| READ_MESSAGES     | Allows for viewing of channel [messages](#messages).     |
+| SEND_MESSAGES     | Allows for [sending messages](#send-message).            |
+| MANAGE_PINS       | Allows [updates to channel pins](#pin).                  |
 
 </details>
 
@@ -793,7 +835,8 @@ DELETE /api/channels/5678/pins/1234
   "flair": string | null,
 
   "online": boolean,
-  "permissions": int, // Bitfield generated by ORing the user's role permissions
+  "roles": array, // Array of string IDs for each role the user has, not including "user" or "everyone",
+  "permissions": object, // Map of computed permissions the user has
 
   "email": string | null // Only provided if the requested user is the same as the sessionID provides
 }
