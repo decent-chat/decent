@@ -86,11 +86,10 @@ Below is a table of all base permissions, configured at a role level.
 | Bit | Name              | Description                                        |
 | ---:| ----------------- | -------------------------------------------------- |
 | 01  | MANAGE_SERVER     | Allows changes to [server settings](#settings).    |
-| 02  | MANAGE_OTHERS     | Allows [updates to other users](#update-user).     |
+| 02  | MANAGE_USERS      | Allows for updating of users other than yourself, and allows deletion of users. |
 | 03  | MANAGE_ROLES      | Allows creation/deletion/modification of [roles](#roles). |
 | 04  | MANAGE_CHANNELS   | Allows management and editing of [channels](#channels) and their permissions. |
 | 05  | MANAGE_EMOTES     | Allows for creation and removal of [emotes](#emotes). |
-| 06  | MANAGE_USERS      | Allows user deletion
 | 10  | UPLOAD_IMAGES     | Allows [image uploads](#upload-image).             |
 | 20  | ALLOW_NON_UNIQUE  | Allows the creation of things with non-unique [names](#names). |
 
@@ -950,7 +949,7 @@ GET /api/users/1/mentions?limit=1
 + requires session (see below)
 + **in-url** id (ID) - The user ID to patch
 
-**The following parameters are available to sessions that represent the user being updated, or have the UPDATE_OTHERS [permission](#permissions):**
+**The following parameters are available to sessions that represent the user being updated, or have the MANAGE_USERS [permission](#permissions):**
 
 + `password` (object; optional):
   * `new` (string) - Errors if shorter than 6 characters
