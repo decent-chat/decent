@@ -19,6 +19,7 @@
   - [Dates](#dates)
   - [Names](#names)
   - [Errors](#errors)
+  - [Mentions](#mentions)
 
 ---
 
@@ -79,6 +80,10 @@ The following list describes each possible error code:
 - `SHORT_PASSWORD` - For when you attempt to register but your password is too short.
 - `INCORRECT_PASSWORD` - For when you attempt to log in but you didn't enter the right password. (Note that `NOT_FOUND` is returned if you try to log in with an unused username.)
 - `INVALID_NAME` - For when you try to make something (a user or channel, etc) with an invalid name.
+
+## Mentions
+
+Mentions target a single user only and are formatted as `<@userID>`, where `userID` is the ID of the user who is being mentioned. Mentions are stored per-user on the server.
 
 ---
 
@@ -388,7 +393,7 @@ Model:
 }
 ```
 
-Note that message mentions live in the message content (`text`) as `<@USER_ID>`, where `USER_ID` is the ID of the user that is being mentioned; these appear in `mentionedUserIDs` of messages for ease of access.
+Note that [message mentions](#mentions) live in the message content (`text`). `mentionedUserIDs` is derived from the content of the message.
 
 Related events:
 * [message/new](#message-new)
@@ -401,7 +406,7 @@ Related events:
 + `channelID` (ID) - The parent channel of the new message
 + `text` (string) - The content of the message
 
-On success, emits [message/new](#message-new) and returns `{ messageID }`. Also marks `channelID` as read for the author.
+On success, emits [message/new](#message-new) and returns `{ messageID }`. Also marks `channelID` as read for the author. Emits [user/mentions/add](#user-mentions-add) to [mentioned](#mentions) users, if any.
 
 ```js
 POST /api/messages
@@ -452,7 +457,7 @@ PATCH /api/messages/1234
 <- {}
 ```
 
-This endpoint will return a NOT_YOURS [error](#errors) if you do not own the message in question.
+This endpoint will return a NOT_YOURS [error](#errors) if you do not own the message in question. Emits [user/mentions/add](#user-mentions-add) to newly [mentioned](#mentions) users and [user/mentions/remove](#user-mentions-remove) to users who are no longer mentioned, if any.
 
 <a name='delete-message'></a>
 ### Delete a message [DELETE /api/messages/:id]
@@ -467,7 +472,7 @@ DELETE /api/messages/1234
 <- {}
 ```
 
-This endpoint may return a NOT_YOURS [error](#errors) if you do not own the message in question. Note that admins may delete any message.
+This endpoint may return a NOT_YOURS [error](#errors) if you do not own the message in question. Note that admins may delete any message. Emits [user/mentions/remove](#user-mentions-remove) to all previously-[mentioned](#mentions) users.
 
 ---
 
@@ -963,12 +968,12 @@ Sent to all clients when a user is mutated using [PATCH /api/users/:userID](#upd
 <a name='user-mentions-add'></a>
 ## user/mentions/add
 
-When a user is mentioned, this is sent to all sockets authenticated as them. Passed data is in the format `{ message }`, where `message` is the new / just edited mesage that mentioned the user.
+When a user is [mentioned](#mentions), this is sent to all sockets authenticated as them. Passed data is in the format `{ message }`, where `message` is the new / just edited mesage that mentioned the user.
 
 <a name='user-mentions-remove'></a>
 ## user/mentions/remove
 
-When a message is deleted or edited to remove the mention of a user, all sockets authenticated as the unmentioned user are sent this event. Passed data is in the format `{ messageID }`, where `messageID` is the ID of the message that just stopped mentioning the user.
+When a message is deleted or edited to remove [the mention of a user](#mentions), all sockets authenticated as the unmentioned user are sent this event. Passed data is in the format `{ messageID }`, where `messageID` is the ID of the message that just stopped mentioning the user.
 
 <a name='emote-new'></a>
 ## emote/new
