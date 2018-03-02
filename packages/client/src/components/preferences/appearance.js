@@ -127,8 +127,10 @@ const apply = appearance => {
       '--table-bg': '#25292f',
 
       '--messageEditor-fg': 'var(--gray-700)',
-      '--messageEditor-bg': 'var(--page-bg)',
+      '--messageEditor-bg': '#25292f',
       '--messageEditor-border-color': '#3c4144',
+      '--messageEditor-sendButton-bg': 'var(--accent)',
+      '--messageEditor-sendButton-fg': 'var(--gray-900)',
 
       '--input-fg': 'var(--gray-700)',
       '--input-bg': 'var(--gray-100)',

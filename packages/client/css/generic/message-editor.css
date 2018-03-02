@@ -3,6 +3,7 @@
   --messageEditor-bg: var(--input-bg);
 
   --messageEditor-border-color: var(--input-border-color);
+  
   --messageEditor-sendButton-bg: var(--accent);
   --messageEditor-sendButton-fg: var(--gray-900);
 }
