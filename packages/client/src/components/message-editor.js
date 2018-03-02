@@ -13,7 +13,7 @@ const component = (state, emit) => {
     textarea.value = ''
 
     const textFormatted = mrk({
-      extendPatterns: {
+      patterns: {
         code({ read, has }) {
           if(read() === '`') {
             if (read() === '`') return false
@@ -77,7 +77,7 @@ const component = (state, emit) => {
         },
       },
 
-      extendHtmlify: {
+      htmlify: {
         text({ text }) {
           return text
         },
