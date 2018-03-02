@@ -3,11 +3,11 @@
 
 Implementors of this specification must support the following two forms of transport:
 
-* **HTTP(S) endpoints** - For client->server requests
+#### HTTP(S) endpoints - For client->server requests
 
 The HTTP API is accessed via `/api/`. All endpoints respond in JSON, and those which take request bodies expect it to also be formatted using JSON. Implementors may choose an appropriate HTTP status code for responses.
 
-* **WebSocket events** - For server->client event notifications
+#### WebSocket events - For server->client event notifications
 
 Messages sent to and from sockets must be JSON strings, following the format `{ evt, data }`, where `evt` is a name representing the meaning of the event, and `data` is an optional property specifying any additional data related to the event.
 
@@ -151,7 +151,7 @@ This endpoint may return [an error](#errors), namely FAILED, NO, or NOT_ALLOWED.
 
 ## Settings
 
-```json
+```js
 {
   "name": string
 }
@@ -415,19 +415,19 @@ DELETE /api/sessions/12345678-ABCDEFGH
 }
 ```
 
-**Mentions**
+#### Mentions
 
 Mentions target a single user only and are formatted as `<@userID>`, where `userID` is the ID of the user who is being mentioned. Mentions are stored per-user on the server. `mentionedUserIDs` is derived from the content of the message.
 
 <details><summary>Events</summary>
 
 <a name='message-new'></a>
-## message/new
+### message/new
 
 Sent to all clients whenever a message is [sent](#send-message) to any channel in the server. Passed data is in the format `{ message }`, where `message` is a [message](#messages) representing the new message.
 
 <a name='message-edit'></a>
-## message/edit
+### message/edit
 
 Sent to all clients when any message is [edited](#edit-message). Passed data is in the format `{ message }`, where `message` is a [message](#messages) representing the new message.
 
@@ -539,27 +539,27 @@ This data is only present if a valid, logged-in session ID is provided to channe
 <details><summary>Events</summary>
 
 <a name='channel-new'></a>
-## channel/new
+### channel/new
 
 Sent to all clients when a channel is [created](#create-channel). Passed data is in the format `{ channel }`, where `channel` is a [channel](#channels) representing the new channel.
 
 <a name='channel-update'></a>
-## channel/update
+### channel/update
 
 Sent to all clients when a channel is updated ([renamed](#rename-channel), [marked as read](#mark-channel-as-read), etc). Passed data is in the format `{ channel }`, including `channel.unreadMessageCount` if the socket is actively [ponging sessionIDs](#pongdata).
 
 <a name='channel-pins-add'></a>
-## channel/pins/add
+### channel/pins/add
 
 Sent to all clients when a message is [pinned](#pin) to a channel. Passed data is in the format `{ message }`, where `message` is the message that was pinned.
 
 <a name='channel-pins-remove'></a>
-## channel/pins/remove
+### channel/pins/remove
 
 Sent to all clients when a message is [unpinned](#unpin) from a channel. Passed data is in the format `{ messageID }`, where `messageID` is the ID of the message that was unpinned.
 
 <a name='channel-delete'></a>
-## channel/delete
+### channel/delete
 
 Sent to all clients when a channel is [deleted](#delete-channel). Passed data is in the format `{ channelID }`.
 
@@ -792,37 +792,37 @@ DELETE /api/channels/5678/pins/1234
 <details><summary>Events</summary>
 
 <a name='user-new'></a>
-## user/new
+### user/new
 
 Sent to all clients when a user is created. Passed data is in the format `{ user }`.
 
 <a name='user-gone'></a>
-## user/gone
+### user/gone
 
 Sent to all clients when a user is deleted. Passed data is in the format `{ userID }`.
 
 <a name='user-online'></a>
-## user/online
+### user/online
 
 Sent to all clients when a user becomes online. This is whenever a socket [tells the server](#pongdata) that its session ID is that of a user who was not already online before. Passed data is in the format `{ userID }`.
 
 <a name='user-offline'></a>
-## user/offline
+### user/offline
 
 Sent to all clients when a user becomes offline. This is whenever the last socket of a user who is online terminates. Passed data is in the format `{ userID }`.
 
 <a name='user-update'></a>
-## user/update
+### user/update
 
 Sent to all clients when a user is mutated using [PATCH /api/users/:userID](#update-user). Passed data is in the format `{ user }`.
 
 <a name='user-mentions-add'></a>
-## user/mentions/add
+### user/mentions/add
 
 When a user is [mentioned](#mentions), this is sent to all sockets authenticated as them. Passed data is in the format `{ message }`, where `message` is the new / just edited mesage that mentioned the user.
 
 <a name='user-mentions-remove'></a>
-## user/mentions/remove
+### user/mentions/remove
 
 When a message is deleted or edited to remove [the mention of a user](#mentions), all sockets authenticated as the unmentioned user are sent this event. Passed data is in the format `{ messageID }`, where `messageID` is the ID of the message that just stopped mentioning the user.
 
@@ -1033,24 +1033,24 @@ GET /api/username-available/patrick
 }
 ```
 
-**See also**
+#### See also
 
 * [Permissions](#permissions)
 
 <details><summary>Events</summary>
 
 <a name='role-new'></a>
-## role/new
+### role/new
 
 Sent to all clients when a role is [added](#new-role). Passed data is in the format `{ role }`.
 
 <a name='role-update'></a>
-## role/update
+### role/update
 
 Sent to all clients when a role is [updated](#update-role). Passed data is in the format `{ role }`.
 
 <a name='role-delete'></a>
-## role/delete
+### role/delete
 
 Sent to all clients when a role is [deleted](#delete-role). Passed data is in the format `{ roleID }`.
 
