@@ -24,24 +24,36 @@
 
 .Message-fillerLine {
   flex: 1;
+  align-self: stretch;
 
   margin-left: 4px;
 
-  height: .5em;
-  border-bottom: 1px dotted var(--page-dim-fg);
-
   opacity: 0;
-  transition: opacity 250ms ease-out;
+
+  position: relative;
+
+  &::after {
+    content: " ";
+    display: block;
+
+    position: absolute;
+    top: 50%;
+    left: 4px;
+    right: 4px;
+
+    border-bottom: 1px dashed var(--page-dim-fg);
+  }
 }
 
 .Message:hover .Message-fillerLine { opacity: 0.5 }
 
 .Message-actions {
   flex: 0;
+
   display: flex;
+  align-items: center;
 
   opacity: 0;
-  transition: opacity 250ms ease-out;
 }
 
 .Message:hover .Message-actions { opacity: 1 }

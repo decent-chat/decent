@@ -7,6 +7,7 @@
 
   --sidebar-border-color: var(--gray-500);
   --sidebar-icon-color: var(--gray-500);
+  --sidebar-icon-color-active: #afceff;
 
   --sidebar-list-item-fg: var(--gray-100);
   --sidebar-list-item-bg: var(--sidebar-bg);
@@ -53,6 +54,8 @@
   font-size: 16px;
   text-decoration: none;
 
+  overflow-x: hidden;
+
   cursor: pointer;
   border-radius: 4px;
 
@@ -62,11 +65,23 @@
   &:hover {
     color: var(--sidebar-list-item-hoverfg);
     background: var(--sidebar-list-item-hoverbg);
+
+    &.is-unread::after {
+      border-color: var(--sidebar-list-item-hoverbg);
+    }
   }
 
   &.is-active {
     color: var(--sidebar-list-item-activefg);
     background: var(--sidebar-list-item-activebg);
+
+    &.\--icon-channel::before {
+      color: var(--sidebar-icon-color-active);
+    }
+
+    &.is-unread::after {
+      border-color: var(--sidebar-list-item-activebg);
+    }
   }
 
   &.\--icon-channel::before {
@@ -105,12 +120,16 @@
 
     border-radius: 99px;
     background: var(--unread-dot-color);
-    border: 2px solid var(--unread-dot-border-color);
+    border: 2px solid var(--sidebar-bg); /* Border color should always match background */
   }
 }
 
 .Sidebar-section {
   padding: 16px;
+
+  &.\--bottom-line {
+    border-bottom: 1px solid var(--sidebar-border-color);
+  }
 }
 
 .Sidebar-section-title {
@@ -125,6 +144,7 @@
   & > h4 {
     text-transform: uppercase;
     color: var(--sidebar-fg);
+    font-size: 14px;
 
     margin: 0;
   }

@@ -11,7 +11,8 @@
   font-size: 14px;
   color: var(--gray-900);
 
-  :not([disabled]) { cursor: pointer; }
+  cursor: pointer;
+  :disabled { cursor: default; }
 
   &.\--red { background-color: var(--red); color: white; }
 
