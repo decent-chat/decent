@@ -153,9 +153,19 @@ This endpoint may return [an error](#errors), namely FAILED, NO, or NOT_ALLOWED.
 
 ```js
 {
-  "name": string
+  "name": string,
+  "iconURL": string,
 }
 ```
+
+<details><summary>Events</summary>
+
+<a name='server-settings-update'></a>
+## server-settings/update
+
+Emitted with data `{ settings }` when the server settings are modified.
+
+</details>
 
 <details><summary>Endpoints</summary>
 
@@ -169,7 +179,8 @@ GET /api/settings
 
 <- {
 <-   "settings": {
-<-     "name": "Unnamed Decent chat server"
+<-     "name": "Unnamed Decent chat server",
+<-     "iconURL": "https://meta.decent.chat/uploads/..."
 <-   }
 <- }
 ```
@@ -177,8 +188,9 @@ GET /api/settings
 ### Modify settings [POST /api/settings]
 + requires [permission](#permissions): MANAGE_SERVER
 + `name` (string; optional)
++ `iconURL` (string; optional)
 
-Returns `{ results }` if successful, where `results` is an object describing the result of each changed setting. Updates settings with new values provided.
+Returns `{}` if successful. Updates settings with new values provided, and emits [server-settings/update](#server-settings-update).
 
 ```js
 POST /api/settings
@@ -187,11 +199,7 @@ POST /api/settings
 ->   "name": "My Server"
 -> }
 
-<- {
-<-   "result": {
-<-     "name": "updated"
-<-   }
-<- }
+<- {}
 ```
 
 </details>
