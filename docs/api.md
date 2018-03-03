@@ -115,11 +115,11 @@ We look at the final permission object: `{readMessages: false, sendMessages: fal
 The actual priority of permission objects is determined according to the roles applied to the user and channel-specific permissions (which are dependent on the roles), and the order is determined as follows:
 
 * Channel-specific permissions for roles of the user (Most priority.)
-* Channel-specific permissions for the "users" role, if the user is a logged-in member of the server, or the "guest" role, if the user is not logged in
-* Channel-specific permissions for the "everyone" role
+* Channel-specific permissions for the user role, if the user is a logged-in member of the server, or the guest role, if the user is not logged in (IDs "_user" and "_guest" respectively)
+* Channel-specific permissions for the everyone role (ID "_everyone")
 * Server-wide permissions for roles of the user
-* Server-wide permissions for the "user" or "guest" role, as above
-* Server-wide permissions for the "everyone" role (Least priority.)
+* Server-wide permissions for the user or guest role, as above
+* Server-wide permissions for the everyone role (Least priority.)
 
 </details>
 
@@ -874,7 +874,7 @@ DELETE /api/channels/5678/pins/1234
   "flair": string | null,
 
   "online": boolean,
-  "roles": array, // Array of string IDs for each role the user has, not including "user" or "everyone",
+  "roles": array, // Array of string IDs for each role the user has, not including "_user" or "_everyone",
 
   "email": string | null // Only provided if the requested user is the same as the sessionID provides
 }
