@@ -90,6 +90,23 @@ class Message extends Thing {
     })
   }
 
+  async edit(text) {
+    typeforce('String', text)
+
+    if (text.length === 0) return this.delete()
+
+    await this.client.fetch('/api/messages/' + this.id, {
+      method: 'PATCH',
+      body: {text}
+    })
+  }
+
+  async delete() {
+    await this.client.fetch('/api/messages/' + this.id, {
+      method: 'DELETE',
+    })
+  }
+
   get dateCreated() {
     return new Date(this.date)
   }
