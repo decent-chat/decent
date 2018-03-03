@@ -15,7 +15,8 @@
   "dependencies": {
     "decent.js": "^0.1.0-preview",
     "mrk.js": "^2.0.0",
-    "preact": "^8.2.7"
+    "preact": "^8.2.7",
+    "preact-portal": "^1.1.2"
   },
   "devDependencies": {
     "autoprefixer": "^8.1.0",

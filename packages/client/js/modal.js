@@ -1,9 +1,10 @@
 const { h, Component } = require('preact')
+const Portal = require('preact-portal')
 
 class Modal extends Component {
   render(props, state) {
-    // Would love to use a fragment here, but preact doesn't support them
-    return (
+    // Renders into document.body rather than as an actual child
+    return <Portal into='body'>
       <div>
         <div class='Modal'>
           <div class='Modal-close-button' onclick={props.cancel}></div>
@@ -16,9 +17,10 @@ class Modal extends Component {
             {props.complete && <button class='Button' onclick={props.complete}>Save</button>}
           </div>
         </div>
+
         <div class='Modal-page-cover' onclick={props.cancel}></div>
       </div>
-    )
+    </Portal>
   }
 }
 
