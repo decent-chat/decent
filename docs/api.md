@@ -237,8 +237,15 @@ GET /api/properties
 
 <details><summary>Events</summary>
 
-* [emote/new](#emote-new)
-* [emote/delete](#emote-delete)
+<a name='emote-new'></a>
+### emote/new
+
+Sent to all clients when an emote is created. Passed data is in the format `{ emote }`.
+
+<a name='emote-delete'></a>
+### emote/delete
+
+Sent to all clients when an emote is deleted. Passed data is in the format `{ shortcode }`.
 
 </details>
 
