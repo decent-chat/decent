@@ -4,7 +4,7 @@ const typeforce = require('typeforce')
 const Socket = require('./socket')
 const { EventEmitter } = require('./emitter')
 
-const { Channels } = require('./channels')
+const { Message, Channels } = require('./channels')
 const { User, Users } = require('./users')
 
 class Client extends EventEmitter {
@@ -122,6 +122,13 @@ class Client extends EventEmitter {
 
     this._host.sessionID = undefined
     this._sessionUser = undefined
+  }
+
+  async getMessageByID(id) {
+    typeforce('String', id)
+
+    const { message } = await this.fetch('/api/messages/' + id)
+    return new Message(this, message)
   }
 
   async setServerName(name) {

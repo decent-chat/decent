@@ -17,6 +17,7 @@ Properties:
 
 * message.channel ([Channel](channel.md))
 * message.author ([User](user.md))
+* message.mentionedUserIDs (Array<String>)
 
 ---
 

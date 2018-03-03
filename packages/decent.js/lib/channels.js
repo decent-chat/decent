@@ -28,6 +28,7 @@ const messageType = {
   // type: 'String',
 
   text: 'String',
+  mentionedUserIDs: typeforce.arrayOf('String'),
 
   authorID: '?String',
   authorUsername: '?String',
