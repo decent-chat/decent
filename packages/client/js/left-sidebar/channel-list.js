@@ -8,10 +8,20 @@ class ChannelList extends Component {
         <button>+ Create</button>
       </div>
 
-      <div class="Sidebar-list">
-        {props.channels.map(channel => (
-          <a class="Sidebar-list-item --icon-channel">{channel.name}</a>
-        ))}
+      <div class='Sidebar-list'>
+        {props.channels.map((channel, index) => {
+          let className = 'Sidebar-list-item --icon-channel'
+          if (index === props.activeChannelIndex) className += ' is-active'
+          
+          return (
+            <a
+              class={className}
+              onclick={() => {props.switchToChannel(index)}}
+            >
+              {channel.name}
+            </a>
+          )
+        })}
       </div>
     </div>
   }

@@ -11,8 +11,8 @@ class App extends Component {
   state = {
     isLoading: true,
 
-    clients: {}, // hostname -> Client map
-    activeClientIndex: -1, // state.clients[] index
+    servers: {}, // map of hostname -> { ui, client }
+    activeServerIndex: -1, // state.clients[] index
 
     showDummyModal: true,
   }
@@ -30,53 +30,61 @@ class App extends Component {
       return client
     }))
 
-    const clients = clientsArr.reduce((map, client, index) => {
-      map[hostnames[index]] = client
+    const servers = clientsArr.reduce((map, client, index) => {
+      map[hostnames[index]] = {
+        client,
+        ui: {
+          activeChannelIndex: (client.channels.length > 0) ? 0 : -1
+        }
+      }
       return map
     }, {})
 
-    console.log(clients)
+    console.log(servers)
 
     this.setState({
       isLoading: false,
-      clients,
-      activeClientIndex: 0,
+      servers,
+      activeServerIndex: 0,
     })
   }
 
-  getActiveClient() {
-    if (this.state.activeClientIndex < 0) return null
-    return Object.values(this.state.clients)[this.state.activeClientIndex]
+  getActiveServer(state) {
+    if(!state) state = this.state
+    if (state.activeServerIndex < 0) return null
+    return Object.values(state.servers)[state.activeServerIndex]
   }
 
   render(props, state) {
-    const { isLoading, clients } = this.state
-    const activeClient = this.getActiveClient()
+    const { isLoading, servers } = this.state
+    const activeServer = this.getActiveServer()
 
     if (isLoading) {
       return <div class='App Loading'></div>
-    } else if (!activeClient) {
+    } else if (!activeServer) {
       // TODO: landing page
     } else {
-      document.title = activeClient.serverName
+      document.title = activeServer.client.serverName
 
       return <div class='App'>
         <aside class='Sidebar --on-left'>
           <ServerList
-              servers={Object.entries(clients).map(([ hostname, client ], index) => {
+              servers={Object.entries(servers).map(([hostname, server], index) => {
               return {
                 hostname,
-                name: client.serverName,
-                isActive: activeClient === client,
+                name: server.client.serverName,
+                isActive: activeServer === server,
                 index,
               }
             })}
-            activeServerName={activeClient.serverName}
+            activeServerName={activeServer.client.serverName}
             onJoinClick={this.actions.showJoinServerModal.bind(this)}
             switchToHost={this.actions.switchToHost.bind(this)}
           />
           <ChannelList
-            channels={activeClient.channels}
+            channels={activeServer.client.channels}
+            activeChannelIndex={activeServer.ui.activeChannelIndex}
+            switchToChannel={this.actions.switchToChannel.bind(this)}
           />
         </aside>
 
@@ -104,9 +112,15 @@ class App extends Component {
 
     switchToHost(index) {
       this.setState({
-        activeClientIndex: index,
+        activeServerIndex: index,
       })
     },
+
+    switchToChannel(index) {
+      let s = Object.assign({}, this.state) // Don't mutate state directly!
+      this.getActiveServer(s).ui.activeChannelIndex = index
+      this.setState(s)
+    }
   }
 }
 
