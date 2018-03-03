@@ -1,12 +1,35 @@
-.Table, .Table th, .Table td {
-  border: 1px solid var(--table-border-color, var(--gray-500));
+:root {
+  --table-border-color: var(--gray-500);
+
+  --table-header-bg: var(--gray-700);
+  --table-header-fg: var(--gray-100);
+
+  --table-cell-bg: var(--gray-900);
+  --table-cell-fg: var(--gray-100);
+}
+
+.Table {
+  border: 1px solid var(--table-border-color);
   border-collapse: collapse;
 
-  background: var(--table-bg, var(--gray-900));
+  border-radius: 4px;
 }
 
 .Table th, .Table td {
-  padding: 0 14px;
+  padding: 6px 14px;
+
+  border: 1px solid var(--table-border-color);
+  border-collapse: collapse;
+}
+
+.Table td {
+  background: var(--table-cell-bg);
+  color: var(--table-cell-fg);
+}
+
+.Table th {
+  background: var(--table-header-bg);
+  color: var(--table-header-fg);
 }
 
 /* Center images properly: https://stackoverflow.com/questions/2452280/ */

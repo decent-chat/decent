@@ -100,6 +100,9 @@ const apply = appearance => {
       '--sidebar-list-item-activefg': 'var(--gray-700)',
       '--sidebar-list-item-activebg': 'var(--gray-100)',
 
+      '--sidebar-icon-color': 'var(--sidebar-list-item-fg)',
+      '--sidebar-icon-color-active': 'var(--sidebar-list-item-activefg)',
+
       '--serverDropdown-fg': 'var(--gray-300)',
       '--serverDropdown-bg': '#1c1e23',
 
@@ -121,11 +124,16 @@ const apply = appearance => {
       '--page-alt-bg': 'var(--gray-100)',
       '--page-title-fg': 'var(--gray-700)',
 
-      '--table-border-color': '#2c333f',
-      '--table-bg': '#25292f',
+      '--table-border-color': '#3c4144',
+
+      '--table-header-bg': '#1c1e23',
+      '--table-header-fg': 'var(--page-fg)',
+
+      '--table-cell-bg': '#25292f',
+      '--table-cell-fg': 'var(--page-dim-fg)',
 
       '--messageEditor-fg': 'var(--gray-700)',
-      '--messageEditor-bg': 'var(--page-bg)',
+      '--messageEditor-bg': '#25292f',
       '--messageEditor-border-color': '#3c4144',
 
       '--input-fg': 'var(--gray-700)',
@@ -144,7 +152,7 @@ const apply = appearance => {
   }
 
   setCSS(document.body, Object.assign({
-    '--avatar-border-radius': appearance.circleAvatars ? '100%' : '5%',
+    '--avatar-border-radius': appearance.circleAvatars ? '100%' : '4px',
   }, themes[appearance.theme]))
 }
 

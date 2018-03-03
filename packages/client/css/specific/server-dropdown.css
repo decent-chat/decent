@@ -46,9 +46,10 @@
   display: none;
 
   position: absolute;
-  top: 47px;
   left: 0;
   right: 0;
+  bottom: 0;
+  transform: translateY(100%);
   z-index: 100;
 
   background: inherit;
