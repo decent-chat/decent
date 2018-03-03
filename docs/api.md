@@ -264,7 +264,7 @@ GET /api/properties
 
 ```js
 {
-  "shortcode": Name, // Unique string without colons
+  "shortcode": string, // Unique string without colons or spaces
   "imageURL": string
 }
 ```
@@ -295,7 +295,7 @@ GET /api/emotes
 ### Add a new emote [POST /api/emotes]
 + requires [permission](#permissions) `manageEmotes`
 + `imageURL` (string)
-+ `shortcode` (Name) - Should not include colons (`:`). Must be unique, even if the user has the `allowNonUnique` [permission](#permissions).
++ `shortcode` (string) - Should not include colons (`:`) or spaces. Must be unique, even if the user has the `allowNonUnique` [permission](#permissions).
 
 Returns `{}` if successful. Emits [emote/new](#emote-new).
 
