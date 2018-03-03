@@ -231,7 +231,11 @@ const store = (state, emitter) => {
         state.messages.scrolledToEnd = true
 
         // We reached the end of the channel - mark it as read.
-        if (state.sessionAuthorized) await api.post(state, `channels/${state.params.channel}/mark-read`)
+        if (state.sessionAuthorized) {
+          await api.post(state, `channels/${state.params.channel}/mark-read`)
+          const channel = state.sidebar.channels.find(c => c.id === state.params.channel)
+          channel.unreadMessageCount = 0
+        }
       }
 
       if (!state.messages.list) {
