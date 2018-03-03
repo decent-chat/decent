@@ -1,0 +1,22 @@
+{
+  "name": "decent.js",
+  "version": "0.1.0-preview",
+  "description": "A library for interacting with Decent servers.",
+  "main": "lib/index.js",
+  "repository": "https://github.com/decent-chat/decent/tree/master/packages/decent.js",
+  "keywords": [
+    "chat",
+    "chat-system",
+    "social",
+    "decent"
+  ],
+  "author": "Multiple contributors",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "eventemitter3": "^3.0.1",
+    "fetch-ponyfill": "^6.0.0",
+    "isomorphic-ws": "^4.0.0",
+    "typeforce": "^1.12.0",
+    "ws": "^4.1.0"
+  }
+}
