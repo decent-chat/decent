@@ -131,7 +131,7 @@ const withState = state => {
     },
 
     extendHtmlify: {
-      link: ({ metadata }) => `<a class='Link' target='_blank' rel='noopener noreferrer' href='${mark.escapeHTML(metadata.href).replace('javascript:', '')}'>
+      link: ({ metadata }) => `<a class='Link' target='_blank' rel='noopener noreferrer' href='${mark.sanitizeURL(mark.escapeHTML(metadata.href))}'>
         ${mark.escapeHTML(metadata.name)}
       </a>`,
 
