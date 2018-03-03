@@ -21,6 +21,9 @@ Attempts to log in using the provided credentials. Resolves with the newly logge
 ## await client.loginWithSessionID(sessionID: string)
 Attempts to log in using the provided sessionID. Resolves with the newly logged-in [user](user.md).
 
+## await client.logout(deleteSessionID: boolean)
+Logs out. `deleteSessionID` defaults to true.
+
 ## await client.setServerName(name: string)
 Attempts to change the server's name (`client.serverName`).
 

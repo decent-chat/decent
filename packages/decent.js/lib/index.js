@@ -13,6 +13,7 @@ class Client extends EventEmitter {
 
     Object.defineProperty(this, '_host', {value: null, writable: true})
     Object.defineProperty(this, '_socket', {value: new Socket(this)})
+    Object.defineProperty(this, '_sessionUser', {value: null, writable: true})
 
     this.serverName = undefined
     this.serverVersion = undefined
@@ -110,6 +111,17 @@ class Client extends EventEmitter {
 
     this._host.sessionID = sessionID
     return this._sessionUser = new User(this, user)
+  }
+
+  async logout(deleteSessionID = true) {
+    typeforce('Boolean', deleteSessionID)
+
+    if (deleteSessionID) {
+      await this.fetch('/api/sessions/' + this._host.sessionID, {method: 'DELETE'})
+    }
+
+    this._host.sessionID = undefined
+    this._sessionUser = undefined
   }
 
   async setServerName(name) {
