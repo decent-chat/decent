@@ -8,6 +8,8 @@ const client = new Client()
 
 ---
 
+Extends [eventemitter3](https://npm.im/eventemitter3).
+
 ## await client.connectTo(hostname: string)
 Attempts to connect to the Decent server at `hostname`. Returns a Promise that resolves once it has connected succesfully. Always call this before doing anything else.
 
@@ -19,6 +21,9 @@ Attempts to log in using the provided credentials. Resolves with the newly logge
 ## await client.loginWithSessionID(sessionID: string)
 Attempts to log in using the provided sessionID. Resolves with the newly logged-in [user](user.md).
 
+## await client.setServerName(name: string)
+Attempts to change the server's name (`client.serverName`).
+
 ---
 
 ## client.channels ([Channels](channels.md))
@@ -29,3 +34,20 @@ Represents all users registered on the server.
 
 ## client.me (?[User](user.md))
 The currently logged-in user, or `null` if not logged in.
+
+## client.serverVersion (string)
+
+## client.serverName (string)
+
+---
+
+Use `client.on('event', callback)` method to listen for events.
+
+## event 'disconnect'
+Emitted when the socket disconnects from the server due to an error.
+
+## event 'reconnect'
+Emitted when the socket reconnects after a disconnect.
+
+## event 'namechange' (name: string)
+Emitted when `client.serverName` changes.

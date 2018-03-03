@@ -27,9 +27,6 @@ module.exports = (host, path, opts = {}) => {
         error.name = 'DecentError'
         error.code = response.error.code
 
-        error.error = response.error
-        error.request = { host, path, opts }
-
         return Promise.reject(error)
       }
 

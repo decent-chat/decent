@@ -2,19 +2,35 @@ const fetch = require('./fetch')
 const { version } = require('../package.json')
 const typeforce = require('typeforce')
 const Socket = require('./socket')
+const { EventEmitter } = require('./emitter')
 
 const { Channels } = require('./channels')
 const { User, Users } = require('./users')
 
-class Client {
+class Client extends EventEmitter {
   constructor() {
-    this._host = null
-    this._socket = new Socket(this)
+    super()
+
+    Object.defineProperty(this, '_host', {value: null, writable: true})
+    Object.defineProperty(this, '_socket', {value: new Socket(this)})
+
+    this.serverName = undefined
+    this.serverVersion = undefined
 
     // Ping!
     this._socket.on('pingdata', () => {
       // Pong!
       this._socket.send('pongdata', {sessionID: this._sessionID || ''})
+    })
+
+    this._socket.on('disconnect', () => this.emit('disconnect'))
+    this._socket.on('reconnect', () => this.emit('reconnect'))
+
+    this._socket.on('server-settings/update', ({ settings: { name } }) => {
+      if (this._serverName !== name) {
+        this.serverName = name
+        this._socket.emit('namechange', name)
+      }
     })
   }
 
@@ -50,6 +66,13 @@ class Client {
       })
     }
 
+    this.serverVersion = decentVersion
+
+    // Load server details
+    const { settings: { name } } = await this.fetch('/api/settings')
+    typeforce('String', name)
+    this.serverName = name
+
     // Setup socket
     await this._socket.connect()
 
@@ -69,6 +92,12 @@ class Client {
     const { sessionID } = await this.fetch('/api/sessions', {
       method: 'POST',
       body: {username, password},
+    }).catch(error => {
+      if (error.code === 'NOT_FOUND') {
+        error.message = `Cannot login as "${username}" because that user does not exist.`
+      }
+
+      return Promise.reject(error)
     })
 
     return await this.loginWithSessionID(sessionID)
@@ -81,6 +110,17 @@ class Client {
 
     this._host.sessionID = sessionID
     return this._sessionUser = new User(this, user)
+  }
+
+  async setServerName(name) {
+    typeforce('String', name)
+
+    await this.fetch('/api/settings', {
+      method: 'POST',
+      body: {name}
+    })
+
+    this.serverName = name
   }
 
   get me() {
