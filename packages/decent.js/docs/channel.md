@@ -41,7 +41,7 @@ Returns `#channelname`.
 Use `channel.on('event', callback)` method to listen for events.
 
 ## event 'update' (channel: [Channel](channel.md))
-Emitted when this channel's details (`email` or `flair`) are updated.
+Emitted when this channel's details (`name` or `unreadMessageCount`) are updated.
 
 ## event 'delete' (channel: [Channel](channel.md))
 Emitted when this channel is deleted.
