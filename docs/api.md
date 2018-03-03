@@ -219,7 +219,7 @@ GET /api/settings
 <- }
 ```
 
-### Modify settings [POST /api/settings]
+### Modify settings [PATCH /api/settings]
 + requires [permission](#permissions) `manageServer`
 + `name` (string; optional)
 + `iconURL` (string; optional)
@@ -227,7 +227,7 @@ GET /api/settings
 Returns `{}` if successful. Updates settings with new values provided, and emits [server-settings/update](#server-settings-update).
 
 ```js
-POST /api/settings
+PATCH /api/settings
 
 -> {
 ->   "name": "My Server"
