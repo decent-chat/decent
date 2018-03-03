@@ -118,7 +118,7 @@
 
     border-radius: 99px;
     background: var(--unread-dot-color);
-    border: 2px solid var(--unread-dot-border-color);
+    border: 2px solid var(--sidebar-bg); /* Border color should always match background */
   }
 }
 

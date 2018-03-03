@@ -124,8 +124,13 @@ const apply = appearance => {
       '--page-alt-bg': 'var(--gray-100)',
       '--page-title-fg': 'var(--gray-700)',
 
-      '--table-border-color': '#2c333f',
-      '--table-bg': '#25292f',
+      '--table-border-color': '#3c4144',
+
+      '--table-header-bg': '#1c1e23',
+      '--table-header-fg': 'var(--page-fg)',
+
+      '--table-cell-bg': '#25292f',
+      '--table-cell-fg': 'var(--page-dim-fg)',
 
       '--messageEditor-fg': 'var(--gray-700)',
       '--messageEditor-bg': '#25292f',

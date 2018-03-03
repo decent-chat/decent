@@ -18,7 +18,6 @@
 
     text-transform: uppercase;
     margin-bottom: 4px;
-    margin-left: 13px;
 
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -36,9 +35,17 @@
     color: var(--input-fg);
     background: var(--input-bg);
 
-    border: 0;
-    border-bottom: 1px solid var(--input-border-color);
-    &:focus { border-color: var(--accent); }
+    border: 1px solid var(--input-border-color);
+    border-radius: 4px;
+
+    &:focus {
+      border-color: var(--accent);
+      outline: none;
+    }
+
+    &::placeholder {
+      color: var(--gray-300);
+    }
 
     &[disabled] {
       cursor: not-allowed;
