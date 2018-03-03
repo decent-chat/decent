@@ -41,3 +41,6 @@ Emitted when this user comes online.
 
 ## event 'offline' (user: [User](user.md))
 Emitted when this user goes offline.
+
+## event 'change'
+Emitted alongside every other event.

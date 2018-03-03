@@ -12,5 +12,8 @@ Use `pins.on('event', callback)` method to listen for events.
 ## event 'pin' (message: [Message](message.md))
 Emitted when a message is pinned.
 
-## event 'delete' (message: [Message](message.md))
+## event 'unpin' (message: [Message](message.md))
 Emitted when a message is unpinned.
+
+## event 'change'
+Emitted alongside 'pin' and 'unpin' to show that state has changed.

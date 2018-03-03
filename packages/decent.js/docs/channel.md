@@ -46,8 +46,8 @@ Emitted when this channel's details (`name` or `unreadMessageCount`) are updated
 ## event 'delete' (channel: [Channel](channel.md))
 Emitted when this channel is deleted.
 
-## event 'online' (channel: [Channel](channel.md))
-Emitted when this channel comes online.
+## event 'change'
+Emitted when channel state changes (ie. alongside the 'update' and 'delete' events).
 
-## event 'offline' (channel: [Channel](channel.md))
-Emitted when this channel goes offline.
+## event 'message' (message: [Message](message.md))
+Emitted when a new message is sent to the channel, by decent.js or not.

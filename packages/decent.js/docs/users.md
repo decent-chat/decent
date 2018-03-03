@@ -23,3 +23,6 @@ Emitted when a user goes offline.
 
 ## event 'delete' (user: [User](user.md))
 Emitted when a user is deleted.
+
+## event 'change'
+Emitted alongside every other event, meaning this event is triggered whenever this set changes.

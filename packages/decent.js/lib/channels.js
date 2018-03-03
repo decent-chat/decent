@@ -54,6 +54,7 @@ class Message extends Thing {
       if (message.id === this.id) {
         this[SET_DATA](message)
         this.emit('edit', this)
+        this.emit('change')
       }
     })
 
@@ -62,18 +63,21 @@ class Message extends Thing {
         // Oof
         this.deleted = true
         this.emit('delete', this)
+        this.emit('change')
       }
     })
 
     this.client._socket.on('channel/pins/add', ({ message: messageObj }) => {
       if (messageObj.id === this.id) {
         this.emit('pin', this)
+        this.emit('change')
       }
     })
 
     this.client._socket.on('channel/pins/remove', ({ messageID }) => {
       if (messageID == this.id) {
         this.emit('unpin', this)
+        this.emit('change')
       }
     })
   }
@@ -128,6 +132,7 @@ class PinnedMessages extends Things {
 
         this.set.push(message)
         this.emit('pin', message)
+        this.emit('change')
       }
     })
 
@@ -138,6 +143,7 @@ class PinnedMessages extends Things {
 
       this.emit('unpin', this.set[index])
       this.set.splice(index, 1)
+      this.emit('change')
     })
   }
 
@@ -158,6 +164,7 @@ class Channel extends Thing {
       if (channel.id === this.id) {
         this[SET_DATA](channel)
         this.emit('update', this)
+        this.emit('change')
       }
     })
 
@@ -166,6 +173,7 @@ class Channel extends Thing {
         // Oof
         this.deleted = true
         this.emit('delete', this)
+        this.emit('change')
       }
     })
 
@@ -239,6 +247,7 @@ class Channels extends Things {
 
       // Re-emit event
       this.emit('new', channel)
+      this.emit('change')
     })
 
     this.client._socket.on('channel/delete', ({ channelID }) => {
@@ -251,10 +260,13 @@ class Channels extends Things {
 
       // Remove from set
       this.set.splice(index, 1)
+      this.emit('change')
     })
 
-    this.client._socket.on('channel/update', ({ channel }) =>
-      nextTick(() => this.emit('update', channel)))
+    this.client._socket.on('channel/update', ({ channel }) => nextTick(() => {
+      this.emit('update', channel)
+      this.emit('change')
+    }))
 
     this.client._socket.on('message/new', ({ message: messageObj }) => {
       this.emit('message', new Message(this.client, messageObj))

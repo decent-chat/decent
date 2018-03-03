@@ -26,6 +26,7 @@ class User extends Thing {
       if (user.id === this.id) {
         this[SET_DATA](user)
         this.emit('update', this)
+        this.emit('change')
       }
     })
 
@@ -34,6 +35,7 @@ class User extends Thing {
         // Oof
         this.deleted = true
         this.emit('delete', this)
+        this.emit('change')
       }
     })
 
@@ -41,6 +43,7 @@ class User extends Thing {
       if (userID === this.id) {
         this.online = true
         this.emit('online', this)
+        this.emit('change')
       }
     })
 
@@ -48,6 +51,7 @@ class User extends Thing {
       if (userID === this.id) {
         this.online = false
         this.emit('offline', this)
+        this.emit('change')
       }
     })
   }
@@ -69,6 +73,7 @@ class Users extends Things {
 
       // Re-emit event
       this.emit('new', user)
+      this.emit('change')
     })
 
     this.client._socket.on('user/delete', ({ userID }) => {
@@ -81,16 +86,23 @@ class Users extends Things {
 
       // Remove from set
       this.set.splice(index, 1)
+      this.emit('change')
     })
 
-    this.client._socket.on('user/update', ({ user }) =>
-      nextTick(() => this.emit('update', user)))
+    this.client._socket.on('user/update', ({ user }) => nextTick(() => {
+      this.emit('update', user)
+      this.emit('change')
+    }))
 
-    this.client._socket.on('user/online', ({ userID }) =>
-      nextTick(() => this.emit('online', this.set.find(usr => usr.id === userID))))
+    this.client._socket.on('user/online', ({ userID }) => nextTick(() => {
+      this.emit('online', this.set.find(usr => usr.id === userID))
+      this.emit('change')
+    }))
 
-    this.client._socket.on('user/offline', ({ userID }) =>
-      nextTick(() => this.emit('offline', this.set.find(usr => usr.id === userID))))
+    this.client._socket.on('user/offline', ({ userID }) => nextTick(() => {
+      this.emit('offline', this.set.find(usr => usr.id === userID))
+      this.emit('change')
+    }))
   }
 }
 

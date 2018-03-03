@@ -53,3 +53,6 @@ Emitted when this message is pinned to `message.channel`.
 
 ## event 'unpin' (message: [Message](message.md))
 Emitted when this message is unpinned.
+
+## event 'change'
+Emitted alongside all other events.
