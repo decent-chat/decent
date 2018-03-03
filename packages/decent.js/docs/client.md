@@ -30,6 +30,9 @@ Finds and resolves with the [message](message.md) with ID `id`.
 ## await client.setServerName(name: string)
 Attempts to change the server's name (`client.serverName`).
 
+## await client.uploadImage(file: Blob)
+Resolves with the URL (string) of the uploaded file. The file must be a GIF, PNG, or JP(E)G.
+
 ---
 
 ## client.channels ([Channels](channels.md))
