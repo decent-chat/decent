@@ -761,6 +761,53 @@ GET /api/channels/5678/messages?after=1234
 <- }
 ```
 
+<a name='update-channel-permissions'></a>
+### Update channel-specific role permissions [PATCH /api/channels/:id/role-permissions]
++ requires [permission](#permissions) (for specified channel) `manageRoles`
++ **in-url** id (ID)
++ **rolePermissions** - an object map of role IDs to their permissions
+
+Returns `{}` if successful. Note that if the **roles** parameter, unspecified role permissions on the channel will not be changed. To delete an entry, pass `{}` as the role's permissions; since this would reset the role's permissions all to unset, the role would have no effect, and is removed from the channel's `rolePermissions` map.
+
+```js
+PATCH /api/channels/1234/role-permissions
+
+-> {
+->   "rolePermissions": {
+->     "_everyone": {
+->       "readMessages": false,
+->       "sendMessages": false
+->     },
+->     "123": {
+->       "readMessages": true,
+->       "sendMessages": true
+->     }
+->   }
+-> }
+
+<- {}
+```
+
+<a name='get-channel-permissions'></a>
+### Get channel-specific role permissions [GET /api/channels/:id/role-permissions]
++ **in-url** id (ID)
+
+Returns `{ rolePermissions }` if successful, where `rolePermissions` is a map of role IDs to their individual [permissions](#permissions).
+
+```js
+GET /api/channels/1234/role-permissions
+
+<- {
+<-   "rolePermissions": {
+<-     "_everyone": {
+<-       "readMessages": false,
+<-       "sendMessages": false
+<-     },
+<-     ...
+<-   }
+<- }
+```
+
 <a name='get-pins'></a>
 ### Retrieve all pinned messages [GET /api/channels/:id/pins]
 + requires [permission](#permissions) (for specified channel) `readMessages`
@@ -1151,13 +1198,13 @@ GET /api/roles
 ```
 
 <a name='new-role'></a>
-### Add a new roles [POST /api/roles]
+### Add a new role [POST /api/roles]
 + requires [permission](#permissions) `manageRoles`
 + `name` (string) - Max length 32.
 + `permissions` ([Permissions object](#permissions)) - this role's intended permissions
   * **Cannot contain permissions that the requesting session's user does not have**
 
-Returns `{ roleID }` if successfu;, where `roleID` is the ID of the new role. Emits [role/new](#role-new).
+Returns `{ roleID }` if successful, where `roleID` is the ID of the new role. Emits [role/new](#role-new).
 
 <a name='update-role'></a>
 ### Update a role [PATCH /api/roles/:id]
