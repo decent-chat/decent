@@ -1200,7 +1200,7 @@ GET /api/roles
 <a name='new-role'></a>
 ### Add a new role [POST /api/roles]
 + requires [permission](#permissions) `manageRoles`
-+ `name` (name) - Max length 32.
++ `name` (string) - Max length 32.
 + `permissions` ([Permissions object](#permissions)) - this role's intended permissions
   * **Cannot contain permissions that the requesting session's user does not have**
 
