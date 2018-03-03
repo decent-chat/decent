@@ -21,7 +21,22 @@ module.exports = (host, path, opts = {}) => {
   return fetch(`${protocol}://${host.hostname}${path}`, opts)
     .then(response => response.json())
     .then(response => {
-      if (response.error) {
+      if (response.error
+          && response.error.code === 'INCOMPLETE_PARAMETERS'
+          && response.error.missing === 'sessionID') {
+        const error = new Error('Not logged in')
+
+        error.name = 'NotLoggedInError'
+
+        return Promise.reject(error)
+      } else if (response.error
+                 && response.error.code === 'MUST_BE_ADMIN') {
+        const error = new Error('You must be an admin to do this')
+
+        error.name = 'NoPermissionError'
+
+        return Promise.reject(error)
+      } else if (response.error) {
         const error = new Error(response.error.message)
 
         error.name = 'DecentError'

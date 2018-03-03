@@ -4,6 +4,7 @@ const typeforce = require('typeforce')
 const Socket = require('./socket')
 const { EventEmitter } = require('./emitter')
 
+const { Emotes } = require('./emotes')
 const { Message, Channels } = require('./channels')
 const { User, Users } = require('./users')
 
@@ -21,7 +22,7 @@ class Client extends EventEmitter {
     // Ping!
     this._socket.on('pingdata', () => {
       // Pong!
-      this._socket.send('pongdata', {sessionID: this._sessionID || ''})
+      this._socket.send('pongdata', {sessionID: this._host.sessionID || ''})
     })
 
     this._socket.on('disconnect', () => this.emit('disconnect'))
@@ -79,9 +80,11 @@ class Client extends EventEmitter {
 
     // We're done - export the API:
 
+    this.emotes = new Emotes(this)
     this.channels = new Channels(this)
     this.users = new Users(this)
 
+    await this.emotes.load()
     await this.channels.load()
     await this.users.load()
   }

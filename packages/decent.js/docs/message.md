@@ -19,12 +19,11 @@ Properties:
 * message.author ([User](user.md))
 * message.mentionedUserIDs (Array<String>)
 
+* message.deleted (boolean)
+
 ---
 
 Extends [eventemitter3](https://npm.im/eventemitter3).
-
-## await message.sendMessage(text: string) -> string messageID
-Sends a message to the message, implicitly marking it as read.
 
 ## await message.pin()
 If permissions are sufficient, pins the message.

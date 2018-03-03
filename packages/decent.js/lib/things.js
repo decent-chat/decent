@@ -28,16 +28,6 @@ class Thing extends EventEmitter {
 
     this[SET_DATA](data)
   }
-
-  async set(data) {
-    // TOOD: persist to network
-
-    this[SET_DATA]
-  }
-
-  async update() {
-    return set(this)
-  }
 }
 
 const OPTS = Symbol()

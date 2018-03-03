@@ -56,7 +56,7 @@ class User extends Thing {
     })
   }
 
-  mention() {
+  toString() {
     return `<@${this.id}>`
   }
 }

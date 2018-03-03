@@ -276,4 +276,7 @@ class Channels extends Things {
   }
 }
 
-module.exports = { Channel, Channels, PinnedMessages, Message, messageType, channelType }
+module.exports = {
+  Channel, Channels, channelType,
+  PinnedMessages, Message, messageType,
+}

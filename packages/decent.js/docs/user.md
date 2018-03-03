@@ -7,10 +7,13 @@ Properties:
 
 * user.id (string)
 * user.username (string)
+
 * user.avatarURL (string)
 * user.flair (string)
+
 * user.online (boolean)
 * user.deleted (boolean)
+
 * user.email (?string) - Only provided if `client.me == user` and it is set.
 
 ---

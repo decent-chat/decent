@@ -28,7 +28,7 @@ client.connectTo('meta.decent.chat').then(async () => {
 decent.js runs in both Node and [the browser](https://wzrd.in/standalone/decent.js@latest).
 
 ### documentation
-[Here.](docs/client.md)
+[Here.](docs/README.md)
 
 ### license
 GPL-3.0

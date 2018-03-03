@@ -21,6 +21,10 @@ class ArrayEmitter extends EventEmitter {
     Object.defineProperty(this, UNDERLYING_ARRAY, {value: underlyingArrayKey})
   }
 
+  get [0]() {
+    throw new Error('Use set.nth(index) instead of set[index]')
+  }
+
   // We could use a Proxy to overload [k] here but I don't think it's worth it.
   nth(k) {
     return this[this[UNDERLYING_ARRAY]][k]
@@ -75,4 +79,4 @@ class ArrayEmitter extends EventEmitter {
   }
 }
 
-module.exports = { EventEmitter, ArrayEmitter }
+module.exports = {EventEmitter, ArrayEmitter}

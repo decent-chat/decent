@@ -7,6 +7,7 @@ Properties:
 
 * channel.id (string)
 * channel.name (string)
+* channel.deleted (boolean)
 
 The following properties are only provided if logged in:
 
