@@ -139,6 +139,7 @@ Below is a table of all permissions.
 | `manageEmotes`    | Allows for creation and removal of [emotes](#emotes).    |
 | `readMessages`    | Allows for viewing of channel [messages](#messages); if false, the channel does not show up in the channel list. |
 | `sendMessages`    | Allows for [sending messages](#send-message).            |
+| `sendSystemMessages` | Allows for [sending system messages](#send-message).  |
 | `uploadImages`    | Allows [image uploads](#upload-image).                   |
 | `allowNonUnique`  | Allows the creation of things with non-unique [names](#names). |
 
@@ -470,7 +471,7 @@ DELETE /api/sessions/12345678-ABCDEFGH
 
 #### Message types
 
-There are currently two message types, `"user"` and `"system"`. Messages sent by users are always marked `"user"`, however the server itself can choose to send system-level messages for things, such as user joins or when pins are added.
+There are currently two message types, `"user"` and `"system"`. Messages sent by users are always marked `"user"`, however both the server and users with the `sendSystemMessage` [permission](#permissions). can choose to send system-level messages for things, such as user joins or when pins are added. Ideally, these would be styled differently in clients.
 
 System messages lack `author` fields.
 
@@ -502,8 +503,10 @@ Sent to all clients when any message is [deleted](#delete-message). Passed data 
 <a name='send-message'></a>
 ### Send a message [POST /api/messages]
 + requires [permission](#permissions) `sendMessages`
+  * Requires `sendSystemMessages` [permission](#permissions) if `type == "system"`
 + `channelID` (ID) - The parent channel of the new message
 + `text` (string) - The content of the message
++ `type` (string; defaults to `"user"`)
 
 On success, emits [message/new](#message-new) and returns `{ messageID }`. Also marks `channelID` as read for the author. Emits [user/mentions/add](#user-mentions-add) to [mentioned](#mentions) users, if any.
 
