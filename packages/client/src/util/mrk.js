@@ -140,7 +140,7 @@ const withState = state => {
       </a>`,
 
       image({ metadata }) {
-        const src = mark.escapeHTML(metadata.src)
+        const src = mark.sanitizeURL(mark.escapeHTML(metadata.src))
         const alt = mark.escapeHTML(metadata.alt)
 
         return `<a href='${src}' target='_blank' class='Message-image'>
