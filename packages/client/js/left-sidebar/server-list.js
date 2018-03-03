@@ -1,8 +1,14 @@
 const { h, Component } = require('preact')
 
 class ServerList extends Component {
-  state = {
-    dropdownIsOpen: false,
+  constructor() {
+    super()
+
+    this.state = {
+      dropdownIsOpen: false,
+    }
+
+    this.toggleDropdown = this.toggleDropdown.bind(this)
   }
 
   render({ servers, activeServerName, onJoinClick, switchToHost }) {
@@ -14,28 +20,28 @@ class ServerList extends Component {
         <button onClick={onJoinClick}>+ Join</button>
       </div>
 
-      <div class={dropdownIsOpen ? 'ServerDropdown is-open' : 'ServerDropdown'} onClick={this.showDropdown.bind(this)}>
+      <div class={dropdownIsOpen ? 'ServerDropdown is-open' : 'ServerDropdown'} onClick={this.toggleDropdown}>
         <div>{activeServerName}</div>
         <div class='ServerDropdown-panel'>
-          {servers.map(({ hostname, name, isActive, index }) => {
-            return <div
+          {servers.map(({ hostname, name, isActive, index }) => (
+            <div
               class={isActive ? 'ServerDropdown-option is-active' : 'ServerDropdown-option'}
               onClick={evt => this.onDropdownSelect(index, switchToHost, evt)}
             >
               {name}
             </div>
-          })}
+          ))}
         </div>
       </div>
     </div>
   }
 
-  showDropdown() {
-    this.setState({dropdownIsOpen: true})
+  toggleDropdown() {
+    this.setState({dropdownIsOpen: !this.state.dropdownIsOpen})
   }
 
   onDropdownSelect(index, f, evt) {
-    evt.stopPropagation() // Don't trigger showDropdown() also
+    evt.stopPropagation() // Don't trigger toggleDropdown() also
     this.setState({dropdownIsOpen: false})
     f(index)
   }

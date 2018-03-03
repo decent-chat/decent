@@ -1,6 +1,11 @@
 const { h, render, Component } = require('preact')
-const ServerList = require('./left-sidebar/server-list.js')
+const devTools = require('preact/devtools')
+
 const Client = require('decent.js')
+
+const ServerList = require('./left-sidebar/server-list.js')
+const ChannelList = require('./left-sidebar/channel-list.js')
+const Modal = require('./modal.js')
 
 class App extends Component {
   state = {
@@ -8,6 +13,8 @@ class App extends Component {
 
     clients: {}, // hostname -> Client map
     activeClientIndex: -1, // state.clients[] index
+
+    showDummyModal: true,
   }
 
   async componentDidMount() {
@@ -42,7 +49,7 @@ class App extends Component {
     return Object.values(this.state.clients)[this.state.activeClientIndex]
   }
 
-  render(k ,s) {
+  render(props, state) {
     const { isLoading, clients } = this.state
     const activeClient = this.getActiveClient()
 
@@ -68,14 +75,31 @@ class App extends Component {
             onJoinClick={this.actions.showJoinServerModal.bind(this)}
             switchToHost={this.actions.switchToHost.bind(this)}
           />
+          <ChannelList
+            channels={activeClient.channels}
+          />
         </aside>
+
+        {state.showDummyModal &&
+          <Modal
+            title="Dummy Modal"
+            subtitle="for testing purposes"
+            cancel={() => {this.setState({showDummyModal: false})}}
+            complete={() => {this.setState({showDummyModal: false})}}
+          >
+            Hello, world!
+          </Modal>
+        }
       </div>
     }
   }
 
   actions = {
-    showJoinServerModal() {
+    showJoinServerModal(open) {
       // TODO
+      this.setState({
+        showDummyModal: true
+      })
     },
 
     switchToHost(index) {

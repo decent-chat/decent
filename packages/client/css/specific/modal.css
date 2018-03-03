@@ -34,7 +34,7 @@
 }
 
 .Modal-title {
-  padding: 69px;
+  padding: 70px;
   padding-bottom: 16px;
 
   color: var(--modal-header-fg);
@@ -52,11 +52,10 @@
 }
 
 .Modal-content {
-  padding: 56px;
+  padding: 70px;
   padding-top: 24px;
-  padding-bottom: 69px;
 
-  width: 315px;
+  width: 314px;
 }
 
 .Modal-error {
@@ -69,7 +68,7 @@
   min-height: 24px;
 }
 
-#modal-page-cover.visible {
+.Modal-page-cover {
   position: fixed;
   top: 0;
   left: 0;
