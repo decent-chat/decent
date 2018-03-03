@@ -1,7 +1,7 @@
 const { h, Component } = require('preact')
 
 class ChannelList extends Component {
-  render(props) {
+  render({ channels, activeChannelIndex, switchToChannel }) {
     return <div class='Sidebar-section'>
       <div class='Sidebar-section-title'>
         <h4>Channels</h4>
@@ -9,14 +9,14 @@ class ChannelList extends Component {
       </div>
 
       <div class='Sidebar-list'>
-        {props.channels.map((channel, index) => {
+        {channels.map((channel, index) => {
           let className = 'Sidebar-list-item --icon-channel'
-          if (index === props.activeChannelIndex) className += ' is-active'
-          
+          if (index === activeChannelIndex) className += ' is-active'
+
           return (
             <a
               class={className}
-              onclick={() => {props.switchToChannel(index)}}
+              onclick={() => {switchToChannel(index)}}
             >
               {channel.name}
             </a>

@@ -34,13 +34,11 @@ class App extends Component {
       map[hostnames[index]] = {
         client,
         ui: {
-          activeChannelIndex: (client.channels.length > 0) ? 0 : -1
-        }
+          activeChannelIndex: (client.channels.length > 0) ? 0 : -1,
+        },
       }
       return map
     }, {})
-
-    console.log(servers)
 
     this.setState({
       isLoading: false,
@@ -90,8 +88,8 @@ class App extends Component {
 
         {state.showDummyModal &&
           <Modal
-            title="Dummy Modal"
-            subtitle="for testing purposes"
+            title='Dummy Modal'
+            subtitle='for testing purposes'
             cancel={() => {this.setState({showDummyModal: false})}}
             complete={() => {this.setState({showDummyModal: false})}}
           >
@@ -120,7 +118,7 @@ class App extends Component {
       let s = Object.assign({}, this.state) // Don't mutate state directly!
       this.getActiveServer(s).ui.activeChannelIndex = index
       this.setState(s)
-    }
+    },
   }
 }
 
