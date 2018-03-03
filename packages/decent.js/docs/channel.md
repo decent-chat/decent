@@ -34,10 +34,10 @@ Resolves with an array (not set!) of [message](message.md)s of max length `limit
 ## await channel.getPins() -> [PinnedMessages](pinned-messages.md)
 Resolves with a PinnedMessages set containing the messages pinned to this channel.
 
-## await channels.rename(newName: string)
+## await channel.rename(newName: string)
 Renames this channel.
 
-## await channels.delete()
+## await channel.delete()
 Deletes this channel.
 
 ## channel.toString()
