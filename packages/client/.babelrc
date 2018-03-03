@@ -3,6 +3,9 @@
     // Support do { ... } expressions; useful for JSX
     'babel-plugin-transform-do-expressions',
 
+    // Support class properties
+    ['babel-plugin-transform-class-properties', {spec: true}],
+
     // Transform JSX to h(...) function calls
     ['babel-plugin-transform-react-jsx', {pragma: 'h'}],
   ],

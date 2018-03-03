@@ -1,6 +1,16 @@
 const WebSocket = require('isomorphic-ws')
 const EventEmitter = require('eventemitter3')
+
 const sleep = s => new Promise(t => setTimeout(t, s))
+const once = (ee, evt, f) => {
+  let done = false
+  ee.addEventListener(evt, (...args) => {
+    if (!done) {
+      done = true
+      f(...args)
+    }
+  })
+}
 
 class Socket extends EventEmitter {
   constructor(client) {
@@ -13,10 +23,10 @@ class Socket extends EventEmitter {
       const protocol = this.client._host.useSecure ? 'wss' : 'ws'
 
       this._ws = new WebSocket(`${protocol}://${this.client._host.hostname}`)
-      this._ws.once('open', resolve)
-      this._ws.once('error', reject)
+      once(this._ws, 'open', resolve)
+      once(this._ws, 'error', reject)
 
-      this._ws.once('close', async event => {
+      once(this._ws, 'close', async event => {
         if (listenClose && !event.wasClean) {
           // Attempt to reconnect
           this.emit('disconnect')
@@ -36,7 +46,7 @@ class Socket extends EventEmitter {
       })
 
       // Listen for messages, parse them, and then re-emit them.
-      this._ws.on('message', message => {
+      this._ws.addEventListener('message', ({ data: message }) => {
         const { evt, data } = JSON.parse(message)
 
         if (this._ws.readyState === 0) return

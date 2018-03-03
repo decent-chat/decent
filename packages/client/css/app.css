@@ -54,7 +54,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", "Lato", system-ui, Arial, sans-serif;
 }
 
-#app {
+.App {
   display: flex;
   flex-direction: row;
   align-items: stretch;
@@ -74,25 +74,6 @@ body {
 
     /* background: var(--gray-700); */
   }
-}
-
-@keyframes wiggle {
-  0%, 50%, 100% {
-    transform: translateZ(0);
-  }
-
-  15%, 23%, 31% {
-    transform: scale(1.03) rotate(-4deg) translateZ(0);
-  }
-
-  19%, 27%, 35% {
-    transform: scale(1.03) rotate(4deg) translateZ(0);
-  }
-}
-
-/* TODO: apply this based on state of elements (.is-empty), not as its own class */
-.wiggle {
-  animation: 3s infinite normal wiggle;
 }
 
 .Link {
