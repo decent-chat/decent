@@ -35,7 +35,7 @@
     "stringify": "^5.2.0",
     "watchify": "^3.9.0"
   },
-  "browserslist": "> 5%",
+  "browserslist": "> 3%",
   "scripts": {
     "build:css": "postcss css/app.css -o dist/bundle.css --verbose",
     "watch:css": "postcss css/app.css -o dist/bundle.css --verbose --watch",

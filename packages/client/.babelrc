@@ -14,7 +14,7 @@
         // Transpilation to support browsers defined by the 'browsers' below.
         // (Note: babel-preset-env doesn't parse (package.json).browserslist yet, so
         //  we define it here also. build:css also uses browserslist)
-        ['babel-preset-env', {browsers: '> 5%'}],
+        ['babel-preset-env', {browsers: '> 3%'}],
 
         // Minify!
         'babel-preset-minify',
