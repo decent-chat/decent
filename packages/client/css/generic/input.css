@@ -19,10 +19,7 @@
     text-transform: uppercase;
     margin-bottom: 4px;
 
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-       -moz-user-select: none;
-            user-select: none;
+    user-select: none;
   }
 
   & input {

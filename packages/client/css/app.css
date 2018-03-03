@@ -95,12 +95,10 @@ body {
   animation: 3s infinite normal wiggle;
 }
 
-/* TODO: migrate all a.link elements to .Link */
-a:any-link.link, .Link {
+.Link {
   color: var(--blue);
   cursor: pointer;
   text-decoration: underline;
 }
 
-::-moz-selection { background: #b3d4fc; color: black }
 ::selection { background: #b3d4fc; color: black }
