@@ -1,6 +1,7 @@
 const fetch = require('./fetch')
 const typeforce = require('typeforce')
 const { Thing, Things, SET_DATA } = require('./things')
+const { Message } = require('./channels')
 const nextTick = k => setTimeout(k, 0)
 
 const userType = {
@@ -14,6 +15,7 @@ const userType = {
   // permissions: permissionsType
 
   email: '?String',
+  mentions: 'Array',
 }
 
 class User extends Thing {
@@ -56,8 +58,51 @@ class User extends Thing {
     })
   }
 
+  // async as to keep the decent.js api between 0.1.0 and 1.0.0 more similar
+  async getMentions() {
+    return new UserMentions(this.client, this)
+  }
+
   toString() {
     return `<@${this.id}>`
+  }
+}
+
+// TODO@1.0.0: figure out a good API for this as mentions are paginated.
+class UserMentions extends Things {
+  constructor(client, user) {
+    super(client)
+    Object.defineProperty(this, 'user', {value: user})
+    this.set = user.mentions.map(msg => new Message(this.client, msg))
+
+    this.client._socket.on('user/mentions/add', ({ message: messageObj }) => {
+      // Mention events are always of the current user.
+      if (this.user.id !== this.client.me.id) return
+
+      const message = new Message(this.client, messageObj)
+
+      this.set.push(message)
+      this.emit('mention', message)
+      this.emit('change')
+    })
+
+    this.client._socket.on('user/mentions/remove', ({ messageID }) => {
+      if (this.user.id !== client.me.id) return
+
+      const index = this.set.findIndex(msg => msg.id === messageID)
+
+      if (index < 0) return // ???
+
+      this.emit('unmention', msg)
+      this.set.splice(index, 1)
+      this.emit('change')
+    })
+  }
+
+  on(...args) {
+    if (!this.client.me || this.user.id !== this.client.me.id) console.warn(`decent.js: Mention events are not recieved for users other than the currently logged-in user, but you are listening for mentions of @${this.user.username}.`)
+
+    return super.on(...args)
   }
 }
 

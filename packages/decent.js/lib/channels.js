@@ -230,6 +230,18 @@ class Channel extends Thing {
     return messageID
   }
 
+  async rename(name) {
+    typeforce('String', name)
+
+    await this.client.fetch('/api/channels/' + this.id, {method: 'PATCH', body: {name}})
+    this.name = name
+  }
+
+  async delete() {
+    await this.client.fetch('/api/channels/' + this.id, {method: 'DELETE'})
+    this.deleted = true
+  }
+
   toString() {
     return '#' + this.name
   }
@@ -273,6 +285,23 @@ class Channels extends Things {
     })
 
     // pin-related events are found under Message(s)
+  }
+
+  async create(name) {
+    typeforce('String', name)
+
+    const { channelID } = await this.client.fetch('/api/channels', {
+      method: 'POST',
+      body: {name},
+    })
+
+    return this.set.find(c => c.id === channelID) || new Promise(resolve => {
+      this.on('new', channel => {
+        if (channel.id === channelID) {
+          resolve(channel)
+        }
+      })
+    })
   }
 }
 

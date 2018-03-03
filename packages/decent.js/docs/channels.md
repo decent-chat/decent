@@ -5,6 +5,9 @@ Represents all [channel](channel.md)s on the server. Updated automatically as ev
 
 Extends [eventemitter3](https://npm.im/eventemitter3) and [array-like](array-like.md) methods and properties.
 
+## await channels.create(name: string)
+Creates a new channel called `name`.
+
 ---
 
 Use `channels.on('event', callback)` method to listen for events.
