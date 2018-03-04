@@ -11,7 +11,15 @@ class ServerList extends Component {
     this.toggleDropdown = this.toggleDropdown.bind(this)
   }
 
-  render({ servers, activeServerName, onJoinClick, switchToServer }) {
+  componentDidMount() {
+    const { pool } = this.context
+
+    this.setState({me: pool.activeServer.client.me})
+
+    // TODO: Need client + pool event for when current user changes
+  }
+
+  render({ servers, activeServerName, onJoinClick, switchToServer }, { me }) {
     const { dropdownIsOpen } = this.state
 
     return <div class='Sidebar-section --bottom-line'>
@@ -34,6 +42,24 @@ class ServerList extends Component {
           ))}
         </div>
       </div>
+
+      { me &&
+        <div class='SessionInfo'>
+          <div class='SessionInfo-text'>
+            Logged in as<a class='SessionInfo-username Link'>{me.username}</a>
+          </div>
+          <button class='SessionInfo-button'>Logout</button>
+        </div>
+      }
+      { !me &&
+        <div class='SessionInfo'>
+          <div class='SessionInfo-text'>
+            Logged out
+          </div>
+          <button class='SessionInfo-button'>Register</button>
+          <button class='SessionInfo-button --minor'>Login</button>
+        </div>
+      }
     </div>
   }
 
