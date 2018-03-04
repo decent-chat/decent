@@ -111,10 +111,14 @@ class Client extends EventEmitter {
   async loginWithSessionID(sessionID) {
     typeforce('String', sessionID)
 
-    const { user } = await this.fetch('/api/sessions/' + sessionID)
+    const { user: userObj } = await this.fetch('/api/sessions/' + sessionID)
+    const user = new User(this, userObj)
 
     this._host.sessionID = sessionID
-    return this._sessionUser = new User(this, user)
+    this._sessionUser = user
+
+    this.emit('login', user)
+    return user
   }
 
   async logout(deleteSessionID = true) {
@@ -126,6 +130,8 @@ class Client extends EventEmitter {
 
     this._host.sessionID = undefined
     this._sessionUser = undefined
+
+    this.emit('logout')
   }
 
   async getMessageByID(id) {
