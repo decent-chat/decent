@@ -25,7 +25,7 @@ class App extends Component {
   pool = new Pool()
 
   async componentDidMount() {
-    await this.pool.add('localhost:3000')
+    await this.pool.add('meta.decent.chat')
     await this.pool.setActive(0)
 
     this.setState({

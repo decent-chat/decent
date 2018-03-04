@@ -1,25 +1,13 @@
 const { h, Component } = require('preact')
 const Message = require('./message')
+const InfiniteScroll = require('../infinite-scroll')
 
 // Not deep.
 const flatten = arr => [].concat(...arr)
 
 class MessageScroller extends Component {
-  state = {
-    messages: null,
-    isLoading: true,
-  }
-
-  position = {
-    latest: false,
-    top: null, // Message
-    btm: null, // Message
-  }
-
-  loadingMore = false
-
-  static DOWN = Symbol('down')
-  static UP = Symbol('up')
+  static DOWN = 'DOWN'
+  static UP = 'UP'
 
   static groupMessages(msgs, startingGroups = []) {
     const groups = startingGroups
@@ -49,42 +37,29 @@ class MessageScroller extends Component {
     return groups
   }
 
+  state = {
+    messages: null,
+    isLoading: true,
+  }
+
+  scrollPos = 10000
+  loadingMore = false
+  showingLatestMessage = false
+  scrolledToBottom = false
+
   async componentDidMount() {
     await this.loadLatest(this.channel)
-
-    this.channel.on('message', newMessage => {
-      if (!this.position.latest) return
-
-      const alreadyExisting = flatten(this.state.messages).find(msg => msg.id === newMessage)
-
-      if (alreadyExisting) {
-        // If we already added this message in anticipation (ie. WE sent it) of
-        // the event, mark it as actually recieved.
-        if (alreadyExisting.anticipated) {
-          alreadyExisting.anticipated = false
-          this.clampMessagesLength(MessageScroller.UP)
-          this.forceUpdate()
-        } else {
-          // ???
-          //
-          // ...I love network-dependent edge-cases!
-        }
-      } else {
-        this.setState({
-          messages: this.clampMessagesLength(MessageScroller.UP, MessageScroller.groupMessages([newMessage], this.state.messages)),
-        })
-      }
-    })
+    this.channel.on('message', this.handleNewMessage)
   }
 
   // Clamp `messages.length` at `maxLength`, removing messages from the top/bottom
   // of the array based on `removeFromDirection`.
-  clampMessagesLength(removeFromDirection, messages = this.state.messages, maxLength = 80) {
+  clampMessagesLength(removeFromDirection, messages = this.state.messages, maxLength = 50) {
     if (messages.length > maxLength) {
-      if (removeFromDirection === MessagesScroller.DOWN) {
+      if (removeFromDirection === MessageScroller.DOWN) {
         // Remove messages from the end of `messages`.
         messages.length = maxLength
-      } else if (removeFromDirection === MessagesScroller.UP) {
+      } else if (removeFromDirection === MessageScroller.UP) {
         // Remove messages from the start of `messages`.
         messages.splice(0, messages.length - maxLength)
       } else {
@@ -99,8 +74,35 @@ class MessageScroller extends Component {
   componentWillReceiveProps({ channel }) {
     if (channel === this.channel) return // No change!
 
+    // Stop listening to the old channel for messages
+    this.channel.removeListener('message', this.handleNewMessage)
+
     this.channel = channel
     this.componentDidMount()
+  }
+
+  handleNewMessage(newMessage) {
+    if (!this.position.latest) return
+
+    const alreadyExisting = flatten(this.state.messages).find(msg => msg.id === newMessage)
+
+    if (alreadyExisting) {
+      // If we already added this message in anticipation (ie. WE sent it) of
+      // the event, mark it as actually recieved.
+      if (alreadyExisting.anticipated) {
+        alreadyExisting.anticipated = false
+        this.forceUpdate()
+      } else {
+        // ???
+        //
+        // ...I love network-dependent edge-cases!
+      }
+    } else if (this.showingLatestMessage) {
+      if (this.scrolledToBottom) this.scrollPos = 10000
+      this.setState({
+        messages: this.clampMessagesLength(MessageScroller.UP, MessageScroller.groupMessages([newMessage], this.state.messages)),
+      })
+    }
   }
 
   async loadLatest(channel) {
@@ -110,11 +112,8 @@ class MessageScroller extends Component {
 
     const messages = await channel.getMessages()
 
-    this.position = {
-      latest: true,
-      top: messages[0],
-      btm: messages[messages.length - 1],
-    }
+    this.scrollPos = 10000
+    this.scrolledToBottom = true
 
     this.setState({
       isLoading: false,
@@ -122,15 +121,107 @@ class MessageScroller extends Component {
     })
   }
 
-  render({ channel }, { messages, isLoading }) {
+  handleOnScroll(pos, prevPos, max) {
+    const diff = pos - prevPos
+
+    if (diff < 0 && prevPos !== 10000) {
+      // We went upwards!
+      this.scrolledToBottom = false
+    }
+
+    this.scrollPos = pos
+    this.scrollMax = max
+  }
+
+  async handleReachTop() {
+    if (this.loadingMore) return
+    this.loadingMore = true
+
+    // Load messages ABOVE us.
+    const firstMessage = flatten(this.state.messages)[0]
+    const moreMessages = await this.channel.getMessages({before: firstMessage, limit: 25})
+
+    if (moreMessages.length > 0) {
+      const firstMessageID = 'msg-' + firstMessage.id
+
+      this.runAfterRender = () => {
+        document.getElementById(firstMessageID).scrollIntoView({
+          behaviour: 'instant',
+          block: 'start',
+        })
+      }
+
+      this.setState({
+        messages: MessageScroller.groupMessages(
+          moreMessages.concat(do {
+            const flat = flatten(this.state.messages)
+            flat.length = 25
+            flat
+          })
+        ),
+      })
+    }
+
+    this.loadingMore = false
+  }
+
+  componentDidUpdate() {
+    if (this.runAfterRender) {
+      this.runAfterRender()
+      delete this.runAfterRender
+    }
+  }
+
+  async handleReachBottom() {
+    if (this.loadingMore) return
+    this.loadingMore = true
+
+    // Load messages BELOW us.
+    const finalMessage = do {
+      const messages = flatten(this.state.messages)
+      messages[messages.length - 1]
+    }
+
+    const moreMessages = await this.channel.getMessages({after: finalMessage, limit: 25})
+
+    if (moreMessages.length > 0) {
+      const finalMessageID = 'msg-' + finalMessage.id
+
+      this.runAfterRender = () => {
+        document.getElementById(finalMessageID).scrollIntoView({
+          behaviour: 'instant',
+          block: 'end',
+        })
+      }
+
+      this.setState({
+        messages: (
+          MessageScroller.groupMessages(moreMessages, this.clampMessagesLength(MessageScroller.UP, this.state.messages, 50 - moreMessages.length))
+        ),
+      })
+    } else {
+      this.scrolledToBottom = true
+    }
+
+    this.loadingMore = false
+  }
+
+  render({ channel, scrollPos }, { messages, isLoading }) {
     this.channel = channel
 
     if (isLoading) {
       return <div class='MessageList Loading'></div>
     } else {
-      return <div class='MessageList'>
-        {messages.map(group => <Message msg={group}/>)}
-      </div>
+      return <InfiniteScroll
+        onReachBottom={() => this.handleReachBottom()}
+        onReachTop={() => this.handleReachTop()}
+        onScroll={(...args) => this.handleOnScroll(...args)}
+        position={this.scrollPos}
+      >
+        <div class='MessageList'>
+          {messages.map(group => <Message msg={group}/>)}
+        </div>
+      </InfiniteScroll>
     }
   }
 }

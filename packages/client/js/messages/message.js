@@ -39,6 +39,7 @@ class Message extends Component {
           <TimeAgo date={dateCreated}/>
         </div>
         {messages.map(message => <div
+          id={'msg-' + message.id}
           class={(!anticipatedGroup && message.anticipated) ? 'Message --anticipated' : 'Message'}
         >
           <div class='Message-content'>{message.text}</div>
