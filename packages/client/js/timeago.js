@@ -19,11 +19,15 @@ class TimeAgo extends Component {
   static dateToAgoString(date) {
     const ago = Date.now() - date
 
-    if (ago < minute) return plural('second', Math.floor(ago / second)) + ' ago'
-    if (ago < 30 * minute) return plural('minute', Math.floor(ago / minute)) + ' ago'
+    if (ago < minute) return plural('sec', Math.floor(ago / second)) + ' ago'
+    if (ago < hour) return plural('min', Math.floor(ago / minute)) + ' ago'
     if (ago < day) return plural('hour', Math.floor(ago / hour)) + ' ago'
-    if (ago > week) return months[date.getDate()] + ' ' + date.getDate() // eg. Apr 2
-    if (ago > day) return plural('day', Math.floor(ago / day)) + ' ago'
+    if (ago < week) return plural('day', Math.floor(ago / day)) + ' ago'
+    
+    // Written date (eg. Apr 2)
+    let dateStr = months[date.getMonth()] + ' ' + date.getDate()
+    if(date.getFullYear() !== new Date().getFullYear()) dateStr += ' ' + date.getFullYear()
+    return dateStr
   }
 
   componentDidMount() {
