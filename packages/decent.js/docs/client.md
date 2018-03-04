@@ -15,6 +15,9 @@ Attempts to connect to the Decent server at `hostname`. Returns a Promise that r
 
 Will reject if the server at `hostname` is unreachable or decent.js and it have different major version numbers (ie. incompatible).
 
+## await client.register(username: string, password: string)
+Creates a new users, resolving with the new [User](user.md). Fails if the username is taken, invalid, or the password is too short (typically < 6 characters is rejected).
+
 ## await client.login(username: string, password: string)
 Attempts to log in using the provided credentials. Resolves with the newly logged-in [user](user.md).
 

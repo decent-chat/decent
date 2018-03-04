@@ -9,6 +9,9 @@ const { Emotes } = require('./emotes')
 const { Message, Channels } = require('./channels')
 const { User, Users } = require('./users')
 
+// Typeforce relies on this function being callable.
+if (!Error.captureStackTrace) Error.captureStackTrace = () => console.trace()
+
 class Client extends EventEmitter {
   constructor() {
     super()
@@ -88,6 +91,18 @@ class Client extends EventEmitter {
     await this.emotes.load()
     await this.channels.load()
     await this.users.load()
+  }
+
+  async register(username, password) {
+    typeforce('String', username)
+    typeforce('String', password)
+
+    const { user } = await this.fetch('/api/users', {
+      method: 'POST',
+      body: {username, password},
+    })
+
+    return new User(this, user)
   }
 
   async login(username, password) {
