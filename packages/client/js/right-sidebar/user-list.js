@@ -8,7 +8,7 @@ class UserList extends Component {
 
     this.setState({users: pool.activeServer.client.users})
 
-    pool.activeUsers.on('change', users => {
+    pool.activeUsersEE.on('change', users => {
       this.setState({users})
     })
   }
@@ -35,14 +35,12 @@ class UserList extends Component {
             'Sidebar-list-item UserList-user ' +
             (user.online ? 'is-online' : 'is-offline')
 
-          return (
-            <div title={title} class={className}>
-              <div class='UserList-user-avatar'>
-                <img src={user.avatarURL} class='Avatar' alt='' />
-              </div>
-              <span class='UserList-user-username'>{user.username}</span>
+          return <div title={title} class={className}>
+            <div class='UserList-user-avatar'>
+              <img src={user.avatarURL} class='Avatar' alt='' />
             </div>
-          )
+            <span class='UserList-user-username'>{user.username}</span>
+          </div>
         })}
       </div>
     </section>

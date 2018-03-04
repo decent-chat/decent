@@ -14,7 +14,7 @@ class ChannelList extends Component {
       activeChannelIndex: pool.activeServer.ui.activeChannelIndex,
     })
 
-    pool.activeChannels.on('change', channels => {
+    pool.activeChannelsEE.on('change', channels => {
       this.setState({channels})
     })
   }
@@ -35,7 +35,7 @@ class ChannelList extends Component {
             class={className}
             onClick={() => {
               this.context.pool.activeServer.ui.activeChannelIndex = index
-              this.setState({ activeChannelIndex: index })
+              this.setState({activeChannelIndex: index})
             }}
           >
             {channel.name}

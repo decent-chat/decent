@@ -53,9 +53,17 @@
 
 .Modal-content {
   padding: 70px;
-  padding-top: 24px;
 
-  width: 314px;
+  box-sizing: border-box;
+
+  width: 454px;
+  min-height: 412px;
+
+  position: relative;
+}
+
+.Modal-loading {
+  min-height: 272px !important;
 }
 
 .Modal-error {
@@ -66,6 +74,21 @@
   margin-bottom: 16px;
 
   min-height: 24px;
+
+  /* Fits into padding above content */
+  position: absolute;
+  top: 24px;
+}
+
+.Modal-button {
+  margin-left: 13px;
+  margin-top: 16px;
+
+  line-height: 1.6;
+}
+
+.Modal-input {
+  margin-left: 13px;
 }
 
 .Modal-page-cover {

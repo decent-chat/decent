@@ -2,6 +2,8 @@ const Client = require('decent.js')
 const EventEmitter = require('eventemitter3')
 
 class Pool {
+  static clientEvents = ['disconnect', 'reconnect', 'namechange', 'login', 'logout']
+
   servers = []
   activeIndex = -1
 
@@ -11,21 +13,29 @@ class Pool {
 
       await client.connectTo(hostname)
 
+      for (const event of Pool.clientEvents) {
+        client.on(event, (...args) => {
+          if (client === this.activeServer.client) {
+            this.activeClientEE.emit(event, ...args)
+          }
+        })
+      }
+
       client.channels.on('change', () => {
         if (client === this.activeServer.client) {
-          this.activeChannels.emit('change', client.channels)
+          this.activeChannelsEE.emit('change', client.channels)
         }
       })
 
       client.users.on('change', () => {
         if (client === this.activeServer.client) {
-          this.activeUsers.emit('change', client.users)
+          this.activeUsersEE.emit('change', client.users)
         }
       })
 
       client.emotes.on('change', () => {
         if (client === this.activeServer.client) {
-          this.activeEmotes.emit('change', client.emotes)
+          this.activeEmotesEE.emit('change', client.emotes)
         }
       })
 
@@ -44,19 +54,24 @@ class Pool {
     if (!this.servers[index]) throw new Error('pool.setActive(): index points to null')
 
     this.activeIndex = index
+    const server = this.servers[index]
 
-    this.activeChannels.emit('change', this.activeServer.client.channels)
-    this.activeUsers.emit('change', this.activeServer.client.users)
-    this.activeEmotes.emit('change', this.activeServer.client.emotes)
+    if (server.client.me) this.activeClientEE.emit('login', server.client.me)
+    else this.activeClientEE.emit('logout')
+
+    this.activeChannelsEE.emit('change', this.activeServer.client.channels)
+    this.activeUsersEE.emit('change', this.activeServer.client.users)
+    this.activeEmotesEE.emit('change', this.activeServer.client.emotes)
   }
 
   get activeServer() {
     return this.activeIndex >= 0 ? this.servers[this.activeIndex] : null
   }
 
-  activeChannels = new EventEmitter()
-  activeUsers = new EventEmitter()
-  activeEmotes = new EventEmitter()
+  activeClientEE = new EventEmitter()
+  activeChannelsEE = new EventEmitter()
+  activeUsersEE = new EventEmitter()
+  activeEmotesEE = new EventEmitter()
 }
 
 module.exports = Pool

@@ -5,10 +5,10 @@ const Provider = require('preact-context-provider')
 class Modal extends Component {
   inputs = []
 
-  render({ title, subtitle, onSubmit, onCancel, children }) {
+  render({ title, subtitle, onSubmit, onCancel, isLoading, children }) {
     // Renders into document.body rather than as an actual child
     return <Portal into='body'>
-      <Provider onSubmit={() => this.handleSubmit(onSubmit)} onCancel={() => onCancel()} inputs={this.inputs}>
+      <Provider onSubmit={() => this.handleSubmit(onSubmit)} onCancel={() => onCancel()} inputs={this.inputs = []}>
         {!closed && <div>
           <div class='Modal'>
             <div class='Modal-close-button' onClick={() => onCancel()}></div>
@@ -17,7 +17,7 @@ class Modal extends Component {
               {subtitle && <span class='Modal-subtitle'>{subtitle}</span>}
             </div>
             <div class='Modal-content'>
-              {children}
+              {isLoading ? <div class='Modal-loading Loading'/> : children}
             </div>
           </div>
 
@@ -28,24 +28,53 @@ class Modal extends Component {
   }
 
   handleSubmit(onSubmit) {
-    onSubmit(this.inputs.reduce((map, [ name, inputState ]) => {
-      map[name] = inputState.value
+    onSubmit(this.inputs.reduce((map, [ name, input ]) => {
+      map[name] = input.state.value
       return map
     }, {}))
   }
 }
 
+class AsyncModal extends Component {
+  state = {isLoading: false, errorMessage: null}
+
+  render({ title, subtitle, submit, onHide, children }, { isLoading, errorMessage }) {
+    return <Modal
+      title={title}
+      subtitle={subtitle}
+      isLoading={isLoading}
+      onCancel={() => onHide()}
+      onSubmit={data => {
+        this.setState({isLoading: true, errorMessage: null})
+
+        return submit(data).then(() => onHide()).catch(error => {
+          console.error(error)
+          this.setState({isLoading: false, errorMessage: error.message || error})
+        })
+      }}
+    >
+      {errorMessage && <ModalError>{errorMessage}</ModalError>}
+      {children}
+    </Modal>
+  }
+}
+
+let inputCount = 0
 class Input extends Component {
+  id = 'modal-input-' + inputCount++
   state = {value: null}
 
   componentDidMount() {
-    this.context.inputs.push([this.props.name, this.state])
+    this.state.value = document.getElementById(this.id).value // XXX
+    this.context.inputs.push([this.props.name, this])
   }
 
   render({ label, type = 'text', placeholder = '' }) {
-    return <div class='Input'>
-      <label>{label}</label>
-      <input type={type} onChange={evt => this.onChange(evt)} placeholder={placeholder}/>
+    const { id } = this
+
+    return <div class='Modal-input Input'>
+      <label for={id}>{label}</label>
+      <input id={id} type={type} onChange={evt => this.onChange(evt)} placeholder={placeholder}/>
     </div>
   }
 
@@ -56,13 +85,13 @@ class Input extends Component {
 
 class Button extends Component {
   render(props) {
-    return <a class={'Button' + (props.class || '')} onClick={() => {
+    return <button class={'Modal-button Button' + (props.class || '')} onClick={() => {
       if (props.action === 'submit') this.context.onSubmit()
       else if (props.action === 'cancel') this.context.onCancel()
       else throw new TypeError('Modal.Button: props.action should be "submit" or "cancel"')
     }}>
       {props.children}
-    </a>
+    </button>
   }
 }
 
@@ -73,4 +102,4 @@ class ModalError extends Component {
   }
 }
 
-module.exports = Object.assign(Modal, {Input, Button, Error: ModalError})
+module.exports = Object.assign(Modal, {Async: AsyncModal, Input, Button, Error: ModalError})
