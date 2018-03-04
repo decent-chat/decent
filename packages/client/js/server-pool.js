@@ -1,5 +1,6 @@
 const Client = require('decent.js')
 const EventEmitter = require('eventemitter3')
+const Atom = require('./atom')
 
 class Pool {
   static clientEvents = ['disconnect', 'reconnect', 'namechange', 'login', 'logout']
@@ -39,11 +40,15 @@ class Pool {
         }
       })
 
+      const ui = {
+        activeChannelIndex: new Atom((client.channels.length > 0) ? 0 : -1),
+      }
+
+      this._listenToUI(ui)
+
       this.servers.push({
         hostname, client,
-        ui: {
-          activeChannelIndex: (client.channels.length > 0) ? 0 : -1,
-        },
+        ui,
       })
     }
 
@@ -71,10 +76,30 @@ class Pool {
     return this.activeIndex >= 0 ? this.servers[this.activeIndex] : null
   }
 
+  _listenToUI(atom, key = '') {
+    if (atom instanceof Atom) {
+      // Subscribe to atom changes
+      atom.on('change', value => {
+        this.activeUIEE.emit(key, value)
+      })
+    } else {
+      // Recursively
+      for (const [ subKey, value ] of Object.entries(atom)) {
+        this._listenToUI(value, key ? (key + '.' + subKey) : subKey)
+      }
+    }
+  }
+
+  activeUIEE = new EventEmitter()
   activeClientEE = new EventEmitter()
   activeChannelsEE = new EventEmitter()
   activeUsersEE = new EventEmitter()
   activeEmotesEE = new EventEmitter()
+
+  onUIChange(key, f) {
+    this.activeUIEE.on(key, f)
+    return this
+  }
 }
 
 module.exports = Pool

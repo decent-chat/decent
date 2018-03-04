@@ -57,6 +57,7 @@ client.connectTo('meta.decent.chat').then(async () => {
     console.log(`${user.username} went offline.`)
   })
 }).catch(console.error)
+```
 
 * Listen for new emotes
 

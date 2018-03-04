@@ -18,6 +18,7 @@
 @import 'specific/modal.css';
 @import 'specific/message-list.css';
 @import 'specific/toast.css';
+@import 'specific/channel-header.css';
 
 /* Pages */
 @import 'pages/emote-settings.css';

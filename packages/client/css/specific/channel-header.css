@@ -1,0 +1,20 @@
+:root {
+  --channel-header-fg: var(--page-fg);
+  --channel-header-bg: var(--sidebar-bg);
+  --channel-header-border-color: var(--sidebar-border-color);
+}
+
+.ChannelHeader {
+  box-sizing: border-box;
+  width: 100%;
+  height: 52px;
+  padding: 8px 1em;
+
+  line-height: 36px;
+  font-size: 24px;
+  font-weight: bold;
+
+  color: var(--channel-header-fg);
+  background: var(--channel-header-bg);
+  border-bottom: 1px solid var(--channel-header-border-color);
+}

@@ -69,6 +69,10 @@ class Input extends Component {
     this.context.inputs.push([this.props.name, this])
   }
 
+  shouldComponentUpdate() {
+    return false
+  }
+
   render({ label, type = 'text', placeholder = '' }) {
     const { id } = this
 

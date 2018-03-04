@@ -13,6 +13,7 @@ const UserList = require('./right-sidebar/user-list')
 const Modal = require('./modal')
 const Icon = require('./icon')
 const Toast = require('./toast')
+const MessageScroller = require('./messages/message-scroller')
 
 class App extends Component {
   state = {
@@ -31,6 +32,7 @@ class App extends Component {
       isLoading: false,
     })
 
+    this.pool.onUIChange('activeChannelIndex', () => this.forceUpdate())
     this.pool.activeClientEE.on('disconnect', () => this.setState({disconnected: true}))
     this.pool.activeClientEE.on('reconnect', () => this.setState({disconnected: false}))
   }
@@ -43,7 +45,8 @@ class App extends Component {
     } else if (!activeServer) {
       // TODO: landing page
     } else {
-      document.title = activeServer.client.serverName
+      const { client, ui } = activeServer
+      document.title = client.serverName
 
       return <Provider pool={this.pool}>
         <div class='App'>
@@ -57,7 +60,7 @@ class App extends Component {
                   index,
                 }
               })}
-              activeServerName={activeServer.client.serverName}
+              activeServerName={client.serverName}
               onJoinClick={() => this.setState({showJoinServerModal: true})}
             />
             <ChannelList/>
@@ -86,7 +89,18 @@ class App extends Component {
             <Modal.Button action='submit'>Join</Modal.Button>
           </Modal.Async>}
 
-          <main></main>
+          {do {
+            const channel = client.channels.nth(ui.activeChannelIndex.get())
+
+            if (channel) {
+              <main>
+                <div class='ChannelHeader'>{channel.toString()}</div>
+                <MessageScroller channel={channel}/>
+              </main>
+            } else {
+              <main></main>
+            }
+          }}
 
           <aside class='Sidebar --on-right'>
             <div class='Tabs'>
@@ -109,7 +123,7 @@ class App extends Component {
 
           {disconnected && <Toast>
             <Icon icon='disconnect'/>
-            Disconnected from <b>{activeServer.client.serverName}</b>!
+            Disconnected from <b>{client.serverName}</b>!
           </Toast>}
         </div>
       </Provider>

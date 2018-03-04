@@ -195,15 +195,19 @@ class Channel extends Thing {
     typeforce(typeforce.maybe(messageType), after)
     typeforce('?Number', limit)
 
-    if (Math.floor(limit) !== limit) throw new TypeError('getMessages({ limit }) must be int')
-    if (limit < 1 || limit > 50) throw new TypeError('getMessages({ limit }) does not satisfy 1 <= limit <= 50')
+    if (typeof limit !== 'undefined') {
+      if (Math.floor(limit) !== limit)
+        throw new TypeError('getMessages({ limit }) must be int')
+      if (limit < 1 || limit > 50)
+        throw new TypeError('getMessages({ limit }) does not satisfy 1 <= limit <= 50')
+    }
 
     const qs = {}
     if (before) qs.before = before.id
     if (after) qs.after = after.id
     if (limit) qs.limit = limit
 
-    const { messages } = await this.client.fetch('/api/channels/' + this.channel.id + '/messages' + querystring(qs))
+    const { messages } = await this.client.fetch('/api/channels/' + this.id + '/messages' + queryString(qs))
 
     return messages.map(msg => new Message(this.client, msg))
   }
