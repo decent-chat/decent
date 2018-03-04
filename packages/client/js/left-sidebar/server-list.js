@@ -11,7 +11,7 @@ class ServerList extends Component {
     this.toggleDropdown = this.toggleDropdown.bind(this)
   }
 
-  render({ servers, activeServerName, onJoinClick, switchToHost }) {
+  render({ servers, activeServerName, onJoinClick, switchToServer }) {
     const { dropdownIsOpen } = this.state
 
     return <div class='Sidebar-section --bottom-line'>
@@ -26,7 +26,8 @@ class ServerList extends Component {
           {servers.map(({ hostname, name, isActive, index }) => (
             <div
               class={isActive ? 'ServerDropdown-option is-active' : 'ServerDropdown-option'}
-              onClick={evt => this.onDropdownSelect(index, switchToHost, evt)}
+              title={hostname}
+              onClick={evt => this.onDropdownSelect(index, switchToServer, evt)}
             >
               {name}
             </div>

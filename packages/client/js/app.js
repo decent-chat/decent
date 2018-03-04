@@ -14,14 +14,14 @@ class App extends Component {
     servers: {}, // map of hostname -> { ui, client }
     activeServerIndex: -1, // state.clients[] index
 
-    showDummyModal: true,
+    joinServerModal: {show: true, loading: false},
   }
 
   async componentDidMount() {
     // TODO: connect to all servers in storage.get('hostnames')
     // TODO: handle connection failure
 
-    const hostnames = ['localhost:3000', 'meta.decent.chat']
+    const hostnames = ['localhost:3000']
     const clientsArr = await Promise.all(hostnames.map(async hostname => {
       const client = new Client()
 
@@ -53,8 +53,7 @@ class App extends Component {
     return Object.values(state.servers)[state.activeServerIndex]
   }
 
-  render(props, state) {
-    const { isLoading, servers } = this.state
+  render(props, { isLoading, servers, joinServerModal }) {
     const activeServer = this.getActiveServer()
 
     if (isLoading) {
@@ -76,49 +75,73 @@ class App extends Component {
               }
             })}
             activeServerName={activeServer.client.serverName}
-            onJoinClick={this.actions.showJoinServerModal.bind(this)}
-            switchToHost={this.actions.switchToHost.bind(this)}
+
+            onJoinClick={() => this.setState({joinServerModal: {show: true, loading: false}})}
+            switchToServer={this.switchToServer.bind(this)}
           />
           <ChannelList
             channels={activeServer.client.channels}
             activeChannelIndex={activeServer.ui.activeChannelIndex}
-            switchToChannel={this.actions.switchToChannel.bind(this)}
+            switchToChannel={this.switchToChannel.bind(this)}
           />
         </aside>
 
-        {state.showDummyModal &&
-          <Modal
-            title='Dummy Modal'
-            subtitle='for testing purposes'
-            cancel={() => {this.setState({showDummyModal: false})}}
-            complete={() => {this.setState({showDummyModal: false})}}
-          >
-            Hello, world!
-          </Modal>
-        }
+        {joinServerModal.show && <Modal
+          title='Join a server'
+
+          onSubmit={async data => {
+            this.setState({joinServerModal: {show: true, loading: true}})
+
+            const serverIndex = await this.joinServer(data)
+
+            if (serverIndex > 0) {
+              // Success - hide the modal & switch to the newly joined server.
+              this.setState({
+                activeServerIndex: serverIndex,
+                joinServerModal: {show: false, loading: false},
+              })
+            } else {
+              // Failure - display an error in the modal.
+              this.setState({
+                joinServerModal: {show: true, loading: false, error: 'Failed to connect.'},
+              })
+            }
+          }}
+
+          onCancel={() => {
+            if (!this.state.joinServerModal.loading) {
+              this.setState({joinServerModal: {show: false, loading: false}})
+            }
+          }}
+        >
+          {joinServerModal.loading ? <div class='Loading'/> : <div>
+            {joinServerModal.error && <Modal.Error>{joinServerModal.error}</Modal.Error>}
+
+            <Modal.Input name='hostname' label='Hostname'/>
+
+            <Modal.Button does='cancel'>Cancel</Modal.Button>
+            <Modal.Button does='submit'>Join</Modal.Button>
+          </div>}
+        </Modal>}
       </div>
     }
   }
 
-  actions = {
-    showJoinServerModal(open) {
-      // TODO
-      this.setState({
-        showDummyModal: true
-      })
-    },
+  async joinServer({ hostname }) {
+    // TODO
+    console.log(hostname)
+  }
 
-    switchToHost(index) {
-      this.setState({
-        activeServerIndex: index,
-      })
-    },
+  switchToServer(index) {
+    this.setState({
+      activeServerIndex: index,
+    })
+  }
 
-    switchToChannel(index) {
-      let s = Object.assign({}, this.state) // Don't mutate state directly!
-      this.getActiveServer(s).ui.activeChannelIndex = index
-      this.setState(s)
-    },
+  switchToChannel(index) {
+    let s = Object.assign({}, this.state) // Don't mutate state directly!
+    this.getActiveServer(s).ui.activeChannelIndex = index
+    this.setState(s)
   }
 }
 
