@@ -1,7 +1,6 @@
 const { h, Component } = require('preact')
 const Portal = require('preact-portal')
 const Provider = require('preact-context-provider')
-const findNodesOfType = require('./find-nodes')
 
 class Modal extends Component {
   inputs = []
