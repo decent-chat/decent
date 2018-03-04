@@ -27,6 +27,7 @@ class Modal extends Component {
     </Portal>
   }
 
+  // FIXME: this.inputs is [] if this is not the first time this fn was run
   handleSubmit(onSubmit) {
     onSubmit(this.inputs.reduce((map, [ name, input ]) => {
       map[name] = input.state.value

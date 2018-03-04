@@ -1,6 +1,9 @@
 const { h, Component } = require('preact')
 const Message = require('./message')
 
+// Not deep.
+const flatten = arr => [].concat(...arr)
+
 class MessageScroller extends Component {
   state = {
     messages: null,
@@ -8,9 +11,15 @@ class MessageScroller extends Component {
   }
 
   position = {
+    latest: false,
     top: null, // Message
     btm: null, // Message
   }
+
+  loadingMore = false
+
+  static DOWN = Symbol('down')
+  static UP = Symbol('up')
 
   static groupMessages(msgs, startingGroups = []) {
     const groups = startingGroups
@@ -40,27 +49,76 @@ class MessageScroller extends Component {
     return groups
   }
 
-  componentDidMount() {
-    this.loadMessages(this.channel)
+  async componentDidMount() {
+    await this.loadLatest(this.channel)
+
+    this.channel.on('message', newMessage => {
+      if (!this.position.latest) return
+
+      const alreadyExisting = flatten(this.state.messages).find(msg => msg.id === newMessage)
+
+      if (alreadyExisting) {
+        // If we already added this message in anticipation (ie. WE sent it) of
+        // the event, mark it as actually recieved.
+        if (alreadyExisting.anticipated) {
+          alreadyExisting.anticipated = false
+          this.clampMessagesLength(MessageScroller.UP)
+          this.forceUpdate()
+        } else {
+          // ???
+          //
+          // ...I love network-dependent edge-cases!
+        }
+      } else {
+        this.setState({
+          messages: this.clampMessagesLength(MessageScroller.UP, MessageScroller.groupMessages([newMessage], this.state.messages)),
+        })
+      }
+    })
+  }
+
+  // Clamp `messages.length` at `maxLength`, removing messages from the top/bottom
+  // of the array based on `removeFromDirection`.
+  clampMessagesLength(removeFromDirection, messages = this.state.messages, maxLength = 80) {
+    if (messages.length > maxLength) {
+      if (removeFromDirection === MessagesScroller.DOWN) {
+        // Remove messages from the end of `messages`.
+        messages.length = maxLength
+      } else if (removeFromDirection === MessagesScroller.UP) {
+        // Remove messages from the start of `messages`.
+        messages.splice(0, messages.length - maxLength)
+      } else {
+        throw new TypeError('clampMessagesLength(removeFromDirection): expected MessagesScroller.DOWN or UP')
+      }
+    }
+
+    return messages
   }
 
   // On channel change, load messages again.
   componentWillReceiveProps({ channel }) {
     if (channel === this.channel) return // No change!
 
+    this.channel = channel
+    this.componentDidMount()
+  }
+
+  async loadLatest(channel) {
     this.setState({
       isLoading: true,
     })
 
-    this.loadMessages(channel)
-  }
+    const messages = await channel.getMessages()
 
-  async loadMessages(channel) {
-    const messages = await channel.getMessages() // Latest messages.
+    this.position = {
+      latest: true,
+      top: messages[0],
+      btm: messages[messages.length - 1],
+    }
 
     this.setState({
       isLoading: false,
-      messages,
+      messages: MessageScroller.groupMessages(messages),
     })
   }
 
@@ -71,7 +129,7 @@ class MessageScroller extends Component {
       return <div class='MessageList Loading'></div>
     } else {
       return <div class='MessageList'>
-        {MessageScroller.groupMessages(messages).map(group => <Message msg={group}/>)}
+        {messages.map(group => <Message msg={group}/>)}
       </div>
     }
   }

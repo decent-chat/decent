@@ -1,4 +1,4 @@
-# const message = await client.channels.nth(0).getMessages()
+# const message = (await client.channels.nth(0).getMessages())[0]
 Represents a single message. Updated automatically.
 
 ---
