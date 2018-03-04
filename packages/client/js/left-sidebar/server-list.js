@@ -101,7 +101,7 @@ class ServerList extends Component {
         <Modal.Input name='username' label='Username'/>
         <Modal.Input name='password' label='Password' type='password'/>
 
-        <Modal.Button action='cancel'>Cancel</Modal.Button>
+        <Modal.Button class='--no-bg' action='cancel'>Cancel</Modal.Button>
         <Modal.Button action='submit'>Register</Modal.Button>
       </Modal.Async>}
 
@@ -116,7 +116,7 @@ class ServerList extends Component {
         <Modal.Input name='username' label='Username'/>
         <Modal.Input name='password' label='Password' type='password'/>
 
-        <Modal.Button action='cancel'>Cancel</Modal.Button>
+        <Modal.Button class='--no-bg' action='cancel'>Cancel</Modal.Button>
         <Modal.Button action='submit'>Login</Modal.Button>
       </Modal.Async>}
     </div>

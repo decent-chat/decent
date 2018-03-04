@@ -72,7 +72,7 @@ class App extends Component {
           >
             <Modal.Input name='hostname' label='Hostname'/>
 
-            <Modal.Button action='cancel'>Cancel</Modal.Button>
+            <Modal.Button class='--no-bg' action='cancel'>Cancel</Modal.Button>
             <Modal.Button action='submit'>Join</Modal.Button>
           </Modal.Async>}
 
