@@ -21,7 +21,7 @@ class Modal extends Component {
             </div>
           </div>
 
-          <div class='Modal-page-cover' onClick={evt => this.requestCancel(evt)}></div>
+          <div class='Modal-page-cover' onClick={() => onCancel()}></div>
         </div>}
       </Provider>
     </Portal>
