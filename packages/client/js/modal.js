@@ -28,8 +28,8 @@ class Modal extends Component {
   }
 
   handleSubmit(onSubmit) {
-    onSubmit(this.inputs.reduce((map, [ name, value ]) => {
-      map[name] = value
+    onSubmit(this.inputs.reduce((map, [ name, inputState ]) => {
+      map[name] = inputState.value
       return map
     }, {}))
   }

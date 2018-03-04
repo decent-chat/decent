@@ -14,6 +14,7 @@
   "license": "GPL-3.0",
   "dependencies": {
     "decent.js": "^0.1.0-preview",
+    "eventemitter3": "^3.0.1",
     "mrk.js": "^2.0.0",
     "preact": "^8.2.7",
     "preact-context-provider": "^1.1.1",

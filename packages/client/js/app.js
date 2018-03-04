@@ -1,6 +1,6 @@
 const { h, render, Component } = require('preact')
-
-const Client = require('decent.js')
+const Provider = require('preact-context-provider')
+const Pool = require('./server-pool')
 
 const ServerList = require('./left-sidebar/server-list')
 const ChannelList = require('./left-sidebar/channel-list')
@@ -11,51 +11,22 @@ const Icon = require('./icon')
 class App extends Component {
   state = {
     isLoading: true,
-
-    servers: {}, // map of hostname -> { ui, client }
-    activeServerIndex: -1, // state.clients[] index
-
     joinServerModal: {show: false, loading: false},
   }
 
+  pool = new Pool()
+
   async componentDidMount() {
-    // TODO: connect to all servers in storage.get('hostnames')
-    // TODO: handle connection failure
-
-    const hostnames = ['localhost:3000']
-    const clientsArr = await Promise.all(hostnames.map(async hostname => {
-      const client = new Client()
-
-      await client.connectTo(hostname)
-
-      return client
-    }))
-
-    const servers = clientsArr.reduce((map, client, index) => {
-      map[hostnames[index]] = {
-        client,
-        ui: {
-          activeChannelIndex: (client.channels.length > 0) ? 0 : -1,
-        },
-      }
-      return map
-    }, {})
+    await this.pool.add('localhost:3000')
+    await this.pool.setActive(0)
 
     this.setState({
       isLoading: false,
-      servers,
-      activeServerIndex: 0,
     })
   }
 
-  getActiveServer(state) {
-    if(!state) state = this.state
-    if (state.activeServerIndex < 0) return null
-    return Object.values(state.servers)[state.activeServerIndex]
-  }
-
-  render(props, { isLoading, servers, joinServerModal }) {
-    const activeServer = this.getActiveServer()
+  render(_, { isLoading, joinServerModal }) {
+    const activeServer = this.pool.activeServer
 
     if (isLoading) {
       return <div class='App Loading'></div>
@@ -64,108 +35,91 @@ class App extends Component {
     } else {
       document.title = activeServer.client.serverName
 
-      return <div class='App'>
-        <aside class='Sidebar --on-left'>
-          <ServerList
-              servers={Object.entries(servers).map(([hostname, server], index) => {
-              return {
-                hostname,
-                name: server.client.serverName,
-                isActive: activeServer === server,
-                index,
+      return <Provider pool={this.pool}>
+        <div class='App'>
+          <aside class='Sidebar --on-left'>
+            <ServerList
+              servers={this.pool.servers.map(({ hostname, client }, index) => {
+                return {
+                  hostname,
+                  name: client.serverName,
+                  isActive: activeServer.hostname === hostname,
+                  index,
+                }
+              })}
+              activeServerName={activeServer.client.serverName}
+              onJoinClick={() => this.setState({joinServerModal: {show: true, loading: false}})}
+            />
+            <ChannelList/>
+          </aside>
+
+          {joinServerModal.show && <Modal
+            title='Join a server'
+
+            onSubmit={async ({ hostname }) => {
+              this.setState({joinServerModal: {show: true, loading: true}})
+
+              try {
+                const serverIndex = await this.pool.setActive(await this.pool.add(hostname))
+
+                // Success - hide the modal & switch to the newly joined server.
+                this.setState({
+                  activeServerIndex: serverIndex,
+                  joinServerModal: {show: false, loading: false},
+                })
+              } catch (error) {
+                console.error('Error whilst joining server:', error)
+
+                // Failure - display an error in the modal.
+                this.setState({
+                  joinServerModal: {
+                    show: true,
+                    loading: false,
+                    error: 'Failed to connect',
+                  },
+                })
               }
-            })}
-            activeServerName={activeServer.client.serverName}
+            }}
 
-            onJoinClick={() => this.setState({joinServerModal: {show: true, loading: false}})}
-            switchToServer={this.switchToServer.bind(this)}
-          />
-          <ChannelList
-            channels={activeServer.client.channels}
-            activeChannelIndex={activeServer.ui.activeChannelIndex}
-            switchToChannel={this.switchToChannel.bind(this)}
-          />
-        </aside>
+            onCancel={() => {
+              if (!this.state.joinServerModal.loading) {
+                this.setState({joinServerModal: {show: false, loading: false}})
+              }
+            }}
+          >
+            {joinServerModal.loading ? <div class='Loading'/> : <div>
+              {joinServerModal.error && <Modal.Error>{joinServerModal.error}</Modal.Error>}
 
-        {joinServerModal.show && <Modal
-          title='Join a server'
+              <Modal.Input name='hostname' label='Hostname'/>
 
-          onSubmit={async data => {
-            this.setState({joinServerModal: {show: true, loading: true}})
+              <Modal.Button action='cancel'>Cancel</Modal.Button>
+              <Modal.Button action='submit'>Join</Modal.Button>
+            </div>}
+          </Modal>}
 
-            const serverIndex = await this.joinServer(data)
+          <main></main>
 
-            if (serverIndex > 0) {
-              // Success - hide the modal & switch to the newly joined server.
-              this.setState({
-                activeServerIndex: serverIndex,
-                joinServerModal: {show: false, loading: false},
-              })
-            } else {
-              // Failure - display an error in the modal.
-              this.setState({
-                joinServerModal: {show: true, loading: false, error: 'Failed to connect.'},
-              })
-            }
-          }}
-
-          onCancel={() => {
-            if (!this.state.joinServerModal.loading) {
-              this.setState({joinServerModal: {show: false, loading: false}})
-            }
-          }}
-        >
-          {joinServerModal.loading ? <div class='Loading'/> : <div>
-            {joinServerModal.error && <Modal.Error>{joinServerModal.error}</Modal.Error>}
-
-            <Modal.Input name='hostname' label='Hostname'/>
-
-            <Modal.Button action='cancel'>Cancel</Modal.Button>
-            <Modal.Button action='submit'>Join</Modal.Button>
-          </div>}
-        </Modal>}
-
-        <main></main>
-
-        <aside class='Sidebar --on-right'>
-          <div class='Tabs'>
-            <div class='Tabs-tab --is-active'>
-              <Icon icon='users' class='Tabs-tab-icon'/>
-              <span class='Tabs-tab-text'>Users</span>
+          <aside class='Sidebar --on-right'>
+            <div class='Tabs'>
+              <div class='Tabs-tab --is-active'>
+                <Icon icon='users' class='Tabs-tab-icon'/>
+                <span class='Tabs-tab-text'>Users</span>
+              </div>
+              <div class='Tabs-tab'>
+                <Icon icon='mention' class='Tabs-tab-icon'/>
+                <span class='Tabs-tab-text'>Mentions</span>
+              </div>
+              <div class='Tabs-tab'>
+                <Icon icon='pin' class='Tabs-tab-icon'/>
+                <span class='Tabs-tab-text'>Pins</span>
+              </div>
             </div>
-            <div class='Tabs-tab'>
-              <Icon icon='mention' class='Tabs-tab-icon'/>
-              <span class='Tabs-tab-text'>Mentions</span>
-            </div>
-            <div class='Tabs-tab'>
-              <Icon icon='pin' class='Tabs-tab-icon'/>
-              <span class='Tabs-tab-text'>Pins</span>
-            </div>
-          </div>
 
-          <UserList
-            users={activeServer.client.users}
-          />
-        </aside>
-      </div>
+            <UserList/>
+          </aside>
+        </div>
+      </Provider>
     }
-  }
-
-  async joinServer({ hostname }) {
-    // TODO
-    console.log(hostname)
-  }
-
-  switchToServer(index) {
-    this.setState({
-      activeServerIndex: index,
-    })
-  }
-
-  switchToChannel(index) {
-    let s = Object.assign({}, this.state) // Don't mutate state directly!
-    this.getActiveServer(s).ui.activeChannelIndex = index
-    this.setState(s)
   }
 }
 

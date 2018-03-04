@@ -1,7 +1,25 @@
 const { h, Component } = require('preact')
 
 class ChannelList extends Component {
-  render({ channels, activeChannelIndex, switchToChannel }) {
+  state = {
+    channels: [],
+    activeChannelIndex: -1,
+  }
+
+  componentDidMount() {
+    const { pool } = this.context
+
+    this.setState({
+      channels: pool.activeServer.client.channels,
+      activeChannelIndex: pool.activeServer.ui.activeChannelIndex,
+    })
+
+    pool.activeChannels.on('change', channels => {
+      this.setState({channels})
+    })
+  }
+
+  render(_, { channels, activeChannelIndex }) {
     return <div class='Sidebar-section'>
       <div class='Sidebar-section-title'>
         <h4>Channels</h4>
@@ -13,14 +31,15 @@ class ChannelList extends Component {
           let className = 'Sidebar-list-item --icon-channel'
           if (index === activeChannelIndex) className += ' is-active'
 
-          return (
-            <a
-              class={className}
-              onclick={() => {switchToChannel(index)}}
-            >
-              {channel.name}
-            </a>
-          )
+          return <a
+            class={className}
+            onClick={() => {
+              this.context.pool.activeServer.ui.activeChannelIndex = index
+              this.setState({ activeChannelIndex: index })
+            }}
+          >
+            {channel.name}
+          </a>
         })}
       </div>
     </div>

@@ -27,7 +27,7 @@ class ServerList extends Component {
             <div
               class={isActive ? 'ServerDropdown-option is-active' : 'ServerDropdown-option'}
               title={hostname}
-              onClick={evt => this.onDropdownSelect(index, switchToServer, evt)}
+              onClick={evt => this.onDropdownSelect(index, evt)}
             >
               {name}
             </div>
@@ -41,10 +41,10 @@ class ServerList extends Component {
     this.setState({dropdownIsOpen: !this.state.dropdownIsOpen})
   }
 
-  onDropdownSelect(index, f, evt) {
+  onDropdownSelect(index, evt) {
     evt.stopPropagation() // Don't trigger toggleDropdown() also
     this.setState({dropdownIsOpen: false})
-    f(index)
+    this.context.pool.setActive(index)
   }
 }
 
