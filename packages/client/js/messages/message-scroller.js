@@ -49,7 +49,7 @@ class MessageScroller extends Component {
 
   async componentDidMount() {
     await this.loadLatest(this.channel)
-    this.channel.on('message', this.handleNewMessage)
+    this.channel.on('message', msg => this.handleNewMessage(msg))
   }
 
   // Clamp `messages.length` at `maxLength`, removing messages from the top/bottom
@@ -82,13 +82,13 @@ class MessageScroller extends Component {
   }
 
   handleNewMessage(newMessage) {
-    if (!this.position.latest) return
+    if (!this.showingLatestMessage) return
 
     const alreadyExisting = flatten(this.state.messages).find(msg => msg.id === newMessage)
 
     if (alreadyExisting) {
       // If we already added this message in anticipation (ie. WE sent it) of
-      // the event, mark it as actually recieved.
+      // the event, mark it as actually recieved.f
       if (alreadyExisting.anticipated) {
         alreadyExisting.anticipated = false
         this.forceUpdate()
@@ -97,10 +97,19 @@ class MessageScroller extends Component {
         //
         // ...I love network-dependent edge-cases!
       }
-    } else if (this.showingLatestMessage) {
+    } else {
       if (this.scrolledToBottom) this.scrollPos = 10000
+
       this.setState({
-        messages: this.clampMessagesLength(MessageScroller.UP, MessageScroller.groupMessages([newMessage], this.state.messages)),
+        messages: MessageScroller.groupMessages(
+          (do {
+            const flat = flatten(this.state.messages)
+
+            if (flat.length > 25) flat.splice(0, flat.length - 25)
+
+            flat
+          }).concat([newMessage])
+        )
       })
     }
   }
@@ -114,6 +123,7 @@ class MessageScroller extends Component {
 
     this.scrollPos = 10000
     this.scrolledToBottom = true
+    this.showingLatestMessage = true
 
     this.setState({
       isLoading: false,
@@ -155,7 +165,10 @@ class MessageScroller extends Component {
         messages: MessageScroller.groupMessages(
           moreMessages.concat(do {
             const flat = flatten(this.state.messages)
-            flat.length = 25
+
+            if (flat.length > 25) flat.length = 25
+            else this.showingLatestMessage = false
+
             flat
           })
         ),
@@ -184,6 +197,10 @@ class MessageScroller extends Component {
 
     const moreMessages = await this.channel.getMessages({after: finalMessage, limit: 25})
 
+    if (moreMessages.length < 25) {
+      this.showingLatestMessage = true
+    }
+
     if (moreMessages.length > 0) {
       const finalMessageID = 'msg-' + finalMessage.id
 
@@ -195,9 +212,7 @@ class MessageScroller extends Component {
       }
 
       this.setState({
-        messages: (
-          MessageScroller.groupMessages(moreMessages, this.clampMessagesLength(MessageScroller.UP, this.state.messages, 50 - moreMessages.length))
-        ),
+        messages: MessageScroller.groupMessages(moreMessages, this.clampMessagesLength(MessageScroller.UP, this.state.messages, 25 - moreMessages.length)),
       })
     } else {
       this.scrolledToBottom = true
@@ -206,7 +221,7 @@ class MessageScroller extends Component {
     this.loadingMore = false
   }
 
-  render({ channel, scrollPos }, { messages, isLoading }) {
+  render({ channel }, { messages, isLoading }) {
     this.channel = channel
 
     if (isLoading) {
