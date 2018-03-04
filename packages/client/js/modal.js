@@ -10,14 +10,14 @@ class Modal extends Component {
     return <Portal into='body'>
       <Provider onSubmit={() => this.handleSubmit(onSubmit)} onCancel={() => onCancel()} inputs={this.inputs = []}>
         {!closed && <div>
-          <div class='Modal'>
+          <div class={'Modal' + (isLoading ? ' --loading' : '')}>
             <div class='Modal-close-button' onClick={() => onCancel()}></div>
             <div class='Modal-title'>
               {title}
               {subtitle && <span class='Modal-subtitle'>{subtitle}</span>}
             </div>
             <div class='Modal-content'>
-              {isLoading ? <div class='Modal-loading Loading'/> : children}
+              {children}
             </div>
           </div>
 
