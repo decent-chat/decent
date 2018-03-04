@@ -17,6 +17,7 @@
     "mrk.js": "^2.0.0",
     "preact": "^8.2.7",
     "preact-context-provider": "^1.1.1",
+    "preact-markup": "^1.6.0",
     "preact-portal": "^1.1.2"
   },
   "devDependencies": {
