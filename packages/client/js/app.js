@@ -5,6 +5,7 @@ const Client = require('decent.js')
 
 const ServerList = require('./left-sidebar/server-list.js')
 const ChannelList = require('./left-sidebar/channel-list.js')
+const UserList = require('./right-sidebar/user-list.js')
 const Modal = require('./modal.js')
 
 class App extends Component {
@@ -14,7 +15,7 @@ class App extends Component {
     servers: {}, // map of hostname -> { ui, client }
     activeServerIndex: -1, // state.clients[] index
 
-    joinServerModal: {show: true, loading: false},
+    joinServerModal: {show: false, loading: false},
   }
 
   async componentDidMount() {
@@ -119,10 +120,43 @@ class App extends Component {
 
             <Modal.Input name='hostname' label='Hostname'/>
 
-            <Modal.Button does='cancel'>Cancel</Modal.Button>
-            <Modal.Button does='submit'>Join</Modal.Button>
+            <Modal.Button action='cancel'>Cancel</Modal.Button>
+            <Modal.Button action='submit'>Join</Modal.Button>
           </div>}
         </Modal>}
+
+        <main></main>
+
+        <aside class='Sidebar --on-right'>
+          <div class='Tabs'>
+            <div class='Tabs-tab --is-active'>
+              <svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='Tabs-tab-icon'>
+                <path d='M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'></path>
+                <circle cx='9' cy='7' r='4'></circle>
+                <path d='M23 21v-2a4 4 0 0 0-3-3.87'></path>
+                <path d='M16 3.13a4 4 0 0 1 0 7.75'></path>
+              </svg>
+              <span class='Tabs-tab-text'>Users</span>
+            </div>
+            <div class='Tabs-tab'>
+              <svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='Tabs-tab-icon'>
+                <circle cx='12' cy='12' r='4'></circle>
+                <path d='M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94'></path>
+              </svg>
+              <span class='Tabs-tab-text'>Mentions</span>
+            </div>
+            <div class='Tabs-tab'>
+              <svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='Tabs-tab-icon'>
+                <path d='M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48'></path>
+              </svg>
+              <span class='Tabs-tab-text'>Pins</span>
+            </div>
+          </div>
+
+          <UserList
+            users={activeServer.client.users}
+          />
+        </aside>
       </div>
     }
   }
