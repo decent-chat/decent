@@ -85,7 +85,7 @@ class Input extends Component {
 
 class Button extends Component {
   render(props) {
-    return <button class={'Modal-button Button' + (props.class || '')} onClick={() => {
+    return <button class={'Modal-button Button' + ((' ' + props.class) || '')} onClick={() => {
       if (props.action === 'submit') this.context.onSubmit()
       else if (props.action === 'cancel') this.context.onCancel()
       else throw new TypeError('Modal.Button: props.action should be "submit" or "cancel"')
