@@ -5,7 +5,7 @@ const TimeAgo = require('../timeago')
 // Note that this component supports both message groups (Array<Message>) *and*
 // lone messages (Message).
 class Message extends Component {
-  // TODO: markdown, actions
+  // TODO: markdown, better actions
 
   componentDidMount() {
     const messages = Array.isArray(this.props.msg) ? this.props.msg : [this.props.msg]
@@ -45,9 +45,9 @@ class Message extends Component {
           <div class='Message-content'>{message.text}</div>
           {showActions && !message.anticipated && <div class='Message-fillerLine'/>}
           {showActions && !message.anticipated && <div class='Message-actions'>
-            <div class='Message-actions-action' title='Edit'><Icon icon='edit'/></div>
-            <div class='Message-actions-action' title='Pin'><Icon icon='pin'/></div>
-            <div class='Message-actions-action' title='Delete'><Icon icon='trash'/></div>
+            <div class='Message-actions-action' title='Edit' onClick={() => message.edit(prompt('Edit message:'))}><Icon icon='edit'/></div>
+            <div class='Message-actions-action' title='Pin' onClick={() => message.pin()}><Icon icon='pin'/></div>
+            <div class='Message-actions-action' title='Delete' onClick={() => message.delete()}><Icon icon='trash'/></div>
           </div>}
         </div>)}
       </div>
