@@ -51,6 +51,8 @@ The currently logged-in user, or `null` if not logged in.
 
 ## client.serverName (string)
 
+## client.connected (boolean)
+
 ---
 
 Use `client.on('event', callback)` method to listen for events.

@@ -59,6 +59,9 @@ class Pool {
     if (server.client.me) this.activeClientEE.emit('login', server.client.me)
     else this.activeClientEE.emit('logout')
 
+    if (server.client.connected) this.activeClientEE.emit('reconnect')
+    else this.activeClientEE.emit('disconnect')
+
     this.activeChannelsEE.emit('change', this.activeServer.client.channels)
     this.activeUsersEE.emit('change', this.activeServer.client.users)
     this.activeEmotesEE.emit('change', this.activeServer.client.emotes)

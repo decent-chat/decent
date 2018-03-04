@@ -1,0 +1,29 @@
+:root {
+  --toast-fg: var(--gray-500);
+  --toast-bg: var(--gray-100);
+}
+
+.Toast {
+  stroke: var(--toast-fg);
+  color: var(--toast-fg);
+  background: var(--toast-bg);
+
+  position: fixed;
+  right: 2em;
+  bottom: 2em;
+
+  padding: 1.5em;
+
+  border-radius: 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* Icon container */
+.Toast .markup {
+  display: inline-block;
+  margin: 0 1em;
+
+  vertical-align: middle;
+
+  &:first-child { margin-left: 0 }
+}

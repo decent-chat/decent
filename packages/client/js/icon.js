@@ -12,6 +12,8 @@ class Icon extends Component {
     message: require('../img/icons/message.svg'),
     //send: require('../img/icons/send.svg'),
     trash: require('../img/icons/trash.svg'),
+    warning: require('../img/icons/warning.svg'),
+    disconnect: require('../img/icons/disconnect.svg'),
   }
 
   render({ icon, class: className }) {

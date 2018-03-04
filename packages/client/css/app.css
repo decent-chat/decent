@@ -17,6 +17,7 @@
 @import 'specific/user-list.css';
 @import 'specific/modal.css';
 @import 'specific/message-list.css';
+@import 'specific/toast.css';
 
 /* Pages */
 @import 'pages/emote-settings.css';

@@ -29,8 +29,8 @@ class Client extends EventEmitter {
       this._socket.send('pongdata', {sessionID: this._host.sessionID || ''})
     })
 
-    this._socket.on('disconnect', () => this.emit('disconnect'))
-    this._socket.on('reconnect', () => this.emit('reconnect'))
+    this._socket.on('disconnect', () => { this.connected = false; this.emit('disconnect') })
+    this._socket.on('reconnect', () => { this.connected = true; this.emit('reconnect') })
 
     this._socket.on('server-settings/update', ({ settings: { name } }) => {
       if (this._serverName !== name) {
@@ -81,6 +81,7 @@ class Client extends EventEmitter {
 
     // Setup socket
     await this._socket.connect()
+    this.connected = true
 
     // We're done - export the API:
 

@@ -7,10 +7,12 @@ const ChannelList = require('./left-sidebar/channel-list')
 const UserList = require('./right-sidebar/user-list')
 const Modal = require('./modal')
 const Icon = require('./icon')
+const Toast = require('./toast')
 
 class App extends Component {
   state = {
     isLoading: true,
+    disconnected: false,
     showJoinServerModal: false,
   }
 
@@ -23,9 +25,12 @@ class App extends Component {
     this.setState({
       isLoading: false,
     })
+
+    this.pool.activeClientEE.on('disconnect', () => this.setState({disconnected: true}))
+    this.pool.activeClientEE.on('reconnect', () => this.setState({disconnected: false}))
   }
 
-  render(_, { isLoading, showJoinServerModal }) {
+  render(_, { isLoading, showJoinServerModal, disconnected }) {
     const activeServer = this.pool.activeServer
 
     if (isLoading) {
@@ -43,7 +48,7 @@ class App extends Component {
                 return {
                   hostname,
                   name: client.serverName,
-                  isActive: activeServer.hostname === hostname,
+                  isActive: activeServer.client === client,
                   index,
                 }
               })}
@@ -96,6 +101,11 @@ class App extends Component {
 
             <UserList/>
           </aside>
+
+          {disconnected && <Toast>
+            <Icon icon='disconnect'/>
+            Disconnected from <b>{activeServer.client.serverName}</b>!
+          </Toast>}
         </div>
       </Provider>
     }
