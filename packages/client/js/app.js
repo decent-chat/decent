@@ -11,7 +11,7 @@ const Icon = require('./icon')
 class App extends Component {
   state = {
     isLoading: true,
-    joinServerModal: {show: false, loading: false},
+    showJoinServerModal: false,
   }
 
   pool = new Pool()
@@ -25,7 +25,7 @@ class App extends Component {
     })
   }
 
-  render(_, { isLoading, joinServerModal }) {
+  render(_, { isLoading, showJoinServerModal }) {
     const activeServer = this.pool.activeServer
 
     if (isLoading) {
@@ -48,54 +48,33 @@ class App extends Component {
                 }
               })}
               activeServerName={activeServer.client.serverName}
-              onJoinClick={() => this.setState({joinServerModal: {show: true, loading: false}})}
+              onJoinClick={() => this.setState({showJoinServerModal: true})}
             />
             <ChannelList/>
           </aside>
 
-          {joinServerModal.show && <Modal
+          {showJoinServerModal && <Modal.Async
             title='Join a server'
+            submit={async ({ hostname }) => {
+              const serverIndex = await this.pool.setActive(await this.pool.add(hostname)).catch(error => {
+                error.realMessage = error.message
+                error.message = 'Failed to connect'
 
-            onSubmit={async ({ hostname }) => {
-              this.setState({joinServerModal: {show: true, loading: true}})
+                return Promise.reject(error)
+              })
 
-              try {
-                const serverIndex = await this.pool.setActive(await this.pool.add(hostname))
-
-                // Success - hide the modal & switch to the newly joined server.
-                this.setState({
-                  activeServerIndex: serverIndex,
-                  joinServerModal: {show: false, loading: false},
-                })
-              } catch (error) {
-                console.error('Error whilst joining server:', error)
-
-                // Failure - display an error in the modal.
-                this.setState({
-                  joinServerModal: {
-                    show: true,
-                    loading: false,
-                    error: 'Failed to connect',
-                  },
-                })
-              }
+              // Success - switch to the newly joined server.
+              this.setState({
+                activeServerIndex: serverIndex,
+              })
             }}
-
-            onCancel={() => {
-              if (!this.state.joinServerModal.loading) {
-                this.setState({joinServerModal: {show: false, loading: false}})
-              }
-            }}
+            onHide={() => this.setState({showJoinServerModal: false})}
           >
-            {joinServerModal.loading ? <div class='Loading'/> : <div>
-              {joinServerModal.error && <Modal.Error>{joinServerModal.error}</Modal.Error>}
+            <Modal.Input name='hostname' label='Hostname'/>
 
-              <Modal.Input name='hostname' label='Hostname'/>
-
-              <Modal.Button action='cancel'>Cancel</Modal.Button>
-              <Modal.Button action='submit'>Join</Modal.Button>
-            </div>}
-          </Modal>}
+            <Modal.Button action='cancel'>Cancel</Modal.Button>
+            <Modal.Button action='submit'>Join</Modal.Button>
+          </Modal.Async>}
 
           <main></main>
 
