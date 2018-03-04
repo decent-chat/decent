@@ -2,6 +2,11 @@ const { h, render, Component } = require('preact')
 const Provider = require('preact-context-provider')
 const Pool = require('./server-pool')
 
+if (process.env !== 'production') {
+  require('preact/debug')
+  require('preact/devtools')
+}
+
 const ServerList = require('./left-sidebar/server-list')
 const ChannelList = require('./left-sidebar/channel-list')
 const UserList = require('./right-sidebar/user-list')
