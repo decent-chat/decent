@@ -13,7 +13,7 @@ module.exports = (host, path, opts = {}) => {
     opts.headers['X-Session-ID'] = host.sessionID
   }
 
-  if (opts.body) {
+  if (opts.body && !opts.isForm) {
     opts.headers['Content-Type'] = 'application/json'
     opts.body = typeof opts.body === 'string' ? opts.body : JSON.stringify(opts.body)
   }

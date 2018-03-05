@@ -99,11 +99,10 @@ class MessageEditor extends Component {
 
     e.preventDefault()
 
-    // upload the image file
+    // Upload the image file
     const client = this.context.pool.activeServer.client
     const imageURL = await client.uploadImage(img)
 
-    console.log(imageURL)
     this.sendMessage(`![](${imageURL})`)
   }
 

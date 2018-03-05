@@ -2,7 +2,6 @@ const fetch = require('./fetch')
 const { version } = require('../package.json')
 const typeforce = require('typeforce')
 const Socket = require('./socket')
-const FormData = require('isomorphic-form-data')
 const { EventEmitter } = require('./emitter')
 
 const { Emotes } = require('./emotes')
@@ -169,6 +168,8 @@ class Client extends EventEmitter {
   }
 
   async uploadImage(file) {
+    if (!process.browser) console.warn('decent.js: client.uploadImage() only works in browsers')
+
     const form = new FormData()
 
     // The server will typecheck for us.
@@ -177,6 +178,7 @@ class Client extends EventEmitter {
     const { path } = await this.fetch('/api/upload-image', {
       method: 'POST',
       body: form,
+      isForm: true,
     })
 
     return (this._host.useSecure ? 'https://' : 'http://') + this._host.hostname + path
