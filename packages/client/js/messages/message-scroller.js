@@ -8,6 +8,7 @@ const flatten = arr => [].concat(...arr)
 class MessageScroller extends Component {
   static DOWN = 'DOWN'
   static UP = 'UP'
+  static MAX_MESSAGE_COUNT = 50
 
   static groupMessages(msgs, startingGroups = []) {
     const groups = startingGroups
@@ -54,7 +55,7 @@ class MessageScroller extends Component {
 
   // Clamp `messages.length` at `maxLength`, removing messages from the top/bottom
   // of the array based on `removeFromDirection`.
-  clampMessagesLength(removeFromDirection, messages = this.state.messages, maxLength = 50) {
+  clampMessagesLength(removeFromDirection, messages = this.state.messages, maxLength = MessageScroller.MAX_MESSAGE_COUNT) {
     if (messages.length > maxLength) {
       if (removeFromDirection === MessageScroller.DOWN) {
         // Remove messages from the end of `messages`.
@@ -105,7 +106,9 @@ class MessageScroller extends Component {
           (do {
             const flat = flatten(this.state.messages)
 
-            if (flat.length > 25) flat.splice(0, flat.length - 25)
+            if (flat.length > MessageScroller.MAX_MESSAGE_COUNT) {
+              flat.splice(0, flat.length - MessageScroller.MAX_MESSAGE_COUNT)
+            }
 
             flat
           }).concat([newMessage])
@@ -166,7 +169,7 @@ class MessageScroller extends Component {
           moreMessages.concat(do {
             const flat = flatten(this.state.messages)
 
-            if (flat.length > 25) flat.length = 25
+            if (flat.length > MessageScroller.MAX_MESSAGE_COUNT) flat.length = MessageScroller.MAX_MESSAGE_COUNT
             else this.showingLatestMessage = false
 
             flat
@@ -212,7 +215,7 @@ class MessageScroller extends Component {
       }
 
       this.setState({
-        messages: MessageScroller.groupMessages(moreMessages, this.clampMessagesLength(MessageScroller.UP, this.state.messages, 25 - moreMessages.length)),
+        messages: MessageScroller.groupMessages(moreMessages, this.clampMessagesLength(MessageScroller.UP, this.state.messages, MessageScroller.MAX_MESSAGE_COUNT - moreMessages.length)),
       })
     } else {
       this.scrolledToBottom = true
