@@ -11,8 +11,10 @@ class MessageEditor extends Component {
     }
 
     this.handleEdit = this.handleEdit.bind(this)
-    this.handleSend = this.handleSend.bind(this)
+    this.sendMessage = this.sendMessage.bind(this)
+    this.sendMessageFromInput = this.sendMessageFromInput.bind(this)
     this.handleKeyPress = this.handleKeyPress.bind(this)
+    this.handlePaste = this.handlePaste.bind(this)
   }
 
   componentDidMount() {
@@ -37,7 +39,7 @@ class MessageEditor extends Component {
     })
   }
 
-  render({sendMessage}, {message, me}) {
+  render({ sendMessage }, { message, me }) {
     if (!me) return <div class='MessageEditor'>You must be signed in to send messages.</div>
 
     return <div class='MessageEditor'>
@@ -47,10 +49,11 @@ class MessageEditor extends Component {
         value={message}
         onChange={this.handleEdit}
         onKeyDown={this.handleKeyPress}
+        onPaste={this.handlePaste}
       ></textarea>
       <button
         class='MessageEditor-sendButton'
-        onClick={this.handleSend}
+        onClick={this.sendMessageFromInput}
       >
         Send
       </button>
@@ -64,11 +67,17 @@ class MessageEditor extends Component {
     })
   }
 
-  handleSend() {
+  sendMessage(message) {
+    if(!message) return
+
+    let messageFormatted = this.parseMarkdown(message)
+    this.props.sendMessage(messageFormatted)
+  }
+
+  sendMessageFromInput() {
     if(this.state.message === '') return false
 
-    let messageFormatted = this.parseMarkdown(this.state.message)
-    this.props.sendMessage(messageFormatted)
+    this.sendMessage(this.state.message)
     this.setState({
       message: ''
     })
@@ -78,8 +87,24 @@ class MessageEditor extends Component {
     if(e.keyCode === 13 && e.shiftKey === false) {
       e.preventDefault()
       this.handleEdit(e) // Update state to reflect input value before sending
-      this.handleSend()
+      this.sendMessageFromInput()
     }
+  }
+
+  async handlePaste(e) {
+    if (!e.clipboardData) return
+
+    const img = e.clipboardData.files[0]
+    if (!img || img.type.indexOf('image') === -1) return
+
+    e.preventDefault()
+
+    // upload the image file
+    const client = this.context.pool.activeServer.client
+    const imageURL = await client.uploadImage(img)
+
+    console.log(imageURL)
+    this.sendMessage(`![](${imageURL})`)
   }
 
   parseMarkdown(md) {
