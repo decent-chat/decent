@@ -14,6 +14,7 @@ const Modal = require('./modal')
 const Icon = require('./icon')
 const Toast = require('./toast')
 const MessageScroller = require('./messages/message-scroller')
+const MessageEditor = require('./messages/message-editor')
 
 class App extends Component {
   state = {
@@ -96,6 +97,11 @@ class App extends Component {
               <main>
                 <div class='ChannelHeader'>{channel.toString()}</div>
                 <MessageScroller channel={channel}/>
+                <MessageEditor
+                  sendMessage={(content) => {
+                    channel.sendMessage(content)
+                  }}
+                />
               </main>
             } else {
               <main></main>
