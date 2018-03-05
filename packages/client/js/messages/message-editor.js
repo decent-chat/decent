@@ -8,6 +8,7 @@ class MessageEditor extends Component {
     this.state = {
       message: '',
       me: null,
+      isUploading: false,
     }
 
     this.handleEdit = this.handleEdit.bind(this)
@@ -39,10 +40,10 @@ class MessageEditor extends Component {
     })
   }
 
-  render({ sendMessage }, { message, me }) {
-    if (!me) return <div class='MessageEditor'>You must be signed in to send messages.</div>
+  render({ sendMessage }, { message, me, isUploading}) {
+    if (!me) return <div class='MessageEditor --disabled'>You must be signed in to send messages.</div>
 
-    return <div class='MessageEditor'>
+    return <div class={isUploading ? 'MessageEditor is-uploading' : 'MessageEditor'}>
       <textarea
         placeholder='Enter a message...'
         class='MessageEditor-textarea'
@@ -57,7 +58,6 @@ class MessageEditor extends Component {
       >
         Send
       </button>
-      <div class='MessageEditor-progressBar'></div>
     </div>
   }
 
@@ -98,12 +98,19 @@ class MessageEditor extends Component {
     if (!img || img.type.indexOf('image') === -1) return
 
     e.preventDefault()
+    this.setState({isUploading: true})
 
-    // Upload the image file
-    const client = this.context.pool.activeServer.client
-    const imageURL = await client.uploadImage(img)
+    try {
+      // Upload the image file
+      const client = this.context.pool.activeServer.client
+      const imageURL = await client.uploadImage(img)
 
-    this.sendMessage(`![](${imageURL})`)
+      this.sendMessage(`![](${imageURL})`)
+    } catch(error) {
+      throw error
+    } finally {
+      this.setState({isUploading: false})
+    }
   }
 
   parseMarkdown(md) {

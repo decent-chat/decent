@@ -10,7 +10,7 @@ class Modal extends Component {
     return <Portal into='body'>
       <Provider onSubmit={() => this.handleSubmit(onSubmit)} onCancel={() => onCancel()} inputs={this.inputs = []}>
         {!closed && <div>
-          <div class={'Modal' + (isLoading ? ' --loading' : '')}>
+          <div class={'Modal' + (isLoading ? ' is-loading' : '')}>
             <div class='Modal-close-button' onClick={() => onCancel()}></div>
             <div class='Modal-title'>
               {title}
