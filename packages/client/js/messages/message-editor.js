@@ -108,7 +108,6 @@ class MessageEditor extends Component {
   }
 
   parseMarkdown(md) {
-    const _this = this // ew
     const formatted = mrk({
       patterns: {
         code({ read, has }) {
@@ -156,7 +155,7 @@ class MessageEditor extends Component {
           return true
         },
 
-        mention({ read, look }, meta) {
+        mention: ({ read, look }, meta) => {
           if (read(1) !== '@') return false
 
           let username = ''
@@ -166,7 +165,7 @@ class MessageEditor extends Component {
             username += read()
           }
 
-          const users = _this.context.pool.activeServer.client.users
+          const users = this.context.pool.activeServer.client.users
           const user = users.find(usr => usr.username === username)
 
           if (!user) return false
