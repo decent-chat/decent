@@ -50,7 +50,7 @@ class MessageScroller extends Component {
 
   async componentDidMount() {
     await this.loadLatest(this.channel)
-    this.channel.on('message', msg => this.handleNewMessage(msg))
+    this.channel.on('message', this.handleNewMessage)
   }
 
   // Clamp `messages.length` at `maxLength`, removing messages from the top/bottom
@@ -82,7 +82,7 @@ class MessageScroller extends Component {
     this.componentDidMount()
   }
 
-  handleNewMessage(newMessage) {
+  handleNewMessage = newMessage => {
     if (!this.showingLatestMessage) return
 
     const alreadyExisting = flatten(this.state.messages).find(msg => msg.id === newMessage)
