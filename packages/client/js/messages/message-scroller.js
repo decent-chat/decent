@@ -157,14 +157,7 @@ class MessageScroller extends Component {
     const moreMessages = await this.channel.getMessages({before: firstMessage, limit: 25})
 
     if (moreMessages.length > 0) {
-      const firstMessageID = 'msg-' + firstMessage.id
-
-      this.runAfterRender = () => {
-        document.getElementById(firstMessageID).scrollIntoView({
-          behaviour: 'instant',
-          block: 'start',
-        })
-      }
+      this.keepScrollAtAnchor(firstMessage)
 
       this.setState({
         messages: MessageScroller.groupMessages(
@@ -207,14 +200,7 @@ class MessageScroller extends Component {
     }
 
     if (moreMessages.length > 0) {
-      const finalMessageID = 'msg-' + finalMessage.id
-
-      this.runAfterRender = () => {
-        document.getElementById(finalMessageID).scrollIntoView({
-          behaviour: 'instant',
-          block: 'end',
-        })
-      }
+      this.keepScrollAtAnchor(finalMessage)
 
       this.setState({
         messages: MessageScroller.groupMessages(moreMessages, this.clampMessagesLength(MessageScroller.UP, this.state.messages, MessageScroller.MAX_MESSAGE_COUNT - moreMessages.length)),
@@ -224,6 +210,26 @@ class MessageScroller extends Component {
     }
 
     this.loadingMore = false
+  }
+
+  keepScrollAtAnchor(anchorElem) {
+    // Next time messages are added or removed, scroll so that
+    // the anchor element is in the same place on the screen
+    // as it was before the change
+    const msgOffset = (messageID) => {
+      const messageTop = document.getElementById(messageID).getBoundingClientRect().top
+      const containerTop = this.ScrollContainer.base.getBoundingClientRect().top
+      return messageTop - containerTop
+    }
+
+    const messageID = 'msg-' + anchorElem.id
+    const originalOffset = msgOffset(messageID)
+
+    this.runAfterRender = () => {
+      const currentOffset = msgOffset(messageID)
+      const scrollDelta = currentOffset - originalOffset
+      this.ScrollContainer.base.scrollTop += scrollDelta
+    }
   }
 
   render({ channel }, { messages, isLoading }) {
@@ -237,6 +243,7 @@ class MessageScroller extends Component {
         onReachTop={() => this.handleReachTop()}
         onScroll={(...args) => this.handleOnScroll(...args)}
         position={this.scrollPos}
+        ref={elem => { this.ScrollContainer = elem }}
       >
         <div class='MessageList'>
           {messages.map(group => <Message msg={group}/>)}
