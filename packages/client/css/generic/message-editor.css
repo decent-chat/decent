@@ -24,11 +24,12 @@
   flex: 1 1 0;
 
   padding: 16px;
-  margin-right: 16px;  
+  margin-right: 16px;
+
+  box-sizing: border-box;
 
   height: 58px;
-  min-height: 58px;
-  max-height: 400px;
+  resize: none;
   overflow-y: auto;
 
   font: inherit;
