@@ -89,7 +89,9 @@ class MessageScroller extends Component {
 
     if (alreadyExisting) {
       // If we already added this message in anticipation (ie. WE sent it) of
-      // the event, mark it as actually recieved.f
+      // the event, mark it as actually recieved.
+      //
+      // Note: sent-message anticipation isn't actually implemented yet
       if (alreadyExisting.anticipated) {
         alreadyExisting.anticipated = false
         this.forceUpdate()
@@ -137,7 +139,7 @@ class MessageScroller extends Component {
   handleOnScroll(pos, prevPos, max) {
     const diff = pos - prevPos
 
-    if (diff < 0 && prevPos !== 10000) {
+    if (diff < -10 && prevPos !== 10000) {
       // We went upwards!
       this.scrolledToBottom = false
     }
