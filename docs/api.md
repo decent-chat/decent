@@ -1,4 +1,4 @@
-# Decent Server API Documentation <1.0.0-preview>
+# Decent Server Specification <1.0.0-preview>
 
 Implementors of this specification support the following two forms of transport, which are meant to be used in conjunction with eachother:
 
@@ -156,14 +156,18 @@ Below is a table of all permissions.
 
 <details><summary>Endpoints</summary>
 
-### Retrieve server version [GET /api]
-Returns `{ decentVersion }`. Should be used to check to see if a particular server is compatible with this spec. Note that Decent follows [SemVer](https://semver.org/), so unless the MAJOR (first) portion of the version number is different to what you expect communication should work fine.
+### Retrieve server implementation details [GET /api]
+Returns `{ decentVersion, implementation, useSecureProtocol }`, where `decentVersion` is a string version number corresponding to the specification version the server supports/providers, `implementation` is a string typically refering to the name of the server impementation, and the boolean `useSecureProtocol` should be `true` when this server is only accessible via the _HTTPS_ and _WSS_ protocols.
+
+Should be used to check to see if a particular server is compatible with the version of the spec that you (the client) support. Note that Decent follows [SemVer](https://semver.org/), so unless the MAJOR (first) portion of the version number is different to what you expect communication should work fine.
 
 ```js
 GET /api/
 
 <- {
-<-   "decentVersion": "0.1.0"
+<-   "implementation": "@decent/server",
+<-   "decentVersion": "1.0.0",
+<-   "useSecureProtocol": true
 <- }
 ```
 
@@ -238,34 +242,6 @@ PATCH /api/settings
 -> }
 
 <- {}
-```
-
-</details>
-
-## Properties
-
-Properties can only be modified on the command line.
-
-```js
-{
-  // If true, always use HTTPS to access the server.
-  "useSecure": boolean
-}
-```
-
-<details><summary>Endpoints</summary>
-
-### Retrieve all properties [GET /api/properties]
-Returns `{ properties }`, where `properties` is an object representing server-specific properties.
-
-```js
-GET /api/properties
-
-<- {
-<-   "properties": {
-<-     "useSecure": false
-<-   }
-<- }
 ```
 
 </details>
