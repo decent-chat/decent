@@ -1,15 +1,14 @@
-### Decent API Specification
-> Version: **1.0.0-preview**
+# Decent Server API Documentation <1.0.0-preview>
 
-Implementors of this specification must support the following two forms of transport:
+Implementors of this specification support the following two forms of transport, which are meant to be used in conjunction with eachother:
 
 #### HTTP(S) endpoints - For client->server requests
 
-The HTTP API is accessed via `/api/`. All endpoints respond in JSON, and those which take request bodies expect it to also be formatted using JSON. Implementors may choose an appropriate HTTP status code for responses.
+The HTTP API is accessed via `/api/`. All endpoints respond in JSON, and those which take request bodies expect it to also be formatted using JSON. Server implementors may choose an appropriate HTTP status code for responses, however this must not be relied on by clients.
 
 #### WebSocket events - For server->client event notifications
 
-Messages sent to and from sockets must be JSON strings, following the format `{ evt, data }`, where `evt` is a name representing the meaning of the event, and `data` is an optional property specifying any additional data related to the event.
+Messages sent to and from sockets are JSON strings, following the format `{ evt, data }`, where `evt` is a name representing the meaning of the event, and `data` is an optional property specifying any additional data related to the event.
 
 ---
 
@@ -21,13 +20,19 @@ Clients should authenticate using both of the following methods at the same time
 
 <details><summary><b>With HTTP(S)</b> - per-request</summary>
 
-When a request is made to the API, the server searches for a [session ID](#sessions) given in the request using:
-* `sessionID` in request body
-* `?sessionID` in query string
-* `X-Session-ID` header
+When a request is made to an API endpoint, the server searches for a [session ID](#sessions) string given in the request using **one** of:
 
-Endpoints **not** labeled _does not require session_ will [error](#errors) if no session or an invalid session is provided.
-Other endpoints may require the session user to posess a particular [permission](#permissions) or set of permissions.
+* `?sessionID` in query string (URL)
+* `sessionID` in request body
+* `X-Session-ID` header (**recommended**)
+
+Note that if session IDs are provided more than once in a single request the request will [error](#errors) with REPEATED_PARAMETERS.
+
+If a session ID is provided but invalid/expired, the request is immediately terminated with an INVALID_SESSION_ID [error](#errors).
+
+If the request requires [permission(s)](#permissions) and a session ID is not provided or its user does not posses the expected permissions, the request is terminated with a NOT_ALLOWED [error](#errors).
+
+Note that "you" in this document typically refers to the provided session ID's related user.
 
 </details>
 
@@ -35,19 +40,20 @@ Other endpoints may require the session user to posess a particular [permission]
 
 ## pingdata
 
-Sent periodically (typically every 10 seconds) by the server, as well as immediately upon the client socket connecting. Clients should respond with a `pongdata` event, as described below.
+Sent periodically (typically every 10 seconds) by the server, as well as immediately upon the client socket connecting. Clients should respond with a `pongdata` event, as described below. No `data` is sent with the event.
 
 ## pongdata
 
-Should be **sent from clients** in response to `pingdata`. Notifies the server of any information related to the particular socket. Passed data should include:
+Should be **sent from clients** (unlike all other WebSocket transmissions) in response to `pingdata`. Notifies the server of any information related to the particular socket. Passed data should include:
 
 * `sessionID`, if the client is "logged in" or keeping track of a session ID. This is used for keeping track of which users are online.
+  - Note `null` means 'not logged in'.
 
 </details>
 
 ## Errors
 
-Nearly all HTTP endpoints return errors situationally. Generally, when the processing of a request errors, its response will have the `error` property, which will follow the form `{ code, message }`.
+Nearly all HTTP endpoints return errors situationally. Generally, when the processing of a request errors, its response will have the `error` property, which will follow the form `{ code, message }`. Server implementors may optionally include extra infomation in this return map, using any key other than `code` or `message`.
 
 The `message` property is a string of a human-readable English message briefly explaining what went wrong, and the `code` is a permanent identifier string for the type of error that happened. Checking `code` is useful for displaying custom messages or behavior when particular errors occur.
 
@@ -62,6 +68,7 @@ The `message` property is a string of a human-readable English message briefly e
 | ALREADY_PERFORMED      | That action has already been performed              |
 | FAILED                 | Something went wrong internally                     |
 | INCOMPLETE_PARAMETERS  | A property is missing from the request's parameters |
+| REPEATED_PARAMETERS    | A parameter is specified twice in the request       |
 | INVALID_PARAMETER_TYPE | A parameter is the wrong type                       |
 | INVALID_SESSION_ID     | There is no session with the provided session ID    |
 | INVALID_NAME           | Provided [name](#name) is invalid                   |
@@ -150,8 +157,6 @@ Below is a table of all permissions.
 <details><summary>Endpoints</summary>
 
 ### Retrieve server version [GET /api]
-+ does not require session
-
 Returns `{ decentVersion }`. Should be used to check to see if a particular server is compatible with this spec. Note that Decent follows [SemVer](https://semver.org/), so unless the MAJOR (first) portion of the version number is different to what you expect communication should work fine.
 
 ```js
@@ -164,7 +169,7 @@ GET /api/
 
 <a id='upload-image'></a>
 ### Upload an image [POST /api/upload-image]
-+ requires [permission](#permissions) `uploadImages`
++ requires [permission](#permissions): `uploadImages`
 + expects form data (`multipart/form-data`)
   * `image` (gif/jpeg/png) - The image to upload. Max size: 10MB
 
@@ -205,8 +210,6 @@ Emitted with data `{ settings }` when the server settings are modified.
 <details><summary>Endpoints</summary>
 
 ### Retrieve all settings [GET /api/settings]
-+ does not require session
-
 Returns `{ settings }`, where `settings` is an object representing server-specific settings.
 
 ```js
@@ -221,7 +224,7 @@ GET /api/settings
 ```
 
 ### Modify settings [PATCH /api/settings]
-+ requires [permission](#permissions) `manageServer`
++ requires [permission](#permissions): `manageServer`
 + `name` (string; optional)
 + `iconURL` (string; optional)
 
@@ -253,8 +256,6 @@ Properties can only be modified on the command line.
 <details><summary>Endpoints</summary>
 
 ### Retrieve all properties [GET /api/properties]
-+ does not require session
-
 Returns `{ properties }`, where `properties` is an object representing server-specific properties.
 
 ```js
@@ -309,7 +310,7 @@ GET /api/emotes
 
 <a name='new-emote'></a>
 ### Add a new emote [POST /api/emotes]
-+ requires [permission](#permissions) `manageEmotes`
++ requires [permission](#permissions): `manageEmotes`
 + `imageURL` (string)
 + `shortcode` (string) - Should not include colons (`:`) or spaces. Must be unique, even if the user has the `allowNonUnique` [permission](#permissions).
 
@@ -339,7 +340,7 @@ POST /api/emotes
 
 <a name='delete-emote'></a>
 ### Delete an existing emote [DELETE /api/emotes/:shortcode]
-+ requires [permission](#permissions) `manageEmotes`
++ requires [permission](#permissions): `manageEmotes`
 + **in-url** shortcode (string)
 
 Returns `{}` if successful. Emits [emote/delete](#emote-delete).
@@ -365,7 +366,7 @@ DELETE /api/emotes/package
 
 <a name='get-sessions'></a>
 ### Fetch the current user's sessions [GET /api/sessions]
-+ requires session
++ requires a valid session ID & user
 
 Responds with `{ sessions }`, where `sessions` is an array of [sessions](#sessions) that also represent the user that the provided session represents (the callee; you).
 
@@ -384,7 +385,6 @@ GET /api/sessions
 
 <a name='login'></a>
 ### Login [POST /api/sessions]
-+ does not require session
 + `username` (string)
 + `password` (string)
 
@@ -404,8 +404,8 @@ POST /api/sessions
 ```
 
 ### Fetch session details [GET /api/sessions/:id]
-+ does not require session (provided in the URL)
-+ **in-url** id (string)
++ does not require a session ID via means other than in the URL
++ **in-url** id (string, session ID)
 
 Responds with `{ session, user }` upon success, where `session` is a [session](#sessions) and `user` is the [user](#users) this session represents.
 
@@ -427,8 +427,8 @@ GET /api/sessions/12345678-ABCDEFGH
 
 <a name='logout'></a>
 ### Logout [DELETE /api/sessions/:id]
-+ does not require session (if you know the ID, it's yours)
-+ **in-url** id (string)
++ does not require a session ID via means other than in the URL
++ **in-url** id (string, session ID)
 
 Responds with `{}` upon success. Any further requests using the provided session ID will fail.
 
@@ -502,8 +502,9 @@ Sent to all clients when any message is [deleted](#delete-message). Passed data 
 
 <a name='send-message'></a>
 ### Send a message [POST /api/messages]
-+ requires [permission](#permissions) `sendMessages`
-  * Requires `sendSystemMessages` [permission](#permissions) if `type == "system"`
++ requires [permissions](#permissions):
+  * `sendMessages`
+  * `sendSystemMessages`, if `type == "system"`
 + `channelID` (ID) - The parent channel of the new message
 + `text` (string) - The content of the message
 + `type` (string; defaults to `"user"`)
@@ -525,7 +526,7 @@ POST /api/messages
 
 <a name='get-message'></a>
 ### Retrieve a message [GET /api/messages/:id]
-+ requires [permission](#permissions) `readMessages`
++ requires [permission](#permissions): `readMessages`
 + **in-url** id (ID) - The ID of the message to retrieve
 
 Returns `{ message }` where `message` is a [message object](#messages-api-messages).
@@ -543,7 +544,7 @@ GET /api/messages/1234
 
 <a name='edit-message'></a>
 ### Edit a message [PATCH /api/messages/:id]
-+ requires ownership of message `id`
++ requires a session ID where the session user is the author of message `id`
 + **in-url** id (ID) - The ID of the message to edit
 + `text` (string) - The new content of the message
 
@@ -564,7 +565,7 @@ This endpoint will return a NOT_YOURS [error](#errors) if you do not own the mes
 <a name='delete-message'></a>
 ### Delete a message [DELETE /api/messages/:id]
 + requires one of:
-  * ownership of message `id`
+  * session with ownership of message `id`
   * [permission](#permissions) (for channel of specified message) `deleteMessages`
 + **in-url** id (ID) - The ID of the message to delete
 
@@ -637,7 +638,7 @@ Sent to all clients when a channel is [deleted](#delete-channel). Passed data is
 <a name='channel-list'></a>
 ### Get list of channels [GET /api/channels]
 + does not require session, however:
-  * channels where you do not have the `readMessages` [permission](#permissions) will not be returned
+  * channels where the session user does not have the `readMessages` [permission](#permissions) will not be returned
   * returns [extra data](#channel-extra-data) with session
 
 Returns `{ channels }`, where channels is an array of channels. Note `unreadMessageCount` will only be returned if this endpoint receives a session.
@@ -978,7 +979,6 @@ GET /api/users?sessionID=adminsid123
 
 <a name='register'></a>
 ### Register (create new user) [POST /api/users]
-+ does not require session
 + `username` ([name](#names)) - Must be unique
 + `password` (string) - Errors if shorter than 6 characters
 
@@ -1003,8 +1003,8 @@ POST /api/users
 
 <a name='get-user'></a>
 ### Retrieve a user by ID [GET /api/users/:id]
-+ does not require session, howerver:
-  * returns extra data (`email`) with session representing user `id`
++ does not require a valid session, howerver:
+  * returns extra data (`email`) if the provided session represents the user requested
 + **in-url** id (ID) - The user ID to fetch
 
 Returns `{ user }`.
@@ -1050,7 +1050,7 @@ GET /api/users/1/mentions?limit=1
 
 <a name='update-user'></a>
 ### Update user details [PATCH /api/users/:id]
-+ requires session (see below)
++ requires valid, logged-in session (see below)
 + **in-url** id (ID) - The user ID to patch
 
 **The following parameters are available to sessions that represent the user being updated:**
@@ -1097,12 +1097,12 @@ PATCH /api/users/12
 
 <- {}
 
-('flair: null' removes the user's flair.)
+('flair: null' removes the flair.)
 ```
 
 <a name='get-user'></a>
 ### Retrieve a user by ID [GET /api/users/:id]
-+ does not require session, however:
++ does not require a session, however:
   * if the provided session represents the user `id`, returns extra data (`email`)
 + **in-url** id (ID) - The user ID to fetch
 
@@ -1122,7 +1122,6 @@ GET /api/users/1
 
 <a name='get-user-permissions'></a>
 ### Get a user's permissions [GET /api/users/:id/permissions]
-+ does not require session
 + **in-url** id (ID) - The user ID to fetch
 
 Returns `{ permissions }`, where `permissions` is a [permissions](#permissions) object.
@@ -1222,7 +1221,7 @@ GET /api/roles
 
 <a name='new-role'></a>
 ### Add a new role [POST /api/roles]
-+ requires [permission](#permissions) `manageRoles`
++ requires [permission](#permissions): `manageRoles`
 + `name` (string) - Max length 32.
 + `permissions` ([Permissions object](#permissions)) - this role's intended permissions
   * **Cannot contain permissions that the requesting session's user does not have**
@@ -1231,7 +1230,7 @@ Returns `{ roleID }` if successful, where `roleID` is the ID of the new role. Em
 
 <a name='update-role'></a>
 ### Update a role [PATCH /api/roles/:id]
-+ requires [permission](#permissions) `manageRoles`
++ requires [permission](#permissions): `manageRoles`
 + **in-url** id (ID)
 + `name` (string; optional) - Max length 32.
 + `permissions` ([Permissions object](#permissions)) - the new intended permissions for this role
@@ -1241,7 +1240,7 @@ Returns `{}` and emits [role/update](#role-update) if successful. May emit [user
 
 <a name='delete-role'></a>
 ### Delete a role [DELETE /api/emotes/:id]
-+ requires [permission](#permissions) `manageRoles`
++ requires [permission](#permissions): `manageRoles`
 + **in-url** id (ID string)
 
 Returns `{}` if successful. Emits [role/delete](#role-delete).
