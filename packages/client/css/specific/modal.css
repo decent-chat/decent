@@ -44,6 +44,7 @@
   height: 19px;
   background: url('/img/x.svg') center center / contain;
   cursor: pointer;
+  z-index: 10; /* Appear above Modal-title */
 }
 
 .Modal-title {
