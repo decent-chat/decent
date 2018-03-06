@@ -84,4 +84,12 @@ body {
   text-decoration: underline;
 }
 
+body {
+  stroke: currentColor;
+}
+
+svg {
+  stroke: inherit;
+}
+
 ::selection { background: #b3d4fc; color: black }

@@ -1,5 +1,6 @@
 const { h, Component } = require('preact')
 const mrk = require('mrk.js')
+const Icon = require('../icon')
 
 class MessageEditor extends Component {
   constructor() {
@@ -9,13 +10,8 @@ class MessageEditor extends Component {
       message: '',
       me: null,
       isUploading: false,
+      height: 58,
     }
-
-    this.handleEdit = this.handleEdit.bind(this)
-    this.sendMessage = this.sendMessage.bind(this)
-    this.sendMessageFromInput = this.sendMessageFromInput.bind(this)
-    this.handleKeyPress = this.handleKeyPress.bind(this)
-    this.handlePaste = this.handlePaste.bind(this)
   }
 
   componentDidMount() {
@@ -40,18 +36,28 @@ class MessageEditor extends Component {
     })
   }
 
-  render({ sendMessage }, { message, me, isUploading}) {
+  render({ sendMessage }, { message, me, isUploading, height }) {
     if (!me) return <div class='MessageEditor --disabled'>You must be signed in to send messages.</div>
 
-    return <div class={isUploading ? 'MessageEditor is-uploading' : 'MessageEditor'}>
-      <textarea
-        placeholder='Enter a message...'
-        class='MessageEditor-textarea'
-        value={message}
-        onChange={this.handleEdit}
-        onKeyDown={this.handleKeyPress}
-        onPaste={this.handlePaste}
-      ></textarea>
+    return <div
+      class={isUploading ? 'MessageEditor is-uploading' : 'MessageEditor'}
+      style={`--messageEditor-height: ${height}px`}
+    >
+      <div class='MessageEditor-box'>
+        <textarea
+          placeholder='Enter a message...'
+          class='MessageEditor-box-textarea'
+          value={message}
+          onKeyUp={this.handleKey}
+          onInput={e => { this.setState({message: e.target.value}); this.updateSize(e) }}
+          onPaste={this.handlePaste}
+        />
+
+        <div class='MessageEditor-box-action'>
+          <Icon icon='upload'/>
+        </div>
+      </div>
+
       <button
         class='MessageEditor-sendButton'
         onClick={this.sendMessageFromInput}
@@ -61,21 +67,21 @@ class MessageEditor extends Component {
     </div>
   }
 
-  handleEdit(e) {
+  handleEdit = e => {
     this.setState({
-      message: e.target.value
+      message: e.target.value,
     })
   }
 
-  sendMessage(message) {
-    if(!message) return
+  sendMessage = message => {
+    if (!message) return
 
     let messageFormatted = this.parseMarkdown(message)
     this.props.sendMessage(messageFormatted)
   }
 
-  sendMessageFromInput() {
-    if(this.state.message === '') return false
+  sendMessageFromInput = () => {
+    if (this.state.message === '') return false
 
     this.sendMessage(this.state.message)
     this.setState({
@@ -83,15 +89,27 @@ class MessageEditor extends Component {
     })
   }
 
-  handleKeyPress(e) {
-    if(e.keyCode === 13 && e.shiftKey === false) {
+  handleKey = e => {
+    if (e.keyCode === 13 && e.shiftKey === false) {
       e.preventDefault()
       this.handleEdit(e) // Update state to reflect input value before sending
       this.sendMessageFromInput()
     }
+
+    this.updateSize(e)
   }
 
-  async handlePaste(e) {
+  updateSize = e => {
+    const ta = e.target
+
+    ta.style.height = '5px'
+    const endHeight = ta.scrollHeight + 5
+    ta.style.height = ''
+
+    this.setState({height: endHeight})
+  }
+
+  handlePaste = async e => {
     if (!e.clipboardData) return
 
     const img = e.clipboardData.files[0]

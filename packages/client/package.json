@@ -17,6 +17,7 @@
     "eventemitter3": "^3.0.1",
     "mrk.js": "^2.0.0",
     "preact": "^8.2.7",
+    "preact-compat": "^3.18.0",
     "preact-context-provider": "^1.1.1",
     "preact-markup": "^1.6.0",
     "preact-portal": "^1.1.2"
@@ -41,11 +42,28 @@
     "watchify": "^3.9.0"
   },
   "browserslist": "last 1 year",
+  "browserify": {
+    "require": {
+      "react": "preact-compat",
+      "react-dom": "preact-compat"
+    },
+    "transform": [
+      [
+        "stringify",
+        {
+          "extensions": [
+            ".svg"
+          ]
+        }
+      ],
+      "babelify"
+    ]
+  },
   "scripts": {
     "build:css": "postcss css/app.css -o dist/bundle.css --verbose",
     "watch:css": "postcss css/app.css -o dist/bundle.css --verbose --watch",
-    "build:js": "browserify --debug js/app.js -t [ stringify --extensions [.svg] ] -t babelify -o dist/bundle.js",
-    "watch:js": "watchify --debug js/app.js -t [ stringify --extensions [.svg] ] -t babelify -o dist/bundle.js --verbose",
+    "build:js": "browserify --debug js/app.js -r preact-compat:react -r preact-compat:react-dom -o dist/bundle.js",
+    "watch:js": "watchify --debug js/app.js -r preact-compat:react -r preact-compat:react-dom -o dist/bundle.js --verbose",
     "build": "npm run build:css && npm run build:js",
     "watch": "concurrently \"npm run watch:css\" \"npm run watch:js\"",
     "prepublishOnly": "npm run build"

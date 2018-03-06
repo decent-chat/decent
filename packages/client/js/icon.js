@@ -14,6 +14,8 @@ class Icon extends Component {
     trash: require('../img/icons/trash.svg'),
     warning: require('../img/icons/warning.svg'),
     disconnect: require('../img/icons/disconnect.svg'),
+    emote: require('../img/icons/emote.svg'),
+    upload: require('../img/icons/upload.svg'),
   }
 
   render({ icon, class: className }) {

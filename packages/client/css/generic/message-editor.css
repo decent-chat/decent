@@ -1,8 +1,11 @@
 :root {
   --messageEditor-fg: var(--input-fg);
-  --messageEditor-bg: var(--input-bg);
+  --messageEditor-dim-fg: var(--page-dim-fg);
 
+  --messageEditor-bg: var(--input-bg);
   --messageEditor-border-color: var(--input-border-color);
+
+  --messageEditor-height: 58px;
   }
 
 .MessageEditor {
@@ -33,16 +36,15 @@
   }
 }
 
-.MessageEditor-textarea {
+.MessageEditor-box {
   flex: 1 1 0;
 
-  padding: 16px;
+  padding-right: 8px;
   margin-right: 16px;
 
   box-sizing: border-box;
 
-  height: 58px;
-  resize: none;
+  height: var(--messageEditor-height);
   overflow-y: auto;
 
   font: inherit;
@@ -51,13 +53,48 @@
   background: var(--messageEditor-bg);
 
   border-radius: 4px;
-  outline: none;
   border: 1px solid var(--messageEditor-border-color);
+
+  display: flex;
+}
+
+.MessageEditor-box-action {
+  flex: 0;
+
+  cursor: pointer;
+  stroke: var(--messageEditor-dim-fg);
+
+  padding: 16px 8px;
+  box-sizing: border-box;
+
+  &:hover {
+    stroke: var(--messageEditor-fg);
+  }
+}
+
+.MessageEditor-box-textarea {
+  flex: 1;
+
+  padding: 16px;
+  padding-right: 8px;
+  box-sizing: border-box;
+
+  resize: none;
+  outline: none;
+  border: 0;
+  margin: 0;
+
+  font: inherit;
+  color: inherit;
+  background: inherit;
+  border-radius: inherit;
+
+  overflow-y: visible;
 }
 
 .MessageEditor-sendButton {
   width: 58px;
-  height: 58px;
+  height: var(--messageEditor-height);
 
   color: transparent;
   text-indent: -99999px;
