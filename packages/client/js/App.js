@@ -1,20 +1,18 @@
 const { h, render, Component } = require('preact')
 const Provider = require('preact-context-provider')
-const Pool = require('./server-pool')
+const Pool = require('./ServerPool/ServerPool')
 
 if (process.env !== 'production') {
   require('preact/debug')
   require('preact/devtools')
 }
 
-const ServerList = require('./left-sidebar/server-list')
-const ChannelList = require('./left-sidebar/channel-list')
-const UserList = require('./right-sidebar/user-list')
-const Modal = require('./modal')
-const Icon = require('./icon')
-const Toast = require('./toast')
-const MessageScroller = require('./messages/message-scroller')
-const MessageEditor = require('./messages/message-editor')
+const LeftSidebar = require('./LeftSidebar/LeftSidebar')
+const RightSidebar = require('./RightSidebar/RightSidebar')
+const Modal = require('./Modal/Modal')
+const Icon = require('./Icon/Icon')
+const Toast = require('./Toast/Toast')
+const Messages = require('./Messages/Messages')
 
 class App extends Component {
   state = {
@@ -51,21 +49,9 @@ class App extends Component {
 
       return <Provider pool={this.pool}>
         <div class='App'>
-          <aside class='Sidebar --on-left'>
-            <ServerList
-              servers={this.pool.servers.map(({ hostname, client }, index) => {
-                return {
-                  hostname,
-                  name: client.serverName,
-                  isActive: activeServer.client === client,
-                  index,
-                }
-              })}
-              activeServerName={client.serverName}
-              onJoinClick={() => this.setState({showJoinServerModal: true})}
-            />
-            <ChannelList/>
-          </aside>
+          <LeftSidebar onJoinClick={() => this.setState({showJoinServerModal: true})}/>
+          <Messages channel={client.channels.nth(ui.activeChannelIndex.get())}/>
+          <RightSidebar/>
 
           {showJoinServerModal && <Modal.Async
             title='Join a server'
@@ -89,43 +75,6 @@ class App extends Component {
             <Modal.Button class='--no-bg' action='cancel'>Cancel</Modal.Button>
             <Modal.Button action='submit'>Join</Modal.Button>
           </Modal.Async>}
-
-          {do {
-            const channel = client.channels.nth(ui.activeChannelIndex.get())
-
-            if (channel) {
-              <main>
-                <div class='ChannelHeader'>{channel.toString()}</div>
-                <MessageScroller channel={channel}/>
-                <MessageEditor
-                  sendMessage={(content) => {
-                    channel.sendMessage(content)
-                  }}
-                />
-              </main>
-            } else {
-              <main></main>
-            }
-          }}
-
-          <aside class='Sidebar --on-right'>
-            <div class='Tabs'>
-              <div class='Tabs-tab --is-active'>
-                <Icon icon='users' class='Tabs-tab-icon'/>
-                <span class='Tabs-tab-text'>Users</span>
-              </div>
-              <div class='Tabs-tab'>
-                <Icon icon='mention' class='Tabs-tab-icon'/>
-                <span class='Tabs-tab-text'>Mentions</span>
-              </div>
-              <div class='Tabs-tab'>
-                <Icon icon='pin' class='Tabs-tab-icon'/>
-                <span class='Tabs-tab-text'>Pins</span>
-              </div>
-            </div>
-
-            <UserList/>
-          </aside>
 
           {disconnected && <Toast>
             <Icon icon='disconnect'/>

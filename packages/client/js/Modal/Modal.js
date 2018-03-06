@@ -15,7 +15,7 @@ class Modal extends Component {
       >
         {!closed && <div>
           <div class={'Modal' + (isLoading ? ' is-loading' : '')}>
-            <div class='Modal-close-button' onClick={() => onCancel()}></div>
+            <div class='Modal-close-button' onClick={this.handleCancel}></div>
             <div class='Modal-title'>
               {title}
               {subtitle && <span class='Modal-subtitle'>{subtitle}</span>}
@@ -34,11 +34,11 @@ class Modal extends Component {
   handleSubmit = () => {
     this.props.onSubmit(this.inputs)
   }
-
+ 
   handleCancel = () => {
     this.props.onCancel()
   }
-
+ 
   handleInputUpdate = (name, value) => {
     this.inputs[name] = value
   }
@@ -62,13 +62,13 @@ class AsyncModal extends Component {
 
   handleSubmit = data => {
     this.setState({isLoading: true, errorMessage: null})
-
+ 
     this.props.submit(data).then(() => this.props.onHide()).catch(error => {
       console.error('Error in <AsyncModal submit/> handler:', error)
       this.setState({isLoading: false, errorMessage: error.message || error})
     })
   }
-
+ 
   handleCancel = () => {
     this.props.onHide()
   }
@@ -81,7 +81,6 @@ class Input extends Component {
 
   componentDidMount() {
     const { value } = this.input
-
     this.context.modalUpdateInput(this.props.name, value)
   }
 
@@ -102,7 +101,7 @@ class Input extends Component {
 
   handleChange = e => {
     const { value } = e.target
-
+ 
     this.setState({value})
     this.context.modalUpdateInput(this.props.name, value)
   }
@@ -121,7 +120,7 @@ class Button extends Component {
 
   handleClick = e => {
     const { action } = this.props
-
+ 
     if (action === 'submit') this.context.modalSubmit(e)
     else if (action === 'cancel') this.context.modalCancel(e)
     else throw new TypeError('<Modal.Button action/> should be "submit" or "cancel"')

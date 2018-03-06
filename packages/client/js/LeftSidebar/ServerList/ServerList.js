@@ -1,5 +1,5 @@
 const { h, Component } = require('preact')
-const Modal = require('../modal')
+const Modal = require('../../Modal/Modal')
 
 class ServerList extends Component {
   constructor() {
@@ -37,9 +37,19 @@ class ServerList extends Component {
     })
   }
 
-  render({ servers, activeServerName, onJoinClick, switchToServer },
+  render({ onJoinClick, switchToServer },
          { me, showRegisterModal, showLoginModal, dropdownIsOpen }) {
     const { client } = this.context.pool.activeServer
+    const activeServerName = client.serverName
+
+    const servers = this.context.pool.servers.map(({ hostname, client: clientN }, index) => {
+      return {
+        hostname,
+        name: clientN.serverName,
+        isActive: client === clientN,
+        index,
+      }
+    })
 
     return <div class='Sidebar-section --bottom-line'>
       <div class='Sidebar-section-title'>

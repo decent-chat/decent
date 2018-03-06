@@ -1,6 +1,7 @@
 const { h, Component } = require('preact')
-const Message = require('./message')
-const InfiniteScroll = require('../infinite-scroll')
+const Message = require('./Message/Message')
+const InfiniteScroll = require('./InfiniteScroll/InfiniteScroll')
+const MessageEditor = require('./MessageEditor/MessageEditor')
 
 // Not deep.
 const flatten = arr => [].concat(...arr)
@@ -232,23 +233,33 @@ class MessageScroller extends Component {
     }
   }
 
+  sendMessage = content => {
+    this.props.channel.sendMessage(content)
+  }
+
   render({ channel }, { messages, isLoading }) {
     this.channel = channel
 
     if (isLoading) {
       return <div class='MessageList Loading'></div>
     } else {
-      return <InfiniteScroll
-        onReachBottom={() => this.handleReachBottom()}
-        onReachTop={() => this.handleReachTop()}
-        onScroll={(...args) => this.handleOnScroll(...args)}
-        position={this.scrollPos}
-        ref={elem => { this.ScrollContainer = elem }}
-      >
-        <div class='MessageList'>
-          {messages.map(group => <Message msg={group}/>)}
-        </div>
-      </InfiniteScroll>
+      if(!channel) return <main></main>
+
+      return <main>
+        <div class='ChannelHeader'>{channel.toString()}</div>
+        <InfiniteScroll
+          onReachBottom={() => this.handleReachBottom()}
+          onReachTop={() => this.handleReachTop()}
+          onScroll={(...args) => this.handleOnScroll(...args)}
+          position={this.scrollPos}
+          ref={elem => { this.ScrollContainer = elem }}
+        >
+          <div class='MessageList'>
+            {messages.map(group => <Message msg={group}/>)}
+          </div>
+        </InfiniteScroll>
+        <MessageEditor sendMessage={ this.sendMessage.bind(this) }/>
+      </main>
     }
   }
 }
