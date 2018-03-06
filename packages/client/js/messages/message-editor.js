@@ -48,8 +48,8 @@ class MessageEditor extends Component {
           placeholder='Enter a message...'
           class='MessageEditor-box-textarea'
           value={message}
-          onKeyUp={this.handleKey}
-          onInput={e => { this.setState({message: e.target.value}); this.updateSize(e) }}
+          onKeyDown={this.handleKey}
+          onInput={this.handleEdit}
           onPaste={this.handlePaste}
         />
 
@@ -71,6 +71,8 @@ class MessageEditor extends Component {
     this.setState({
       message: e.target.value,
     })
+
+    this.updateSize(e)
   }
 
   sendMessage = message => {
@@ -85,18 +87,16 @@ class MessageEditor extends Component {
 
     this.sendMessage(this.state.message)
     this.setState({
-      message: ''
+      message: '',
+      height: 58,
     })
   }
 
   handleKey = e => {
     if (e.keyCode === 13 && e.shiftKey === false) {
       e.preventDefault()
-      this.handleEdit(e) // Update state to reflect input value before sending
       this.sendMessageFromInput()
     }
-
-    this.updateSize(e)
   }
 
   updateSize = e => {

@@ -61,10 +61,13 @@
 .MessageEditor-box-action {
   flex: 0;
 
+  display: flex;
+  flex-direction: column-reverse; /* Display icon at bottom, always */
+
   cursor: pointer;
   stroke: var(--messageEditor-dim-fg);
 
-  padding: 16px 8px;
+  padding: 12px 8px;
   box-sizing: border-box;
 
   &:hover {
@@ -94,7 +97,7 @@
 
 .MessageEditor-sendButton {
   width: 58px;
-  height: var(--messageEditor-height);
+  height: 58px; /*var(--messageEditor-height);*/
 
   color: transparent;
   text-indent: -99999px;
