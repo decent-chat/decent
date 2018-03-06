@@ -1,6 +1,7 @@
 const { h, Component } = require('preact')
 const mrk = require('mrk.js')
 const Icon = require('../icon')
+const Modal = require('../modal')
 
 class MessageEditor extends Component {
   constructor() {
@@ -36,7 +37,7 @@ class MessageEditor extends Component {
     })
   }
 
-  render({ sendMessage }, { message, me, isUploading, height }) {
+  render({ sendMessage }, { message, me, isUploading, height, showUploadModal }) {
     if (!me) return <div class='MessageEditor --disabled'>You must be signed in to send messages.</div>
 
     return <div
@@ -53,8 +54,16 @@ class MessageEditor extends Component {
           onPaste={this.handlePaste}
         />
 
-        <div class='MessageEditor-box-action'>
+        <div class='MessageEditor-box-action' onClick={this.showUploadModal}>
           <Icon icon='upload'/>
+          {showUploadModal && <Modal.Async
+            title='Upload an image'
+            submit={this.handleUpload}
+            onHide={this.hideUploadModal}
+          >
+            <Modal.Input name='file' label='PNG, GIF, JPG' type='file'/>
+            <Modal.Button action='submit'>Upload</Modal.Button>
+          </Modal.Async>}
         </div>
       </div>
 
@@ -66,6 +75,28 @@ class MessageEditor extends Component {
       </button>
     </div>
   }
+
+  appendMessage(text) {
+    const already = this.state.message
+
+    if (!already || ['\n', ' '].includes(already[already.length - 1])) {
+      this.setState({message: already + text})
+    } else {
+      this.setState({message: already + ' ' + text})
+    }
+  }
+
+  handleUpload = async ({ file }) => {
+    const { client } = this.context.pool.activeServer
+    console.log(file)
+
+    const url = await client.uploadImage(file)
+
+    this.appendMessage(`![Image](${url})`)
+  }
+
+  showUploadModal = () => this.setState({showUploadModal: true})
+  hideUploadModal = () => this.setState({showUploadModal: false})
 
   handleEdit = e => {
     this.setState({
@@ -123,7 +154,7 @@ class MessageEditor extends Component {
       const client = this.context.pool.activeServer.client
       const imageURL = await client.uploadImage(img)
 
-      this.sendMessage(`![](${imageURL})`)
+      this.sendMessage(`![Image](${imageURL})`)
     } catch(error) {
       throw error
     } finally {
