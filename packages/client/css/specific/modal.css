@@ -84,6 +84,7 @@
   margin-left: 13px;
   margin-bottom: 16px;
 
+  max-width: 314px;
   min-height: 24px;
 
   /* Fits into padding above content */
