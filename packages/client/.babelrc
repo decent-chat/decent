@@ -1,5 +1,10 @@
 {
+  sourceType: 'module',
+
   plugins: [
+    // Converts es6 import/export to require(...)
+    'babel-plugin-transform-es2015-modules-commonjs',
+
     // Support do { ... } expressions; useful for JSX
     'babel-plugin-transform-do-expressions',
 

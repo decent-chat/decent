@@ -20,11 +20,15 @@ Serve `index.html`, `dist` and `img` over HTTP:
 ```
 
 ### contributing
-[Install from source](https://github.com/decent-chat/decent#from-source). To re-build on file change, use:
+[Install from source](https://github.com/decent-chat/decent#from-source).
+
+To serve up a copy of the client without starting a Decent server, use:
 ```sh
-> npm run watch
+> npm run serve
 ```
-At the same time use `python3 -m http.server` (or similar) to serve your build of the client.
+> Note: `yarn run` works too! :tada:
+
+If you just want to build use `npm run build`, or `npm run watch` to rebuild on file-change.
 
 Please follow our [codestyle](../../CONTRIBUTING.md) when contributing :)
 
