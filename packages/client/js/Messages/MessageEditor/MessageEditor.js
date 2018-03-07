@@ -1,7 +1,7 @@
 const { h, Component } = require('preact')
 const mrk = require('mrk.js')
-const Icon = require('../icon')
-const Modal = require('../modal')
+const Modal = require('/Modal')
+const Icon = require('/Icon')
 
 class MessageEditor extends Component {
   constructor() {
@@ -49,8 +49,8 @@ class MessageEditor extends Component {
           placeholder='Enter a message...'
           class='MessageEditor-box-textarea'
           value={message}
-          onKeyDown={this.handleKey}
-          onInput={this.handleEdit}
+          onKeyUp={this.handleKey}
+          onInput={e => { this.setState({message: e.target.value}); this.updateSize(e) }}
           onPaste={this.handlePaste}
         />
 
@@ -78,23 +78,23 @@ class MessageEditor extends Component {
 
   appendMessage(text) {
     const already = this.state.message
-
+ 
     if (!already || ['\n', ' '].includes(already[already.length - 1])) {
       this.setState({message: already + text})
     } else {
       this.setState({message: already + ' ' + text})
     }
   }
-
+ 
   handleUpload = async ({ file }) => {
     const { client } = this.context.pool.activeServer
     console.log(file)
-
+ 
     const url = await client.uploadImage(file)
-
+ 
     this.appendMessage(`![Image](${url})`)
   }
-
+ 
   showUploadModal = () => this.setState({showUploadModal: true})
   hideUploadModal = () => this.setState({showUploadModal: false})
 
@@ -102,8 +102,6 @@ class MessageEditor extends Component {
     this.setState({
       message: e.target.value,
     })
-
-    this.updateSize(e)
   }
 
   sendMessage = message => {
@@ -118,16 +116,18 @@ class MessageEditor extends Component {
 
     this.sendMessage(this.state.message)
     this.setState({
-      message: '',
-      height: 58,
+      message: ''
     })
   }
 
   handleKey = e => {
     if (e.keyCode === 13 && e.shiftKey === false) {
       e.preventDefault()
+      this.handleEdit(e) // Update state to reflect input value before sending
       this.sendMessageFromInput()
     }
+
+    this.updateSize(e)
   }
 
   updateSize = e => {

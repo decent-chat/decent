@@ -1,6 +1,6 @@
 const { h, Component } = require('preact')
-const Icon = require('../icon')
-const TimeAgo = require('../timeago')
+const Icon = require('/Icon')
+const TimeAgo = require('./Timeago')
 
 // Note that this component supports both message groups (Array<Message>) *and*
 // lone messages (Message).

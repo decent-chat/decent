@@ -38,6 +38,7 @@
     "postcss-cli": "^5.0.0",
     "postcss-import": "^11.1.0",
     "postcss-nesting": "^4.2.1",
+    "resolve": "^1.5.0",
     "stringify": "^5.2.0",
     "watchify": "^3.9.0"
   },
@@ -62,8 +63,8 @@
   "scripts": {
     "build:css": "postcss css/app.css -o dist/bundle.css --verbose",
     "watch:css": "postcss css/app.css -o dist/bundle.css --verbose --watch",
-    "build:js": "browserify --debug js/app.js -r preact-compat:react -r preact-compat:react-dom -o dist/bundle.js",
-    "watch:js": "watchify --debug js/app.js -r preact-compat:react -r preact-compat:react-dom -o dist/bundle.js --verbose",
+    "build:js": "browserify --debug js/App.js -r preact-compat:react -r preact-compat:react-dom -o dist/bundle.js",
+    "watch:js": "watchify --debug js/App.js -r preact-compat:react -r preact-compat:react-dom -o dist/bundle.js --verbose",
     "build": "npm run build:css && npm run build:js",
     "watch": "concurrently \"npm run watch:css\" \"npm run watch:js\"",
     "prepublishOnly": "npm run build"
