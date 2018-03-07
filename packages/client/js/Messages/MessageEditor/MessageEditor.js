@@ -49,7 +49,8 @@ class MessageEditor extends Component {
           placeholder='Enter a message...'
           class='MessageEditor-box-textarea'
           value={message}
-          onKeyUp={this.handleKey}
+          onKeyDown={this.handleKeyDown}
+          onKeyPress={this.handleKeyPress}
           onInput={e => { this.setState({message: e.target.value}); this.updateSize(e) }}
           onPaste={this.handlePaste}
         />
@@ -78,23 +79,23 @@ class MessageEditor extends Component {
 
   appendMessage(text) {
     const already = this.state.message
- 
+
     if (!already || ['\n', ' '].includes(already[already.length - 1])) {
       this.setState({message: already + text})
     } else {
       this.setState({message: already + ' ' + text})
     }
   }
- 
+
   handleUpload = async ({ file }) => {
     const { client } = this.context.pool.activeServer
     console.log(file)
- 
+
     const url = await client.uploadImage(file)
- 
+
     this.appendMessage(`![Image](${url})`)
   }
- 
+
   showUploadModal = () => this.setState({showUploadModal: true})
   hideUploadModal = () => this.setState({showUploadModal: false})
 
@@ -116,17 +117,20 @@ class MessageEditor extends Component {
 
     this.sendMessage(this.state.message)
     this.setState({
-      message: ''
+      message: '',
+      height: 58,
     })
   }
 
-  handleKey = e => {
+  handleKeyDown = e => {
     if (e.keyCode === 13 && e.shiftKey === false) {
       e.preventDefault()
       this.handleEdit(e) // Update state to reflect input value before sending
-      this.sendMessageFromInput()
+      this.sendMessageFromInput() // Updates size
     }
+  }
 
+  handleKeyPress = e => {
     this.updateSize(e)
   }
 
