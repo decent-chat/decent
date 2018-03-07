@@ -11,6 +11,7 @@ class Message extends Component {
     const messages = Array.isArray(this.props.msg) ? this.props.msg : [this.props.msg]
 
     for (const message of messages) {
+      message.on('delete', () => this.forceUpdate())
       message.on('change', () => this.forceUpdate())
     }
   }
