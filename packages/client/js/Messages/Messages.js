@@ -6,7 +6,7 @@ const MessageEditor = require('./MessageEditor')
 // Not deep.
 const flatten = arr => [].concat(...arr)
 
-class MessageScroller extends Component {
+class Messages extends Component {
   static DOWN = 'DOWN'
   static UP = 'UP'
   static MAX_MESSAGE_COUNT = 50
@@ -56,12 +56,12 @@ class MessageScroller extends Component {
 
   // Clamp `messages.length` at `maxLength`, removing messages from the top/bottom
   // of the array based on `removeFromDirection`.
-  clampMessagesLength(removeFromDirection, messages = this.state.messages, maxLength = MessageScroller.MAX_MESSAGE_COUNT) {
+  clampMessagesLength(removeFromDirection, messages = this.state.messages, maxLength = Messages.MAX_MESSAGE_COUNT) {
     if (messages.length > maxLength) {
-      if (removeFromDirection === MessageScroller.DOWN) {
+      if (removeFromDirection === Messages.DOWN) {
         // Remove messages from the end of `messages`.
         messages.length = maxLength
-      } else if (removeFromDirection === MessageScroller.UP) {
+      } else if (removeFromDirection === Messages.UP) {
         // Remove messages from the start of `messages`.
         messages.splice(0, messages.length - maxLength)
       } else {
@@ -105,12 +105,12 @@ class MessageScroller extends Component {
       if (this.scrolledToBottom) this.scrollPos = 10000
 
       this.setState({
-        messages: MessageScroller.groupMessages(
+        messages: Messages.groupMessages(
           (do {
             const flat = flatten(this.state.messages)
 
-            if (flat.length > MessageScroller.MAX_MESSAGE_COUNT) {
-              flat.splice(0, flat.length - MessageScroller.MAX_MESSAGE_COUNT)
+            if (flat.length > Messages.MAX_MESSAGE_COUNT) {
+              flat.splice(0, flat.length - Messages.MAX_MESSAGE_COUNT)
             }
 
             flat
@@ -133,7 +133,7 @@ class MessageScroller extends Component {
 
     this.setState({
       isLoading: false,
-      messages: MessageScroller.groupMessages(messages),
+      messages: Messages.groupMessages(messages),
     })
   }
 
@@ -161,11 +161,11 @@ class MessageScroller extends Component {
       this.keepScrollAtAnchor(firstMessage)
 
       this.setState({
-        messages: MessageScroller.groupMessages(
+        messages: Messages.groupMessages(
           moreMessages.concat(do {
             const flat = flatten(this.state.messages)
 
-            if (flat.length > MessageScroller.MAX_MESSAGE_COUNT) flat.length = MessageScroller.MAX_MESSAGE_COUNT
+            if (flat.length > Messages.MAX_MESSAGE_COUNT) flat.length = Messages.MAX_MESSAGE_COUNT
             else this.showingLatestMessage = false
 
             flat
@@ -204,7 +204,7 @@ class MessageScroller extends Component {
       this.keepScrollAtAnchor(finalMessage)
 
       this.setState({
-        messages: MessageScroller.groupMessages(moreMessages, this.clampMessagesLength(MessageScroller.UP, this.state.messages, MessageScroller.MAX_MESSAGE_COUNT - moreMessages.length)),
+        messages: Messages.groupMessages(moreMessages, this.clampMessagesLength(Messages.UP, this.state.messages, Messages.MAX_MESSAGE_COUNT - moreMessages.length)),
       })
     } else {
       this.scrolledToBottom = true
@@ -241,10 +241,11 @@ class MessageScroller extends Component {
     this.channel = channel
 
     if (isLoading) {
-      return <div class='MessageList Loading'></div>
+      return <main>
+        <div class='ChannelHeader'></div>
+        <div class='MessageList Loading'></div>
+      </main>
     } else {
-      if(!channel) return <main></main>
-
       return <main>
         <div class='ChannelHeader'>{channel.toString()}</div>
         <InfiniteScroll
@@ -264,4 +265,4 @@ class MessageScroller extends Component {
   }
 }
 
-module.exports = MessageScroller
+module.exports = Messages
