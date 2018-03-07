@@ -33,7 +33,7 @@ class InfiniteScroll extends Component {
 
   handleScrollerRef = (reference) => { this.scroller = reference }
 
-  setScrollPosition(position = 0) {
+  setScrollPosition = (position = 0) => {
     if (this.props.horizontal) {
       this.scroller.scrollLeft = position
     } else {
@@ -137,7 +137,8 @@ class InfiniteScroll extends Component {
           WebkitOverflowScrolling: 'inherit',
           whiteSpace
         }}
-        onScroll={this.handleScroll}>
+        onScroll={this.handleScroll}
+      >
         {children}
       </div>
     )
