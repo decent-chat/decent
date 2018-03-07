@@ -1,6 +1,6 @@
 const { h, Component } = require('preact')
-const ServerList = require('./ServerList/ServerList')
-const ChannelList = require('./ChannelList/ChannelList')
+const ServerList = require('./ServerList')
+const ChannelList = require('./ChannelList')
 
 class LeftSidebar extends Component {
   render({ onJoinClick }) {

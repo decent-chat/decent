@@ -1,7 +1,7 @@
 const { h, Component } = require('preact')
 const mrk = require('mrk.js')
-const Modal = require('../../Modal/Modal')
-const Icon = require('../../Icon/Icon')
+const Modal = require('/Modal')
+const Icon = require('/Icon')
 
 class MessageEditor extends Component {
   constructor() {

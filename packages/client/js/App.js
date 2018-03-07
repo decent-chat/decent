@@ -1,18 +1,18 @@
 const { h, render, Component } = require('preact')
 const Provider = require('preact-context-provider')
-const Pool = require('./ServerPool/ServerPool')
+const Pool = require('./ServerPool')
 
 if (process.env !== 'production') {
   require('preact/debug')
   require('preact/devtools')
 }
 
-const LeftSidebar = require('./LeftSidebar/LeftSidebar')
-const RightSidebar = require('./RightSidebar/RightSidebar')
-const Modal = require('./Modal/Modal')
-const Icon = require('./Icon/Icon')
-const Toast = require('./Toast/Toast')
-const Messages = require('./Messages/Messages')
+const LeftSidebar = require('./LeftSidebar')
+const RightSidebar = require('./RightSidebar')
+const Modal = require('./Modal')
+const Icon = require('./Icon')
+const Toast = require('./Toast')
+const Messages = require('./Messages')
 
 class App extends Component {
   state = {

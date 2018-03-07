@@ -38,6 +38,7 @@
     "postcss-cli": "^5.0.0",
     "postcss-import": "^11.1.0",
     "postcss-nesting": "^4.2.1",
+    "resolve": "^1.5.0",
     "stringify": "^5.2.0",
     "watchify": "^3.9.0"
   },

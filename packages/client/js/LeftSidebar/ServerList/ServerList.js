@@ -1,5 +1,5 @@
 const { h, Component } = require('preact')
-const Modal = require('../../Modal/Modal')
+const Modal = require('/Modal')
 
 class ServerList extends Component {
   constructor() {

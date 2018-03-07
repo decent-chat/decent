@@ -1,7 +1,7 @@
 const { h, Component } = require('preact')
-const Message = require('./Message/Message')
-const InfiniteScroll = require('./InfiniteScroll/InfiniteScroll')
-const MessageEditor = require('./MessageEditor/MessageEditor')
+const Message = require('./Message')
+const InfiniteScroll = require('./InfiniteScroll')
+const MessageEditor = require('./MessageEditor')
 
 // Not deep.
 const flatten = arr => [].concat(...arr)

@@ -8,6 +8,9 @@
 
     // Transform JSX to h(...) function calls
     ['babel-plugin-transform-react-jsx', {pragma: 'h'}],
+
+    // Custom - routes require('~Component') to ./Component/Component.js.
+    './transform',
   ],
 
   env: {

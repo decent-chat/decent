@@ -1,6 +1,6 @@
 const Client = require('decent.js')
 const EventEmitter = require('eventemitter3')
-const Atom = require('./Atom/Atom')
+const Atom = require('./Atom')
 
 class Pool {
   static clientEvents = ['disconnect', 'reconnect', 'namechange', 'login', 'logout']

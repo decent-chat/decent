@@ -1,6 +1,6 @@
 const { h, Component } = require('preact')
-const Icon = require('../Icon/Icon')
-const UserList = require('./UserList/UserList')
+const Icon = require('/Icon')
+const UserList = require('./UserList')
 
 class RightSidebar extends Component {
   render({ }) {
