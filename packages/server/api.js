@@ -432,6 +432,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         authorUsername: sessionUser.username,
         authorEmail: sessionUser.email,
         authorFlair: sessionUser.flair,
+        type: 'user',
         text: request.body.text,
         date: Date.now() - 1,
         editDate: null,
