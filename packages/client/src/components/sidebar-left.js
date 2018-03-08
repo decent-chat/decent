@@ -420,7 +420,18 @@ const store = (state, emitter) => {
   })
 
   async function loadSessionID(sessionID) {
-    const { user } = await api.get(state, 'sessions/' + sessionID)
+    let response
+    try {
+      response = await api.get(state, 'sessions/' + sessionID)
+    } catch (error) {
+      if (error.code === 'NOT_FOUND') {
+        response = {}
+      } else {
+        throw error
+      }
+    }
+
+    const { user } = response
     if (user) {
       state.session = { id: sessionID, user }
       state.sessionAuthorized = user.authorized

@@ -127,6 +127,13 @@ app.use((state, emitter) => {
         break handleHostChange
       }
 
+      if (typeof state.params.host === 'undefined') {
+        state.ws = null
+        state.secure = false
+        state.serverRequiresAuthorization = false
+        break handleHostChange
+      }
+
       const { properties: { useSecure, useAuthorization } } = await api.get(state, 'properties')
       const { settings: { authorizationMessage } } = await api.get(state, 'settings')
 
