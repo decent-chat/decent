@@ -230,9 +230,13 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  app.get('/api/', (request, response) => {
+  app.get('/api/', async (request, response) => {
+    const { https } = await getAllSettings(db.settings, serverPropertiesID)
+
     response.status(200).json({
-      decentVersion: packageObj.version
+      implementation: '@decent/server',
+      decentVersion: packageObj.version,
+      useSecureProtocol: https === 'on'
     })
   })
 
@@ -408,20 +412,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       })
 
       response.status(status).json({results})
-    }
-  ])
-
-  app.get('/api/properties', [
-    async (request, response) => {
-      const { https } = await db.settings.findOne({_id: serverPropertiesID})
-      const useAuthorization = await shouldUseAuthorization()
-
-      response.status(200).json({
-        properties: {
-          useSecure: https === 'on',
-          useAuthorization
-        }
-      })
     }
   ])
 
