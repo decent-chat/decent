@@ -15,7 +15,7 @@ const packageObj = require('./package.json')
 const mkdir = util.promisify(fs.mkdir)
 
 const {
-  serverSettingsID, serverPropertiesID, setSetting,
+  serverSettingsID, serverPropertiesID, setSetting, getAllSettings
 } = require('./settings')
 const errors = require('./errors')
 
@@ -384,7 +384,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  app.post('/api/settings', [
+  app.patch('/api/settings', [
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requireBeAdmin('sessionUser'),
@@ -394,11 +394,20 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       const results = {}
 
+      let status = 200
       for (const [ key, value ] of Object.entries(request.body)) {
-        results[key] = await setSetting(db.settings, serverSettingsID, key, value)
+        const result = await setSetting(db.settings, serverSettingsID, key, value)
+        if (result !== 'updated') {
+          results[key] = result
+          status = 400
+        }
       }
 
-      response.status(200).json({results})
+      sendToAllSockets('server-settings/update', {
+        settings: await getAllSettings(serverSettingsID)
+      })
+
+      response.status(status).json({results})
     }
   ])
 
