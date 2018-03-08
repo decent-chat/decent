@@ -62,7 +62,10 @@ const store = (state, emitter) => {
   emitter.on('login', () => {
     if (state.session.user) {
       if (state.userList.users) {
-        state.userList.users.find(u => u.id === state.session.user.id).online = true
+        const user = state.userList.users.find(u => u.id === state.session.user.id)
+        if (user) {
+          user.online = true
+        }
       } else if (state.serverRequiresAuthorization) {
         // If the server requires authorization, now is a good time to fetch the
         // user list.
