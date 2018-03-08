@@ -15,6 +15,7 @@ test('serialize.message', t => {
       authorID: '234',
       authorUsername: 'jen',
       authorFlair: 'spooks',
+      type: 'user',
       text: 'Hello!',
       date, editDate,
       channelID: '345',
@@ -23,12 +24,13 @@ test('serialize.message', t => {
 
     const serialized = await serialize.message(message)
 
-    t.deepEqual(Object.keys(serialized), ['id', 'authorUsername', 'authorID', 'authorFlair', 'authorAvatarURL', 'text', 'date', 'editDate', 'channelID', 'reactions', 'mentionedUserIDs'])
+    t.deepEqual(Object.keys(serialized), ['id', 'authorUsername', 'authorID', 'authorFlair', 'authorAvatarURL', 'type', 'text', 'date', 'editDate', 'channelID', 'reactions', 'mentionedUserIDs'])
     t.is(serialized.id, '123')
     t.is(serialized.authorUsername, 'jen')
     t.is(serialized.authorID, '234')
     t.is(serialized.authorFlair, 'spooks')
     t.is(typeof serialized.authorAvatarURL, 'string')
+    t.is(serialized.type, 'user')
     t.is(serialized.text, 'Hello!')
     t.is(serialized.date, date)
     t.is(serialized.editDate, editDate)
