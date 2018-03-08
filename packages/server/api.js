@@ -31,6 +31,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   const serialize = makeSerializers({db, util})
 
   const {
+    asUnixDate, unixDateNow,
     getUserIDBySessionID,
     getUserBySessionID,
     emailToAvatarURL,
@@ -125,7 +126,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   const markChannelAsRead = async function(userObj, channelID, emitEvent = true) {
     await db.users.update({_id: userObj._id}, {
       $set: {
-        [`lastReadChannelDates.${channelID}`]: Date.now()
+        [`lastReadChannelDates.${channelID}`]: unixDateNow()
       }
     })
 
@@ -433,7 +434,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         authorEmail: sessionUser.email,
         authorFlair: sessionUser.flair,
         text: request.body.text,
-        date: Date.now() - 1,
+        date: unixDateNow() - 1,
         editDate: null,
         channelID: channelID,
         reactions: {}
@@ -525,7 +526,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       const [ numAffected, newMessage ] = await db.messages.update({_id: oldMessage._id}, {
         $set: {
           text,
-          editDate: Date.now()
+          editDate: unixDateNow()
         }
       }, {
         multi: false,
@@ -1263,7 +1264,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         const session = await db.sessions.insert({
           _id: uuidv4(),
           userID: user._id,
-          dateCreated: Date.now()
+          dateCreated: unixDateNow()
         })
 
         response.status(200).json({
@@ -1462,7 +1463,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
     await db.sessions.remove({
       $where: function() {
-        return Date.now() - this.dateCreated > maximumLifetime
+        return unixDateNow() - this.dateCreated > maximumLifetime
       }
     }, {multi: true})
   }
