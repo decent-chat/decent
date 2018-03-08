@@ -134,15 +134,11 @@ app.use((state, emitter) => {
         break handleHostChange
       }
 
-      const { properties: { useSecure, useAuthorization } } = await api.get(state, 'properties')
+      const { useSecureProtocol } = await api.get(state, '/')
       const { settings: { authorizationMessage } } = await api.get(state, 'settings')
 
-      state.serverRequiresAuthorization = useAuthorization
-      state.secure = useSecure
-
-      if (useAuthorization) {
-        state.authorizationMessage = authorizationMessage
-      }
+      state.serverRequiresAuthorization = false
+      state.secure = useSecureProtocol
 
       state.ws = new util.WS(state.params.host, state.secure)
 

@@ -11,6 +11,16 @@ const defaultSettings = {
     // The name of the server.
     name: {value: 'Unnamed Decent chat server'},
 
+    // The URL to the server icon.
+    iconURL: {
+      value: '',
+      validationFn: string => {
+        if (typeof string !== 'string') {
+          throw 'not a string'
+        }
+      }
+    },
+
     // Authorization message displayed to users who are logged in but not
     // authorized to participate in the server. Must be less than 800
     // characters long, and supports Markdown.
@@ -96,6 +106,10 @@ module.exports.setSetting = async function(settingsDB, categoryID, key, value) {
   })
 
   return 'updated'
+}
+
+module.exports.getAllSettings = async function(settingsDB, categoryID) {
+  return await settingsDB.findOne({_id: categoryID}, {_id: false})
 }
 
 Object.assign(module.exports, {
