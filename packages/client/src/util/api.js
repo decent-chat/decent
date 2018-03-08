@@ -6,6 +6,9 @@ async function fetchHelper(state, path, fetchConfig = {}) {
   if (!state) throw new Error('No state argument given')
   if (!path) throw new Error('No path argument given')
 
+  // Let '/' be passed to target the root path (/api).
+  if (path === '/') path = ''
+
   let secure = false, host = state
   if (typeof state === 'object') {
     secure = state.secure
