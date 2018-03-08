@@ -13,8 +13,8 @@ module.exports = function makeSerializers({util, db}) {
       authorAvatarURL: emailToAvatarURL(m.authorEmail || m.authorID),
       type: m.type,
       text: m.text,
-      date: m.date,
-      editDate: m.editDate,
+      dateCreated: m.dateCreated,
+      dateEdited: m.dateEdited,
       channelID: m.channelID,
       reactions: m.reactions,
       mentionedUserIDs: await util.getMentionsFromMessageContent(m.text),
@@ -30,8 +30,8 @@ module.exports = function makeSerializers({util, db}) {
         online: isUserOnline(u._id),
         mentions: (await Promise.all((u.mentionedInMessageIDs || []).map(async msgID => await serialize.message(await db.messages.findOne({_id: msgID}), sessionUser)))).sort((a, b) => {
           // Sort by latest edited/created first.
-          if ((a.editDate || a.date) > (b.editDate || b.date)) return -1
-          if ((a.editDate || a.date) < (b.editDate || b.date)) return +1
+          if ((a.dateEdited || a.dateCreated) > (b.dateEdited || b.dateCreated)) return -1
+          if ((a.dateEdited || a.dateCreated) < (b.dateEdited || b.dateCreated)) return +1
           return 0
         }),
       }

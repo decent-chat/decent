@@ -51,7 +51,7 @@ test('PATCH /api/messages/:id', t => {
 
     const { message: messageOld } = await fetch(port, '/messages/' + messageID)
     t.is(messageOld.text, 'hello')
-    t.is(messageOld.editDate, null)
+    t.is(messageOld.dateEdited, null)
 
     const response = await fetch(port, '/messages/' + messageID, {
       method: 'PATCH',
@@ -63,7 +63,7 @@ test('PATCH /api/messages/:id', t => {
 
     const { message: messageNew } = await fetch(port, '/messages/' + messageID)
     t.is(messageNew.text, 'goodbye')
-    t.is(typeof messageNew.editDate, 'number')
+    t.is(typeof messageNew.dateEdited, 'number')
 
     const { sessionID: sessionID2 } = await makeUser(server, port)
     try {

@@ -114,7 +114,7 @@ test('getUnreadMessageCountInChannel', t => {
     t.is(await util.getUnreadMessageCountInChannel(user, channelID), 2)
 
     await Promise.all(new Array(210).fill(0).map(() =>
-      server.db.messages.insert({date: Date.now(), channelID})
+      server.db.messages.insert({dateCreated: Date.now(), channelID})
     ))
     t.is(await util.getUnreadMessageCountInChannel(user, channelID), 200)
   })

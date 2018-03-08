@@ -93,7 +93,7 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
     }
 
     const cursor = db.messages.ccount({
-      date: {$gt: date},
+      dateCreated: {$gt: date},
       channelID
     }).limit(200)
     const count = await cursor.exec()
@@ -111,7 +111,7 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
     }
 
     const message = await db.messages.findOne({
-      date: {$gt: date},
+      dateCreated: {$gt: date},
       channelID
     })
 

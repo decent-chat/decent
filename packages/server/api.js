@@ -434,8 +434,8 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         authorFlair: sessionUser.flair,
         type: 'user',
         text: request.body.text,
-        date: unixDateNow() - 1,
-        editDate: null,
+        dateCreated: unixDateNow() - 1,
+        dateEdited: null,
         channelID: channelID,
         reactions: {}
       })
@@ -526,7 +526,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       const [ numAffected, newMessage ] = await db.messages.update({_id: oldMessage._id}, {
         $set: {
           text,
-          editDate: unixDateNow()
+          dateEdited: unixDateNow()
         }
       }, {
         multi: false,
@@ -765,27 +765,27 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       const query = {channelID}
 
       if (beforeMessage || afterMessage) {
-        query.date = {}
+        query.dateCreated = {}
 
         if (beforeMessage) {
-          query.date.$lt = beforeMessage.date
+          query.dateCreated.$lt = beforeMessage.dateCreated
         }
 
         if (afterMessage) {
-          query.date.$gt = afterMessage.date
+          query.dateCreated.$gt = afterMessage.dateCreated
         }
       }
 
-      const sort = {date: -1}
+      const sort = {dateCreated: -1}
 
       if (afterMessage) {
-        sort.date = +1
+        sort.dateCreated = +1
       }
 
-      // We sort the messages by NEWEST date ({date: -1}), so that we're returned
-      // the newest messages, but then we reverse the array, so that the actual
-      // data returned from the API is sorted by oldest first. (This is so that
-      // appending message elements is easier.)
+      // We sort the messages by NEWEST creation date ({dateCreated: -1}), so
+      // that we're returned the newest messages, but then we reverse the array,
+      // therefore the data returned from the API is sorted by oldest first.
+      // (This is so that appending message elements is easier.)
 
       // TODO: If there is more than 50, show that somehow.
       // TODO: Store 50 as a constant somewhere?
@@ -793,7 +793,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       cursor.sort(sort)
       cursor.limit(limit ? Math.max(1, Math.min(50, parseInt(limit))) : 50)
       const messages = await cursor.exec()
-      if (sort.date === -1) {
+      if (sort.dateCreated === -1) {
         messages.reverse()
       }
 
