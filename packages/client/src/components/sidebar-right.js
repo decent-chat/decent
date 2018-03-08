@@ -232,6 +232,8 @@ const component = (state, emit) => {
             }, {withActions: false, showFlair: false, msgIDprefix: 'mentioned-msg-'})
 
             group.style.pointerEvents = 'none'
+            group.style.width = '100%'
+            group.style.overflowWrap = 'break-word'
 
             return html`
               <div class='Sidebar-list-item' onclick=${() => {
@@ -274,6 +276,8 @@ const component = (state, emit) => {
             }, {withActions: false, showFlair: false, msgIDprefix: 'pinned-msg-'})
 
             group.style.pointerEvents = 'none'
+            group.style.width = '100%'
+            group.style.overflowWrap = 'break-word'
 
             return html`
               <div class='Sidebar-list-item' onclick=${() => {

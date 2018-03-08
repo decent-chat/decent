@@ -131,7 +131,7 @@ const withState = state => {
     },
 
     extendHtmlify: {
-      link: ({ metadata }) => `<a class='Link' target='_blank' rel='noopener noreferrer' href='${mark.escapeHTML(metadata.href).replace('javascript:', '')}'>
+      link: ({ metadata }) => `<a class='Link' target='_blank' rel='noopener noreferrer' href='${mark.sanitizeURL(mark.escapeHTML(metadata.href))}'>
         ${mark.escapeHTML(metadata.name)}
       </a>`,
 
@@ -140,7 +140,7 @@ const withState = state => {
       </a>`,
 
       image({ metadata }) {
-        const src = mark.escapeHTML(metadata.src)
+        const src = mark.sanitizeURL(mark.escapeHTML(metadata.src))
         const alt = mark.escapeHTML(metadata.alt)
 
         return `<a href='${src}' target='_blank' class='Message-image'>

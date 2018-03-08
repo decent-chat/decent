@@ -129,7 +129,7 @@ const component = (state, emit) => {
       const row = html`
         <tr data-sessionid=${session.id}>
           <td>
-            Created: ${timeAgo(session.dateCreated).string}
+            ${timeAgo(session.dateCreated).string}
             ${session.id === state.session.id ? '(Current)' : ''}
           </td>
           <td>
@@ -148,12 +148,12 @@ const component = (state, emit) => {
   return html`<div class='Page AccountSettings'>
     <h1 class='Page-title AccountSettings-title'>Account settings <span class='Page-subtitle'>for ${state.params.host}</span></h1>
 
-    <div class='Input --horizontal AccountSettings-input'>
+    <div class='Input AccountSettings-input'>
       <label for='acc-settings-username'>Username</label>
       <input id='acc-settings-username' type='text' disabled value=${state.session.user.username}/>
     </div>
 
-    <div class='Input --horizontal AccountSettings-input --avatar'>
+    <div class='Input AccountSettings-input --avatar'>
       <label for='acc-settings-email'>Avatar</label>
 
       <input id='acc-settings-email' type='email' placeholder='Email address' value=${state.session.user.email || ''}/>
@@ -164,14 +164,14 @@ const component = (state, emit) => {
       We use <a class='Link' href='https://www.libravatar.org/'>Libravatar</a> for avatars, which falls back to Gravatar.
     </p>
 
-    <div class='Input --horizontal AccountSettings-input'>
+    <div class='Input AccountSettings-input'>
       <label for='acc-settings-flair'>Flair</label>
       <input id='acc-settings-flair' type='text' placeholder='(None)' maxlength=50 value=${state.session.user.flair || ''}/>
     </div>
 
     <div class='AccountSettings-submit'>
-      <span class='AccountSettings-submit-status'></span>
       <button class='Button' onclick=${save}>Save</button>
+      <span class='AccountSettings-submit-status'></span>
     </div>
 
     <h2 class='AccountSettings-loginSessionsTitle'>Login sessions</h2>
@@ -187,6 +187,13 @@ const component = (state, emit) => {
           onclick=${() => emit('accountSettings.deleteAllSessions')}
         >Delete all login sessions</button></p>
         <table class='Table'>
+          <thead>
+            <tr>
+              <th>Created</th>
+              <th>Session Code</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
           <tbody>
             ${sessionRows}
           </tbody>

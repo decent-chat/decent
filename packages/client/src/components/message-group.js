@@ -84,7 +84,7 @@ const component = (state, emit, group, { withActions = true, showFlair = true, m
 
         const el = html`<div class='Message ${bigEmotes ? '--big-emotes' : ''}' id=${msgIDprefix + msg.id}>
           <div class='Message-content'>${raw(mrked.html())}</div>
-          <div class='Message-fillerLine'></div>
+          ${withActions ? html`<div class='Message-fillerLine'></div>` : document.createTextNode('')}
           ${withActions ? html`
             <div class='Message-actions'>
               ${state.session.user && msg.authorID === state.session.user.id

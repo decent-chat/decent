@@ -3,7 +3,7 @@
   --messageEditor-bg: var(--input-bg);
 
   --messageEditor-border-color: var(--input-border-color);
-}
+  }
 
 .MessageEditor {
   display: flex;
@@ -24,7 +24,7 @@
   flex: 1 1 0;
 
   padding: 16px;
-  margin-right: 16px;
+  margin-right: 16px;  
 
   height: 58px;
   min-height: 58px;
@@ -55,7 +55,8 @@
   background-image: url('/img/send.svg');
   background-size: default;
   background-position: center;
-
+  background-repeat: no-repeat;
+  
   cursor: pointer;
 }
 

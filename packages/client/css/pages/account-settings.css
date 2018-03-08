@@ -6,10 +6,6 @@
   box-shadow: 0 0 16px -4px #00000044;
 }
 
-.AccountSettings-title {
-  margin-left: 180px;
-}
-
 .AccountSettings-input {
   & > p {
     line-height: 1.6;
@@ -27,11 +23,11 @@
       width: 50px;
       height: 50px;
 
-      margin-left: 24px;
+      margin-left: 8px;
+      vertical-align: bottom;
     }
 
     & + p {
-      margin-left: 180px;
       color: var(--gray-300);
 
       & a {
@@ -51,8 +47,6 @@
 
 .AccountSettings-submit {
   display: block;
-  margin: 80px 0 20px auto;
-  float: right;
 }
 
 .AccountSettings-submit-status {
@@ -61,7 +55,6 @@
 
 .AccountSettings-loginSessionsTitle {
   clear: right;
-  border-top: 1px solid var(--gray-500);
   padding-top: 36px;
 }
 
