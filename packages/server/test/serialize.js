@@ -7,7 +7,7 @@ let portForSerializeTests = 23000
 
 test('serialize.message', t => {
   return testWithServer(portForSerializeTests++, async ({ serialize }) => {
-    const dateCreated = Math.floor(Date.now() / 1000), dateEdited = dateCreated - 5
+    const dateCreated = Date.now() / 1000, dateEdited = dateCreated - 5
     const reactions = {} // TODO: Actually check how reactions are serialized.
 
     const message = {
@@ -32,8 +32,8 @@ test('serialize.message', t => {
     t.is(typeof serialized.authorAvatarURL, 'string')
     t.is(serialized.type, 'user')
     t.is(serialized.text, 'Hello!')
-    t.is(serialized.dateCreated, dateCreated)
-    t.is(serialized.dateEdited, dateEdited)
+    t.is(serialized.dateCreated, Math.floor(dateCreated))
+    t.is(serialized.dateEdited, Math.floor(dateEdited))
     t.is(serialized.channelID, '345')
     t.deepEqual(serialized.mentionedUserIDs, [])
     t.deepEqual(serialized.reactions, reactions)
@@ -96,13 +96,13 @@ test('serialize.session', t => {
   return testWithServer(portForSerializeTests++, async ({ serialize, server, port }) => {
     const { user, sessionID } = await makeUser(server, port)
 
-    const dateCreated = Date.now()
+    const dateCreated = Date.now() / 1000
     const session = {_id: sessionID, dateCreated, userID: user._id}
     const serialized = await serialize.session(session)
 
     t.deepEqual(Object.keys(serialized), ['id', 'dateCreated'])
     t.is(serialized.id, sessionID)
-    t.is(serialized.dateCreated, dateCreated)
+    t.is(serialized.dateCreated, Math.floor(dateCreated))
   })
 })
 

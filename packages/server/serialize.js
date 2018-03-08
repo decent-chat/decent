@@ -13,8 +13,8 @@ module.exports = function makeSerializers({util, db}) {
       authorAvatarURL: emailToAvatarURL(m.authorEmail || m.authorID),
       type: m.type,
       text: m.text,
-      dateCreated: m.dateCreated,
-      dateEdited: m.dateEdited,
+      dateCreated: Math.floor(m.dateCreated),
+      dateEdited: m.dateEdited ? Math.floor(m.dateEdited) : null,
       channelID: m.channelID,
       reactions: m.reactions,
       mentionedUserIDs: await util.getMentionsFromMessageContent(m.text),
@@ -49,7 +49,7 @@ module.exports = function makeSerializers({util, db}) {
 
     session: async s => ({
       id: s._id,
-      dateCreated: s.dateCreated
+      dateCreated: Math.floor(s.dateCreated),
     }),
 
     channel: async (c, sessionUser = null) => {

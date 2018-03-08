@@ -11,7 +11,7 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
   // regex can be updated.
   const isNameValid = name => /^[a-zA-Z0-9_-]+$/g.test(name)
 
-  const asUnixDate = jsDate => Math.floor(jsDate / 1000)
+  const asUnixDate = jsDate => jsDate / 1000
   const unixDateNow = () => asUnixDate(Date.now())
 
   const getUserIDBySessionID = async function(sessionID) {
