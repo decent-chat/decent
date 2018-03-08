@@ -1,7 +1,7 @@
 const raw = require('choo/html/raw')
 const html = require('choo/html')
 const { svg, mrk, api } = require('../util')
-const { timeAgo } = require('../util/date')
+const { asJSDate, timeAgo } = require('../util/date')
 
 // times are updated outside of choo because we don't need to
 // diff the entire tree just to modify times
@@ -52,12 +52,12 @@ const component = (state, emit, group, { withActions = true, showFlair = true, m
     await api.delete(state, `messages/${msg.id}`)
   }
 
-  const timeEl = date => {
-    const { needsUpdate, string } = timeAgo(date)
+  const timeEl = unixDate => {
+    const { needsUpdate, string } = timeAgo(unixDate)
 
     return html`<time class=${needsUpdate ? 'needs-update': ''}
-         title=${new Date(date).toLocaleString()}
-         data-date=${date.toString()}>
+         title=${new Date(asJSDate(unixDate)).toLocaleString()}
+         data-date=${unixDate.toString()}>
       ${string}
     </time>`
   }
