@@ -11,11 +11,9 @@ const defaultSettings = {
     // The name of the server.
     name: {value: 'Unnamed Decent chat server'},
 
-    // The path to the server icon. This is always appended to the hostname
-    // of the server, and should usually be set to an image upload path.
-    iconPath: {
+    // The URL to the server icon.
+    iconURL: {
       value: '',
-
       validationFn: string => {
         if (typeof string !== 'string') {
           throw 'not a string'

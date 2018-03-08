@@ -198,7 +198,7 @@ This endpoint may return [an error](#errors), namely FAILED, NO, or NOT_ALLOWED.
 ```js
 {
   "name": string,
-  "iconPath": string,
+  "iconURL": string,
 }
 ```
 
@@ -222,7 +222,7 @@ GET /api/settings
 <- {
 <-   "settings": {
 <-     "name": "Unnamed Decent chat server",
-<-     "iconPath": "/uploads/..."
+<-     "iconURL": "https://meta.decent.chat/uploads/..."
 <-   }
 <- }
 ```
@@ -230,7 +230,7 @@ GET /api/settings
 ### Modify settings [PATCH /api/settings]
 + requires [permission](#permissions): `manageServer`
 + `name` (string; optional)
-+ `iconPath` (string; optional)
++ `iconURL` (string; optional)
 
 Returns `{}` if successful. Updates settings with new values provided, and emits [server-settings/update](#server-settings-update).
 
