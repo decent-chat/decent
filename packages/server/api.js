@@ -1250,6 +1250,18 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
+  app.get('/api/roles/:id', [
+    async (request, response) => {
+      const role = await db.roles.findOne({_id: request.params.id})
+
+      if (role) {
+        response.status(200).json({role: await serialize.role(role)})
+      } else {
+        response.status(404).json({error: errors.NOT_FOUND})
+      }
+    }
+  ])
+
   app.post('/api/roles', [
     // TODO: Permissions for this. Well, and everything else. But also this.
     ...middleware.loadVarFromBody('name'),
@@ -1267,9 +1279,41 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         name, permissions
       })
 
-      response.status(201).json({
+      const serialized = await serialize.role(role)
+
+      sendToAllSockets('role/new', {role: serialized})
+
+      response.status(201).json({role: serialized})
+    }
+  ])
+
+  app.patch('/api/roles/:id', [
+    // TODO: Permissions for this.
+    ...middleware.loadVarFromParams('id'),
+    ...middleware.loadVarFromBody('name', false),
+    ...middleware.loadVarFromBody('permissions', false),
+    ...middleware.runIfVarExists('name',
+      middleware.validateVar('name', validate.roleName)
+    ),
+    ...middleware.runIfVarExists('permissions',
+      middleware.validateVar('permissions', validate.permissionsObject)
+    ),
+    // TODO: Also error 403 here, just like when creating a role.
+
+    async (request, response) => {
+      const { id, name, permissions } = request[middleware.vars]
+
+      const $set = {}
+      if (typeof name !== 'undefined') $set.name = name
+      if (typeof permissions !== 'undefined') $set.permissions = permissions
+
+      const role = await db.roles.update({_id: id}, {$set}, {multi: false})
+
+      sendToAllSockets('role/update', {
         role: await serialize.role(role)
       })
+
+      response.status(200).json({})
     }
   ])
 

@@ -1179,7 +1179,7 @@ Sent to all clients when a role is [deleted](#delete-role). Passed data is in th
 <a name='list-roles'></a>
 ### List roles [GET /api/roles]
 
-Returns `{ roles }`, where `roles` is an array of emote objects.
+Returns `{ roles }`, where `roles` is an array of role objects.
 
 ```js
 GET /api/roles
@@ -1187,11 +1187,28 @@ GET /api/roles
 <- {
 <-   "roles": [
 <-     {
-<-       "id": ID,
+<-       "id": "_everyone",
 <-       "name": "Everyone",
 <-       "permissions": ...
 <-     }
 <-   ]
+<- }
+```
+
+<a name='get-role'></a>
+### Retrieve a role by ID [GET /api/roles/:id]
+
+Returns `{ role }`.
+
+```js
+GET /api/roles/_everyone
+
+<- {
+<-   "role": {
+<-     "id": "_everyone",
+<-     "name": "Everyone",
+<-     "permissions": ...
+<-   }
 <- }
 ```
 
