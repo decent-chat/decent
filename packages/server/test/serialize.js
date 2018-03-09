@@ -32,8 +32,8 @@ test('serialize.message', t => {
     t.is(typeof serialized.authorAvatarURL, 'string')
     t.is(serialized.type, 'user')
     t.is(serialized.text, 'Hello!')
-    t.is(serialized.dateCreated, Math.floor(dateCreated))
-    t.is(serialized.dateEdited, Math.floor(dateEdited))
+    t.is(serialized.dateCreated, dateCreated)
+    t.is(serialized.dateEdited, dateEdited)
     t.is(serialized.channelID, '345')
     t.deepEqual(serialized.mentionedUserIDs, [])
     t.deepEqual(serialized.reactions, reactions)
@@ -102,7 +102,7 @@ test('serialize.session', t => {
 
     t.deepEqual(Object.keys(serialized), ['id', 'dateCreated'])
     t.is(serialized.id, sessionID)
-    t.is(serialized.dateCreated, Math.floor(dateCreated))
+    t.is(serialized.dateCreated, dateCreated)
   })
 })
 
