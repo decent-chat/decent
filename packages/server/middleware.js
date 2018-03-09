@@ -1,4 +1,5 @@
 const errors = require('./errors')
+const { permissionKeys } = require('./roles')
 
 module.exports.makeMiddleware = function({db, util}) {
   const {
@@ -362,9 +363,19 @@ const validate = {
   string: Object.assign(function(x) {
     return typeof x === 'string'
   }, {description: 'a string'}),
+
   object: Object.assign(function(x) {
     return typeof x === 'object' && !Array.isArray(x)
   }, {description: 'an object'}),
+
+  roleName: Object.assign(function(x) {
+    return typeof x === 'string' && x.length <= 32
+  }, {description: 'a role name (<= 32 chars)'}),
+
+  permissionsObject: Object.assign(function(x) {
+    return typeof x === 'object' && Object.keys(x).every(k => permissionKeys.includes(k))
+  }, {description: 'a permissions object'}),
+
   defined: Object.assign(function(x) {
     return typeof x !== 'undefined'
   }, {description: 'defined'})

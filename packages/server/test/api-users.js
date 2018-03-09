@@ -251,19 +251,6 @@ test('PATCH /api/users/:id', t => {
     t.is(updatedUser.flair, 'Best of all the test users')
     t.is(updatedUser.email, undefined)
 
-    // Changing flair and permissionLevel (as admin!)
-    await fetch(port, `/users/${user.id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({
-        sessionID: adminSessionID,
-
-        flair: 'Best admin',
-        permissionLevel: 'admin',
-      })
-    })
-
-    updatedUser = await getUser()
-    t.is(updatedUser.flair, 'Best admin')
-    t.is(updatedUser.permissionLevel, 'admin')
+    // TODO: Test changing role permissions.
   })
 })

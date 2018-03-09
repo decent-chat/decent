@@ -58,18 +58,17 @@ test('serialize.user', t => {
       passwordHash: 'hash',
       salt: 'salt',
       email: 'user1@nonfree.news',
-      permissionLevel: 'member',
-      authorized: true,
+      roleIDs: [],
       lastReadChannelDates: {}
     }
 
     const serialized = await serialize.user(user)
-    const baseProperties = ['id', 'username', 'flair', 'avatarURL', 'permissionLevel', 'online', 'mentions']
+    const baseProperties = ['id', 'username', 'flair', 'avatarURL', 'roleIDs', 'online', 'mentions']
     t.deepEqual(Object.keys(serialized), baseProperties)
     t.is(serialized.id, 'user1')
     t.is(serialized.username, 'user')
     t.is(typeof serialized.avatarURL, 'string')
-    t.is(serialized.permissionLevel, 'member')
+    t.deepEqual(serialized.roleIDs, [])
     t.false(serialized.online)
 
     const fakeSocket = {}
@@ -84,11 +83,6 @@ test('serialize.user', t => {
     const serialized3 = await serialize.user(user, sessionUser)
     t.deepEqual(Object.keys(serialized3), baseProperties.concat(['email']))
     t.is(serialized3.email, 'user1@nonfree.news')
-
-    await server.settings.setSetting(server.db.settings, server.settings.serverPropertiesID, 'requireAuthorization', 'on')
-    const serialized4 = await serialize.user(user, sessionUser)
-    t.deepEqual(Object.keys(serialized4), baseProperties.concat(['email', 'authorized']))
-    t.true(serialized4.authorized)
   })
 })
 

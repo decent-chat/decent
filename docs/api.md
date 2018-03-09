@@ -122,8 +122,8 @@ We look at the final permission object: `{readMessages: false, sendMessages: fal
 The actual priority of permission objects is determined according to the roles applied to the user and channel-specific permissions (which are dependent on the roles), and the order is determined as follows:
 
 * Channel-specific permissions for roles of the user (Most priority.)
-* Channel-specific permissions for the user role, if the user is a logged-in member of the server, or the guest role, if the user is not logged in (IDs "_user" and "_guest" respectively)
-* Channel-specific permissions for the everyone role (ID "_everyone")
+* Channel-specific permissions for the user role, if the user is a logged-in member of the server, or the guest role, if the user is not logged in (IDs "\_user" and "\_guest" respectively)
+* Channel-specific permissions for the everyone role (ID "\_everyone")
 * Server-wide permissions for roles of the user
 * Server-wide permissions for the user or guest role, as above
 * Server-wide permissions for the everyone role (Least priority.)
@@ -767,7 +767,7 @@ GET /api/channels/5678/messages?after=1234
 + **in-url** id (ID)
 + **rolePermissions** - an object map of role IDs to their permissions
 
-Returns `{}` if successful. Note that if the **roles** parameter, unspecified role permissions on the channel will not be changed. To delete an entry, pass `{}` as the role's permissions; since this would reset the role's permissions all to unset, the role would have no effect, and is removed from the channel's `rolePermissions` map.
+Returns `{}` if successful. Note that if a role is not specified on the **roles** parameter, its permissions on the channel will not be changed. To delete an entry, pass `{}` as the role's permissions; since this would reset the role's permissions all to unset, the role would have no effect, and is removed from the channel's `rolePermissions` map.
 
 ```js
 PATCH /api/channels/1234/role-permissions
@@ -874,7 +874,7 @@ DELETE /api/channels/5678/pins/1234
   "flair": string | null,
 
   "online": boolean,
-  "roles": array, // Array of string IDs for each role the user has, not including "_user" or "_everyone",
+  "roleIDs": array, // Array of string IDs for each role the user has, not including "_user" or "_everyone",
 
   "email": string | null // Only provided if the requested user is the same as the sessionID provides
 }
@@ -1042,7 +1042,7 @@ GET /api/users/1/mentions?limit=1
 
 **The following parameters are available to sessions with the `manageRoles` [permission](#permissions):**
 
-+ `roles`: (array of [role IDs](#roles); optional) - Used to generate `user.permissions`)
++ `roleIDs`: (array of [role IDs](#roles); optional) - Used to generate `user.permissions`)
 
 Returns `{}` and applies changes, assuming a valid session for this user (or an admin) is provided and no errors occur. Also emits [user/update](#user-update).
 
@@ -1067,7 +1067,7 @@ PATCH /api/users/12
 (with session representing an admin)
 
 -> {
-->   "roles": [ "id-of-role", "id-of-role-2" ],
+->   "roleIDs": [ "id-of-role", "id-of-role-2" ],
 ->   "flair": null
 -> }
 

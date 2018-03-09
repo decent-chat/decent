@@ -26,7 +26,7 @@ module.exports = function makeSerializers({util, db}) {
         username: u.username,
         flair: u.flair,
         avatarURL: emailToAvatarURL(u.email || u._id),
-        permissionLevel: u.permissionLevel,
+        roleIDs: u.roleIDs,
         online: isUserOnline(u._id),
         mentions: (await Promise.all((u.mentionedInMessageIDs || []).map(async msgID => await serialize.message(await db.messages.findOne({_id: msgID}), sessionUser)))).sort((a, b) => {
           // Sort by latest edited/created first.
@@ -38,14 +38,16 @@ module.exports = function makeSerializers({util, db}) {
 
       if (sessionUser && sessionUser._id === u._id) {
         obj.email = u.email || null
-
-        if (await shouldUseAuthorization()) {
-          obj.authorized = u.authorized || false
-        }
       }
 
       return obj
     },
+
+    role: async s => ({
+      id: s._id,
+      name: s.name,
+      permissions: s.permissions
+    }),
 
     session: async s => ({
       id: s._id,

@@ -10,6 +10,7 @@ const bcrypt = require('./bcrypt-util')
 const { makeMiddleware, validate } = require('./middleware')
 const makeSerializers = require('./serialize')
 const makeCommonUtil = require('./common')
+const { defaultRoles } = require('./roles')
 const packageObj = require('./package.json')
 
 const mkdir = util.promisify(fs.mkdir)
@@ -29,6 +30,12 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   const util = makeCommonUtil({db, connectedSocketsMap})
   const middleware = makeMiddleware({db, util})
   const serialize = makeSerializers({db, util})
+
+  await Promise.all(Object.entries(defaultRoles).map(async ([ _id, role ]) => {
+    if (await db.roles.findOne({_id}) === null) {
+      await db.roles.insert(Object.assign({}, role, {_id}))
+    }
+  }))
 
   const {
     asUnixDate, unixDateNow,
@@ -984,8 +991,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         passwordHash,
         email: null,
         flair: null,
-        permissionLevel: 'member',
-        authorized: false,
+        roleIDs: [],
         lastReadChannelDates: {},
         mentionedInMessageIDs: [],
       })
@@ -1232,6 +1238,29 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       response.status(200).json({})
     },
+  ])
+
+  app.post('/api/roles', [
+    // TODO: Permissions for this. Well, and everything else. But also this.
+    ...middleware.loadVarFromBody('name'),
+    ...middleware.loadVarFromBody('permissions'),
+    ...middleware.validateVar('name', validate.roleName),
+    ...middleware.validateVar('permissions', validate.permissionsObject),
+    // TODO: Error 403 if the requester doesn't have one or more of the
+    // permissions they want to give this role. This should be a portable
+    // middleware (taking the session-user and permissions objects).
+
+    async (request, response) => {
+      const { name, permissions } = request[middleware.vars]
+
+      const role = await db.roles.insert({
+        name, permissions
+      })
+
+      response.status(201).json({
+        role: await serialize.role(role)
+      })
+    }
   ])
 
   app.get('/api/sessions', [
