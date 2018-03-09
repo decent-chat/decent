@@ -334,7 +334,7 @@ DELETE /api/emotes/package
 ```js
 {
   "id": string,
-  "dateCreated": number // Unix time at creation
+  "dateCreated": float // Unix time at creation. May be more accurate using decimal places
 }
 ```
 
@@ -436,9 +436,9 @@ DELETE /api/sessions/12345678-ABCDEFGH
   "authorAvatarURL": string,
 
   // Dates are returned as the number of seconds since UTC 1970-1-1, commonly
-  // known as Unix time.
-  "dateCreated": number,
-  "dateEdited": number | null,
+  // known as Unix time. May be more accurate using decimal places.
+  "dateCreated": float,
+  "dateEdited": float | null,
 
   "pinned": boolean,
   "mentionedUserIDs": [ ID ]
@@ -1005,7 +1005,7 @@ GET /api/users/1
 + `limit` (int <= 50; default `50`) - The maximum number of mentions to fetch.
 + `skip` (int; default `0`) - Skips the first n mentions before returning
 
-Returns `{ mentions }`, where `mentions` is an array of [messages](#messages). Note that mentions are sorted by date: `mentions[0]` is the most recent mention.
+Returns `{ mentions }`, where `mentions` is an array of [messages](#messages). Note that mentions are sorted by creation date: `mentions[0]` is the most recent mention.
 
 Combining `limit` and `skip` can net you simple pagination.
 

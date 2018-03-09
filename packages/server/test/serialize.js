@@ -7,7 +7,7 @@ let portForSerializeTests = 23000
 
 test('serialize.message', t => {
   return testWithServer(portForSerializeTests++, async ({ serialize }) => {
-    const date = Date.now(), editDate = date - 5000
+    const dateCreated = Date.now() / 1000, dateEdited = dateCreated - 5
     const reactions = {} // TODO: Actually check how reactions are serialized.
 
     const message = {
@@ -17,14 +17,14 @@ test('serialize.message', t => {
       authorFlair: 'spooks',
       type: 'user',
       text: 'Hello!',
-      date, editDate,
+      dateCreated, dateEdited,
       channelID: '345',
       reactions
     }
 
     const serialized = await serialize.message(message)
 
-    t.deepEqual(Object.keys(serialized), ['id', 'authorUsername', 'authorID', 'authorFlair', 'authorAvatarURL', 'type', 'text', 'date', 'editDate', 'channelID', 'reactions', 'mentionedUserIDs'])
+    t.deepEqual(Object.keys(serialized), ['id', 'authorUsername', 'authorID', 'authorFlair', 'authorAvatarURL', 'type', 'text', 'dateCreated', 'dateEdited', 'channelID', 'reactions', 'mentionedUserIDs'])
     t.is(serialized.id, '123')
     t.is(serialized.authorUsername, 'jen')
     t.is(serialized.authorID, '234')
@@ -32,8 +32,8 @@ test('serialize.message', t => {
     t.is(typeof serialized.authorAvatarURL, 'string')
     t.is(serialized.type, 'user')
     t.is(serialized.text, 'Hello!')
-    t.is(serialized.date, date)
-    t.is(serialized.editDate, editDate)
+    t.is(serialized.dateCreated, dateCreated)
+    t.is(serialized.dateEdited, dateEdited)
     t.is(serialized.channelID, '345')
     t.deepEqual(serialized.mentionedUserIDs, [])
     t.deepEqual(serialized.reactions, reactions)
@@ -96,7 +96,7 @@ test('serialize.session', t => {
   return testWithServer(portForSerializeTests++, async ({ serialize, server, port }) => {
     const { user, sessionID } = await makeUser(server, port)
 
-    const dateCreated = Date.now()
+    const dateCreated = Date.now() / 1000
     const session = {_id: sessionID, dateCreated, userID: user._id}
     const serialized = await serialize.session(session)
 
