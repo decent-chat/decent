@@ -1240,6 +1240,16 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     },
   ])
 
+  app.get('/api/roles', [
+    async (request, response) => {
+      const roles = await db.roles.find({})
+
+      response.status(200).json({
+        roles: await Promise.all(roles.map(serialize.role))
+      })
+    }
+  ])
+
   app.post('/api/roles', [
     // TODO: Permissions for this. Well, and everything else. But also this.
     ...middleware.loadVarFromBody('name'),
