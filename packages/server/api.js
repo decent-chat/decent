@@ -1317,6 +1317,22 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
+  app.delete('/api/roles/:id', [
+    // TODO: Also also permissions for this also.
+    ...middleware.loadVarFromParams('id'),
+
+    async (request, response) => {
+      // TODO: Don't delete internal roles!
+
+      const numRemoved = await db.roles.remove({_id: request.params.id})
+      if (numRemoved) {
+        response.status(200).json({})
+      } else {
+        response.status(404).json({error: errors.NOT_FOUND})
+      }
+    }
+  ])
+
   app.get('/api/sessions', [
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),

@@ -141,3 +141,32 @@ test('PATCH /api/roles/:id', t => {
     // self.
   })
 })
+
+test('DELETE /api/roles/:id', t => {
+  return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
+    const { sessionID } = await makeAdmin(server, port)
+
+    const { role: { id } } = await fetch(port, '/roles', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: 'Test',
+        permissions: {}
+      })
+    })
+
+    await fetch(port, '/roles/' + id)
+
+    t.is((await fetch(port, '/roles')).roles.length, 5)
+
+    await fetch(port, `/roles/${id}?sessionID=${sessionID}`, {method: 'DELETE'})
+
+    t.is((await fetch(port, '/roles')).roles.length, 4)
+
+    try {
+      await fetch(port, '/roles/' + id)
+      t.fail('Could fetch deleted role')
+    } catch (error) {
+      t.is(error.code, 'NOT_FOUND')
+    }
+  })
+})
