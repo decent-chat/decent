@@ -86,6 +86,24 @@ test('serialize.user', t => {
   })
 })
 
+test('serialize.role', t => {
+  return testWithServer(portForSerializeTests++, async ({ serialize }) => {
+    const role = {
+      _id: '12345',
+      name: 'vv g00d',
+      permissions: {readMessages: true}
+    }
+
+    const serialized = await serialize.role(role)
+
+    t.deepEqual(serialized, {
+      id: '12345',
+      name: 'vv g00d',
+      permissions: {readMessages: true}
+    })
+  })
+})
+
 test('serialize.session', t => {
   return testWithServer(portForSerializeTests++, async ({ serialize, server, port }) => {
     const { user, sessionID } = await makeUser(server, port)

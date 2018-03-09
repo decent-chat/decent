@@ -369,8 +369,8 @@ const validate = {
   }, {description: 'an object'}),
 
   roleName: Object.assign(function(x) {
-    return typeof x === 'string' && x.length <= 32
-  }, {description: 'a role name (<= 32 chars)'}),
+    return typeof x === 'string' && x.length > 0 && x.length <= 32
+  }, {description: 'a valid role name (<= 32 chars)'}),
 
   permissionsObject: Object.assign(function(x) {
     return typeof x === 'object' && Object.keys(x).every(k => permissionKeys.includes(k))

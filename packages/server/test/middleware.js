@@ -203,7 +203,7 @@ test('loadVarFromQueryOrBody - missing variable, required = true', async t => {
   t.true(response.wasEnded)
   t.is(response.statusCode, 400)
   t.is(response.endData.error.code, 'INCOMPLETE_PARAMETERS')
-  t.is(request[middleware.vars].y, undefined) 
+  t.is(request[middleware.vars].y, undefined)
 })
 
 test('loadVarFromQueryOrBody - missing variable, required = false', async t => {
@@ -237,6 +237,13 @@ test('validate.object', t => {
   t.false(validate.object(123))
   t.false(validate.object())
   t.false(validate.object([]))
+})
+
+test('validate.roleName', t => {
+  t.true(validate.roleName('boop'))
+  t.false(validate.roleName(''))
+  t.false(validate.roleName('boooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooop'))
+  t.false(validate.roleName(5000))
 })
 
 test('validateVar - test data is valid', async t => {
