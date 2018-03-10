@@ -246,6 +246,17 @@ test('validate.roleName', t => {
   t.false(validate.roleName(5000))
 })
 
+test('validate.permissionsObject', t => {
+  const val = validate.permissionsObject
+  t.true(val({readMessages: true}))
+  t.true(val({readMessages: false}))
+  t.true(val({readMessages: null}))
+  t.true(val({readMessages: undefined}))
+  t.true(val({}))
+  t.false(val({readMessages: 'sure'}))
+  t.false(val({yourFACE: null}))
+})
+
 test('validateVar - test data is valid', async t => {
   const { middleware } = quickMakeServerlessMiddleware()
 
