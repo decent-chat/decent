@@ -70,4 +70,4 @@ See [serialize.js](https://github.com/decent-chat/decent/tree/master/packages/se
 See [common.js](https://github.com/decent-chat/decent/tree/master/packages/server/common.js). Also comes pre-made.
 
 ### license
-GPL-3.0
+The Decent project is licensed under the [Mozilla Public License (2.0)](../../LICENSE.txt).

@@ -95,4 +95,4 @@ This repository is a [lerna monorepo](https://github.com/lerna/lerna), consistin
 Come visit us at [meta.decent.chat](https://meta.decent.chat)!
 
 ## License
-GPL-3.0
+The Decent project is licensed under the [Mozilla Public License (2.0)](LICENSE.txt).

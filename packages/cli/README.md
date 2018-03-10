@@ -21,4 +21,5 @@ Default port is 3000. Omit the database directory to use a volatile in-memory st
 Note: don't share databases between two running Decent servers at once; something will probably go wrong.
 
 ### license
-GPL-3.0
+The Decent project is licensed under the [Mozilla Public License (2.0)](../../LICENSE.txt).
+

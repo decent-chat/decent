@@ -14,7 +14,7 @@
     "cli"
   ],
   "author": "Multiple contributors",
-  "license": "GPL-3.0",
+  "license": "MPL-2.0",
   "dependencies": {
     "@decent/client": "^0.0.0",
     "@decent/server": "^0.0.0",
