@@ -128,6 +128,8 @@ The actual priority of permission objects is determined according to the roles a
 * Server-wide permissions for the user or guest role, as above
 * Server-wide permissions for the everyone role (Least priority.)
 
+Permissions for roles of the user (both globally and channel-specific) are prioritized according to the [role prioritization order](#prioritize-roles).
+
 </details>
 
 <details><summary><b>Table of permissions</b></summary>
@@ -1115,9 +1117,16 @@ GET /api/users/1/permissions
 <- }
 ```
 
+<a name='get-user-channel-permissions'></a>
+### Get a user's channel-specific permissions [GET /api/users/:userID/channel-permissions/:channelID]
++ **in-url** userID (ID) - The user ID to fetch
++ **in-url** channelID (ID) - The channel ID to fetch
+
+Returns `{ permissions }`, where `permissions` is a [permissions](#permissions) object containing permissions, with the given channel's role-specific permissions applied.
+
 <a name='delete-user'></a>
 ### Delete a user [DELETE /api/users/:id]
-+ requires [permission](#permission): MANAGE_USERS
++ requires [permission](#permission): `manageUsers`
 + **in-url** id (ID) - The user to delete
 
 Returns `{}` and emits [user/delete](#user-delete).
@@ -1191,6 +1200,40 @@ GET /api/roles
 <-       "name": "Everyone",
 <-       "permissions": ...
 <-     }
+<-   ]
+<- }
+```
+
+<a name='prioritize-roles'></a>
+### Change role prioritization order [PATCH /api/roles/order]
+
++ requires [permission](#permissions): `manageRoles`
++ `roleIDs` (array of IDs) - The order roles are applied in
+  * Must contain all role IDs, except for internal ones such as `_user` and `_everyone`, which are always the least prioritized
+
+Returns `{}` when successful. Changes the order that roles are applied in; initial items are the most prioritized. See [Permissions](#permissions).
+
+```js
+PATCH /api/roles/order
+
+-> {
+->   "roleIDs": [
+->     "abc",
+->     "123",
+->     "999"
+->   ]
+-> }
+
+// Then...
+GET /api/roles
+
+<- {
+<-   "roles": [
+<-     {"id": "abc", ...},
+<-     {"id": "123", ...},
+<-     {"id": "999", ...},
+<-     {"id": "_user", ...},
+<-     ...
 <-   ]
 <- }
 ```
