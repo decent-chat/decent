@@ -64,6 +64,17 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
       .some(socketData => socketData.userID === userID)
   }
 
+  const getUserPermissions = async function(userID, channelID = null) {
+    // TODO: Handle channel ID, for channel-specific permissions.
+
+    const { roleIDs } = await db.users.findOne({_id: userID})
+    const roles = (await Promise.all(['_everyone', '_user'].concat(roleIDs).map(
+      id => db.roles.findOne({_id: id})
+    ))).filter(Boolean) // Filter-boolean in case some roles have been deleted.
+
+    return Object.assign(...roles.map(r => r.permissions))
+  }
+
   const shouldUseAuthorization = async function() {
     const { requireAuthorization } = await db.settings.findOne({_id: serverPropertiesID})
 
@@ -193,6 +204,7 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
     isNameValid,
     asUnixDate, unixDateNow,
     getUserIDBySessionID, getUserBySessionID,
+    getUserPermissions,
     md5,
     isUserOnline, isUserAuthorized,
     emailToAvatarURL,

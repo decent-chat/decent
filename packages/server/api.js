@@ -1044,6 +1044,35 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
+  app.get('/api/users/:userID/permissions', [
+    ...middleware.loadVarFromParams('userID'),
+    ...middleware.getUserFromID('userID', '_'), // To make sure the user exists.
+
+    async (request, response) => {
+      const { userID } = request[middleware.vars]
+
+      response.status(200).json({
+        permissions: await util.getUserPermissions(userID)
+      })
+    }
+  ])
+
+  app.get('/api/users/:userID/channel-permissions/:channelID', [
+    ...middleware.loadVarFromParams('userID'),
+    ...middleware.loadVarFromParams('channelID'),
+
+    // To make sure the user and channel exist:
+    ...middleware.getUserFromID('userID', '_'),
+    ...middleware.getChannelFromID('channelID', '_'),
+
+    async (request, response) => {
+      const { userID, channelID } = request[middleware.vars]
+
+      response.status(200).json({
+        permissions: await util.getUserPermissions(userID, channelID)
+      })
+    }
+  ])
   app.get('/api/username-available/:username', [
     ...middleware.loadVarFromParams('username'),
     ...middleware.requireNameValid('username'),
