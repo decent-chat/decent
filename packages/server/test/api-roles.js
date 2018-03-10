@@ -139,6 +139,32 @@ test('PATCH /api/roles/:id', t => {
     // TODO: Tests for patching the _guest and _everyone roles, which shouldn't
     // ever be allowed to send messages or do anything specific to their own
     // self.
+
+    try {
+      await fetch(port, '/roles/_guest', {
+        method: 'PATCH',
+        body: JSON.stringify({permissions: {sendMessages: true}})
+      })
+      t.fail('Could set non-guest permission on _guest')
+    } catch (error) {
+      t.is(error.code, 'NOT_GUEST_PERMISSION')
+    }
+
+    try {
+      await fetch(port, '/roles/_everyone', {
+        method: 'PATCH',
+        body: JSON.stringify({permissions: {sendMessages: true}})
+      })
+      t.fail('Could set non-guest permission on _everyone')
+    } catch (error) {
+      t.is(error.code, 'NOT_GUEST_PERMISSION')
+    }
+
+    // *Should* be able to set readMessages permission on guests/everyone.
+    await fetch(port, '/roles/_guest', {
+      method: 'PATCH',
+      body: JSON.stringify({permissions: {readMessages: false}})
+    })
   })
 })
 
@@ -167,6 +193,13 @@ test('DELETE /api/roles/:id', t => {
       t.fail('Could fetch deleted role')
     } catch (error) {
       t.is(error.code, 'NOT_FOUND')
+    }
+
+    try {
+      await fetch(port, `/roles/_user?sessionID=${sessionID}`, {method: 'DELETE'})
+      t.fail('Could delete internal role')
+    } catch (error) {
+      t.is(error.code, 'NOT_DELETABLE_ROLE')
     }
   })
 })

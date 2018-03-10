@@ -10,7 +10,7 @@ const bcrypt = require('./bcrypt-util')
 const { makeMiddleware, validate } = require('./middleware')
 const makeSerializers = require('./serialize')
 const makeCommonUtil = require('./common')
-const { defaultRoles } = require('./roles')
+const { defaultRoles, guestPermissionKeys } = require('./roles')
 const packageObj = require('./package.json')
 
 const mkdir = util.promisify(fs.mkdir)
@@ -1303,6 +1303,13 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     async (request, response) => {
       const { id, name, permissions } = request[middleware.vars]
 
+      if (['_everyone', '_guest'].includes(id)) {
+        if (Object.keys(permissions).some(k => !guestPermissionKeys.includes(k))) {
+          response.status(403).json({error: errors.NOT_GUEST_PERMISSION})
+          return
+        }
+      }
+
       const $set = {}
       if (typeof name !== 'undefined') $set.name = name
       if (typeof permissions !== 'undefined') $set.permissions = permissions
@@ -1322,9 +1329,14 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     ...middleware.loadVarFromParams('id'),
 
     async (request, response) => {
-      // TODO: Don't delete internal roles!
+      const { id } = request[middleware.vars]
 
-      const numRemoved = await db.roles.remove({_id: request.params.id})
+      if (Object.keys(defaultRoles).includes(id)) {
+        response.status(403).json({error: errors.NOT_DELETABLE_ROLE})
+        return
+      }
+
+      const numRemoved = await db.roles.remove({_id: id})
       if (numRemoved) {
         response.status(200).json({})
       } else {
