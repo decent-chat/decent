@@ -29,4 +29,4 @@ At the same time use `python3 -m http.server` (or similar) to serve your build o
 Please follow our [codestyle](../../CONTRIBUTING.md) when contributing :)
 
 ### license
-GPL-3.0
+The Decent project is licensed under the [Mozilla Public License (2.0)](../../LICENSE.txt).

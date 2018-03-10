@@ -11,7 +11,7 @@
     "decent"
   ],
   "author": "Multiple contributors",
-  "license": "GPL-3.0",
+  "license": "MPL-2.0",
   "dependencies": {
     "choo": "^6.6.1",
     "choo-devtools": "^2.3.3",
