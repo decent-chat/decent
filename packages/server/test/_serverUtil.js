@@ -54,7 +54,7 @@ const makeOwner = async (server, port, username = 'test_admin_' + shortid()) => 
 
 const makeChannel = async (server, port, name = 'test_channel_' + shortid(), sessionID = null) => {
   if (sessionID === null) {
-    sessionID = (await makeAdmin(server, port)).sessionID
+    sessionID = (await makeOwner(server, port)).sessionID
   }
 
   const { channelID } = await fetch(port, '/channels', {
