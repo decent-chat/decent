@@ -231,7 +231,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   app.post('/api/emotes', [
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.requirePermission('sessionUser', 'manageEmotes'),
     ...middleware.loadVarFromBody('shortcode'),
     ...middleware.requireNameValid('shortcode'),
     ...middleware.loadVarFromBody('imageURL'),
@@ -241,7 +241,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       const { imageURL, shortcode } = request[middleware.vars]
 
       if (await db.emotes.findOne({shortcode})) {
-        response.status(400).json(errors.NAME_ALREADY_TAKEN)
+        response.status(400).json({error: errors.NAME_ALREADY_TAKEN})
         return
       }
 
@@ -272,7 +272,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     ...middleware.loadVarFromParams('shortcode'),
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.requirePermission('sessionUser', 'manageEmotes'),
 
     async function(request, response, next) {
       const { shortcode } = request[middleware.vars]
