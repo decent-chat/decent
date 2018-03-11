@@ -315,27 +315,31 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   app.patch('/api/settings', [
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.requirePermission('sessionUser', 'manageServer'),
 
     async (request, response) => {
       const serverSettings = await db.settings.findOne({_id: serverSettingsID})
 
-      const results = {}
+      const setErrors = {}
 
       let status = 200
       for (const [ key, value ] of Object.entries(request.body)) {
         const result = await setSetting(db.settings, serverSettingsID, key, value)
         if (result !== 'updated') {
-          results[key] = result
+          setErrors[key] = result
           status = 400
         }
       }
 
       sendToAllSockets('server-settings/update', {
-        settings: await getAllSettings(serverSettingsID)
+        settings: await getAllSettings(db.settings, serverSettingsID)
       })
 
-      response.status(status).json({results})
+      if (status === 200) {
+        response.status(200).json({})
+      } else {
+        response.status(status).json({setErrors})
+      }
     }
   ])
 

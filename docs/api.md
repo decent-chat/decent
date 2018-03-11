@@ -236,7 +236,7 @@ GET /api/settings
 + `name` (string; optional)
 + `iconURL` (string; optional)
 
-Returns `{}` if successful. Updates settings with new values provided, and emits [server-settings/update](#server-settings-update).
+Returns `{}` if successful, and `{ setErrors }` if the given values are invalid, where `setErrors` is an object mapping of setting keys and human-readable error strings. Updates settings with new values provided, and emits [server-settings/update](#server-settings-update).
 
 ```js
 PATCH /api/settings

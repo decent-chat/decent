@@ -9,7 +9,18 @@ const defaultSettings = {
   // anyone can view them by GETting the same endpoint.
   [serverSettingsID]: {
     // The name of the server.
-    name: {value: 'Unnamed Decent chat server'},
+    name: {
+      value: 'Unnamed Decent chat server',
+      validationFn: string => {
+        if (typeof string !== 'string') {
+          throw 'not a string'
+        }
+
+        if (string.length === 0) {
+          throw 'must not be an empty string'
+        }
+      }
+    },
 
     // The URL to the server icon.
     iconURL: {
