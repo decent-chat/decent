@@ -320,26 +320,15 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     async (request, response) => {
       const serverSettings = await db.settings.findOne({_id: serverSettingsID})
 
-      const setErrors = {}
-
-      let status = 200
       for (const [ key, value ] of Object.entries(request.body)) {
-        const result = await setSetting(db.settings, serverSettingsID, key, value)
-        if (result !== 'updated') {
-          setErrors[key] = result
-          status = 400
-        }
+        await setSetting(db.settings, serverSettingsID, key, value)
       }
 
       sendToAllSockets('server-settings/update', {
         settings: await getAllSettings(db.settings, serverSettingsID)
       })
 
-      if (status === 200) {
-        response.status(200).json({})
-      } else {
-        response.status(status).json({setErrors})
-      }
+      response.status(200).json({})
     }
   ])
 

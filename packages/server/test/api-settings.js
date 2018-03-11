@@ -43,9 +43,5 @@ test('GET/PATCH /api/settings', t => {
         name: ''
       })
     })
-
-    t.deepEqual(Object.keys(response4), ['setErrors'])
-    t.deepEqual(Object.keys(response4.setErrors), ['name'])
-    t.is(typeof response4.setErrors.name, 'string')
   })
 })
