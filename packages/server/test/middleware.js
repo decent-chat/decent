@@ -1,7 +1,7 @@
 const { test } = require('ava')
 const { makeMiddleware, validate } = require('../middleware')
 const makeCommonUtils = require('../common')
-const { testWithServer, makeUser, makeAdmin, makeChannel, makeMessage } = require('./_serverUtil')
+const { testWithServer, makeUser, giveOwnerRole, makeChannel, makeMessage } = require('./_serverUtil')
 const fetch = require('./_fetch')
 
 let portForMiddlewareTests = 22000
@@ -614,7 +614,7 @@ test('getChannelFromID - channelID of nonexistent channel', t => {
 test('requirePermission', t => {
   return testWithServer(portForMiddlewareTests++, async ({ middleware, server, port }) => {
     // By default, everyone has the readMessages permission, so we check for that:
-    const { userID, sessionID } = await makeUser(server, port)
+    const { user: { id: userID }, sessionID } = await makeUser(server, port)
     const request = {[middleware.vars]: {sessionID}}
     const { response } = await interpretMiddleware(request, [
       ...middleware.getSessionUserFromID('sessionID', 'user'),
@@ -636,9 +636,7 @@ test('requirePermission', t => {
     // If we give the user the Owner role, then they should have every permission,
     // but we'll only test manageRoles (enough to know that requirePermission is
     // actually checking the user's roles):
-    await server.db.users.update({_id: userID}, {
-      $push: {roleIDs: (await server.db.roles.findOne({name: 'Owner'}))._id}
-    })
+    await giveOwnerRole(server, userID)
     const request3 = {[middleware.vars]: {sessionID}}
     const { response: response3 } = await interpretMiddleware(request, [
       ...middleware.getSessionUserFromID('sessionID', 'user'),

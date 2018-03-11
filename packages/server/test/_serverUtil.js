@@ -38,17 +38,18 @@ const makeUser = async (server, port, inUsername = undefined, inPassword = undef
   return {user, sessionID}
 }
 
-const makeAdmin = async (server, port, username = 'test_admin_' + shortid()) => {
-  const { user: admin, sessionID } = await makeUser(server, port, username)
-
-  await server.db.users.update({username}, {
-    $set: {
-      permissionLevel: 'admin',
-      authorized: true
-    }
+const giveOwnerRole = async (server, userID) => {
+  await server.db.users.update({_id: userID}, {
+    $push: {roleIDs: (await server.db.roles.findOne({name: 'Owner'}))._id}
   })
+}
 
-  return {admin, sessionID}
+const makeOwner = async (server, port, username = 'test_admin_' + shortid()) => {
+  const { user, sessionID } = await makeUser(server, port, username)
+
+  await giveOwnerRole(server, user)
+
+  return {user, sessionID}
 }
 
 const makeChannel = async (server, port, name = 'test_channel_' + shortid(), sessionID = null) => {
@@ -91,7 +92,7 @@ const enableAuthorization = async server => {
 
 module.exports = {
   testWithServer,
-  makeUserWithoutSession, makeUser, makeAdmin,
+  makeUserWithoutSession, makeUser, makeOwner, giveOwnerRole,
   makeChannel, makeMessage,
   enableAuthorization
 }

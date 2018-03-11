@@ -1,12 +1,12 @@
 const { test } = require('ava')
-const { testWithServer, makeAdmin } = require('./_serverUtil')
+const { testWithServer, makeOwner, makeUser } = require('./_serverUtil')
 const fetch = require('./_fetch')
 
 let portForApiRoleTests = 31000
 
 test('POST /api/roles', t => {
   return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
-    const { sessionID } = await makeAdmin(server, port)
+    const { sessionID } = await makeOwner(server, port)
 
     const response = await fetch(port, '/roles', {
       method: 'POST',
@@ -97,7 +97,7 @@ test('GET /api/roles/:id', t => {
 
 test('GET /api/roles (with new role)', t => {
   return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
-    const { sessionID } = await makeAdmin(server, port)
+    const { sessionID } = await makeOwner(server, port)
 
     await fetch(port, '/roles', {
       method: 'POST',
@@ -122,7 +122,7 @@ test('GET /api/roles (with new role)', t => {
 
 test('PATCH /api/roles/:id', t => {
   return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
-    const { sessionID } = await makeAdmin(server, port)
+    const { sessionID } = await makeOwner(server, port)
 
     const response = await fetch(port, '/roles/_user', {
       method: 'PATCH',
@@ -170,7 +170,7 @@ test('PATCH /api/roles/:id', t => {
 
 test('DELETE /api/roles/:id', t => {
   return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
-    const { sessionID } = await makeAdmin(server, port)
+    const { sessionID } = await makeOwner(server, port)
 
     const { role: { id } } = await fetch(port, '/roles', {
       method: 'POST',
@@ -207,7 +207,7 @@ test('DELETE /api/roles/:id', t => {
 
 test('PATCH/GET /api/roles/order', t => {
   return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
-    const { sessionID } = await makeAdmin(server, port)
+    const { sessionID } = await makeOwner(server, port)
 
     const ownerRoleID = (await fetch(port, '/roles')).roles.find(
       r => r.name === 'Owner').id
@@ -258,5 +258,15 @@ test('PATCH/GET /api/roles/order', t => {
 
     // And make sure that deleting the role is reflected:
     t.deepEqual(await fetch(port, '/roles/order'), {roleIDs: [ownerRoleID, id2]})
+  })
+})
+
+// Not strictly from the roles API, but related enough.
+test('GET /api/users/:userID/permissions', t => {
+  return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
+    const { user: { id: userID } } = await makeUser(server, port)
+    const response = await fetch(port, `/users/${userID}/permissions`)
+    t.deepEqual(Object.keys(response), ['permissions'])
+    t.true(Object.values(response.permissions).every(v => typeof v === 'boolean'))
   })
 })
