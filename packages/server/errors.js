@@ -6,7 +6,7 @@ module.exports = {
   INVALID_NAME: {code: 'INVALID_NAME', message: 'That name is not valid.'},
   INVALID_PARAMETER_TYPE: {code: 'INVALID_PARAMETER_TYPE', message: 'A parameter is not of the correct type.'},
   INVALID_SESSION_ID: {code: 'INVALID_SESSION_ID', message: 'The session ID is invalid.'},
-  MUST_BE_ADMIN: {code: 'MUST_BE_ADMIN', message: 'You must be an administrator to do this.'},
+  MISSING_PERMISSION: {code: 'MISSING_PERMISSION', message: 'You are missing a required permission.'},
   NAME_ALREADY_TAKEN: {code: 'NAME_ALREADY_TAKEN', message: 'That name is already taken.'},
   NOT_DELETABLE_ROLE: {code: 'NOT_DELETABLE_ROLE', message: 'This role is internal and cannot be deleted.'},
   NOT_FOUND: {code: 'NOT_FOUND', message: 'This couldn\'t be found.'},

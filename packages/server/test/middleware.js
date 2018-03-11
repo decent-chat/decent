@@ -611,29 +611,40 @@ test('getChannelFromID - channelID of nonexistent channel', t => {
   })
 })
 
-test('requireBeAdmin - basic functionality, as admin', t => {
+test('requirePermission', t => {
   return testWithServer(portForMiddlewareTests++, async ({ middleware, server, port }) => {
-    const { sessionID } = await makeAdmin(server, port)
+    // By default, everyone has the readMessages permission, so we check for that:
+    const { userID, sessionID } = await makeUser(server, port)
     const request = {[middleware.vars]: {sessionID}}
     const { response } = await interpretMiddleware(request, [
       ...middleware.getSessionUserFromID('sessionID', 'user'),
-      ...middleware.requireBeAdmin('user')
+      ...middleware.requirePermission('user', 'readMessages')
     ])
     t.false(response.wasEnded)
-  })
-})
 
-test('requireBeAdmin - basic functionality, as non-admin', t => {
-  return testWithServer(portForMiddlewareTests++, async ({ middleware, server, port }) => {
-    const { sessionID } = await makeUser(server, port)
-    const request = {[middleware.vars]: {sessionID}}
-    const { response } = await interpretMiddleware(request, [
+    // Users don't have manageRoles by default, though:
+    const request2 = {[middleware.vars]: {sessionID}}
+    const { response: response2 } = await interpretMiddleware(request, [
       ...middleware.getSessionUserFromID('sessionID', 'user'),
-      ...middleware.requireBeAdmin('user')
+      ...middleware.requirePermission('user', 'manageRoles')
     ])
-    t.true(response.wasEnded)
-    t.is(response.statusCode, 403)
-    t.is(response.endData.error.code, 'MUST_BE_ADMIN')
+    t.true(response2.wasEnded)
+    t.is(response2.statusCode, 403)
+    t.is(response2.endData.error.code, 'MISSING_PERMISSION')
+    t.is(response2.endData.error.permission, 'manageRoles')
+
+    // If we give the user the Owner role, then they should have every permission,
+    // but we'll only test manageRoles (enough to know that requirePermission is
+    // actually checking the user's roles):
+    await server.db.users.update({_id: userID}, {
+      $push: {roleIDs: (await server.db.roles.findOne({name: 'Owner'}))._id}
+    })
+    const request3 = {[middleware.vars]: {sessionID}}
+    const { response: response3 } = await interpretMiddleware(request, [
+      ...middleware.getSessionUserFromID('sessionID', 'user'),
+      ...middleware.requirePermission('user', 'manageRoles')
+    ])
+    t.false(response3.wasEnded)
   })
 })
 

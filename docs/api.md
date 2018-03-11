@@ -63,7 +63,7 @@ The `message` property is a string of a human-readable English message briefly e
 | ----------------------:|:----------------------------------------------------|
 | NOT_FOUND              | The requested thing was not found                   |
 | NOT_YOURS              | Your attempt to do something impactful was rejected because you are not the owner/author of the thing |
-| NOT_ALLOWED            | The requesting user has insufficient permissions to perform this action |
+| MISSING_PERMISSION     | You do not have a required permission               |
 | NO                     | The server does not support or does not want to fulfill your request |
 | ALREADY_PERFORMED      | That action has already been performed              |
 | FAILED                 | Something went wrong internally                     |
@@ -655,8 +655,6 @@ POST /api/channels
 <- }
 ```
 
-May return [an error](#errors): MUST_BE_ADMIN, NAME_ALREADY_TAKEN, INVALID_NAME.
-
 <a name='get-channel'></a>
 ### Retrieve a channel [GET /api/channels/:id]
 + does not require session, however:
@@ -673,8 +671,6 @@ GET /api/channels/5678
 <-   "name": "general"
 <- }
 ```
-
-May return [an error](#errors), including MUST_BE_ADMIN, NAME_ALREADY_TAKEN, and INVALID_NAME.
 
 <a name='rename-channel'></a>
 ### Rename a channel [PATCH /api/channels/:id]

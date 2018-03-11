@@ -6,8 +6,8 @@ module.exports.makeMiddleware = function({db, util}) {
     getUserIDBySessionID, getUserBySessionID,
     isUserOnline, isUserAuthorized,
     emailToAvatarURL, isNameValid,
-    getUnreadMessageCountInChannel,
-    shouldUseAuthorization
+    getUserPermissions, userHasPermission,
+    getUnreadMessageCountInChannel
   } = util
 
   const _loadVarFromObject = (request, response, next, obj, key, required) => {
@@ -301,6 +301,41 @@ module.exports.makeMiddleware = function({db, util}) {
         request[middleware.vars][channelVar] = channel
 
         next()
+      }
+    ],
+
+    requirePermission: (userVar, permissionKey) => [
+      async function(request, response, next) {
+        const { _id: userID } = request[middleware.vars][userVar]
+
+        if (await userHasPermission(userID, permissionKey)) {
+          next()
+        } else {
+          response.status(403).end(JSON.stringify({
+            error: Object.assign({}, errors.MISSING_PERMISSION, {
+              permission: permissionKey
+            })
+          }))
+        }
+      }
+    ],
+
+    requireChannelPermission: (userVar, channelVar, permissionVar) => [
+      async function(request, response, next) {
+        const { _id: userID } = request[middleware.vars][userVar]
+        const { _id: channelID } = request[middleware.vars][channelVar]
+        const permissionKey = request[middleware.vars][permissionVar]
+
+        if (await userHasPermission(userID, permissionKey, channelID)) {
+          next()
+        } else {
+          response.status(403).end(JSON.stringify({
+            error: Object.assign({}, errors.MISSING_PERMISSION, {
+              permission: permissionKey,
+              requirePermissionInChannel: true
+            })
+          }))
+        }
       }
     ],
 

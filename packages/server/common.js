@@ -98,6 +98,11 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
     return Object.assign(...permissions)
   }
 
+  const userHasPermission = async function(userID, permissionKey, channelID = null) {
+    const permissions = await getUserPermissions(userID, channelID)
+    return permissions[permissionKey] === true
+  }
+
   const getUnreadMessageCountInChannel = async function(userObj, channelID) {
     let date = 0
     const { lastReadChannelDates } = userObj
@@ -208,7 +213,8 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
     isNameValid,
     asUnixDate, unixDateNow,
     getUserIDBySessionID, getUserBySessionID,
-    getUserPermissions, getPrioritizedRoles,
+    getPrioritizedRoles,
+    getUserPermissions, userHasPermission,
     md5,
     isUserOnline,
     emailToAvatarURL,
