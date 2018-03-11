@@ -21,8 +21,10 @@ const guestPermissionKeys = [
   'readMessages',
 ]
 
-const defaultRoles = {
-  '_everyone': {
+// Internal roles - generally invisible, behave like magic.
+const internalRoles = [
+  {
+    _id: '_everyone',
     name: 'Everyone',
     permissions: {
       manageServer: false,
@@ -39,34 +41,22 @@ const defaultRoles = {
     }
   },
 
-  '_guest': {
+  {
+    _id: '_guest',
     name: 'Guest',
     permissions: {}
   },
 
-  '_user': {
+  {
+    _id: '_user',
     name: 'User',
     permissions: {
       sendMessages: true
     }
-  },
-
-  '_owner': {
-    name: 'Owner',
-    permissions: {
-      manageServer: true,
-      manageUsers: true,
-      manageRoles: true,
-      manageChannels: true,
-      managePins: true,
-      manageEmotes: true,
-      readMessages: true,
-      sendMessages: true,
-      sendSystemMessages: true,
-      uploadImages: true,
-      allowNonUnique: true
-    }
   }
-}
+]
 
-module.exports = {permissionKeys, guestPermissionKeys, defaultRoles}
+internalRoles.ids = internalRoles.map(r => r._id)
+internalRoles.isInternalID = id => internalRoles.ids.includes(id)
+
+module.exports = {permissionKeys, guestPermissionKeys, internalRoles}

@@ -282,10 +282,10 @@ test('validate.arrayOfAllRoleIDs', async t => {
   const db = {
     roles: {
       find: async () => {
-        return [{_id: 'a'}, {_id: 'b'}, {_id: 'c'}, {_id: '_owner'}]
+        return [{_id: 'a'}, {_id: 'b'}, {_id: 'c'}, {_id: '_user'}]
       },
       findOne: async ({ _id }) => {
-        return ['a', 'b', 'c', '_owner'].includes(_id) ? {} : null
+        return ['a', 'b', 'c', '_user'].includes(_id) ? {} : null
       }
     }
   }
@@ -293,7 +293,6 @@ test('validate.arrayOfAllRoleIDs', async t => {
   const val = x => validate.arrayOfAllRoleIDs(x, {db})
   t.true(await val(['a', 'b', 'c']))
   t.true(await val(['b', 'a', 'c']))
-  t.false(await val(['a', 'b', 'c', '_owner']))
   t.false(await val(['a']))
   t.false(await val([]))
   t.false(await val(['a', 'b', 'c', 'x']))

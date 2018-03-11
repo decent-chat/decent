@@ -10,7 +10,7 @@ const bcrypt = require('./bcrypt-util')
 const { makeMiddleware, validate } = require('./middleware')
 const makeSerializers = require('./serialize')
 const makeCommonUtil = require('./common')
-const { defaultRoles, guestPermissionKeys } = require('./roles')
+const { internalRoles, guestPermissionKeys } = require('./roles')
 const packageObj = require('./package.json')
 
 const mkdir = util.promisify(fs.mkdir)
@@ -31,9 +31,9 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   const middleware = makeMiddleware({db, util})
   const serialize = makeSerializers({db, util})
 
-  await Promise.all(Object.entries(defaultRoles).map(async ([ _id, role ]) => {
-    if (await db.roles.findOne({_id}) === null) {
-      await db.roles.insert(Object.assign({}, role, {_id}))
+  await Promise.all(internalRoles.map(async role => {
+    if (await db.roles.findOne({_id: role._id}) === null) {
+      await db.roles.insert(role)
     }
   }))
 
@@ -45,6 +45,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     isUserOnline,
     getUnreadMessageCountInChannel,
     getMentionsFromMessageContent,
+    getPrioritizedRoles,
   } = util
 
   const sendToAllSockets = function(evt, data) {
@@ -1115,16 +1116,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
   app.get('/api/roles', [
     async (request, response) => {
-      const roles = await db.roles.find({})
-      const { rolePrioritizationOrder } = await getAllSettings(db.settings, serverPropertiesID)
-      const prioritizedRoles = rolePrioritizationOrder.map(
-        id => roles.find(r => r._id === id)
-      )
-
-      prioritizedRoles.unshift(roles.find(r => r._id === '_owner'))
-      prioritizedRoles.push(roles.find(r => r._id === '_user'))
-      prioritizedRoles.push(roles.find(r => r._id === '_guest'))
-      prioritizedRoles.push(roles.find(r => r._id === '_everyone'))
+      const prioritizedRoles = await getPrioritizedRoles()
 
       response.status(200).json({
         roles: await Promise.all(prioritizedRoles.map(serialize.role))
@@ -1251,7 +1243,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     async (request, response) => {
       const { id } = request[middleware.vars]
 
-      if (Object.keys(defaultRoles).includes(id)) {
+      if (internalRoles.isInternalID(id)) {
         response.status(403).json({error: errors.NOT_DELETABLE_ROLE})
         return
       }

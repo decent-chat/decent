@@ -1,5 +1,5 @@
 const errors = require('./errors')
-const { defaultRoles, permissionKeys } = require('./roles')
+const { internalRoles, permissionKeys } = require('./roles')
 
 module.exports.makeMiddleware = function({db, util}) {
   const {
@@ -385,8 +385,7 @@ const validate = {
     // Return false if there are any duplicate items.
     if (x.some((r, i) => x.slice(i + 1).includes(r))) return false
 
-    const defaultRoleKeys = Object.keys(defaultRoles)
-    if (x.some(r => defaultRoleKeys.includes(r))) return false
+    if (x.some(r => internalRoles.isInternalID(r))) return false
 
     const roles = await Promise.all(x.map(id => db.roles.findOne({_id: id})))
     if (roles.some(r => r === null)) return false
@@ -398,8 +397,7 @@ const validate = {
     if (!await validate.arrayOfRoleIDs(x, {db})) return false
 
     let allRoles = await db.roles.find({})
-    const defaultRoleKeys = Object.keys(defaultRoles)
-    allRoles = allRoles.filter(r => !Object.keys(defaultRoles).includes(r._id))
+    allRoles = allRoles.filter(r => !internalRoles.isInternalID(r._id))
     if (allRoles.some(r => !x.includes(r._id))) return false
 
     return true

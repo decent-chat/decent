@@ -1,5 +1,6 @@
 const { test } = require('ava')
 const { testWithServer, makeAdmin } = require('./_serverUtil')
+const { internalRoles } = require('../roles')
 const fetch = require('./_fetch')
 
 let portForApiRoleTests = 31000
@@ -72,19 +73,18 @@ test('GET /api/roles (default roles)', t => {
 
     t.deepEqual(Object.keys(response), ['roles'])
 
-    t.is(response.roles.length, 4)
+    t.is(response.roles.length, 3) // = internalRoles.length
     t.true(response.roles.some(r => r.id === '_everyone'))
     t.true(response.roles.some(r => r.id === '_user'))
     t.true(response.roles.some(r => r.id === '_guest'))
-    t.true(response.roles.some(r => r.id === '_owner'))
   })
 })
 
 test('GET /api/roles/:id', t => {
   return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
-    const response = await fetch(port, '/roles/_owner')
+    const response = await fetch(port, '/roles/_everyone')
     t.deepEqual(Object.keys(response), ['role'])
-    t.is(response.role.id, '_owner')
+    t.is(response.role.id, '_everyone')
 
     try {
       await fetch(port, '/roles/abcd')
@@ -111,7 +111,7 @@ test('GET /api/roles (with new role)', t => {
     })
 
     const response = await fetch(port, '/roles')
-    t.is(response.roles.length, 5)
+    t.is(response.roles.length, 4)
 
     const botRole = response.roles.find(r => r.name === 'Basic Bot')
     t.truthy(botRole)
@@ -183,11 +183,11 @@ test('DELETE /api/roles/:id', t => {
 
     await fetch(port, '/roles/' + id)
 
-    t.is((await fetch(port, '/roles')).roles.length, 5)
+    t.is((await fetch(port, '/roles')).roles.length, internalRoles.length + 1)
 
     await fetch(port, `/roles/${id}?sessionID=${sessionID}`, {method: 'DELETE'})
 
-    t.is((await fetch(port, '/roles')).roles.length, 4)
+    t.is((await fetch(port, '/roles')).roles.length, internalRoles.length)
 
     try {
       await fetch(port, '/roles/' + id)
