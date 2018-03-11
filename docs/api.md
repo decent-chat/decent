@@ -962,7 +962,7 @@ GET /api/users?sessionID=adminsid123
 + `username` ([name](#names)) - Must be unique
 + `password` (string) - Errors if shorter than 6 characters
 
-Responds with `{ user }` if successful, where `user` is the new user object. If the server does not [require authorization](#authorization), [user/new](#user-new) is emitted. Note the given password is passed as a plain string and is stored in the database as a bcrypt-hashed and salted string (and not in any plaintext form). Log in with [POST /api/sessions](#login).
+Responds with `{ user }` if successful, where `user` is the new user object. Emits [user/new](#user-new). Note the given password is passed as a plain string and is stored in the database as a bcrypt-hashed and salted string (and not in any plaintext form). Log in with [POST /api/sessions](#login).
 
 ```js
 POST /api/users
