@@ -1,5 +1,5 @@
 const errors = require('./errors')
-const { permissionKeys } = require('./roles')
+const { defaultRoles, permissionKeys } = require('./roles')
 
 module.exports.makeMiddleware = function({db, util}) {
   const {
@@ -108,7 +108,7 @@ module.exports.makeMiddleware = function({db, util}) {
       async function(request, response, next) {
         const value = request[middleware.vars][varName]
 
-        if (await validationFn(value)) {
+        if (await validationFn(value, {db})) {
           next()
         } else {
           response.status(400).end(JSON.stringify({
@@ -377,6 +377,33 @@ const validate = {
       Object.keys(x).every(k => permissionKeys.includes(k)) &&
       Object.values(x).every(v => [true, false, undefined, null].includes(v))
   }, {description: 'a permissions object'}),
+
+  arrayOfRoleIDs: Object.assign(async function(x, {db}) {
+    if (!Array.isArray(x)) return false
+    if (x.some(r => typeof r !== 'string')) return false
+
+    // Return false if there are any duplicate items.
+    if (x.some((r, i) => x.slice(i + 1).includes(r))) return false
+
+    const defaultRoleKeys = Object.keys(defaultRoles)
+    if (x.some(r => defaultRoleKeys.includes(r))) return false
+
+    const roles = await Promise.all(x.map(id => db.roles.findOne({_id: id})))
+    if (roles.some(r => r === null)) return false
+
+    return true
+  }, {description: 'an array of non-internal, existant role IDs'}),
+
+  arrayOfAllRoleIDs: Object.assign(async function(x, {db}) {
+    if (!await validate.arrayOfRoleIDs(x, {db})) return false
+
+    let allRoles = await db.roles.find({})
+    const defaultRoleKeys = Object.keys(defaultRoles)
+    allRoles = allRoles.filter(r => !Object.keys(defaultRoles).includes(r._id))
+    if (allRoles.some(r => !x.includes(r._id))) return false
+
+    return true
+  }, {description: 'an array of every non-internal, existant role ID'}),
 
   defined: Object.assign(function(x) {
     return typeof x !== 'undefined'

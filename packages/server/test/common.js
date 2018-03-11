@@ -76,32 +76,6 @@ test('isUserOnline', t => {
   })
 })
 
-test('shouldUseAuthorization', t => {
-  return testWithServer(portForCommonTests++, async ({ util, server }) => {
-    t.false(await util.shouldUseAuthorization())
-    await server.settings.setSetting(server.db.settings, server.settings.serverPropertiesID, 'requireAuthorization', 'on')
-    t.true(await util.shouldUseAuthorization())
-  })
-})
-
-test('isUserAuthorized', t => {
-  return testWithServer(portForCommonTests++, async ({ util, server, port }) => {
-    const { user: { id: userID } } = await makeUser(server, port)
-
-    // When authorization is disabled, isUserAuthorized should ALWAYS return true.
-    await server.settings.setSetting(server.db.settings, server.settings.serverPropertiesID, 'requireAuthorization', 'off')
-    await server.db.users.update({_id: userID}, {authorized: true})
-    t.true(await util.isUserAuthorized(userID))
-    await server.db.users.update({_id: userID}, {authorized: false})
-    t.true(await util.isUserAuthorized(userID))
-
-    await server.settings.setSetting(server.db.settings, server.settings.serverPropertiesID, 'requireAuthorization', 'on')
-    t.false(await util.isUserAuthorized(userID))
-    await server.db.users.update({_id: userID}, {authorized: true})
-    t.true(await util.isUserAuthorized(userID))
-  })
-})
-
 test('getUnreadMessageCountInChannel', t => {
   return testWithServer(portForCommonTests++, async ({ util, server, port }) => {
     const { user: { id: userID } } = await makeUser(server, port)

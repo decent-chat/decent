@@ -75,25 +75,6 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
     return Object.assign(...roles.map(r => r.permissions))
   }
 
-  const shouldUseAuthorization = async function() {
-    const { requireAuthorization } = await db.settings.findOne({_id: serverPropertiesID})
-
-    return requireAuthorization === 'on'
-  }
-
-  const isUserAuthorized = async function(userID) {
-    // Checks if a user is authorized. If authorization is disabled, this will
-    // always return true (even if the "authorized" field is set to false).
-
-    if (await shouldUseAuthorization() === false) {
-      return true
-    }
-
-    const user = await db.users.findOne({_id: userID})
-
-    return user && user.authorized ? true : false
-  }
-
   const getUnreadMessageCountInChannel = async function(userObj, channelID) {
     let date = 0
     const { lastReadChannelDates } = userObj
@@ -206,10 +187,9 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
     getUserIDBySessionID, getUserBySessionID,
     getUserPermissions,
     md5,
-    isUserOnline, isUserAuthorized,
+    isUserOnline,
     emailToAvatarURL,
     getUnreadMessageCountInChannel, getOldestUnreadMessageInChannel,
-    shouldUseAuthorization,
     getMentionsFromMessageContent,
   }
 }

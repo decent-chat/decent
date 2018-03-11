@@ -255,6 +255,50 @@ test('validate.permissionsObject', t => {
   t.true(val({}))
   t.false(val({readMessages: 'sure'}))
   t.false(val({yourFACE: null}))
+  t.false(val('lol'))
+})
+
+test('validate.arrayOfRoleIDs', async t => {
+  const db = {
+    roles: {
+      findOne: async ({ _id }) => {
+        return ['a', 'b', 'c'].includes(_id) ? {} : null
+      }
+    }
+  }
+
+  const val = x => validate.arrayOfRoleIDs(x, {db})
+  t.true(await val(['a', 'b', 'c']))
+  t.true(await val(['a', 'c']))
+  t.true(await val([]))
+  t.false(await val(['x']))
+  t.false(await val(['a', 'b', 'x', 'c']))
+  t.false(await val(['a', 'a']))
+  t.false(await val(['a', 'b', 'c', 'b']))
+  t.false(await val('lol'))
+})
+
+test('validate.arrayOfAllRoleIDs', async t => {
+  const db = {
+    roles: {
+      find: async () => {
+        return [{_id: 'a'}, {_id: 'b'}, {_id: 'c'}, {_id: '_owner'}]
+      },
+      findOne: async ({ _id }) => {
+        return ['a', 'b', 'c', '_owner'].includes(_id) ? {} : null
+      }
+    }
+  }
+
+  const val = x => validate.arrayOfAllRoleIDs(x, {db})
+  t.true(await val(['a', 'b', 'c']))
+  t.true(await val(['b', 'a', 'c']))
+  t.false(await val(['a', 'b', 'c', '_owner']))
+  t.false(await val(['a']))
+  t.false(await val([]))
+  t.false(await val(['a', 'b', 'c', 'x']))
+  t.false(await val(['a', 'b', 'b', 'c']))
+  t.false(await val('lol'))
 })
 
 test('validateVar - test data is valid', async t => {

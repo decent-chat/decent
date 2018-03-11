@@ -121,12 +121,14 @@ We look at the final permission object: `{readMessages: false, sendMessages: fal
 
 The actual priority of permission objects is determined according to the roles applied to the user and channel-specific permissions (which are dependent on the roles), and the order is determined as follows:
 
-* Channel-specific permissions for roles of the user (Most priority.)
-* Channel-specific permissions for the user role, if the user is a logged-in member of the server, or the guest role, if the user is not logged in (IDs "\_user" and "\_guest" respectively)
-* Channel-specific permissions for the everyone role (ID "\_everyone")
+* Channel-specific permissions for the `_owner` role, if the user has this role (Most priority.)
+* Server-wide permissions for the `_owner` role, if the user has this role
+* Channel-specific permissions for roles of the user
+* Channel-specific permissions for the `_user` role, if the user is a logged-in member of the server, or the `_guest` role, if the user is not logged in
+* Channel-specific permissions for the `_everyone` role
 * Server-wide permissions for roles of the user
-* Server-wide permissions for the user or guest role, as above
-* Server-wide permissions for the everyone role (Least priority.)
+* Server-wide permissions for the `_user` or `_guest` role, as above
+* Server-wide permissions for the `_everyone` role (Least priority.)
 
 Permissions for roles of the user (both globally and channel-specific) are prioritized according to the [role prioritization order](#prioritize-roles). Note that the order of the user's `roles` property **does not** have any effect on the order roles that are applied when calculating their perissions.
 
@@ -1204,12 +1206,17 @@ GET /api/roles
 <- }
 ```
 
+<a name='get-role-order'></a>
+### Retrieve role prioritization order [GET /api/roles/order]
+
+Returns `{ roleIDs }`, where `roleIDs` is an array of role IDs representing the order that roles are applied when [permissions](#permissions) are calculated. Internal roles, such as `_guest` and `_everyone`, are not included.
+
 <a name='prioritize-roles'></a>
 ### Change role prioritization order [PATCH /api/roles/order]
 
 + requires [permission](#permissions): `manageRoles`
 + `roleIDs` (array of IDs) - The order roles are applied in
-  * Must contain all role IDs, except for internal ones such as `_user` and `_everyone`, which are always the least prioritized
+  * Must contain all role IDs just once, except for internal ones such as `_user` and `_everyone`
 
 Returns `{}` when successful. Changes the order that roles are applied in; initial items are the most prioritized. See [Permissions](#permissions).
 

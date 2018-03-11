@@ -175,6 +175,7 @@ test('DELETE /api/roles/:id', t => {
     const { role: { id } } = await fetch(port, '/roles', {
       method: 'POST',
       body: JSON.stringify({
+        sessionID,
         name: 'Test',
         permissions: {}
       })
@@ -201,5 +202,58 @@ test('DELETE /api/roles/:id', t => {
     } catch (error) {
       t.is(error.code, 'NOT_DELETABLE_ROLE')
     }
+  })
+})
+
+test('PATCH/GET /api/roles/order', t => {
+  return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
+    const { sessionID } = await makeAdmin(server, port)
+
+    t.deepEqual(await fetch(port, '/roles/order'), {roleIDs: []})
+
+    const { role: { id: id1 } } = await fetch(port, '/roles', {
+      method: 'POST',
+      body: JSON.stringify({
+        sessionID,
+        name: 'Role 1',
+        permissions: {}
+      })
+    })
+
+    const { role: { id: id2 } } = await fetch(port, '/roles', {
+      method: 'POST',
+      body: JSON.stringify({
+        sessionID,
+        name: 'Role 2',
+        permissions: {}
+      })
+    })
+
+    // Default prioritization order should be role 2 then role 1, because
+    // newer roles are more prioritized.
+    t.deepEqual(await fetch(port, '/roles/order'), {roleIDs: [id2, id1]})
+
+    // Now re-order it:
+    const response = await fetch(port, '/roles/order?sessionID=' + sessionID, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        roleIDs: [id1, id2]
+      })
+    })
+    t.deepEqual(response, {})
+
+    // Check that this is reflected:
+    t.deepEqual(await fetch(port, '/roles/order'), {roleIDs: [id1, id2]})
+
+    // Remove a role:
+    await fetch(port, '/roles/' + id1, {
+      method: 'DELETE',
+      body: JSON.stringify({
+        sessionID
+      })
+    })
+
+    // And make sure that deleting the role is reflected:
+    t.deepEqual(await fetch(port, '/roles/order'), {roleIDs: [id2]})
   })
 })

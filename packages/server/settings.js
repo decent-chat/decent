@@ -19,22 +19,6 @@ const defaultSettings = {
           throw 'not a string'
         }
       }
-    },
-
-    // Authorization message displayed to users who are logged in but not
-    // authorized to participate in the server. Must be less than 800
-    // characters long, and supports Markdown.
-    authorizationMessage: {
-      value: 'Unauthorized - contact this server\'s webmaster to authorize your account for interacting with the server.',
-      validationFn: string => {
-        if (typeof string !== 'string') {
-          throw 'not a string'
-        }
-
-        if (string.length > 800) {
-          throw 'greater than 800 characters long'
-        }
-      }
     }
   },
 
@@ -47,11 +31,30 @@ const defaultSettings = {
     // implemented yet.
     https: {value: 'off', possibleValues: ['on', 'off']},
 
-    // Authorization required - whether or not users will need to be authorized
-    // before they can interact with the server (or view its messages). Anyone
-    // can still register, but an admin must mark the user as authorized before
-    // they will be able to send or receive any information to/from the server.
-    requireAuthorization: {value: 'off', possibleValues: ['on', 'off']}
+    // Role prioritization order - the order that permissions of roles are
+    // applied when calculating a user's permissions. This is stored on the
+    // server properties because we really, really don't want anybody to mess
+    // with it, and we can't entirely validate it from here (see below).
+    // We could give it an "internal" property or whatever, but this is sort
+    // of feature creep; it's much simpler just to throw it onto the properties
+    // section.
+    rolePrioritizationOrder: {
+      value: [],
+      validationFn: array => {
+        // This validation function is rather basic - since we don't have
+        // access to the database from this function, we have to skip checking
+        // if the role IDs are actual existant role IDs. But simple validation
+        // is better than no validation.
+
+        if (!Array.isArray(array)) {
+          throw 'not an array'
+        }
+
+        if (array.some(x => typeof x !== 'string')) {
+          throw 'not an array of strings'
+        }
+      }
+    }
   }
 }
 
