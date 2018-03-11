@@ -18,10 +18,8 @@ test('POST /api/roles', t => {
       })
     })
 
-    t.deepEqual(Object.keys(response), ['role'])
-    t.deepEqual(Object.keys(response.role), ['id', 'name', 'permissions'])
-    t.is(response.role.name, 'Emote Manager')
-    t.deepEqual(response.role.permissions, {manageEmotes: true})
+    t.deepEqual(Object.keys(response), ['roleID'])
+    t.is(typeof response.roleID, 'string')
 
     try {
       await fetch(port, '/roles', {
@@ -172,7 +170,7 @@ test('DELETE /api/roles/:id', t => {
   return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
     const { sessionID } = await makeOwner(server, port)
 
-    const { role: { id } } = await fetch(port, '/roles', {
+    const { roleID } = await fetch(port, '/roles', {
       method: 'POST',
       body: JSON.stringify({
         sessionID,
@@ -181,16 +179,16 @@ test('DELETE /api/roles/:id', t => {
       })
     })
 
-    await fetch(port, '/roles/' + id)
+    await fetch(port, '/roles/' + roleID)
 
     t.is((await fetch(port, '/roles')).roles.length, 5)
 
-    await fetch(port, `/roles/${id}?sessionID=${sessionID}`, {method: 'DELETE'})
+    await fetch(port, `/roles/${roleID}?sessionID=${sessionID}`, {method: 'DELETE'})
 
     t.is((await fetch(port, '/roles')).roles.length, 4)
 
     try {
-      await fetch(port, '/roles/' + id)
+      await fetch(port, '/roles/' + roleID)
       t.fail('Could fetch deleted role')
     } catch (error) {
       t.is(error.code, 'NOT_FOUND')
@@ -214,7 +212,7 @@ test('PATCH/GET /api/roles/order', t => {
 
     t.deepEqual(await fetch(port, '/roles/order'), {roleIDs: [ownerRoleID]})
 
-    const { role: { id: id1 } } = await fetch(port, '/roles', {
+    const { roleID: id1 } = await fetch(port, '/roles', {
       method: 'POST',
       body: JSON.stringify({
         sessionID,
@@ -223,7 +221,7 @@ test('PATCH/GET /api/roles/order', t => {
       })
     })
 
-    const { role: { id: id2 } } = await fetch(port, '/roles', {
+    const { roleID: id2 } = await fetch(port, '/roles', {
       method: 'POST',
       body: JSON.stringify({
         sessionID,

@@ -95,6 +95,8 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
     // mostPrioritized to be applied last (on top). So we reverse the order.
     permissions.reverse()
 
+    // console.log('getUserPermissions - perms:', permissions)
+
     return Object.assign(...permissions)
   }
 

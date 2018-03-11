@@ -341,17 +341,11 @@ module.exports.makeMiddleware = function({db, util}) {
 
     requireBeAdmin: userVar => [
       async function(request, response, next) {
-        const { permissionLevel } = request[middleware.vars][userVar]
-
-        if (permissionLevel !== 'admin') {
-          response.status(403).end(JSON.stringify({
-            error: errors.MUST_BE_ADMIN
-          }))
-
-          return
-        }
-
-        next()
+        response.status(500).json({
+          error: Object.assign({}, errors.INTERNAL_ERROR, {
+            message: 'Attempted to use obsolete requireBeAdmin middleware'
+          })
+        })
       }
     ],
 

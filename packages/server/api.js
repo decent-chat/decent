@@ -553,7 +553,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   app.post('/api/channels', [
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.requirePermission('sessionUser', 'manageChannels'),
     ...middleware.loadVarFromBody('name'),
     ...middleware.requireNameValid('name'),
 
@@ -604,7 +604,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     ...middleware.loadVarFromParams('channelID'),
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.requirePermission('sessionUser', 'manageChannels'),
     ...middleware.loadVarFromBody('name'),
     ...middleware.requireNameValid('name'),
     ...middleware.getChannelFromID('channelID', '_'), // To verify the channel exists.
@@ -633,7 +633,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   app.delete('/api/channels/:channelID', [
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.requirePermission('sessionUser', 'manageChannels'),
     ...middleware.loadVarFromParams('channelID'),
     ...middleware.getChannelFromID('channelID', '_'), // To verify the channel exists.
 
@@ -748,7 +748,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   app.post('/api/channels/:channelID/pins', [
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.requirePermission('sessionUser', 'managePins'),
     ...middleware.loadVarFromParams('channelID'),
     ...middleware.getChannelFromID('channelID', 'channel'),
     ...middleware.loadVarFromBody('messageID'),
@@ -787,7 +787,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   app.delete('/api/channels/:channelID/pins/:messageID', [
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.requirePermission('sessionUser', 'managePins'),
     ...middleware.loadVarFromParams('channelID'),
     ...middleware.getChannelFromID('channelID', 'channel'),
     ...middleware.loadVarFromParams('messageID'),
@@ -1075,7 +1075,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         }
       }
 
-      if (!validate.arrayOfRoleIDs(roleIDs, db)) {
+      if (!validate.arrayOfRoleIDs(roleIDs, {db})) {
         return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
           message: `roleIDs should be ${validate.arrayOfRoleIDs.description}`
         })})
@@ -1196,9 +1196,8 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       const { name, permissions } = request[middleware.vars]
       const role = await addRole(name, permissions)
 
-      const serialized = await serialize.role(role)
-      sendToAllSockets('role/new', {role: serialized})
-      response.status(201).json({role: serialized})
+      sendToAllSockets('role/new', {role: await serialize.role(role)})
+      response.status(201).json({roleID: role._id})
     }
   ])
 

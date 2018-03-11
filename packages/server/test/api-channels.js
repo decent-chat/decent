@@ -1,12 +1,13 @@
 const { test } = require('ava')
-const { testWithServer, makeUser, makeAdmin, makeChannel, makeMessage } = require('./_serverUtil')
+const { testWithServer, makeUser, makeUserWithPermissions, makeChannel, makeMessage } = require('./_serverUtil')
 const fetch = require('./_fetch')
 
 let portForApiChannelTests = 29000
 
 test('POST /api/channels', t => {
   return testWithServer(portForApiChannelTests++, async ({ server, port }) => {
-    const { sessionID } = await makeAdmin(server, port)
+    const { sessionID } = await makeUserWithPermissions(server, port, {manageChannels: true})
+
     const response = await fetch(port, '/channels', {
       method: 'POST',
       body: JSON.stringify({
@@ -24,9 +25,10 @@ test('POST /api/channels', t => {
           sessionID: sessionID2, name: 'memes'
         })
       })
-      t.fail('Could create channel without being an admin')
+      t.fail('Could create channel without manageChannels permission')
     } catch (error) {
-      t.is(error.code, 'MUST_BE_ADMIN')
+      t.is(error.code, 'MISSING_PERMISSION')
+      t.is(error.permission, 'manageChannels')
     }
 
     try {
@@ -45,7 +47,7 @@ test('POST /api/channels', t => {
 
 test('GET /api/channels', t => {
   return testWithServer(portForApiChannelTests++, async ({ server, port }) => {
-    const { sessionID } = await makeAdmin(server, port)
+    const { sessionID } = await makeUserWithPermissions(server, port, {manageChannels: true})
     const { channelID } = await makeChannel(server, port, 'general', sessionID)
 
     const response = await fetch(port, '/channels')
@@ -74,8 +76,10 @@ test('GET /api/channels', t => {
 
 test('GET /api/channels/:id', t => {
   return testWithServer(portForApiChannelTests++, async ({ server, port }) => {
-    const { channelID, sessionID } = await makeChannel(server, port, 'general')
+    const { sessionID } = await makeUserWithPermissions(server, port, {manageChannels: true})
+    const { channelID } = await makeChannel(server, port, 'general', sessionID)
     const response = await fetch(port, '/channels/' + channelID)
+
     t.deepEqual(response, {
       channel: {
         id: channelID,
@@ -106,7 +110,9 @@ test('GET /api/channels/:id', t => {
 
 test('PATCH /api/channels/:id', t => {
   return testWithServer(portForApiChannelTests++, async ({ server, port }) => {
-    const { channelID, sessionID } = await makeChannel(server, port, 'general')
+    const { sessionID } = await makeUserWithPermissions(server, port, {manageChannels: true})
+
+    const { channelID } = await makeChannel(server, port, 'general', sessionID)
     t.is((await server.db.channels.findOne({_id: channelID})).name, 'general')
     const response = await fetch(port, '/channels/' + channelID, {
       method: 'PATCH',
@@ -125,9 +131,10 @@ test('PATCH /api/channels/:id', t => {
           sessionID: sessionID2, name: 'tic-tac'
         })
       })
-      t.fail('Could rename channel without being an admin')
+      t.fail('Could rename channel without manageChannels permission')
     } catch (error) {
-      t.is(error.code, 'MUST_BE_ADMIN')
+      t.is(error.code, 'MISSING_PERMISSION')
+      t.is(error.permission, 'manageChannels')
     }
 
     try {
@@ -146,7 +153,9 @@ test('PATCH /api/channels/:id', t => {
 
 test('DELETE /api/channels/:id', t => {
   return testWithServer(portForApiChannelTests++, async ({ server, port }) => {
-    const { channelID: channelID1, sessionID } = await makeChannel(server, port, 'channel1')
+    const { sessionID } = await makeUserWithPermissions(server, port, {manageChannels: true})
+
+    const { channelID: channelID1 } = await makeChannel(server, port, 'channel1', sessionID)
     const { channelID: channelID2 } = await makeChannel(server, port, 'channel2', sessionID)
     t.is(await server.db.channels.count({}), 2)
     const response = await fetch(port, '/channels/' + channelID1, {
@@ -174,7 +183,8 @@ test('DELETE /api/channels/:id', t => {
       })
       t.fail('Non-admin could delete channel')
     } catch (error) {
-      t.is(error.code, 'MUST_BE_ADMIN')
+      t.is(error.code, 'MISSING_PERMISSION')
+      t.is(error.permission, 'manageChannels')
     }
   })
 })
@@ -275,12 +285,18 @@ test('GET /api/channels/:id/messages', t => {
 
 test('POST /api/channels/:id/pins', t => {
   return testWithServer(portForApiChannelTests++, async ({ server, port }) => {
-    const { channelID, sessionID } = await makeChannel(server, port)
-    const { messageID } = await makeMessage(server, port, undefined, channelID)
+    const { sessionID: pinnerSID } = await makeUserWithPermissions(server, port, {managePins: true})
+    const { sessionID: creatorSID } = await makeUserWithPermissions(server, port, {manageChannels: true})
+    const { sessionID: posterSID } = await makeUserWithPermissions(server, port, {sendMessages: true})
+    // (Technically all users have sendMessages by default, but it's nice to be clear
+    // above about who does what anyways.)
+
+    const { channelID } = await makeChannel(server, port, 'general', creatorSID)
+    const { messageID } = await makeMessage(server, port, undefined, channelID, posterSID)
 
     const response = await fetch(port, `/channels/${channelID}/pins`, {
       method: 'POST',
-      body: JSON.stringify({sessionID, messageID})
+      body: JSON.stringify({sessionID: pinnerSID, messageID})
     })
     t.deepEqual(response, {})
     t.deepEqual((await server.db.channels.findOne({_id: channelID})).pinnedMessageIDs, [messageID])
@@ -288,21 +304,21 @@ test('POST /api/channels/:id/pins', t => {
     try {
       await fetch(port, `/channels/${channelID}/pins`, {
         method: 'POST',
-        body: JSON.stringify({sessionID, messageID})
+        body: JSON.stringify({sessionID: pinnerSID, messageID})
       })
       t.fail('Could pin an already-pinned message')
     } catch (error) {
       t.is(error.code, 'ALREADY_PERFORMED')
     }
 
-    const { channelID: channelID2 } = await makeChannel(server, port, undefined, sessionID)
-    const { messageID: messageID2 } = await makeMessage(server, port, undefined, channelID2)
+    const { channelID: channelID2 } = await makeChannel(server, port, undefined, creatorSID)
+    const { messageID: messageID2 } = await makeMessage(server, port, undefined, channelID2, posterSID)
 
     try {
       await fetch(port, `/channels/${channelID}/pins`, {
         method: 'POST',
         body: JSON.stringify({
-          sessionID, messageID: messageID2
+          sessionID: pinnerSID, messageID: messageID2
         })
       })
       t.fail('Could pin a message from another channel')
@@ -311,62 +327,87 @@ test('POST /api/channels/:id/pins', t => {
     }
 
     try {
-      const { sessionID: sessionID2 } = await makeUser(server, port)
       await fetch(port, `/channels/${channelID2}/pins`, {
         method: 'POST',
         body: JSON.stringify({
-          sessionID: sessionID2, messageID: messageID2
+          sessionID: posterSID, messageID: messageID2
         })
       })
-      t.fail('Could pin a message as a non-admin')
+      t.fail('Could pin a message without managePins permission')
     } catch (error) {
-      t.is(error.code, 'MUST_BE_ADMIN')
+      t.is(error.code, 'MISSING_PERMISSION')
+      t.is(error.permission, 'managePins')
     }
   })
 })
 
 test('DELETE /api/channels/:channelID/pins/:messageID', t => {
   return testWithServer(portForApiChannelTests++, async ({ server, port }) => {
-    const { channelID, sessionID } = await makeChannel(server, port)
-    const { messageID } = await makeMessage(server, port, undefined, channelID)
+    const { sessionID: pinnerSID } = await makeUserWithPermissions(server, port, {managePins: true})
+    const { sessionID: creatorSID } = await makeUserWithPermissions(server, port, {manageChannels: true})
+    const { sessionID: posterSID } = await makeUserWithPermissions(server, port, {sendMessages: true})
+    const { channelID } = await makeChannel(server, port, creatorSID)
+    const { messageID } = await makeMessage(server, port, undefined, channelID, posterSID)
 
     await fetch(port, `/channels/${channelID}/pins`, {
       method: 'POST',
-      body: JSON.stringify({sessionID, messageID})
+      body: JSON.stringify({sessionID: pinnerSID, messageID})
     })
+
+    t.is((await fetch(port, `/channels/${channelID}/pins`)).pins.length, 1)
 
     await fetch(port, `/channels/${channelID}/pins/${messageID}`, {
       method: 'DELETE',
-      body: JSON.stringify({sessionID})
+      body: JSON.stringify({sessionID: pinnerSID})
     })
 
-    const { pins } = await fetch(port, `/channels/${channelID}/pins`, {
-      method: 'GET',
-      headers: {
-        'X-Session-ID': sessionID,
-      }
+    t.is((await fetch(port, `/channels/${channelID}/pins`)).pins.length, 0)
+
+    try {
+      await fetch(port, `/channels/${channelID}/pins/${messageID}`, {
+        method: 'DELETE',
+        body: JSON.stringify({sessionID: pinnerSID})
+      })
+      t.fail('Could unpin a message that was already unpinned')
+    } catch (error) {
+      t.is(error.code, 'NOT_FOUND')
+    }
+
+    // Pin the message again for the next test:
+    await fetch(port, `/channels/${channelID}/pins`, {
+      method: 'POST',
+      body: JSON.stringify({sessionID: pinnerSID, messageID})
     })
 
-    t.is(pins.length, 0)
+    try {
+      await fetch(port, `/channels/${channelID}/pins/${messageID}`, {
+        method: 'DELETE',
+        body: JSON.stringify({sessionID: posterSID})
+      })
+    } catch (error) {
+      t.is(error.code, 'MISSING_PERMISSION')
+      t.is(error.permission, 'managePins')
+    }
   })
 })
 
 test('GET /api/channels/:id/pins', t => {
   return testWithServer(portForApiChannelTests++, async ({ server, port }) => {
-    const { channelID, sessionID } = await makeChannel(server, port)
+    const { sessionID: pinnerSID } = await makeUserWithPermissions(server, port, {managePins: true})
+    const { sessionID: creatorSID } = await makeUserWithPermissions(server, port, {manageChannels: true})
+    const { sessionID: posterSID } = await makeUserWithPermissions(server, port, {sendMessages: true})
+    const { channelID } = await makeChannel(server, port, 'general', creatorSID)
 
     const response = await fetch(port, `/channels/${channelID}/pins`)
-    t.deepEqual(response, {
-      pins: []
-    })
+    t.deepEqual(response, {pins: []})
 
-    const { messageID: messageID1 } = await makeMessage(server, port, 'Hello!', channelID, sessionID)
-    const { messageID: messageID2 } = await makeMessage(server, port, 'Goodbye!', channelID, sessionID)
+    const { messageID: messageID1 } = await makeMessage(server, port, 'Hello!', channelID, posterSID)
+    const { messageID: messageID2 } = await makeMessage(server, port, 'Goodbye!', channelID, posterSID)
     for (const id of [messageID1, messageID2]) {
       await fetch(port, `/channels/${channelID}/pins`, {
         method: 'POST',
         body: JSON.stringify({
-          sessionID, messageID: id
+          sessionID: pinnerSID, messageID: id
         })
       })
     }
@@ -376,9 +417,11 @@ test('GET /api/channels/:id/pins', t => {
     t.is(response2.pins[0].text, 'Hello!')
     t.is(response2.pins[1].text, 'Goodbye!')
 
+    // Deleted messages shouldn't show up in the pin list.
+
     await fetch(port, `/messages/${messageID1}`, {
       method: 'DELETE',
-      body: JSON.stringify({sessionID})
+      body: JSON.stringify({sessionID: posterSID})
     })
 
     const response3 = await fetch(port, `/channels/${channelID}/pins`)
