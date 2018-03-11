@@ -18,11 +18,11 @@ test('POST /api/channels', t => {
     t.is(typeof response.channelID, 'string')
 
     try {
-      const { sessionID: sessionID2 } = await makeUser(server, port)
+      const { sessionID: userSID } = await makeUserWithPermissions(server, port, {manageChannels: false})
       await fetch(port, '/channels', {
         method: 'POST',
         body: JSON.stringify({
-          sessionID: sessionID2, name: 'memes'
+          sessionID: userSID, name: 'memes'
         })
       })
       t.fail('Could create channel without manageChannels permission')
@@ -124,11 +124,11 @@ test('PATCH /api/channels/:id', t => {
     t.is((await server.db.channels.findOne({_id: channelID})).name, 'party-land')
 
     try {
-      const { sessionID: sessionID2 } = await makeUser(server, port)
+      const { sessionID: userSID } = await makeUserWithPermissions(server, port, {manageChannels: false})
       await fetch(port, '/channels/' + channelID, {
         method: 'PATCH',
         body: JSON.stringify({
-          sessionID: sessionID2, name: 'tic-tac'
+          sessionID: userSID, name: 'tic-tac'
         })
       })
       t.fail('Could rename channel without manageChannels permission')
@@ -176,12 +176,12 @@ test('DELETE /api/channels/:id', t => {
     }
 
     try {
-      const { sessionID: sessionID2 } = await makeUser(server, port)
+      const { sessionID: userSID } = await makeUserWithPermissions(server, port, {manageChannels: false})
       await fetch(port, '/channels/' + channelID2, {
         method: 'DELETE',
-        body: JSON.stringify({sessionID: sessionID2})
+        body: JSON.stringify({sessionID: userSID})
       })
-      t.fail('Non-admin could delete channel')
+      t.fail('Could delete channel without manageChannels permission')
     } catch (error) {
       t.is(error.code, 'MISSING_PERMISSION')
       t.is(error.permission, 'manageChannels')
