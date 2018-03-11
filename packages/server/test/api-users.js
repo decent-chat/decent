@@ -99,59 +99,6 @@ test('GET /api/users (no authorization)', t => {
   })
 })
 
-test('GET /api/users (with authorization)', t => {
-  return testWithServer(portForApiUserTests++, async ({ server, port }) => {
-    await enableAuthorization(server)
-
-    const { admin, sessionID: adminSessionID } = await makeAdmin(server, port)
-    const { user: member, sessionID: memberSessionID } = await makeUser(server, port)
-    const { user: unauthUser, sessionID: unauthSessionID } = await makeUser(server, port)
-
-    await fetch(port, '/users/' + member.id, {
-      method: 'PATCH',
-      body: JSON.stringify({
-        sessionID: adminSessionID,
-        authorized: true
-      })
-    })
-
-    const response = await fetch(port, '/users?sessionID=' + memberSessionID)
-    t.deepEqual(Object.keys(response), ['users'])
-    t.is(response.users.length, 2)
-    t.truthy(response.users.find(u => u.id === admin.id))
-    t.truthy(response.users.find(u => u.id === member.id))
-
-    const response2 = await fetch(port, '/users?sessionID=' + adminSessionID)
-    t.deepEqual(Object.keys(response2), ['users', 'unauthorizedUsers'])
-    t.is(response2.users.length, 2)
-    t.truthy(response.users.find(u => u.id === admin.id))
-    t.truthy(response.users.find(u => u.id === member.id))
-    t.is(response2.unauthorizedUsers.length, 1)
-    t.is(response2.unauthorizedUsers[0].id, unauthUser.id)
-
-    try {
-      await fetch(port, '/users?sessionID=a')
-      t.fail('Could fetch user list with invalid session ID')
-    } catch (error) {
-      t.is(error.code, 'INVALID_SESSION_ID')
-    }
-
-    try {
-      await fetch(port, '/users?sessionID=' + unauthSessionID)
-      t.fail('Could fetch user list as an unauthorized user')
-    } catch (error) {
-      t.is(error.code, 'AUTHORIZATION_ERROR')
-    }
-
-    try {
-      await fetch(port, '/users')
-      t.fail('Could fetch user list without any session ID')
-    } catch (error) {
-      t.is(error.code, 'AUTHORIZATION_ERROR')
-    }
-  })
-})
-
 test('GET /api/users/:id', t => {
   return testWithServer(portForApiUserTests++, async ({ server, port }) => {
     const { user: { id: userID }, sessionID } = await makeUser(server, port)

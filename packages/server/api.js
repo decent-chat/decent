@@ -1122,15 +1122,16 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     ...middleware.loadVarFromQueryOrBody('email', false),
     ...middleware.loadVarFromQueryOrBody('flair', false),
     ...middleware.loadVarFromQueryOrBody('permissionLevel', false),
-    ...middleware.loadVarFromQueryOrBody('authorized', false),
+    ...middleware.loadVarFromQueryOrBody('roleIDs', false),
 
     // Typecheck/permission-check
     async (request, response, next) => {
       const {
         user, sessionUser,
-        requestFromAdmin, password, email, flair, permissionLevel, authorized,
+        requestFromAdmin, password, email, flair, roleIDs,
       } = request[middleware.vars]
 
+      /* TODO: Port this to use permissions.
       if (!requestFromAdmin && (typeof permissionLevel !== 'undefined' || typeof authorized !== 'undefined')) {
         // permissionLevel and authorized require an admin session to be provided!
 
@@ -1138,19 +1139,20 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
           message: 'permissionLevel/authorized cannot be changed without an admin session',
         })})
       }
+      */
 
       if (typeof password !== 'undefined') {
         // { old: String, new: String }
 
         if (typeof password.old !== 'string') {
           return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-            message: 'password.old should be a String.',
+            message: 'password.old should be a string'
           })})
         }
 
         if (typeof password.new !== 'string') {
           return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-            message: 'password.new should be a String.',
+            message: 'password.new should be a string'
           })})
         }
 
@@ -1173,7 +1175,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         if (typeof email !== 'string' && email !== null) {
           // String - an email address, hopefully. We don't verify it though.
           return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-            message: 'email should be null, or a String.',
+            message: 'email should be null or a string'
           })})
         }
 
@@ -1182,7 +1184,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
           if (email.length > 254) {
             return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-              message: 'email too long (>254 characters)',
+              message: 'email too long (>254 characters)'
             })})
           }
         }
@@ -1193,33 +1195,28 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
         if (typeof flair !== 'string') {
           return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-            message: 'flair should be null, or a String.',
+            message: 'flair should be null or a string'
           })})
         }
 
         if (flair.length > 50) {
           return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-            message: 'flair should not be longer than 50 characters.',
+            message: 'flair too long (>50 characters)'
           })})
         }
       }
 
-      if (typeof permissionLevel !== 'undefined' && permissionLevel !== 'admin' && permissionLevel !== 'member') {
-        // "admin" | "member"
-        return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-          message: 'permissionLevel should be "admin" or "member".',
-        })})
-      }
-
-      if (typeof authorized !== 'undefined') {
-        if (!await shouldUseAuthorization()) {
-          return response.status(400).json({error: errors.AUTHORIZATION_ERROR})
+      if (typeof roleIDs !== 'undefined') {
+        if (roleIDs.some(r => typeof r !== 'string')) {
+          return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+            message: 'roleIDs should be an array of strings'
+          })})
         }
 
-        if (typeof authorized !== 'boolean') {
-          // Boolean.
+        const roles = await Promise.all(roles.map(id => db.roles.findOne({_id: id})))
+        if (roles.some(r => r === null)) {
           return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-            message: 'authorized should be a Boolean.',
+            message: 'roleIDs should be an array of existant role IDs'
           })})
         }
       }
@@ -1231,7 +1228,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     async (request, response) => {
       const {
         userID, user: oldUser,
-        password, email, flair, permissionLevel, authorized,
+        password, email, flair, roleIDs,
       } = request[middleware.vars]
 
       if (password) {
@@ -1243,10 +1240,9 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       }
 
       const $set = {}
-      if (typeof authorized !== 'undefined') $set.authorized = authorized
+      if (typeof roleIDs !== 'undefined') $set.roleIDs = roleIDs
       if (typeof email !== 'undefined') $set.email = email
       if (typeof flair !== 'undefined') $set.flair = flair
-      if (typeof permissionLevel !== 'undefined') $set.permissionLevel = permissionLevel
 
       await db.users.update({_id: userID}, {$set})
 

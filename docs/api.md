@@ -1,4 +1,4 @@
-# Decent Server Specification <1.0.0-preview>
+# Decent Server Specification \<1.0.0-preview>
 
 Implementors of this specification support the following two forms of transport, which are meant to be used in conjunction with eachother:
 
@@ -128,7 +128,7 @@ The actual priority of permission objects is determined according to the roles a
 * Server-wide permissions for the user or guest role, as above
 * Server-wide permissions for the everyone role (Least priority.)
 
-Permissions for roles of the user (both globally and channel-specific) are prioritized according to the [role prioritization order](#prioritize-roles).
+Permissions for roles of the user (both globally and channel-specific) are prioritized according to the [role prioritization order](#prioritize-roles). Note that the order of the user's `roles` property **does not** have any effect on the order roles that are applied when calculating their perissions.
 
 </details>
 
@@ -1044,7 +1044,7 @@ GET /api/users/1/mentions?limit=1
 
 **The following parameters are available to sessions with the `manageRoles` [permission](#permissions):**
 
-+ `roleIDs`: (array of [role IDs](#roles); optional) - Used to generate `user.permissions`)
++ `roleIDs`: (array of [role IDs](#roles); optional) - Used to generate `user.permissions`
 
 Returns `{}` and applies changes, assuming a valid session for this user (or an admin) is provided and no errors occur. Also emits [user/update](#user-update).
 
