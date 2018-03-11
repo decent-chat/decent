@@ -22,6 +22,10 @@ const guestPermissionKeys = [
 ]
 
 // Internal roles - generally invisible, behave like magic.
+// Please don't refer to this array's length. Please. Please don't.
+// If you do, you'll be ignoring other roles that are automagically made.
+// Like the Owner role. So please don't refer to this array's length.
+// I know you'll have to hard-code the expected default role count. I'm sorry.
 const internalRoles = [
   {
     _id: '_everyone',

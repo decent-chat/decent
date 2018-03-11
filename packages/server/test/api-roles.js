@@ -1,6 +1,5 @@
 const { test } = require('ava')
 const { testWithServer, makeAdmin } = require('./_serverUtil')
-const { internalRoles } = require('../roles')
 const fetch = require('./_fetch')
 
 let portForApiRoleTests = 31000
@@ -73,10 +72,11 @@ test('GET /api/roles (default roles)', t => {
 
     t.deepEqual(Object.keys(response), ['roles'])
 
-    t.is(response.roles.length, 3) // = internalRoles.length
+    t.is(response.roles.length, 4)
     t.true(response.roles.some(r => r.id === '_everyone'))
     t.true(response.roles.some(r => r.id === '_user'))
     t.true(response.roles.some(r => r.id === '_guest'))
+    t.true(response.roles.some(r => r.name === 'Owner'))
   })
 })
 
@@ -111,7 +111,7 @@ test('GET /api/roles (with new role)', t => {
     })
 
     const response = await fetch(port, '/roles')
-    t.is(response.roles.length, 4)
+    t.is(response.roles.length, 5)
 
     const botRole = response.roles.find(r => r.name === 'Basic Bot')
     t.truthy(botRole)
@@ -183,11 +183,11 @@ test('DELETE /api/roles/:id', t => {
 
     await fetch(port, '/roles/' + id)
 
-    t.is((await fetch(port, '/roles')).roles.length, internalRoles.length + 1)
+    t.is((await fetch(port, '/roles')).roles.length, 5)
 
     await fetch(port, `/roles/${id}?sessionID=${sessionID}`, {method: 'DELETE'})
 
-    t.is((await fetch(port, '/roles')).roles.length, internalRoles.length)
+    t.is((await fetch(port, '/roles')).roles.length, 4)
 
     try {
       await fetch(port, '/roles/' + id)
@@ -209,7 +209,10 @@ test('PATCH/GET /api/roles/order', t => {
   return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
     const { sessionID } = await makeAdmin(server, port)
 
-    t.deepEqual(await fetch(port, '/roles/order'), {roleIDs: []})
+    const ownerRoleID = (await fetch(port, '/roles')).roles.find(
+      r => r.name === 'Owner').id
+
+    t.deepEqual(await fetch(port, '/roles/order'), {roleIDs: [ownerRoleID]})
 
     const { role: { id: id1 } } = await fetch(port, '/roles', {
       method: 'POST',
@@ -231,19 +234,19 @@ test('PATCH/GET /api/roles/order', t => {
 
     // Default prioritization order should be role 2 then role 1, because
     // newer roles are more prioritized.
-    t.deepEqual(await fetch(port, '/roles/order'), {roleIDs: [id2, id1]})
+    t.deepEqual(await fetch(port, '/roles/order'), {roleIDs: [id2, id1, ownerRoleID]})
 
     // Now re-order it:
     const response = await fetch(port, '/roles/order?sessionID=' + sessionID, {
       method: 'PATCH',
       body: JSON.stringify({
-        roleIDs: [id1, id2]
+        roleIDs: [ownerRoleID, id1, id2]
       })
     })
     t.deepEqual(response, {})
 
     // Check that this is reflected:
-    t.deepEqual(await fetch(port, '/roles/order'), {roleIDs: [id1, id2]})
+    t.deepEqual(await fetch(port, '/roles/order'), {roleIDs: [ownerRoleID, id1, id2]})
 
     // Remove a role:
     await fetch(port, '/roles/' + id1, {
@@ -254,6 +257,6 @@ test('PATCH/GET /api/roles/order', t => {
     })
 
     // And make sure that deleting the role is reflected:
-    t.deepEqual(await fetch(port, '/roles/order'), {roleIDs: [id2]})
+    t.deepEqual(await fetch(port, '/roles/order'), {roleIDs: [ownerRoleID, id2]})
   })
 })

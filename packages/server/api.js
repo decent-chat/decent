@@ -1165,6 +1165,23 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
+  const addRole = async function(name, permissions) {
+    const role = await db.roles.insert({
+      name, permissions
+    })
+
+    // Also add the role to the role prioritization order!
+    // Default to being the most prioritized.
+    const { rolePrioritizationOrder } = await getAllSettings(db.settings, serverPropertiesID)
+    rolePrioritizationOrder.unshift(role._id)
+    await setSetting(
+      db.settings, serverPropertiesID,
+      'rolePrioritizationOrder', rolePrioritizationOrder
+    )
+
+    return role
+  }
+
   app.post('/api/roles', [
     // TODO: Permissions for this. Well, and everything else. But also this.
     ...middleware.loadVarFromBody('name'),
@@ -1177,27 +1194,26 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
     async (request, response) => {
       const { name, permissions } = request[middleware.vars]
-
-      const role = await db.roles.insert({
-        name, permissions
-      })
-
-      // Also add the role to the role prioritization order!
-      // Default to being the most prioritized.
-      const { rolePrioritizationOrder } = await getAllSettings(db.settings, serverPropertiesID)
-      rolePrioritizationOrder.unshift(role._id)
-      await setSetting(
-        db.settings, serverPropertiesID,
-        'rolePrioritizationOrder', rolePrioritizationOrder
-      )
+      const role = await addRole(name, permissions)
 
       const serialized = await serialize.role(role)
-
       sendToAllSockets('role/new', {role: serialized})
-
       response.status(201).json({role: serialized})
     }
   ])
+
+  // Should this go somewhere else in the file? ABSOLUTELY LOL.
+  // But I'm so lazy and can't figure out where to put this nicely.
+  if (await db.roles.findOne({name: 'Owner'}) === null) {
+    const { permissions } = (internalRoles.find(r => r._id === '_everyone'))
+    const ownerPermissions = {}
+
+    for (const key of Object.keys(permissions)) {
+      ownerPermissions[key] = true
+    }
+
+    await addRole('Owner', ownerPermissions)
+  }
 
   app.patch('/api/roles/:id', [
     // TODO: Permissions for this.
