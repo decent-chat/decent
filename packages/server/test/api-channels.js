@@ -27,8 +27,8 @@ test('POST /api/channels', t => {
       })
       t.fail('Could create channel without manageChannels permission')
     } catch (error) {
-      t.is(error.code, 'MISSING_PERMISSION')
-      t.is(error.permission, 'manageChannels')
+      t.is(error.code, 'NOT_ALLOWED')
+      t.is(error.missingPermission, 'manageChannels')
     }
 
     try {
@@ -133,8 +133,8 @@ test('PATCH /api/channels/:id', t => {
       })
       t.fail('Could rename channel without manageChannels permission')
     } catch (error) {
-      t.is(error.code, 'MISSING_PERMISSION')
-      t.is(error.permission, 'manageChannels')
+      t.is(error.code, 'NOT_ALLOWED')
+      t.is(error.missingPermission, 'manageChannels')
     }
 
     try {
@@ -183,8 +183,8 @@ test('DELETE /api/channels/:id', t => {
       })
       t.fail('Could delete channel without manageChannels permission')
     } catch (error) {
-      t.is(error.code, 'MISSING_PERMISSION')
-      t.is(error.permission, 'manageChannels')
+      t.is(error.code, 'NOT_ALLOWED')
+      t.is(error.missingPermission, 'manageChannels')
     }
   })
 })
@@ -335,8 +335,8 @@ test('POST /api/channels/:id/pins', t => {
       })
       t.fail('Could pin a message without managePins permission')
     } catch (error) {
-      t.is(error.code, 'MISSING_PERMISSION')
-      t.is(error.permission, 'managePins')
+      t.is(error.code, 'NOT_ALLOWED')
+      t.is(error.missingPermission, 'managePins')
     }
   })
 })
@@ -385,8 +385,8 @@ test('DELETE /api/channels/:channelID/pins/:messageID', t => {
         body: JSON.stringify({sessionID: posterSID})
       })
     } catch (error) {
-      t.is(error.code, 'MISSING_PERMISSION')
-      t.is(error.permission, 'managePins')
+      t.is(error.code, 'NOT_ALLOWED')
+      t.is(error.missingPermission, 'managePins')
     }
   })
 })

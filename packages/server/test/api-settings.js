@@ -33,8 +33,8 @@ test('GET/PATCH /api/settings', t => {
       })
       t.fail('Could set settings without manageServer permission')
     } catch (error) {
-      t.is(error.code, 'MISSING_PERMISSION')
-      t.is(error.permission, 'manageServer')
+      t.is(error.code, 'NOT_ALLOWED')
+      t.is(error.missingPermission, 'manageServer')
     }
 
     const response4 = await fetch(port, '/settings?sessionID=' + setterSID, {

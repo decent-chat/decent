@@ -32,8 +32,8 @@ test('POST /api/emotes', t => {
       })
       t.fail('Could create emote without manageEmotes permission')
     } catch (error) {
-      t.is(error.code, 'MISSING_PERMISSION')
-      t.is(error.permission, 'manageEmotes')
+      t.is(error.code, 'NOT_ALLOWED')
+      t.is(error.missingPermission, 'manageEmotes')
       t.is(await server.db.emotes.count({}), 1) // Make sure it wasn't created!
     }
 
@@ -102,8 +102,8 @@ test('DELETE /api/emotes/:shortcode', t => {
       })
       t.fail('Could delete emote without manageEmotes permission')
     } catch (error) {
-      t.is(error.code, 'MISSING_PERMISSION')
-      t.is(error.permission, 'manageEmotes')
+      t.is(error.code, 'NOT_ALLOWED')
+      t.is(error.missingPermission, 'manageEmotes')
       t.is(await server.db.emotes.count({}), 1) // Make sure it wasn't deleted!
     }
   })

@@ -630,8 +630,8 @@ test('requirePermission', t => {
     ])
     t.true(response2.wasEnded)
     t.is(response2.statusCode, 403)
-    t.is(response2.endData.error.code, 'MISSING_PERMISSION')
-    t.is(response2.endData.error.permission, 'manageRoles')
+    t.is(response2.endData.error.code, 'NOT_ALLOWED')
+    t.is(response2.endData.error.missingPermission, 'manageRoles')
 
     // If we give the user the Owner role, then they should have every permission,
     // but we'll only test manageRoles (enough to know that requirePermission is

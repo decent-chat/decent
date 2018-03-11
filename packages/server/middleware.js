@@ -312,8 +312,8 @@ module.exports.makeMiddleware = function({db, util}) {
           next()
         } else {
           response.status(403).end(JSON.stringify({
-            error: Object.assign({}, errors.MISSING_PERMISSION, {
-              permission: permissionKey
+            error: Object.assign({}, errors.NOT_ALLOWED, {
+              missingPermission: permissionKey
             })
           }))
         }
@@ -330,8 +330,8 @@ module.exports.makeMiddleware = function({db, util}) {
           next()
         } else {
           response.status(403).end(JSON.stringify({
-            error: Object.assign({}, errors.MISSING_PERMISSION, {
-              permission: permissionKey,
+            error: Object.assign({}, errors.NOT_ALLOWED, {
+              missingPermission: permissionKey,
               requirePermissionInChannel: true
             })
           }))

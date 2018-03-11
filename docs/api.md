@@ -63,7 +63,7 @@ The `message` property is a string of a human-readable English message briefly e
 | ----------------------:|:----------------------------------------------------|
 | NOT_FOUND              | The requested thing was not found                   |
 | NOT_YOURS              | Your attempt to do something impactful was rejected because you are not the owner/author of the thing |
-| MISSING_PERMISSION     | You do not have a required permission               |
+| NOT_FOUND              | You are not allowed to do that                      |
 | NO                     | The server does not support or does not want to fulfill your request |
 | ALREADY_PERFORMED      | That action has already been performed              |
 | FAILED                 | Something went wrong internally                     |
