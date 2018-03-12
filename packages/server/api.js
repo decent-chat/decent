@@ -317,11 +317,44 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.requirePermission('sessionUser', 'manageServer'),
 
-    async (request, response) => {
-      const serverSettings = await db.settings.findOne({_id: serverSettingsID})
+    ...middleware.loadVarFromQueryOrBody('name', false),
+    ...middleware.loadVarFromQueryOrBody('iconURL', false),
 
-      for (const [ key, value ] of Object.entries(request.body)) {
-        await setSetting(db.settings, serverSettingsID, key, value)
+    async (request, response) => {
+      const { name, iconURL } = request[middleware.vars]
+
+      // Typecheck
+
+      if (typeof name !== 'undefined') {
+        if (typeof name !== 'string') {
+          return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+            message: 'name should be a string'
+          })})
+        }
+
+        if (name.trim().length === 0) {
+          return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+            message: 'name should not be an empty string'
+          })})
+        }
+      }
+
+      if (typeof iconURL !== 'undefined') {
+        if (typeof iconURL !== 'string') {
+          return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+            message: 'iconURL should be a string'
+          })})
+        }
+      }
+
+      // Apply settings
+
+      if (typeof name === 'string') {
+        await setSetting(db.settings, serverSettingsID, 'name', name)
+      }
+
+      if (typeof iconURL === 'string') {
+        await setSetting(db.settings, serverSettingsID, 'iconURL', iconURL)
       }
 
       sendToAllSockets('server-settings/update', {

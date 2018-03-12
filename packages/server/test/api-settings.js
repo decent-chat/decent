@@ -37,11 +37,37 @@ test('GET/PATCH /api/settings', t => {
       t.is(error.missingPermission, 'manageServer')
     }
 
-    const response4 = await fetch(port, '/settings?sessionID=' + setterSID, {
-      method: 'PATCH',
-      body: JSON.stringify({
-        name: ''
+    try {
+      await fetch(port, '/settings?sessionID=' + setterSID, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          name: 999
+        })
       })
-    })
+    } catch (error) {
+      t.is(error.code, 'INVALID_PARAMETER_TYPE')
+    }
+
+    try {
+      await fetch(port, '/settings?sessionID=' + setterSID, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          name: ''
+        })
+      })
+    } catch (error) {
+      t.is(error.code, 'INVALID_PARAMETER_TYPE')
+    }
+
+    try {
+      await fetch(port, '/settings?sessionID=' + setterSID, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          iconURL: {lol: 'lol'}
+        })
+      })
+    } catch (error) {
+      t.is(error.code, 'INVALID_PARAMETER_TYPE')
+    }
   })
 })
