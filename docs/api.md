@@ -142,6 +142,7 @@ Below is a table of all permissions.
 
 | Code              | Description                                              |
 | ----------------- | -------------------------------------------------------- |
+| `deleteMessages`  | Allows deletion of messages that you do not own.         |
 | `manageServer`    | Allows changes to [server settings](#settings).          |
 | `manageUsers`     | Allows for updating of users other than yourself, and allows deletion of users. |
 | `manageRoles`     | Allows creation/deletion/modification of [roles](#roles). |

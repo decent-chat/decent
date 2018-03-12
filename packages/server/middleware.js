@@ -320,11 +320,10 @@ module.exports.makeMiddleware = function({db, util}) {
       }
     ],
 
-    requireChannelPermission: (userVar, channelVar, permissionVar) => [
+    requireChannelPermission: (userVar, channelVar, permissionKey) => [
       async function(request, response, next) {
         const { _id: userID } = request[middleware.vars][userVar]
         const { _id: channelID } = request[middleware.vars][channelVar]
-        const permissionKey = request[middleware.vars][permissionVar]
 
         if (await userHasPermission(userID, permissionKey, channelID)) {
           next()

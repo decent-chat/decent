@@ -1,5 +1,6 @@
 const permissionKeys = [
   'allowNonUnique',
+  'deleteMessages',
   'manageChannels',
   'manageEmotes',
   'managePins',

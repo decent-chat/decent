@@ -348,13 +348,14 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   ])
 
   app.post('/api/messages', [
-    ...middleware.loadVarFromBody('text'),
-    ...middleware.validateVar('text', validate.string),
-    ...middleware.loadVarFromBody('channelID'),
-    ...middleware.validateVar('channelID', validate.string),
-    ...middleware.getChannelFromID('channelID', '_'), // To verify that it exists.
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.loadVarFromBody('channelID'),
+    ...middleware.validateVar('channelID', validate.string),
+    ...middleware.getChannelFromID('channelID', 'channel'),
+    ...middleware.requireChannelPermission('sessionUser', 'channel', 'sendMessages'),
+    ...middleware.loadVarFromBody('text'),
+    ...middleware.validateVar('text', validate.string),
 
     async (request, response) => {
       const { text, channelID, sessionUser } = request[middleware.vars]
@@ -483,7 +484,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       const { message, sessionUser } = request[middleware.vars]
 
       if (sessionUser._id !== message.authorID) {
-        if (sessionUser.permissionLevel !== 'admin') {
+        if (await util.userHasPermission(sessionUser._id, 'deleteMessages', message.channelID) === false) {
           response.status(403).json({
             error: errors.NOT_YOURS
           })
@@ -505,6 +506,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       // If this message is pinned to any channel, unpin it, because it just
       // got deleted!
+
       const channelWithPin = await db.channels.findOne({
         pinnedMessageIDs: {$elemMatch: message._id},
       })
