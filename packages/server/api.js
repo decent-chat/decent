@@ -320,34 +320,16 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     ...middleware.loadVarFromQueryOrBody('name', false),
     ...middleware.loadVarFromQueryOrBody('iconURL', false),
 
+    ...middleware.runIfVarExists('name',
+      middleware.validateVar('name', validate.nonEmptyString)
+    ),
+
+    ...middleware.runIfVarExists('iconURL',
+      middleware.validateVar('iconURL', validate.string)
+    ),
+
     async (request, response) => {
       const { name, iconURL } = request[middleware.vars]
-
-      // Typecheck
-
-      if (typeof name !== 'undefined') {
-        if (typeof name !== 'string') {
-          return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-            message: 'name should be a string'
-          })})
-        }
-
-        if (name.trim().length === 0) {
-          return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-            message: 'name should not be an empty string'
-          })})
-        }
-      }
-
-      if (typeof iconURL !== 'undefined') {
-        if (typeof iconURL !== 'string') {
-          return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-            message: 'iconURL should be a string'
-          })})
-        }
-      }
-
-      // Apply settings
 
       if (typeof name === 'string') {
         await setSetting(db.settings, serverSettingsID, 'name', name)

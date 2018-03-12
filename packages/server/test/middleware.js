@@ -228,8 +228,17 @@ test('loadVarFromParams', async t => {
 
 test('validate.string', t => {
   t.true(validate.string('hello'))
+  t.true(validate.string(''))
   t.false(validate.string(123))
   t.false(validate.string())
+})
+
+test('validate.nonEmptyString', t => {
+  const val = validate.nonEmptyString
+  t.true(val('hello'))
+  t.false(val(''))
+  t.false(val(123))
+  t.false(val())
 })
 
 test('validate.object', t => {

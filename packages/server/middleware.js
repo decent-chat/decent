@@ -393,6 +393,10 @@ const validate = {
     return typeof x === 'string'
   }, {description: 'a string'}),
 
+  nonEmptyString: Object.assign(function(x) {
+    return typeof x === 'string' && x.trim().length > 0
+  }, {description: 'a non-empty string'}),
+
   object: Object.assign(function(x) {
     return typeof x === 'object' && !Array.isArray(x)
   }, {description: 'an object'}),
