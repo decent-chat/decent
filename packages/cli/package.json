@@ -1,6 +1,6 @@
 {
   "name": "@decent/cli",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "bin": {
     "decent": "bin/decent.js"
   },
@@ -16,7 +16,7 @@
   "author": "Multiple contributors",
   "license": "GPL-3.0",
   "dependencies": {
-    "@decent/client": "^0.0.0",
+    "@decent/client": "1.0.0",
     "@decent/server": "^0.0.0",
     "express": "^4.16.2",
     "fix-whitespace": "^1.0.3"

@@ -1,6 +1,6 @@
 {
   "name": "@decent/client",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Standalone web client for Decent",
   "main": "index.js",
   "repository": "https://github.com/decent-chat/decent/tree/master/packages/client",
@@ -13,7 +13,7 @@
   "author": "Multiple contributors",
   "license": "GPL-3.0",
   "dependencies": {
-    "decent.js": "^0.1.0-preview",
+    "decent.js": "1.0.0",
     "eventemitter3": "^3.0.1",
     "mrk.js": "^2.0.0",
     "preact": "^8.2.7",
