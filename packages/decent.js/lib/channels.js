@@ -14,7 +14,7 @@ const queryString = query => {
 }
 
 const channelType = {
-  id: 'String',
+  id: typeforce.oneOf('String', 'Number', 'Boolean'),
   name: 'String',
 
   unreadMessageCount: '?Number',
@@ -22,28 +22,28 @@ const channelType = {
 }
 
 const messageType = {
-  id: 'String',
+  id: typeforce.oneOf('String', 'Number', 'Boolean'),
   channelID: 'String',
 
-  // type: 'String',
-
+  type: 'String', // "user" or "system"
   text: 'String',
-  mentionedUserIDs: typeforce.arrayOf('String'),
 
   authorID: '?String',
   authorUsername: '?String',
   authorAvatarURL: '?String',
-  authorFlair: '?String',
 
-  // dateCreated: 'Number',
-  // dateEdited: '?Number',
-  date: 'Number',
-  editDate: '?Number',
+  dateCreated: 'Number',
+  dateEdited: '?Number',
+  //date: 'Number',
+  //editDate: '?Number',
 }
 
 class Message extends Thing {
   constructor(client, data) {
     super(client, messageType, data)
+
+    this.dateCreated = new Date(this.dateCreated * 1000)
+    this.dateEdited = this.dateEdited ? new Date(this.dateEdited * 1000) : null
 
     this.deleted = false
 
@@ -110,14 +110,6 @@ class Message extends Thing {
     await this.client.fetch('/api/messages/' + this.id, {
       method: 'DELETE',
     })
-  }
-
-  get dateCreated() {
-    return new Date(this.date)
-  }
-
-  get dateEdited() {
-    return this.editDate ? new Date(this.editDate) : null
   }
 }
 

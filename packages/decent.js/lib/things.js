@@ -13,7 +13,11 @@ class Thing extends EventEmitter {
     Object.defineProperty(this, SPEC, {value: spec})
 
     Object.defineProperty(this, SET_DATA, {value: data => {
-      typeforce(this[SPEC], data)
+      try {
+        typeforce(this[SPEC], data)
+      } catch (err) {
+        console.warn(`Typecheck failed for ${this.constructor.name}:`, err.message)
+      }
 
       for (const key of Object.keys(this[SPEC])) {
         this[key] = data[key]
@@ -42,7 +46,18 @@ class Things extends ArrayEmitter {
 
   async load() {
     const { t, ts, T } = this[OPTS]
-    const set = await this.client.fetch(`/api/${ts}/`)
+    let set
+
+    try {
+      set = await this.client.fetch(`/api/${ts}/`)
+    } catch (err) {
+      if (err.code === 'NOT_FOUND' || err.code === 'NO') {
+        console.warn(`Server does not support /api/${ts}`)
+        set = {[ts]: []}
+      } else {
+        throw err
+      }
+    }
 
     this.set = set[ts].map(data => {
       // Re-use existing instances, if any

@@ -1,6 +1,6 @@
 {
   "name": "decent.js",
-  "version": "0.1.0-preview",
+  "version": "1.0.0",
   "description": "A library for interacting with Decent servers.",
   "main": "lib/index.js",
   "repository": "https://github.com/decent-chat/decent/tree/master/packages/decent.js",

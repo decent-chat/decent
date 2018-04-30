@@ -5,17 +5,16 @@ const { Message } = require('./channels')
 const nextTick = k => setTimeout(k, 0)
 
 const userType = {
-  id: 'String',
+  id: typeforce.oneOf('String', 'Number', 'Boolean'),
   username: 'String',
 
   avatarURL: 'String',
   flair: '?String',
 
   online: 'Boolean',
-  // permissions: permissionsType
+  roleIDs: typeforce.arrayOf('String'),
 
   email: '?String',
-  mentions: 'Array',
 }
 
 class User extends Thing {

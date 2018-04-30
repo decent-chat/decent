@@ -9,7 +9,7 @@ const { Message, Channels } = require('./channels')
 const { User, Users } = require('./users')
 
 // Typeforce relies on this function being callable.
-if (!Error.captureStackTrace) Error.captureStackTrace = () => console.trace()
+if (!Error.captureStackTrace) Error.captureStackTrace = () => {}
 
 class Client extends EventEmitter {
   constructor() {
@@ -48,15 +48,13 @@ class Client extends EventEmitter {
     this._host = {hostname}
 
     // Should we be using HTTPS or plain HTTP?
-    const { properties: { useSecure } } = await this.fetch('/api/properties')
-    typeforce('Boolean', useSecure)
+    const { useSecureProtocol, decentVersion } = await this.fetch('/api/')
+    typeforce('Boolean', useSecureProtocol)
 
-    this._host.useSecure = useSecure
+    this._host.useSecure = useSecureProtocol
 
     // Check version compatability
-    const { decentVersion } = await this.fetch('/api/')
     typeforce('String', decentVersion)
-
     const majorVersions = [version, decentVersion].map(v => parseInt(v.split('.')[0]))
 
     if (majorVersions[0] < majorVersions[1]) {

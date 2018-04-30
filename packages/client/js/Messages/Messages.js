@@ -22,7 +22,6 @@ class Messages extends Component {
 
       const usePrevGroup = typeof group !== 'undefined'
         && group[0].authorID === msg.authorID
-        && group[0].authorFlair === msg.authorFlair
         && group[0].authorAvatarURL === msg.authorAvatarURL
         && group.length <= 20
         && (msg.dateCreated - group[group.length - 1].dateCreated) < apart
