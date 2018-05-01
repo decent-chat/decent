@@ -14,14 +14,14 @@ module.exports = (port, path = '', opts = {}) =>
         return JSON.parse(text)
       } catch(err) {
         return {error: {
-          code: 'INTERNAL_ERROR',
+          code: 'INTERNAL_FETCH_ERROR',
           stack: new Error('Failed to parse JSON from:\n-----\n' + text + '\n-----')
         }}
       }
     })
     .then(res => {
       if (res.error) {
-        if (res.error.code === 'INTERNAL_ERROR') {
+        if (res.error.code === 'INTERNAL_FETCH_ERROR') {
           throw Object.assign(new Error('stack:' + res.error.stack), {
             stack: res.error.stack
           })

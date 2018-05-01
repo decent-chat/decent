@@ -1,7 +1,7 @@
 const { test } = require('ava')
 const { makeMiddleware, validate } = require('../middleware')
 const makeCommonUtils = require('../common')
-const { testWithServer, makeUser, makeAdmin, makeChannel, makeMessage } = require('./_serverUtil')
+const { testWithServer, makeUser, giveOwnerRole, makeChannel, makeMessage } = require('./_serverUtil')
 const fetch = require('./_fetch')
 
 let portForMiddlewareTests = 22000
@@ -203,7 +203,7 @@ test('loadVarFromQueryOrBody - missing variable, required = true', async t => {
   t.true(response.wasEnded)
   t.is(response.statusCode, 400)
   t.is(response.endData.error.code, 'INCOMPLETE_PARAMETERS')
-  t.is(request[middleware.vars].y, undefined) 
+  t.is(request[middleware.vars].y, undefined)
 })
 
 test('loadVarFromQueryOrBody - missing variable, required = false', async t => {
@@ -228,8 +228,17 @@ test('loadVarFromParams', async t => {
 
 test('validate.string', t => {
   t.true(validate.string('hello'))
+  t.true(validate.string(''))
   t.false(validate.string(123))
   t.false(validate.string())
+})
+
+test('validate.nonEmptyString', t => {
+  const val = validate.nonEmptyString
+  t.true(val('hello'))
+  t.false(val(''))
+  t.false(val(123))
+  t.false(val())
 })
 
 test('validate.object', t => {
@@ -237,6 +246,67 @@ test('validate.object', t => {
   t.false(validate.object(123))
   t.false(validate.object())
   t.false(validate.object([]))
+})
+
+test('validate.roleName', t => {
+  t.true(validate.roleName('boop'))
+  t.false(validate.roleName(''))
+  t.false(validate.roleName('boooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooop'))
+  t.false(validate.roleName(5000))
+})
+
+test('validate.permissionsObject', t => {
+  const val = validate.permissionsObject
+  t.true(val({readMessages: true}))
+  t.true(val({readMessages: false}))
+  t.true(val({readMessages: null}))
+  t.true(val({readMessages: undefined}))
+  t.true(val({}))
+  t.false(val({readMessages: 'sure'}))
+  t.false(val({yourFACE: null}))
+  t.false(val('lol'))
+})
+
+test('validate.arrayOfRoleIDs', async t => {
+  const db = {
+    roles: {
+      findOne: async ({ _id }) => {
+        return ['a', 'b', 'c'].includes(_id) ? {} : null
+      }
+    }
+  }
+
+  const val = x => validate.arrayOfRoleIDs(x, {db})
+  t.true(await val(['a', 'b', 'c']))
+  t.true(await val(['a', 'c']))
+  t.true(await val([]))
+  t.false(await val(['x']))
+  t.false(await val(['a', 'b', 'x', 'c']))
+  t.false(await val(['a', 'a']))
+  t.false(await val(['a', 'b', 'c', 'b']))
+  t.false(await val('lol'))
+})
+
+test('validate.arrayOfAllRoleIDs', async t => {
+  const db = {
+    roles: {
+      find: async () => {
+        return [{_id: 'a'}, {_id: 'b'}, {_id: 'c'}, {_id: '_user'}]
+      },
+      findOne: async ({ _id }) => {
+        return ['a', 'b', 'c', '_user'].includes(_id) ? {} : null
+      }
+    }
+  }
+
+  const val = x => validate.arrayOfAllRoleIDs(x, {db})
+  t.true(await val(['a', 'b', 'c']))
+  t.true(await val(['b', 'a', 'c']))
+  t.false(await val(['a']))
+  t.false(await val([]))
+  t.false(await val(['a', 'b', 'c', 'x']))
+  t.false(await val(['a', 'b', 'b', 'c']))
+  t.false(await val('lol'))
 })
 
 test('validateVar - test data is valid', async t => {
@@ -550,29 +620,38 @@ test('getChannelFromID - channelID of nonexistent channel', t => {
   })
 })
 
-test('requireBeAdmin - basic functionality, as admin', t => {
+test('requirePermission', t => {
   return testWithServer(portForMiddlewareTests++, async ({ middleware, server, port }) => {
-    const { sessionID } = await makeAdmin(server, port)
+    // By default, everyone has the readMessages permission, so we check for that:
+    const { user: { id: userID }, sessionID } = await makeUser(server, port)
     const request = {[middleware.vars]: {sessionID}}
     const { response } = await interpretMiddleware(request, [
       ...middleware.getSessionUserFromID('sessionID', 'user'),
-      ...middleware.requireBeAdmin('user')
+      ...middleware.requirePermission('user', 'readMessages')
     ])
     t.false(response.wasEnded)
-  })
-})
 
-test('requireBeAdmin - basic functionality, as non-admin', t => {
-  return testWithServer(portForMiddlewareTests++, async ({ middleware, server, port }) => {
-    const { sessionID } = await makeUser(server, port)
-    const request = {[middleware.vars]: {sessionID}}
-    const { response } = await interpretMiddleware(request, [
+    // Users don't have manageRoles by default, though:
+    const request2 = {[middleware.vars]: {sessionID}}
+    const { response: response2 } = await interpretMiddleware(request, [
       ...middleware.getSessionUserFromID('sessionID', 'user'),
-      ...middleware.requireBeAdmin('user')
+      ...middleware.requirePermission('user', 'manageRoles')
     ])
-    t.true(response.wasEnded)
-    t.is(response.statusCode, 403)
-    t.is(response.endData.error.code, 'MUST_BE_ADMIN')
+    t.true(response2.wasEnded)
+    t.is(response2.statusCode, 403)
+    t.is(response2.endData.error.code, 'NOT_ALLOWED')
+    t.is(response2.endData.error.missingPermission, 'manageRoles')
+
+    // If we give the user the Owner role, then they should have every permission,
+    // but we'll only test manageRoles (enough to know that requirePermission is
+    // actually checking the user's roles):
+    await giveOwnerRole(server, userID)
+    const request3 = {[middleware.vars]: {sessionID}}
+    const { response: response3 } = await interpretMiddleware(request, [
+      ...middleware.getSessionUserFromID('sessionID', 'user'),
+      ...middleware.requirePermission('user', 'manageRoles')
+    ])
+    t.false(response3.wasEnded)
   })
 })
 

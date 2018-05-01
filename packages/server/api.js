@@ -10,6 +10,7 @@ const bcrypt = require('./bcrypt-util')
 const { makeMiddleware, validate } = require('./middleware')
 const makeSerializers = require('./serialize')
 const makeCommonUtil = require('./common')
+const { internalRoles, guestPermissionKeys } = require('./roles')
 const packageObj = require('./package.json')
 
 const mkdir = util.promisify(fs.mkdir)
@@ -30,25 +31,26 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   const middleware = makeMiddleware({db, util})
   const serialize = makeSerializers({db, util})
 
+  await Promise.all(internalRoles.map(async role => {
+    if (await db.roles.findOne({_id: role._id}) === null) {
+      await db.roles.insert(role)
+    }
+  }))
+
   const {
     asUnixDate, unixDateNow,
     getUserIDBySessionID,
     getUserBySessionID,
     emailToAvatarURL,
     isUserOnline,
-    shouldUseAuthorization, isUserAuthorized,
     getUnreadMessageCountInChannel,
     getMentionsFromMessageContent,
+    getPrioritizedRoles,
   } = util
 
-  const sendToAllSockets = function(evt, data, sendToUnauthorized = false) {
+  const sendToAllSockets = function(evt, data) {
     for (const [ socket, socketData ] of connectedSocketsMap.entries()) {
-      // Only send data to authorized sockets - those are sockets who've been
-      // verified as having logged in as an actual member (and not an
-      // unauthorized user).
-      if (sendToUnauthorized || socketData.authorized === true) {
-        socket.send(JSON.stringify({ evt, data }))
-      }
+      socket.send(JSON.stringify({ evt, data }))
     }
   }
 
@@ -152,84 +154,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     app.set('json spaces', 2)
   }
 
-  // Don't let users who aren't verified (authorized false) interact with
-  // most API endpoints.
-  app.use('/api', [
-    ...middleware.verifyVarsExists(),
-
-    // Users should still be able to log in, though, obviously - otherwise,
-    // they'll never have a session ID (and tied user) for the server to
-    // check! (By the way, Express automatically gets rid of the "/api/"
-    // part, so we can just check for /login instead of /api/login.)
-    // A couple other endpoints also don't make sense to verify, so we skip
-    // those.
-    async (request, response, next) => {
-      // Although, of course, we should only do any of this if the server is
-      // set to require authorization!
-      const { requireAuthorization } = await db.settings.findOne({_id: serverPropertiesID})
-
-      if (requireAuthorization === 'on' && !(
-        [
-          ['GET', /^\/$/],
-          ['POST', /^\/sessions$/],
-          ['GET', /^\/sessions\//],
-          ['POST', /^\/users$/],
-          ['GET', /^\/username-available/],
-          ['GET', /^\/properties$/],
-          ['GET', /^\/settings$/],
-        ].find(([ m, re ]) => request.method === m && re.test(request.path))
-      )) {
-        request[middleware.vars].shouldVerify = true
-      }
-
-      next()
-    },
-
-    ...middleware.loadSessionID('sessionID', false),
-
-    (request, response, next) => {
-      if (!request[middleware.vars].sessionID && request[middleware.vars].shouldVerify) {
-        // No session ID given - just quit here.
-        response.status(403).json({
-          error: errors.AUTHORIZATION_ERROR
-        })
-        return
-      }
-
-      next()
-    },
-
-    ...middleware.runIfVarExists('shouldVerify', [
-      // No need to rewrite the wheel - we have a fancy way of guessing where
-      // we might get the session ID, but we can use it just like we always
-      // do (with our normal middleware functions).
-      ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-
-      (request, response, next) => {
-        // Now that we have the session user, we can actually check if the user
-        // is authorized. For now, we just check if the user's permission
-        // level is "admin" or "member", but in the future (TODO) we should have
-        // a more sophisticated (and not hard-coded!) setup for permissions.
-        const { sessionUser } = request[middleware.vars]
-
-        if (sessionUser.authorized === true) {
-          next()
-        } else {
-          response.status(403).json({
-            error: errors.AUTHORIZATION_ERROR
-          })
-        }
-      }
-    ]),
-
-    // Don't pollute middleware-vars!
-    function(request, response, next) {
-      delete request[middleware.vars].shouldVerify
-      delete request[middleware.vars].sessionID
-      next()
-    }
-  ])
-
   app.get('/api/', async (request, response) => {
     const { https } = await getAllSettings(db.settings, serverPropertiesID)
 
@@ -307,7 +231,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   app.post('/api/emotes', [
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.requirePermission('sessionUser', 'manageEmotes'),
     ...middleware.loadVarFromBody('shortcode'),
     ...middleware.requireNameValid('shortcode'),
     ...middleware.loadVarFromBody('imageURL'),
@@ -317,7 +241,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       const { imageURL, shortcode } = request[middleware.vars]
 
       if (await db.emotes.findOne({shortcode})) {
-        response.status(400).json(errors.NAME_ALREADY_TAKEN)
+        response.status(400).json({error: errors.NAME_ALREADY_TAKEN})
         return
       }
 
@@ -348,7 +272,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     ...middleware.loadVarFromParams('shortcode'),
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.requirePermission('sessionUser', 'manageEmotes'),
 
     async function(request, response, next) {
       const { shortcode } = request[middleware.vars]
@@ -391,38 +315,47 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   app.patch('/api/settings', [
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.requirePermission('sessionUser', 'manageServer'),
+
+    ...middleware.loadVarFromQueryOrBody('name', false),
+    ...middleware.loadVarFromQueryOrBody('iconURL', false),
+
+    ...middleware.runIfVarExists('name',
+      middleware.validateVar('name', validate.nonEmptyString)
+    ),
+
+    ...middleware.runIfVarExists('iconURL',
+      middleware.validateVar('iconURL', validate.string)
+    ),
 
     async (request, response) => {
-      const serverSettings = await db.settings.findOne({_id: serverSettingsID})
+      const { name, iconURL } = request[middleware.vars]
 
-      const results = {}
+      if (typeof name === 'string') {
+        await setSetting(db.settings, serverSettingsID, 'name', name)
+      }
 
-      let status = 200
-      for (const [ key, value ] of Object.entries(request.body)) {
-        const result = await setSetting(db.settings, serverSettingsID, key, value)
-        if (result !== 'updated') {
-          results[key] = result
-          status = 400
-        }
+      if (typeof iconURL === 'string') {
+        await setSetting(db.settings, serverSettingsID, 'iconURL', iconURL)
       }
 
       sendToAllSockets('server-settings/update', {
-        settings: await getAllSettings(serverSettingsID)
+        settings: await getAllSettings(db.settings, serverSettingsID)
       })
 
-      response.status(status).json({results})
+      response.status(200).json({})
     }
   ])
 
   app.post('/api/messages', [
-    ...middleware.loadVarFromBody('text'),
-    ...middleware.validateVar('text', validate.string),
-    ...middleware.loadVarFromBody('channelID'),
-    ...middleware.validateVar('channelID', validate.string),
-    ...middleware.getChannelFromID('channelID', '_'), // To verify that it exists.
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.loadVarFromBody('channelID'),
+    ...middleware.validateVar('channelID', validate.string),
+    ...middleware.getChannelFromID('channelID', 'channel'),
+    ...middleware.requireChannelPermission('sessionUser', 'channel', 'sendMessages'),
+    ...middleware.loadVarFromBody('text'),
+    ...middleware.validateVar('text', validate.string),
 
     async (request, response) => {
       const { text, channelID, sessionUser } = request[middleware.vars]
@@ -551,7 +484,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       const { message, sessionUser } = request[middleware.vars]
 
       if (sessionUser._id !== message.authorID) {
-        if (sessionUser.permissionLevel !== 'admin') {
+        if (await util.userHasPermission(sessionUser._id, 'deleteMessages', message.channelID) === false) {
           response.status(403).json({
             error: errors.NOT_YOURS
           })
@@ -573,6 +506,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       // If this message is pinned to any channel, unpin it, because it just
       // got deleted!
+
       const channelWithPin = await db.channels.findOne({
         pinnedMessageIDs: {$elemMatch: message._id},
       })
@@ -629,7 +563,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   app.post('/api/channels', [
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.requirePermission('sessionUser', 'manageChannels'),
     ...middleware.loadVarFromBody('name'),
     ...middleware.requireNameValid('name'),
 
@@ -680,7 +614,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     ...middleware.loadVarFromParams('channelID'),
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.requirePermission('sessionUser', 'manageChannels'),
     ...middleware.loadVarFromBody('name'),
     ...middleware.requireNameValid('name'),
     ...middleware.getChannelFromID('channelID', '_'), // To verify the channel exists.
@@ -709,7 +643,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   app.delete('/api/channels/:channelID', [
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.requirePermission('sessionUser', 'manageChannels'),
     ...middleware.loadVarFromParams('channelID'),
     ...middleware.getChannelFromID('channelID', '_'), // To verify the channel exists.
 
@@ -824,7 +758,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   app.post('/api/channels/:channelID/pins', [
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.requirePermission('sessionUser', 'managePins'),
     ...middleware.loadVarFromParams('channelID'),
     ...middleware.getChannelFromID('channelID', 'channel'),
     ...middleware.loadVarFromBody('messageID'),
@@ -863,7 +797,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   app.delete('/api/channels/:channelID/pins/:messageID', [
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-    ...middleware.requireBeAdmin('sessionUser'),
+    ...middleware.requirePermission('sessionUser', 'managePins'),
     ...middleware.loadVarFromParams('channelID'),
     ...middleware.getChannelFromID('channelID', 'channel'),
     ...middleware.loadVarFromParams('messageID'),
@@ -902,54 +836,13 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   ])
 
   app.get('/api/users', [
-    ...middleware.runIfCondition(() => shouldUseAuthorization(), [
-      ...middleware.loadSessionID('sessionID', false),
-      ...middleware.runIfVarExists('sessionID',
-        middleware.getSessionUserFromID('sessionID'),
-      ),
+    async (request, response) => {
+      const users = await db.users.find({})
 
-      async (request, response) => {
-        const { sessionUser } = request[middleware.vars]
-        const isAdmin = sessionUser && sessionUser.permissionLevel === 'admin'
-
-        const [ authorizedUsers, unauthorizedUsers ] = await Promise.all([
-          db.users.find({authorized: true}),
-
-          // Unauthorized users - anyone where authorized is false,
-          // or authorized just isn't set at all (e.g. an old database).
-          isAdmin
-            ? db.users.find({$or: [
-              {authorized: false},
-              {authorized: {$exists: false}}
-            ]})
-            : Promise.resolve(null)
-        ])
-
-        const result = {
-          users: await Promise.all(authorizedUsers.map(serialize.user))
-        }
-
-        // Respond the unauthorized users in a separate field, but only if the
-        // session user is an admin.
-        if (isAdmin) {
-          result.unauthorizedUsers = await Promise.all(
-            unauthorizedUsers.map(serialize.user)
-          )
-        }
-
-        response.status(200).json(result)
-      }
-    ], [
-      // If authorization is disabled we can take a far simpler route - just
-      // return every user.
-      async (request, response) => {
-        const users = await db.users.find({})
-
-        response.status(200).json({
-          users: await Promise.all(users.map(serialize.user))
-        })
-      }
-    ])
+      response.status(200).json({
+        users: await Promise.all(users.map(serialize.user))
+      })
+    }
   ])
 
   app.post('/api/users', [
@@ -984,27 +877,19 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         passwordHash,
         email: null,
         flair: null,
-        permissionLevel: 'member',
-        authorized: false,
+        roleIDs: [],
         lastReadChannelDates: {},
         mentionedInMessageIDs: [],
       })
 
       // Note that we run serialize.user twice here -- once, to send to the
-      // general public of connected (authorized-user) sockets, and again,
-      // which is sent back as the HTTP response to POST /api/users. The first
-      // one doesn't contain some private data that the second one does (like
-      // the (unset) email).
+      // general public of connected sockets, and again, to be sent back as the
+      // HTTP response to POST /api/users. The first one doesn't contain some
+      // private data that the second one does (like the (unset) email).
 
-      // Only tell client sockets that a user has been created if the server
-      // isn't using authorization. After all, if the user isn't authorized
-      // (which it isn't, upon being created), other users won't be able to
-      // interact with it until it is.
-      if (await shouldUseAuthorization() === false) {
-        sendToAllSockets('user/new', {
-          user: await serialize.user(user)
-        })
-      }
+      sendToAllSockets('user/new', {
+        user: await serialize.user(user)
+      })
 
       response.status(201).json({
         user: await serialize.user(user, user)
@@ -1038,6 +923,35 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
+  app.get('/api/users/:userID/permissions', [
+    ...middleware.loadVarFromParams('userID'),
+    ...middleware.getUserFromID('userID', '_'), // To make sure the user exists.
+
+    async (request, response) => {
+      const { userID } = request[middleware.vars]
+
+      response.status(200).json({
+        permissions: await util.getUserPermissions(userID)
+      })
+    }
+  ])
+
+  app.get('/api/users/:userID/channel-permissions/:channelID', [
+    ...middleware.loadVarFromParams('userID'),
+    ...middleware.loadVarFromParams('channelID'),
+
+    // To make sure the user and channel exist:
+    ...middleware.getUserFromID('userID', '_'),
+    ...middleware.getChannelFromID('channelID', '_'),
+
+    async (request, response) => {
+      const { userID, channelID } = request[middleware.vars]
+
+      response.status(200).json({
+        permissions: await util.getUserPermissions(userID, channelID)
+      })
+    }
+  ])
   app.get('/api/username-available/:username', [
     ...middleware.loadVarFromParams('username'),
     ...middleware.requireNameValid('username'),
@@ -1087,15 +1001,16 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     ...middleware.loadVarFromQueryOrBody('email', false),
     ...middleware.loadVarFromQueryOrBody('flair', false),
     ...middleware.loadVarFromQueryOrBody('permissionLevel', false),
-    ...middleware.loadVarFromQueryOrBody('authorized', false),
+    ...middleware.loadVarFromQueryOrBody('roleIDs', false),
 
     // Typecheck/permission-check
     async (request, response, next) => {
       const {
         user, sessionUser,
-        requestFromAdmin, password, email, flair, permissionLevel, authorized,
+        requestFromAdmin, password, email, flair, roleIDs,
       } = request[middleware.vars]
 
+      /* TODO: Port this to use permissions.
       if (!requestFromAdmin && (typeof permissionLevel !== 'undefined' || typeof authorized !== 'undefined')) {
         // permissionLevel and authorized require an admin session to be provided!
 
@@ -1103,19 +1018,20 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
           message: 'permissionLevel/authorized cannot be changed without an admin session',
         })})
       }
+      */
 
       if (typeof password !== 'undefined') {
         // { old: String, new: String }
 
         if (typeof password.old !== 'string') {
           return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-            message: 'password.old should be a String.',
+            message: 'password.old should be a string'
           })})
         }
 
         if (typeof password.new !== 'string') {
           return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-            message: 'password.new should be a String.',
+            message: 'password.new should be a string'
           })})
         }
 
@@ -1138,7 +1054,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         if (typeof email !== 'string' && email !== null) {
           // String - an email address, hopefully. We don't verify it though.
           return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-            message: 'email should be null, or a String.',
+            message: 'email should be null or a string'
           })})
         }
 
@@ -1147,7 +1063,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
           if (email.length > 254) {
             return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-              message: 'email too long (>254 characters)',
+              message: 'email too long (>254 characters)'
             })})
           }
         }
@@ -1158,35 +1074,21 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
         if (typeof flair !== 'string') {
           return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-            message: 'flair should be null, or a String.',
+            message: 'flair should be null or a string'
           })})
         }
 
         if (flair.length > 50) {
           return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-            message: 'flair should not be longer than 50 characters.',
+            message: 'flair too long (>50 characters)'
           })})
         }
       }
 
-      if (typeof permissionLevel !== 'undefined' && permissionLevel !== 'admin' && permissionLevel !== 'member') {
-        // "admin" | "member"
+      if (!validate.arrayOfRoleIDs(roleIDs, {db})) {
         return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-          message: 'permissionLevel should be "admin" or "member".',
+          message: `roleIDs should be ${validate.arrayOfRoleIDs.description}`
         })})
-      }
-
-      if (typeof authorized !== 'undefined') {
-        if (!await shouldUseAuthorization()) {
-          return response.status(400).json({error: errors.AUTHORIZATION_ERROR})
-        }
-
-        if (typeof authorized !== 'boolean') {
-          // Boolean.
-          return response.status(400).json({error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
-            message: 'authorized should be a Boolean.',
-          })})
-        }
       }
 
       next()
@@ -1196,7 +1098,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     async (request, response) => {
       const {
         userID, user: oldUser,
-        password, email, flair, permissionLevel, authorized,
+        password, email, flair, roleIDs,
       } = request[middleware.vars]
 
       if (password) {
@@ -1208,30 +1110,186 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       }
 
       const $set = {}
-      if (typeof authorized !== 'undefined') $set.authorized = authorized
+      if (typeof roleIDs !== 'undefined') $set.roleIDs = roleIDs
       if (typeof email !== 'undefined') $set.email = email
       if (typeof flair !== 'undefined') $set.flair = flair
-      if (typeof permissionLevel !== 'undefined') $set.permissionLevel = permissionLevel
 
       await db.users.update({_id: userID}, {$set})
 
       const serializedUser = await serialize.user(await db.users.findOne({_id: userID}))
 
-      // If whether the user is authorized or not has changed, emit the
-      // respective events.
-      if (oldUser.authorized === false && authorized === true) {
-        sendToAllSockets('user/new', {user: serializedUser})
-      } else if (oldUser.authorized === true && authorized === false) {
-        sendToAllSockets('user/gone', {userID})
-      }
-
-      // If a user was deauthorized, don't send an update event.
-      if (serializedUser.authorized) {
-        sendToAllSockets('user/update', {user: serializedUser})
-      }
+      sendToAllSockets('user/update', {user: serializedUser})
 
       response.status(200).json({})
     },
+  ])
+
+  app.get('/api/roles', [
+    async (request, response) => {
+      const prioritizedRoles = await getPrioritizedRoles()
+
+      response.status(200).json({
+        roles: await Promise.all(prioritizedRoles.map(serialize.role))
+      })
+    }
+  ])
+
+  // Note that this goes before app.get('/api/roles/:id').
+  // That's because otherwise, it'll think that fetching /api/roles/order means
+  // you just want to fetch *that* route, with id equal to order.
+  // We don't need to worry about a role somehow being generated with the ID
+  // "order" because nedb always generates 16-character strings for its IDs.
+  app.get('/api/roles/order', [
+    async (request, response) => {
+      const { rolePrioritizationOrder } = await getAllSettings(db.settings, serverPropertiesID)
+
+      response.status(200).json({
+        roleIDs: rolePrioritizationOrder
+      })
+    }
+  ])
+
+  app.patch('/api/roles/order', [
+    ...middleware.loadSessionID('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    // TODO: Check permissions - manageRoles.
+    ...middleware.loadVarFromBody('roleIDs'),
+    ...middleware.validateVar('roleIDs', validate.arrayOfAllRoleIDs),
+
+    async (request, response) => {
+      const { roleIDs } = request[middleware.vars]
+      await setSetting(db.settings, serverPropertiesID, 'rolePrioritizationOrder', roleIDs)
+      response.status(200).json({})
+    }
+  ])
+
+  app.get('/api/roles/:id', [
+    async (request, response) => {
+      const role = await db.roles.findOne({_id: request.params.id})
+
+      if (role) {
+        response.status(200).json({role: await serialize.role(role)})
+      } else {
+        response.status(404).json({error: errors.NOT_FOUND})
+      }
+    }
+  ])
+
+  const addRole = async function(name, permissions) {
+    const role = await db.roles.insert({
+      name, permissions
+    })
+
+    // Also add the role to the role prioritization order!
+    // Default to being the most prioritized.
+    const { rolePrioritizationOrder } = await getAllSettings(db.settings, serverPropertiesID)
+    rolePrioritizationOrder.unshift(role._id)
+    await setSetting(
+      db.settings, serverPropertiesID,
+      'rolePrioritizationOrder', rolePrioritizationOrder
+    )
+
+    return role
+  }
+
+  app.post('/api/roles', [
+    // TODO: Permissions for this. Well, and everything else. But also this.
+    ...middleware.loadVarFromBody('name'),
+    ...middleware.loadVarFromBody('permissions'),
+    ...middleware.validateVar('name', validate.roleName),
+    ...middleware.validateVar('permissions', validate.permissionsObject),
+    // TODO: Error 403 if the requester doesn't have one or more of the
+    // permissions they want to give this role. This should be a portable
+    // middleware (taking the session-user and permissions objects).
+
+    async (request, response) => {
+      const { name, permissions } = request[middleware.vars]
+      const role = await addRole(name, permissions)
+
+      sendToAllSockets('role/new', {role: await serialize.role(role)})
+      response.status(201).json({roleID: role._id})
+    }
+  ])
+
+  // Should this go somewhere else in the file? ABSOLUTELY LOL.
+  // But I'm so lazy and can't figure out where to put this nicely.
+  if (await db.roles.findOne({name: 'Owner'}) === null) {
+    const { permissions } = (internalRoles.find(r => r._id === '_everyone'))
+    const ownerPermissions = {}
+
+    for (const key of Object.keys(permissions)) {
+      ownerPermissions[key] = true
+    }
+
+    await addRole('Owner', ownerPermissions)
+  }
+
+  app.patch('/api/roles/:id', [
+    // TODO: Permissions for this.
+    ...middleware.loadVarFromParams('id'),
+    ...middleware.loadVarFromBody('name', false),
+    ...middleware.loadVarFromBody('permissions', false),
+    ...middleware.runIfVarExists('name',
+      middleware.validateVar('name', validate.roleName)
+    ),
+    ...middleware.runIfVarExists('permissions',
+      middleware.validateVar('permissions', validate.permissionsObject)
+    ),
+    // TODO: Also error 403 here, just like when creating a role.
+
+    async (request, response) => {
+      const { id, name, permissions } = request[middleware.vars]
+
+      if (['_everyone', '_guest'].includes(id)) {
+        if (Object.keys(permissions).some(k => !guestPermissionKeys.includes(k))) {
+          response.status(403).json({error: errors.NOT_GUEST_PERMISSION})
+          return
+        }
+      }
+
+      const $set = {}
+      if (typeof name !== 'undefined') $set.name = name
+      if (typeof permissions !== 'undefined') $set.permissions = permissions
+
+      const role = await db.roles.update({_id: id}, {$set}, {multi: false})
+
+      sendToAllSockets('role/update', {
+        role: await serialize.role(role)
+      })
+
+      response.status(200).json({})
+    }
+  ])
+
+  app.delete('/api/roles/:id', [
+    // TODO: Also also permissions for this also.
+    ...middleware.loadVarFromParams('id'),
+
+    async (request, response) => {
+      const { id } = request[middleware.vars]
+
+      if (internalRoles.isInternalID(id)) {
+        response.status(403).json({error: errors.NOT_DELETABLE_ROLE})
+        return
+      }
+
+      const numRemoved = await db.roles.remove({_id: id})
+      if (numRemoved) {
+        // Also remove the role ID from the role prioritization order.
+        const { rolePrioritizationOrder } = await getAllSettings(db.settings, serverPropertiesID)
+        if (rolePrioritizationOrder.includes(id)) {
+          rolePrioritizationOrder.splice(rolePrioritizationOrder.indexOf(id), 1)
+        }
+        await setSetting(
+          db.settings, serverPropertiesID,
+          'rolePrioritizationOrder', rolePrioritizationOrder
+        )
+
+        response.status(200).json({})
+      } else {
+        response.status(404).json({error: errors.NOT_FOUND})
+      }
+    }
   ])
 
   app.get('/api/sessions', [
@@ -1339,7 +1397,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     const socketData = {
       sessionID: null,
       userID: null,
-      authorized: false,
       isAlive: true,
     }
 
@@ -1388,25 +1445,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
           const newUserID = await getUserIDBySessionID(sessionID)
           await announceUserOnline(newUserID)
           socketData.userID = newUserID
-
-          if (await shouldUseAuthorization()) {
-            const user = await getUserBySessionID(sessionID)
-
-            if (!user) {
-              socketData.sessionID = null
-              socketData.userID = null
-              socketData.authorized = false
-              return
-            }
-
-            if (user.authorized === true) {
-              socketData.authorized = true
-            } else {
-              socketData.authorized = false
-            }
-          } else {
-            socketData.authorized = true
-          }
         }
       }
     })

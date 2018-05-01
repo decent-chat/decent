@@ -1,12 +1,13 @@
 const errors = require('./errors')
+const { internalRoles, permissionKeys } = require('./roles')
 
 module.exports.makeMiddleware = function({db, util}) {
   const {
     getUserIDBySessionID, getUserBySessionID,
     isUserOnline, isUserAuthorized,
     emailToAvatarURL, isNameValid,
-    getUnreadMessageCountInChannel,
-    shouldUseAuthorization
+    getUserPermissions, userHasPermission,
+    getUnreadMessageCountInChannel
   } = util
 
   const _loadVarFromObject = (request, response, next, obj, key, required) => {
@@ -107,7 +108,7 @@ module.exports.makeMiddleware = function({db, util}) {
       async function(request, response, next) {
         const value = request[middleware.vars][varName]
 
-        if (await validationFn(value)) {
+        if (await validationFn(value, {db})) {
           next()
         } else {
           response.status(400).end(JSON.stringify({
@@ -303,19 +304,47 @@ module.exports.makeMiddleware = function({db, util}) {
       }
     ],
 
+    requirePermission: (userVar, permissionKey) => [
+      async function(request, response, next) {
+        const { _id: userID } = request[middleware.vars][userVar]
+
+        if (await userHasPermission(userID, permissionKey)) {
+          next()
+        } else {
+          response.status(403).end(JSON.stringify({
+            error: Object.assign({}, errors.NOT_ALLOWED, {
+              missingPermission: permissionKey
+            })
+          }))
+        }
+      }
+    ],
+
+    requireChannelPermission: (userVar, channelVar, permissionKey) => [
+      async function(request, response, next) {
+        const { _id: userID } = request[middleware.vars][userVar]
+        const { _id: channelID } = request[middleware.vars][channelVar]
+
+        if (await userHasPermission(userID, permissionKey, channelID)) {
+          next()
+        } else {
+          response.status(403).end(JSON.stringify({
+            error: Object.assign({}, errors.NOT_ALLOWED, {
+              missingPermission: permissionKey,
+              requirePermissionInChannel: true
+            })
+          }))
+        }
+      }
+    ],
+
     requireBeAdmin: userVar => [
       async function(request, response, next) {
-        const { permissionLevel } = request[middleware.vars][userVar]
-
-        if (permissionLevel !== 'admin') {
-          response.status(403).end(JSON.stringify({
-            error: errors.MUST_BE_ADMIN
-          }))
-
-          return
-        }
-
-        next()
+        response.status(500).json({
+          error: Object.assign({}, errors.INTERNAL_ERROR, {
+            message: 'Attempted to use obsolete requireBeAdmin middleware'
+          })
+        })
       }
     ],
 
@@ -362,9 +391,50 @@ const validate = {
   string: Object.assign(function(x) {
     return typeof x === 'string'
   }, {description: 'a string'}),
+
+  nonEmptyString: Object.assign(function(x) {
+    return typeof x === 'string' && x.trim().length > 0
+  }, {description: 'a non-empty string'}),
+
   object: Object.assign(function(x) {
     return typeof x === 'object' && !Array.isArray(x)
   }, {description: 'an object'}),
+
+  roleName: Object.assign(function(x) {
+    return typeof x === 'string' && x.length > 0 && x.length <= 32
+  }, {description: 'a valid role name (<= 32 chars)'}),
+
+  permissionsObject: Object.assign(function(x) {
+    return typeof x === 'object' &&
+      Object.keys(x).every(k => permissionKeys.includes(k)) &&
+      Object.values(x).every(v => [true, false, undefined, null].includes(v))
+  }, {description: 'a permissions object'}),
+
+  arrayOfRoleIDs: Object.assign(async function(x, {db}) {
+    if (!Array.isArray(x)) return false
+    if (x.some(r => typeof r !== 'string')) return false
+
+    // Return false if there are any duplicate items.
+    if (x.some((r, i) => x.slice(i + 1).includes(r))) return false
+
+    if (x.some(r => internalRoles.isInternalID(r))) return false
+
+    const roles = await Promise.all(x.map(id => db.roles.findOne({_id: id})))
+    if (roles.some(r => r === null)) return false
+
+    return true
+  }, {description: 'an array of non-internal, existant role IDs'}),
+
+  arrayOfAllRoleIDs: Object.assign(async function(x, {db}) {
+    if (!await validate.arrayOfRoleIDs(x, {db})) return false
+
+    let allRoles = await db.roles.find({})
+    allRoles = allRoles.filter(r => !internalRoles.isInternalID(r._id))
+    if (allRoles.some(r => !x.includes(r._id))) return false
+
+    return true
+  }, {description: 'an array of every non-internal, existant role ID'}),
+
   defined: Object.assign(function(x) {
     return typeof x !== 'undefined'
   }, {description: 'defined'})

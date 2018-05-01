@@ -3,7 +3,7 @@
 const memoize = require('memoizee')
 const crypto = require('crypto')
 const mrk = require('mrk.js/async')
-const { serverPropertiesID } = require('./settings')
+const { serverPropertiesID, getAllSettings } = require('./settings')
 
 module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
   // The olde General Valid Name regex. In the off-chance it's decided that
@@ -64,23 +64,45 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
       .some(socketData => socketData.userID === userID)
   }
 
-  const shouldUseAuthorization = async function() {
-    const { requireAuthorization } = await db.settings.findOne({_id: serverPropertiesID})
+  const getPrioritizedRoles = async function() {
+    const allRoles = await db.roles.find({})
+    const { rolePrioritizationOrder } = await getAllSettings(db.settings, serverPropertiesID)
+    const prioritizedRoles = rolePrioritizationOrder.map(
+      id => allRoles.find(r => r._id === id)
+    )
 
-    return requireAuthorization === 'on'
+    prioritizedRoles.push(allRoles.find(r => r._id === '_user'))
+    prioritizedRoles.push(allRoles.find(r => r._id === '_guest'))
+    prioritizedRoles.push(allRoles.find(r => r._id === '_everyone'))
+
+    return prioritizedRoles
   }
 
-  const isUserAuthorized = async function(userID) {
-    // Checks if a user is authorized. If authorization is disabled, this will
-    // always return true (even if the "authorized" field is set to false).
+  const getUserPermissions = async function(userID, channelID = null) {
+    // TODO: Handle channel ID, for channel-specific permissions.
 
-    if (await shouldUseAuthorization() === false) {
-      return true
-    }
+    const { roleIDs } = await db.users.findOne({_id: userID})
+    const prioritizedRoles = await getPrioritizedRoles()
+    const userRoles = prioritizedRoles.filter(r => {
+      return ['_everyone', '_user', ...roleIDs].includes(r._id)
+    })
 
-    const user = await db.users.findOne({_id: userID})
+    const permissions = userRoles.map(r => r.permissions)
 
-    return user && user.authorized ? true : false
+    // The order is initially [mostPrioritized, ..., leastPrioritized].
+    // If we just pass this to Object.assing, it'll assign leastPrioritized
+    // *after* mostPrioritized. That's not what we want; we want
+    // mostPrioritized to be applied last (on top). So we reverse the order.
+    permissions.reverse()
+
+    // console.log('getUserPermissions - perms:', permissions)
+
+    return Object.assign(...permissions)
+  }
+
+  const userHasPermission = async function(userID, permissionKey, channelID = null) {
+    const permissions = await getUserPermissions(userID, channelID)
+    return permissions[permissionKey] === true
   }
 
   const getUnreadMessageCountInChannel = async function(userObj, channelID) {
@@ -193,11 +215,12 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
     isNameValid,
     asUnixDate, unixDateNow,
     getUserIDBySessionID, getUserBySessionID,
+    getPrioritizedRoles,
+    getUserPermissions, userHasPermission,
     md5,
-    isUserOnline, isUserAuthorized,
+    isUserOnline,
     emailToAvatarURL,
     getUnreadMessageCountInChannel, getOldestUnreadMessageInChannel,
-    shouldUseAuthorization,
     getMentionsFromMessageContent,
   }
 }

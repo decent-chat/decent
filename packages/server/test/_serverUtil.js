@@ -35,25 +35,68 @@ const makeUser = async (server, port, inUsername = undefined, inPassword = undef
     body: JSON.stringify({username, password})
   })
 
-  return {user, sessionID}
+  const userID = user.id
+
+  return {user, userID, sessionID}
 }
 
-const makeAdmin = async (server, port, username = 'test_admin_' + shortid()) => {
-  const { user: admin, sessionID } = await makeUser(server, port, username)
+const giveOwnerRole = async (server, userID) => {
+  await server.db.users.update({_id: userID}, {
+    $push: {roleIDs: (await server.db.roles.findOne({name: 'Owner'}))._id}
+  })
+}
 
-  await server.db.users.update({username}, {
-    $set: {
-      permissionLevel: 'admin',
-      authorized: true
-    }
+const makeOwner = async (server, port, username = 'test_admin_' + shortid()) => {
+  const { user, userID, sessionID } = await makeUser(server, port, username)
+
+  await giveOwnerRole(server, userID)
+
+  return {user, userID, sessionID}
+}
+
+const makeRole = async (server, port, permissions = {}, name = 'test_role_' + shortid(), sessionID = null) => {
+  if (sessionID === null) {
+    sessionID = (await makeOwner(server, port)).sessionID
+  }
+
+  const { roleID } = await fetch(port, '/roles', {
+    method: 'POST',
+    body: JSON.stringify({
+      name, permissions, sessionID
+    })
   })
 
-  return {admin, sessionID}
+  return {roleID}
+}
+
+const giveRole = async (server, port, roleID, userID, sessionID = null) => {
+  if (sessionID === null) {
+    sessionID = (await makeOwner(server, port)).sessionID
+  }
+
+  const oldRoles = (await fetch(port, '/users/' + userID)).user.roleIDs
+  const newRoles = oldRoles.concat([roleID])
+
+  await fetch(port, `/users/${userID}?sessionID=${sessionID}`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      roleIDs: newRoles
+    })
+  })
+}
+
+const makeUserWithPermissions = async (server, port, permissions) => {
+  const { sessionID: ownerSessionID } = await makeOwner(server, port)
+  const { sessionID, userID } = await makeUser(server, port)
+  const { roleID } = await makeRole(server, port, permissions, undefined, ownerSessionID)
+  await giveRole(server, port, roleID, userID, ownerSessionID)
+
+  return { sessionID, userID, ownerSessionID}
 }
 
 const makeChannel = async (server, port, name = 'test_channel_' + shortid(), sessionID = null) => {
   if (sessionID === null) {
-    sessionID = (await makeAdmin(server, port)).sessionID
+    sessionID = (await makeOwner(server, port)).sessionID
   }
 
   const { channelID } = await fetch(port, '/channels', {
@@ -85,13 +128,9 @@ const makeMessage = async (server, port, text = 'Hello.', channelID = null, sess
   return {messageID, channelID, sessionID}
 }
 
-const enableAuthorization = async server => {
-  await server.settings.setSetting(server.db.settings, server.settings.serverPropertiesID, 'requireAuthorization', 'on')
-}
-
 module.exports = {
   testWithServer,
-  makeUserWithoutSession, makeUser, makeAdmin,
-  makeChannel, makeMessage,
-  enableAuthorization
+  makeUserWithoutSession, makeUser, makeOwner, makeUserWithPermissions,
+  makeRole, giveRole, giveOwnerRole,
+  makeChannel, makeMessage
 }

@@ -25,6 +25,7 @@ async function main(port = 3000, dbDir) {
     channels: new Datastore(),
     settings: new Datastore(),
     emotes:   new Datastore(),
+    roles:    new Datastore(),
   } : {
     messages: new Datastore({filename: dbDir + '/messages'}),
     users:    new Datastore({filename: dbDir + '/users'}),
@@ -32,6 +33,7 @@ async function main(port = 3000, dbDir) {
     channels: new Datastore({filename: dbDir + '/channels'}),
     settings: new Datastore({filename: dbDir + '/settings'}),
     emotes:   new Datastore({filename: dbDir + '/emotes'}),
+    roles:    new Datastore({filename: dbDir + '/roles'}),
   }
 
   await Promise.all(Object.values(db).map(d => d.loadDatabase()))

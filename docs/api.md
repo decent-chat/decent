@@ -1,4 +1,4 @@
-# Decent Server Specification <1.0.0-preview>
+# Decent Server Specification \<1.0.0-preview>
 
 Implementors of this specification support the following two forms of transport, which are meant to be used in conjunction with eachother:
 
@@ -63,7 +63,7 @@ The `message` property is a string of a human-readable English message briefly e
 | ----------------------:|:----------------------------------------------------|
 | NOT_FOUND              | The requested thing was not found                   |
 | NOT_YOURS              | Your attempt to do something impactful was rejected because you are not the owner/author of the thing |
-| NOT_ALLOWED            | The requesting user has insufficient permissions to perform this action |
+| NOT_ALLOWED            | You are not allowed to do that                      |
 | NO                     | The server does not support or does not want to fulfill your request |
 | ALREADY_PERFORMED      | That action has already been performed              |
 | FAILED                 | Something went wrong internally                     |
@@ -121,12 +121,16 @@ We look at the final permission object: `{readMessages: false, sendMessages: fal
 
 The actual priority of permission objects is determined according to the roles applied to the user and channel-specific permissions (which are dependent on the roles), and the order is determined as follows:
 
-* Channel-specific permissions for roles of the user (Most priority.)
-* Channel-specific permissions for the user role, if the user is a logged-in member of the server, or the guest role, if the user is not logged in (IDs "_user" and "_guest" respectively)
-* Channel-specific permissions for the everyone role (ID "_everyone")
+* Channel-specific permissions for the `_owner` role, if the user has this role (Most priority.)
+* Server-wide permissions for the `_owner` role, if the user has this role
+* Channel-specific permissions for roles of the user
+* Channel-specific permissions for the `_user` role, if the user is a logged-in member of the server, or the `_guest` role, if the user is not logged in
+* Channel-specific permissions for the `_everyone` role
 * Server-wide permissions for roles of the user
-* Server-wide permissions for the user or guest role, as above
-* Server-wide permissions for the everyone role (Least priority.)
+* Server-wide permissions for the `_user` or `_guest` role, as above
+* Server-wide permissions for the `_everyone` role (Least priority.)
+
+Permissions for roles of the user (both globally and channel-specific) are prioritized according to the [role prioritization order](#prioritize-roles). Note that the order of the user's `roles` property **does not** have any effect on the order roles that are applied when calculating their perissions.
 
 </details>
 
@@ -138,6 +142,7 @@ Below is a table of all permissions.
 
 | Code              | Description                                              |
 | ----------------- | -------------------------------------------------------- |
+| `deleteMessages`  | Allows deletion of messages that you do not own.         |
 | `manageServer`    | Allows changes to [server settings](#settings).          |
 | `manageUsers`     | Allows for updating of users other than yourself, and allows deletion of users. |
 | `manageRoles`     | Allows creation/deletion/modification of [roles](#roles). |
@@ -651,8 +656,6 @@ POST /api/channels
 <- }
 ```
 
-May return [an error](#errors): MUST_BE_ADMIN, NAME_ALREADY_TAKEN, INVALID_NAME.
-
 <a name='get-channel'></a>
 ### Retrieve a channel [GET /api/channels/:id]
 + does not require session, however:
@@ -669,8 +672,6 @@ GET /api/channels/5678
 <-   "name": "general"
 <- }
 ```
-
-May return [an error](#errors), including MUST_BE_ADMIN, NAME_ALREADY_TAKEN, and INVALID_NAME.
 
 <a name='rename-channel'></a>
 ### Rename a channel [PATCH /api/channels/:id]
@@ -767,7 +768,7 @@ GET /api/channels/5678/messages?after=1234
 + **in-url** id (ID)
 + **rolePermissions** - an object map of role IDs to their permissions
 
-Returns `{}` if successful. Note that if the **roles** parameter, unspecified role permissions on the channel will not be changed. To delete an entry, pass `{}` as the role's permissions; since this would reset the role's permissions all to unset, the role would have no effect, and is removed from the channel's `rolePermissions` map.
+Returns `{}` if successful. Note that if a role is not specified on the **roles** parameter, its permissions on the channel will not be changed. To delete an entry, pass `{}` as the role's permissions; since this would reset the role's permissions all to unset, the role would have no effect, and is removed from the channel's `rolePermissions` map.
 
 ```js
 PATCH /api/channels/1234/role-permissions
@@ -874,7 +875,7 @@ DELETE /api/channels/5678/pins/1234
   "flair": string | null,
 
   "online": boolean,
-  "roles": array, // Array of string IDs for each role the user has, not including "_user" or "_everyone",
+  "roleIDs": array, // Array of string IDs for each role the user has, not including "_user" or "_everyone",
 
   "email": string | null // Only provided if the requested user is the same as the sessionID provides
 }
@@ -958,7 +959,7 @@ GET /api/users?sessionID=adminsid123
 + `username` ([name](#names)) - Must be unique
 + `password` (string) - Errors if shorter than 6 characters
 
-Responds with `{ user }` if successful, where `user` is the new user object. If the server does not [require authorization](#authorization), [user/new](#user-new) is emitted. Note the given password is passed as a plain string and is stored in the database as a bcrypt-hashed and salted string (and not in any plaintext form). Log in with [POST /api/sessions](#login).
+Responds with `{ user }` if successful, where `user` is the new user object. Emits [user/new](#user-new). Note the given password is passed as a plain string and is stored in the database as a bcrypt-hashed and salted string (and not in any plaintext form). Log in with [POST /api/sessions](#login).
 
 ```js
 POST /api/users
@@ -1042,7 +1043,7 @@ GET /api/users/1/mentions?limit=1
 
 **The following parameters are available to sessions with the `manageRoles` [permission](#permissions):**
 
-+ `roles`: (array of [role IDs](#roles); optional) - Used to generate `user.permissions`)
++ `roleIDs`: (array of [role IDs](#roles); optional) - Used to generate `user.permissions`
 
 Returns `{}` and applies changes, assuming a valid session for this user (or an admin) is provided and no errors occur. Also emits [user/update](#user-update).
 
@@ -1067,7 +1068,7 @@ PATCH /api/users/12
 (with session representing an admin)
 
 -> {
-->   "roles": [ "id-of-role", "id-of-role-2" ],
+->   "roleIDs": [ "id-of-role", "id-of-role-2" ],
 ->   "flair": null
 -> }
 
@@ -1115,9 +1116,16 @@ GET /api/users/1/permissions
 <- }
 ```
 
+<a name='get-user-channel-permissions'></a>
+### Get a user's channel-specific permissions [GET /api/users/:userID/channel-permissions/:channelID]
++ **in-url** userID (ID) - The user ID to fetch
++ **in-url** channelID (ID) - The channel ID to fetch
+
+Returns `{ permissions }`, where `permissions` is a [permissions](#permissions) object containing permissions, with the given channel's role-specific permissions applied.
+
 <a name='delete-user'></a>
 ### Delete a user [DELETE /api/users/:id]
-+ requires [permission](#permission): MANAGE_USERS
++ requires [permission](#permission): `manageUsers`
 + **in-url** id (ID) - The user to delete
 
 Returns `{}` and emits [user/delete](#user-delete).
@@ -1179,7 +1187,7 @@ Sent to all clients when a role is [deleted](#delete-role). Passed data is in th
 <a name='list-roles'></a>
 ### List roles [GET /api/roles]
 
-Returns `{ roles }`, where `roles` is an array of emote objects.
+Returns `{ roles }`, where `roles` is an array of role objects.
 
 ```js
 GET /api/roles
@@ -1187,11 +1195,67 @@ GET /api/roles
 <- {
 <-   "roles": [
 <-     {
-<-       "id": ID,
+<-       "id": "_everyone",
 <-       "name": "Everyone",
 <-       "permissions": ...
 <-     }
 <-   ]
+<- }
+```
+
+<a name='get-role-order'></a>
+### Retrieve role prioritization order [GET /api/roles/order]
+
+Returns `{ roleIDs }`, where `roleIDs` is an array of role IDs representing the order that roles are applied when [permissions](#permissions) are calculated. Internal roles, such as `_guest` and `_everyone`, are not included.
+
+<a name='prioritize-roles'></a>
+### Change role prioritization order [PATCH /api/roles/order]
+
++ requires [permission](#permissions): `manageRoles`
++ `roleIDs` (array of IDs) - The order roles are applied in
+  * Must contain all role IDs just once, except for internal ones such as `_user` and `_everyone`
+
+Returns `{}` when successful. Changes the order that roles are applied in; initial items are the most prioritized. See [Permissions](#permissions).
+
+```js
+PATCH /api/roles/order
+
+-> {
+->   "roleIDs": [
+->     "abc",
+->     "123",
+->     "999"
+->   ]
+-> }
+
+// Then...
+GET /api/roles
+
+<- {
+<-   "roles": [
+<-     {"id": "abc", ...},
+<-     {"id": "123", ...},
+<-     {"id": "999", ...},
+<-     {"id": "_user", ...},
+<-     ...
+<-   ]
+<- }
+```
+
+<a name='get-role'></a>
+### Retrieve a role by ID [GET /api/roles/:id]
+
+Returns `{ role }`.
+
+```js
+GET /api/roles/_everyone
+
+<- {
+<-   "role": {
+<-     "id": "_everyone",
+<-     "name": "Everyone",
+<-     "permissions": ...
+<-   }
 <- }
 ```
 
@@ -1202,7 +1266,7 @@ GET /api/roles
 + `permissions` ([Permissions object](#permissions)) - this role's intended permissions
   * **Cannot contain permissions that the requesting session's user does not have**
 
-Returns `{ roleID }` if successful, where `roleID` is the ID of the new role. Emits [role/new](#role-new).
+Returns `{ roleID }` if successful, where `roleID` is the ID of the new role. Emits [role/new](#role-new). The role is added to the role prioritization order as the most prioritized.
 
 <a name='update-role'></a>
 ### Update a role [PATCH /api/roles/:id]
@@ -1219,6 +1283,6 @@ Returns `{}` and emits [role/update](#role-update) if successful. May emit [user
 + requires [permission](#permissions): `manageRoles`
 + **in-url** id (ID string)
 
-Returns `{}` if successful. Emits [role/delete](#role-delete).
+Returns `{}` if successful. Emits [role/delete](#role-delete). The role is removed from the role prioritization order.
 
 </details>

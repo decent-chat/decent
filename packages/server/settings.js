@@ -9,32 +9,13 @@ const defaultSettings = {
   // anyone can view them by GETting the same endpoint.
   [serverSettingsID]: {
     // The name of the server.
-    name: {value: 'Unnamed Decent chat server'},
+    name: {
+      value: 'Unnamed Decent chat server'
+    },
 
     // The URL to the server icon.
     iconURL: {
-      value: '',
-      validationFn: string => {
-        if (typeof string !== 'string') {
-          throw 'not a string'
-        }
-      }
-    },
-
-    // Authorization message displayed to users who are logged in but not
-    // authorized to participate in the server. Must be less than 800
-    // characters long, and supports Markdown.
-    authorizationMessage: {
-      value: 'Unauthorized - contact this server\'s webmaster to authorize your account for interacting with the server.',
-      validationFn: string => {
-        if (typeof string !== 'string') {
-          throw 'not a string'
-        }
-
-        if (string.length > 800) {
-          throw 'greater than 800 characters long'
-        }
-      }
+      value: ''
     }
   },
 
@@ -47,11 +28,14 @@ const defaultSettings = {
     // implemented yet.
     https: {value: 'off', possibleValues: ['on', 'off']},
 
-    // Authorization required - whether or not users will need to be authorized
-    // before they can interact with the server (or view its messages). Anyone
-    // can still register, but an admin must mark the user as authorized before
-    // they will be able to send or receive any information to/from the server.
-    requireAuthorization: {value: 'off', possibleValues: ['on', 'off']}
+    // Role prioritization order - the order that permissions of roles are
+    // applied when calculating a user's permissions. This is stored on the
+    // server properties because we really, really don't want anybody to mess
+    // with it, and we can't entirely validate it from here (see below).
+    // We could give it an "internal" property or whatever, but this is sort
+    // of feature creep; it's much simpler just to throw it onto the properties
+    // section.
+    rolePrioritizationOrder: {value: []}
   }
 }
 
@@ -80,22 +64,12 @@ module.exports.setSetting = async function(settingsDB, categoryID, key, value) {
   const settingSpec = defaultSettings[categoryID][key]
 
   if (!settingSpec) {
-    return 'invalid key'
+    throw new Error(`invalid key "${key}"`)
   }
 
   if (settingSpec.possibleValues) {
     if (settingSpec.possibleValues.includes(value) === false) {
-      return `invalid value - must be one of ${JSON.stringify(settingSpec.possibleValues)}`
-    }
-  }
-
-  if (settingSpec.validationFn) {
-    try {
-      // validationFn should reject to declare the value invalid, with
-      // a string error message to display to the user.
-      await settingSpec.validationFn(value)
-    } catch (error) {
-      return `invalid value - ${error}`
+      throw new Error(`invalid value - must be one of ${JSON.stringify(settingSpec.possibleValues)}`)
     }
   }
 
@@ -104,8 +78,6 @@ module.exports.setSetting = async function(settingsDB, categoryID, key, value) {
       [key]: value
     }
   })
-
-  return 'updated'
 }
 
 module.exports.getAllSettings = async function(settingsDB, categoryID) {

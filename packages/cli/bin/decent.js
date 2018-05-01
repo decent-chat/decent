@@ -42,13 +42,11 @@ server(port, dbDir).then(async ({ settings, app, db, serialize, sendToAllSockets
             interface for chatting; use an actual client for that.
             Commands:
             - license: shows license information (hint: it's GPL 3.0!)
-            - make-admin: makes an already-registered user an admin and
-              authorizes them as a member of the server.
-            - unmake-admin: demotes an admin to member status.
-            - get-property: shows a server property.
-            - set-property: sets a server property.
+            - make-owner: give an already-registered user the "Owner" role
+            - get-property: shows a server property
+            - set-property: sets a server property
             - list-properties: lists all server properties and their
-              values.
+              values
               ("-property" can be omitted from these, and
                "show" is an alias for "get".)
           `)
@@ -136,9 +134,9 @@ server(port, dbDir).then(async ({ settings, app, db, serialize, sendToAllSockets
           break
         }
 
-        case 'make-admin': {
+        case 'make-owner': {
           if (parts.length !== 2) {
-            console.error('Expected (make-admin <username>)')
+            console.error('Expected (make-owner <username>)')
             break
           }
 
@@ -151,47 +149,23 @@ server(port, dbDir).then(async ({ settings, app, db, serialize, sendToAllSockets
             break
           }
 
-          await db.users.update({username}, {
-            $set: {
-              permissionLevel: 'admin',
-              authorized: true
-            }
-          })
+          const ownerRole = await db.roles.findOne({name: 'Owner'})
 
-          user.authorized = true
-          user.permissionLevel = 'admin'
-          sendToAllSockets('user/update', {user: await serialize.user(user)})
-
-          console.log(`Made ${username} an admin.`)
-
-          break
-        }
-
-        case 'unmake-admin': {
-          if (parts.length !== 2) {
-            console.error('Expected (unmake-admin <username>)')
-            break
-          }
-
-          const username = parts[1]
-
-          const user = await db.users.findOne({username})
-
-          if (!user || user.permissionLevel !== 'admin') {
-            console.error('Error: There is no admin with username ' + username)
+          if (!ownerRole) {
+            console.error('Error: There is no role with the name "Owner".')
+            console.error('Restarting the server will regenerate this role.')
             break
           }
 
           await db.users.update({username}, {
-            $set: {
-              permissionLevel: 'member',
+            $push: {
+              roleIDs: ownerRole._id
             }
           })
 
-          user.permissionLevel = 'member'
           sendToAllSockets('user/update', {user: await serialize.user(user)})
 
-          console.log(`Demoted ${username} from admin to member.`)
+          console.log(`Made ${username} an owner.`)
 
           break
         }
