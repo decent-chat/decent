@@ -17,4 +17,6 @@
   color: var(--channel-header-fg);
   background: var(--channel-header-bg);
   border-bottom: 1px solid var(--channel-header-border-color);
+
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.07);
 }

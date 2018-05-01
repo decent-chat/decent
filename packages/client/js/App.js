@@ -14,6 +14,10 @@ const Icon = require('./Icon')
 const Toast = require('./Toast')
 const Messages = require('./Messages')
 
+// TODO: make theming an actual option
+const theme = require('./theme')
+theme.apply(theme.dark)
+
 class App extends Component {
   state = {
     isLoading: true,

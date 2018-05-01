@@ -16,10 +16,14 @@
     font-weight: bold;
     font-size: 16px;
 
-    text-transform: uppercase;
+    text-transform: lowercase;
     margin-bottom: 4px;
 
     user-select: none;
+
+    &.\--type-text {
+      margin-left: 16px;
+    }
   }
 
   & input {

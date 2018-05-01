@@ -31,6 +31,8 @@
     border-top: 6px solid var(--accent);
   }
   &.\--on-right { border-left: 1px solid var(--sidebar-border-color); }
+
+  box-shadow: -2px 0 4px 0 rgba(0,0,0,0.1)
 }
 
 .Sidebar-list {

@@ -5,7 +5,7 @@ const Provider = require('preact-context-provider')
 class Modal extends Component {
   inputs = {}
 
-  render({ title, subtitle, isLoading, children, cancellable = true }) {    
+  render({ title, subtitle, isLoading, children, cancellable = true }) {
     // Renders into document.body rather than as an actual child
     return <Portal into='body'>
       <Provider
@@ -34,11 +34,11 @@ class Modal extends Component {
   handleSubmit = () => {
     this.props.onSubmit(this.inputs)
   }
- 
+
   handleCancel = () => {
     this.props.onCancel()
   }
- 
+
   handleInputUpdate = (name, value) => {
     this.inputs[name] = value
   }
@@ -63,13 +63,13 @@ class AsyncModal extends Component {
 
   handleSubmit = data => {
     this.setState({isLoading: true, errorMessage: null})
- 
+
     this.props.submit(data).then(() => this.props.onHide()).catch(error => {
       console.error('Error in <AsyncModal submit/> handler:', error)
       this.setState({isLoading: false, errorMessage: error.message || error})
     })
   }
- 
+
   handleCancel = () => {
     this.props.onHide()
   }
@@ -87,7 +87,7 @@ class Input extends Component {
 
   render({ label, type = 'text', placeholder = '' }, { value }) {
     return <div class='Modal-input Input'>
-      <label>{label}</label>
+      <label class={'--type-' + type}>{label}</label>
       <input
         ref={this.inputRef}
         type={type}
@@ -103,7 +103,7 @@ class Input extends Component {
 
   handleChange = e => {
     const { value } = e.target
- 
+
     this.setState({value})
     this.context.modalUpdateInput(this.props.name, value)
   }
@@ -122,7 +122,7 @@ class Button extends Component {
 
   handleClick = e => {
     const { action } = this.props
- 
+
     if (action === 'submit') this.context.modalSubmit(e)
     else if (action === 'cancel') this.context.modalCancel(e)
     else throw new TypeError('<Modal.Button action/> should be "submit" or "cancel"')
