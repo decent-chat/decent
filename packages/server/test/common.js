@@ -59,10 +59,10 @@ test('md5', t => {
 test('emailToAvatarURL', t => {
   return testWithServer(portForCommonTests++, ({ util }) => {
     t.is(util.emailToAvatarURL('towerofnix@gmail.com'),
-      `https://seccdn.libravatar.org/avatar/${util.md5('towerofnix@gmail.com')}?d=retro`
+      `https://gravatar.com/avatar/${util.md5('towerofnix@gmail.com')}?d=retro`
     )
     t.is(util.emailToAvatarURL(''),
-      'https://seccdn.libravatar.org/avatar/?d=retro'
+      'https://gravatar.com/avatar/?d=retro'
     )
   })
 })

@@ -53,7 +53,7 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
   }
 
   const emailToAvatarURL = memoize(email =>
-    `https://seccdn.libravatar.org/avatar/${email ? md5(email) : ''}?d=retro`
+    `https://gravatar.com/avatar/${email ? md5(email) : ''}?d=retro`
   )
 
   const isUserOnline = function(userID) {

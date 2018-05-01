@@ -1,5 +1,5 @@
 const { test } = require('ava')
-const { testWithServer, makeUser, makeAdmin, enableAuthorization } = require('./_serverUtil')
+const { testWithServer, makeUser, makeOwner, enableAuthorization } = require('./_serverUtil')
 const fetch = require('./_fetch')
 
 let portForApiUserTests = 30000
@@ -141,7 +141,7 @@ test('GET /api/username-available/:username', t => {
 test('PATCH /api/users/:id', t => {
   return testWithServer(portForApiUserTests++, async ({ server, port }) => {
     const { user, sessionID: userSessionID } = await makeUser(server, port, 'test_user', 'password')
-    const { admin, sessionID: adminSessionID } = await makeAdmin(server, port)
+    const { admin, sessionID: adminSessionID } = await makeOwner(server, port)
 
     const getUser = () => fetch(port, '/users/' + user.id, {
       sessionID: userSessionID

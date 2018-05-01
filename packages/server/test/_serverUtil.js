@@ -4,6 +4,7 @@ const shortid = require('shortid')
 const makeCommonUtils = require('../common')
 const { makeMiddleware } = require('../middleware')
 const makeSerializers = require('../serialize')
+const { setSetting, serverPropertiesID, getAllSettings } = require('../settings')
 
 const testWithServer = async (port, cb) => {
   const server = await spawn(port)
@@ -41,8 +42,33 @@ const makeUser = async (server, port, inUsername = undefined, inPassword = undef
 }
 
 const giveOwnerRole = async (server, userID) => {
+  let ownerRole = await server.db.roles.findOne({name: 'Owner'})
+
+  if (!ownerRole) {
+    const name = 'Owner'
+    const permissions = {}
+
+    for (const key of require('../roles').permissionKeys) {
+      permissions[key] = true // Grant every permission
+    }
+
+    const role = await server.db.roles.insert({
+      name, permissions
+    })
+
+    // Also add the role to the role prioritization order
+    const { rolePrioritizationOrder } = await getAllSettings(server.db.settings, serverPropertiesID)
+    rolePrioritizationOrder.unshift(role._id)
+    await setSetting(
+      server.db.settings, serverPropertiesID,
+      'rolePrioritizationOrder', rolePrioritizationOrder
+    )
+
+    ownerRole = role
+  }
+
   await server.db.users.update({_id: userID}, {
-    $push: {roleIDs: (await server.db.roles.findOne({name: 'Owner'}))._id}
+    $push: {roleIDs: ownerRole._id}
   })
 }
 

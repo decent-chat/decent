@@ -70,11 +70,10 @@ test('GET /api/roles (default roles)', t => {
 
     t.deepEqual(Object.keys(response), ['roles'])
 
-    t.is(response.roles.length, 4)
+    t.is(response.roles.length, 3)
     t.true(response.roles.some(r => r.id === '_everyone'))
     t.true(response.roles.some(r => r.id === '_user'))
     t.true(response.roles.some(r => r.id === '_guest'))
-    t.true(response.roles.some(r => r.name === 'Owner'))
   })
 })
 

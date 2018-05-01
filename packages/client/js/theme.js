@@ -59,6 +59,8 @@ const theme = {
     '--table-cell-bg': '#25292f',
     '--table-cell-fg': 'var(--page-dim-fg)',
 
+    '--toast-bg': '#16191c',
+
     '--messageEditor-fg': 'var(--gray-700)',
     '--messageEditor-bg': '#25292f',
     '--messageEditor-border-color': '#3c4144',
