@@ -5,7 +5,7 @@ const Provider = require('preact-context-provider')
 class Modal extends Component {
   inputs = {}
 
-  render({ title, subtitle, isLoading, children }) {
+  render({ title, subtitle, isLoading, children, cancellable = true }) {    
     // Renders into document.body rather than as an actual child
     return <Portal into='body'>
       <Provider
@@ -15,7 +15,7 @@ class Modal extends Component {
       >
         {!closed && <div>
           <div class={'Modal' + (isLoading ? ' is-loading' : '')}>
-            <div class='Modal-close-button' onClick={this.handleCancel}></div>
+            {cancellable ? <div class='Modal-close-button' onClick={this.handleCancel}></div> : <div />}
             <div class='Modal-title'>
               {title}
               {subtitle && <span class='Modal-subtitle'>{subtitle}</span>}
@@ -47,10 +47,11 @@ class Modal extends Component {
 class AsyncModal extends Component {
   state = {isLoading: false, errorMessage: null}
 
-  render({ title, subtitle, children }, { isLoading, errorMessage }) {
+  render({ title, subtitle, children, cancellable }, { isLoading, errorMessage }) {
     return <Modal
       title={title}
       subtitle={subtitle}
+      cancellable={cancellable}
       isLoading={isLoading}
       onCancel={this.handleCancel}
       onSubmit={this.handleSubmit}
@@ -84,13 +85,14 @@ class Input extends Component {
     this.context.modalUpdateInput(this.props.name, value)
   }
 
-  render({ label, type = 'text', placeholder = '' }) {
+  render({ label, type = 'text', placeholder = '' }, { value }) {
     return <div class='Modal-input Input'>
       <label>{label}</label>
       <input
         ref={this.inputRef}
         type={type}
         placeholder={placeholder}
+        value={value}
 
         onInput={this.handleChange}
         onChange={this.handleChange}

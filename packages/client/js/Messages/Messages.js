@@ -49,8 +49,10 @@ class Messages extends Component {
   scrolledToBottom = false
 
   async componentDidMount() {
-    await this.loadLatest(this.channel)
-    this.channel.on('message', this.handleNewMessage)
+    if (this.channel) {
+      await this.loadLatest(this.channel)
+      this.channel.on('message', this.handleNewMessage)
+    }
   }
 
   // Clamp `messages.length` at `maxLength`, removing messages from the top/bottom
@@ -239,7 +241,14 @@ class Messages extends Component {
   render({ channel }, { messages, isLoading }) {
     this.channel = channel
 
-    if (isLoading) {
+    if (!channel) {
+      // TODO: make this prettier, show a graphic or something that tells
+      // you that no channel has been opened and you should make/open one
+      return <main>
+        <div class='ChannelHeader'></div>
+        <div class='MessageList'></div>
+      </main>
+    } else if (isLoading) {
       return <main>
         <div class='ChannelHeader'></div>
         <div class='MessageList Loading'></div>

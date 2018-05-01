@@ -24,8 +24,8 @@ class App extends Component {
   pool = new Pool()
 
   async componentDidMount() {
-    await this.pool.add(prompt("Server hostname?"))
-    await this.pool.setActive(0)
+    //await this.pool.add(prompt("Server hostname?"))
+    //await this.pool.setActive(0)
 
     this.setState({
       isLoading: false,
@@ -42,7 +42,33 @@ class App extends Component {
     if (isLoading) {
       return <div class='App Loading'></div>
     } else if (!activeServer) {
-      // TODO: landing page
+      // TODO: better landing page
+      return <Provider pool={this.pool}>
+        <div class='App'>
+          <Modal.Async
+            title='Join a server'
+            cancellable={false}
+            submit={async ({ hostname }) => {
+              const serverIndex = await this.pool.setActive(await this.pool.add(hostname)).catch(error => {
+                error.realMessage = error.message
+                error.message = 'Failed to connect'
+
+                return Promise.reject(error)
+              })
+
+              // Success - switch to the newly joined server.
+              this.setState({
+                activeServerIndex: serverIndex,
+              })
+            }}
+            onHide={() => this.setState({showJoinServerModal: false})}
+          >
+            <Modal.Input name='hostname' label='Hostname'/>
+
+            <Modal.Button action='submit'>Join</Modal.Button>
+          </Modal.Async>
+        </div>
+      </Provider>
     } else {
       const { client, ui } = activeServer
       document.title = client.serverName
