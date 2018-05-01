@@ -4,7 +4,7 @@
 
   font-size: 14px;
   font-weight: normal;
-  color: var(--sidebar-fg);
+  color: var(--base04);
 }
 
 .SessionInfo-text {
@@ -13,33 +13,34 @@
 
 .SessionInfo-username {
   margin-left: 5px;
+  color: var(--base08) !important;
 }
 
 .SessionInfo-button {
-  padding: 6px 8px;
+  padding: 8px 12px;
 
-  background: var(--blue-a2);
-  color: var(--blue);
+  background: var(--base2E);
+  color: var(--base0E);
 
   cursor: pointer;
   font-size: 12px;
 
-  border-radius: 4px;
+  border-radius: 100px;
   border: 0;
 
   &:hover {
-    background: var(--blue-a3);
+    background: var(--base1E);
   }
 
   &.\--minor {
     margin-left: 8px;
 
-    background: var(--page-bg);
-    color: var(--gray-300);
+    background: var(--base20);
+    color: var(--base0C);
 
     &:hover {
-      background: var(--gray-700);
-      color: var(--gray-100);
+      background: var(--base2C);
+      color: var(--base0C);
     }
   }
 }

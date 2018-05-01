@@ -1,12 +1,7 @@
-:root {
-  --toast-fg: var(--gray-500);
-  --toast-bg: var(--gray-100);
-}
-
 .Toast {
-  stroke: var(--toast-fg);
-  color: var(--toast-fg);
-  background: var(--toast-bg);
+  stroke: var(--base0F);
+  color: var(--base0F);
+  background: var(--base1F);
 
   position: fixed;
   right: 2em;
@@ -14,8 +9,8 @@
 
   padding: 1.5em;
 
-  border-radius: 5px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  box-shadow: 0px -2px 18px 0px var(--base2F);
 }
 
 /* Icon container */

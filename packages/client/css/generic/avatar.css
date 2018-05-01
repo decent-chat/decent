@@ -1,7 +1,3 @@
-:root {
-  --avatar-border-radius: 64px;
-}
-
 .Avatar {
-  border-radius: var(--avatar-border-radius);
+  border-radius: 100px;
 }

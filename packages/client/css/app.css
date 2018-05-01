@@ -26,26 +26,56 @@
 @import 'pages/authorized-users.css';
 
 :root {
-  --gray-900: #fff;
-  --gray-700: #eaedf2;
-  --gray-500: #cdd1d7;
-  --gray-300: #a3a8af;
-  --gray-200: #5a5a5a;
-  --gray-100: #2d323a;
+  --base00: #ffffff;
+  --base01: #eef2f5;
+  --base02: #cdd1d7;
+  --base03: #a3a8af;
+  --base04: #70808d;
+  --base05: #687682;
+  --base06: #61717d;
+  --base07: #49555f;
+  --base08: #29353f;
+  --base09: #68c0f8;
+  --base0A: #8bbf56;
+  --base0B: #56bf8b;
+  --base0C: #568bbf;
+  --base0D: #8b56bf;
+  --base0E: #bf568b;
+  --base0F: #bf5656;
 
-  --blue: #337df4;
-  --blue-a2: rgba(51, 125, 244, 0.2); /* --blue with alpha of 0.2 */
-  --blue-a3: rgba(51, 125, 244, 0.3); /* --blue with alpha of 0.3 */
+  --base10: #ffffff60;
+  --base11: #eef2f560;
+  --base12: #cdd1d760;
+  --base13: #a3a8af60;
+  --base14: #70808d60;
+  --base15: #68768260;
+  --base16: #61717d60;
+  --base17: #49555f60;
+  --base18: #29353f60;
+  --base19: #68c0f860;
+  --base1A: #8bbf5660;
+  --base1B: #56bf8b60;
+  --base1C: #568bbf60;
+  --base1D: #8b56bf60;
+  --base1E: #bf568b60;
+  --base1F: #bf565660;
 
-  --green: #26a527;
-  --green-a2: rgba(38, 165, 39, 0.2); /* --green with alpha of 0.2 */
-  --green-a3: rgba(38, 165, 39, 0.3); /* --green with alpha of 0.3 */
-
-  --red: #f43259;
-
-  /* Part of theme - will likely be changed by JS */
-  --accent: var(--blue);
-  --unread-dot-color: var(--red);
+  --base20: #ffffff30;
+  --base21: #eef2f530;
+  --base22: #cdd1d730;
+  --base23: #a3a8af30;
+  --base24: #70808d30;
+  --base25: #68768230;
+  --base26: #61717d30;
+  --base27: #49555f30;
+  --base28: #29353f30;
+  --base29: #68c0f830;
+  --base2A: #8bbf5630;
+  --base2B: #56bf8b30;
+  --base2C: #568bbf30;
+  --base2D: #8b56bf30;
+  --base2E: #bf568b30;
+  --base2F: #bf565630;
 }
 
 body {
@@ -53,7 +83,7 @@ body {
   padding: 0;
 
   font-size: 16px;
-  font-family: -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", "Lato", system-ui, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "PT Sans", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", "Lato", system-ui, Arial, sans-serif;
 }
 
 .App {
@@ -61,8 +91,8 @@ body {
   flex-direction: row;
   align-items: stretch;
 
-  color: var(--page-fg);
-  background: var(--page-bg);
+  color: var(--base04);
+  background: var(--base01);
 
   height: 100vh;
 
@@ -79,7 +109,7 @@ body {
 }
 
 .Link {
-  color: var(--blue);
+  color: var(--base09);
   cursor: pointer;
   text-decoration: underline;
 }
@@ -92,4 +122,4 @@ svg {
   stroke: inherit;
 }
 
-::selection { background: #b3d4fc; color: black }
+::selection { background: var(--base19); color: var(--base07) }

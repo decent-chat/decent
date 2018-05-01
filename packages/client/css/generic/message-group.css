@@ -19,11 +19,12 @@
 }
 
 .MessageGroup-authorAvatar {
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
 
-  margin-right: 16px;
-  border-radius: var(--avatar-borderRadius);
+  margin-top: 4px;
+  margin-left: 6px;
+  margin-right: 18px;
 }
 
 .MessageGroup-info {
@@ -41,6 +42,14 @@
 
   font-weight: bold;
   text-align: right;
+
+  color: var(--base03);
+}
+
+.MessageGroup-info time {
+  color: var(--base02);
+
+  &:hover { color: var(--base06); }
 }
 
 .MessageGroup-authorFlair {

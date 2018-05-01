@@ -1,6 +1,8 @@
 .UserList {}
 
 .UserList-user {
+  padding-left: 10px;
+
   &.is-offline {
     & .UserList-user-avatar,
     & .UserList-user-username {

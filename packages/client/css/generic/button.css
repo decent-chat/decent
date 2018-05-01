@@ -1,27 +1,32 @@
 .Button {
-  padding: 10px 16px;
+  padding: 8px 16px;
+  font-family: inherit;
 
   margin-right: 6px;
   &:last-child { margin-right: 0; }
 
-  background: var(--blue);
-  border-radius: 4px;
+  background: var(--base0B);
+  border-radius: 8px;
+  box-shadow: 0 1px 6px var(--base12);
   border: none;
 
   font-size: 14px;
-  color: var(--gray-900);
+  color: var(--base00);
 
   cursor: pointer;
   :disabled { cursor: default; }
 
-  &.\--red { background-color: var(--red); color: white; }
+  &.\--red { background-color: var(--base0F); color: var(--base00); }
 
   &.\--no-bg {
-    color: var(--blue);
+    font-weight: bold;
+    color: var(--base0B);
     background: transparent;
 
-    &.\--red { color: var(--red); }
-    &[disabled] { color: var(--gray-300); }
+    box-shadow: none;
+
+    &.\--red { color: var(--base0F); }
+    &[disabled] { color: var(--base03); }
 
     &:hover:not([disabled]) {
       text-decoration: underline;

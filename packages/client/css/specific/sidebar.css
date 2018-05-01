@@ -1,24 +1,6 @@
 @import 'server-dropdown.css';
 @import 'session-info.css';
 
-:root {
-  --sidebar-fg: var(--gray-300);
-  --sidebar-bg: var(--gray-900);
-
-  --sidebar-border-color: var(--gray-500);
-  --sidebar-icon-color: var(--gray-500);
-  --sidebar-icon-color-active: #afceff;
-
-  --sidebar-list-item-fg: var(--gray-100);
-  --sidebar-list-item-bg: var(--sidebar-bg);
-
-  --sidebar-list-item-hoverfg: var(--sidebar-list-item-fg);
-  --sidebar-list-item-hoverbg: var(--gray-700);
-
-  --sidebar-list-item-activefg: var(--gray-900);
-  --sidebar-list-item-activebg: var(--accent);
-}
-
 .Sidebar {
   flex: 0 0 300px;
   overflow-y: auto;
@@ -26,13 +8,32 @@
   background: var(--sidebar-bg);
   user-select: none;
 
-  &.\--on-left {
-    border-right: 1px solid var(--sidebar-border-color);
-    border-top: 6px solid var(--accent);
-  }
-  &.\--on-right { border-left: 1px solid var(--sidebar-border-color); }
+  --sidebar-icon-color: var(--base14);
+  --sidebar-icon-color-active: var(--base10);
 
-  box-shadow: -2px 0 4px 0 rgba(0,0,0,0.1)
+  --sidebar-list-item-hoverfg: var(--base18);
+  --sidebar-list-item-hoverbg: var(--base20);
+
+  --sidebar-list-item-activefg: var(--base00);
+  --sidebar-list-item-activebg: var(--base1C);
+
+  &.\--on-left {
+    --sidebar-fg: var(--base0C);
+    --sidebar-bg: var(--base1C);
+
+    box-shadow: 0 0 4px var(--base13);
+  }
+
+  &.\--on-right {
+    --sidebar-fg: var(--base04);
+    --sidebar-bg: var(--base01);
+
+    --sidebar-list-item-fg: var(--base06);
+    --sidebar-list-item-bg: var(--base01);
+
+    --sidebar-list-item-hoverfg: var(--base0D);
+    --sidebar-list-item-hoverbg: var(--base1D);
+  }
 }
 
 .Sidebar-list {
@@ -46,7 +47,7 @@
   position: relative;
 
   align-items: center;
-  padding: 8px 16px;
+  padding: 8px 24px;
   margin-bottom: 4px;
 
   font-size: 16px;
@@ -55,12 +56,14 @@
   overflow-x: hidden;
 
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 100px;
 
   color: var(--sidebar-list-item-fg);
   background: var(--sidebar-list-item-bg);
 
   &:hover {
+    opacity: 1 !important;
+
     color: var(--sidebar-list-item-hoverfg);
     background: var(--sidebar-list-item-hoverbg);
 
@@ -140,7 +143,7 @@
   z-index: 10;
 
   & > h4 {
-    text-transform: uppercase;
+    text-transform: lowercase;
     color: var(--sidebar-fg);
     font-size: 14px;
 
@@ -149,15 +152,15 @@
 
   & > button {
     margin-left: auto;
-    padding: 4px 8px;
+    padding: 6px 12px;
 
-    color: var(--green);
-    background: var(--green-a2);
-    &:hover { background: var(--green-a3); }
+    color: var(--base01);
+    background: var(--base2C);
+    &:hover { background: var(--base1C); }
 
     font-size: 12px;
     border: 1px solid var(--green-a2);
-    border-radius: 4px;
+    border-radius: 100px;
 
     cursor: pointer;
   }

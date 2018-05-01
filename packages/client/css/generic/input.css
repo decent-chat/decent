@@ -1,17 +1,9 @@
-:root {
-  --input-fg: var(--gray-100);
-  --input-bg: var(--gray-900);
-
-  --input-border-color: var(--gray-500);
-  --input-disabled-bg: var(--gray-700);
-}
-
 .Input {
   margin-bottom: 16px;
 
   & label {
     display: block;
-    color: var(--page-dim-fg);
+    color: var(--base04);
 
     font-weight: bold;
     font-size: 16px;
@@ -21,7 +13,7 @@
 
     user-select: none;
 
-    &.\--type-text {
+    &.\--type-text, &.\--type-password {
       margin-left: 16px;
     }
   }
@@ -33,8 +25,10 @@
     font-family: inherit;
     font-size: 18px;
 
-    color: var(--input-fg);
-    background: var(--input-bg);
+    color: var(--base08);
+    background: var(--base24);
+
+    box-shadow: inset 0 0 6px var(--base22);
 
     border: 1px solid var(--input-border-color);
     border-radius: 4px;
@@ -50,7 +44,7 @@
 
     &[disabled] {
       cursor: not-allowed;
-      background: var(--input-disabled-bg);
+      background: var(--base14);
       opacity: 0.8;
     }
   }
@@ -91,16 +85,16 @@
   font-family: inherit;
   font-size: 18px;
 
-  color: var(--input-fg);
-  background: var(--input-bg);
+  color: var(--base08);
+  background: var(--base24);
 
   border: 0;
-  border-bottom: 1px solid var(--input-border-color);
-  &:focus { border-color: var(--accent); }
+  border-bottom: 1px solid var(--base14);
+  &:focus { border-color: var(--base1E); }
 
   &[disabled] {
     cursor: not-allowed;
-    background: var(--input-disabled-bg);
+    background: var(--base14);
     opacity: 0.8;
   }
 }

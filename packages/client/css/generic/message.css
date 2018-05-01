@@ -45,7 +45,7 @@
     left: 4px;
     right: 4px;
 
-    border-bottom: 1px dashed var(--page-dim-fg);
+    border-bottom: 1px dotted var(--base03);
   }
 }
 
@@ -73,11 +73,11 @@
   & .markup, & svg {
     width: inherit;
     height: inherit;
-    stroke: var(--page-dim-fg);
+    stroke: var(--base03);
   }
 
   &:hover svg {
-    stroke: var(--page-fg);
+    stroke: var(--base05);
   }
 }
 

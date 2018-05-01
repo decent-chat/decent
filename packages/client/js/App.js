@@ -30,8 +30,8 @@ class App extends Component {
   async componentDidMount() {
     global.$app = this
 
-    //await this.pool.add(prompt("Server hostname?"))
-    //await this.pool.setActive(0)
+    await this.pool.add('localhost:3000')
+    await this.pool.setActive(0)
 
     this.setState({
       isLoading: false,
