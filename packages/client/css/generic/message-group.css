@@ -12,6 +12,10 @@
   &:last-child { margin-bottom: 0 }
 
   color: var(--page-fg);
+
+  &.\--anticipated {
+    opacity: 0.7;
+  }
 }
 
 .MessageGroup-authorAvatar {

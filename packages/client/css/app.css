@@ -17,6 +17,8 @@
 @import 'specific/user-list.css';
 @import 'specific/modal.css';
 @import 'specific/message-list.css';
+@import 'specific/toast.css';
+@import 'specific/channel-header.css';
 
 /* Pages */
 @import 'pages/emote-settings.css';
@@ -54,7 +56,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", "Lato", system-ui, Arial, sans-serif;
 }
 
-#app {
+.App {
   display: flex;
   flex-direction: row;
   align-items: stretch;
@@ -76,31 +78,18 @@ body {
   }
 }
 
-@keyframes wiggle {
-  0%, 50%, 100% {
-    transform: translateZ(0);
-  }
-
-  15%, 23%, 31% {
-    transform: scale(1.03) rotate(-4deg) translateZ(0);
-  }
-
-  19%, 27%, 35% {
-    transform: scale(1.03) rotate(4deg) translateZ(0);
-  }
-}
-
-/* TODO: apply this based on state of elements (.is-empty), not as its own class */
-.wiggle {
-  animation: 3s infinite normal wiggle;
-}
-
-/* TODO: migrate all a.link elements to .Link */
-a:any-link.link, .Link {
+.Link {
   color: var(--blue);
   cursor: pointer;
   text-decoration: underline;
 }
 
-::-moz-selection { background: #b3d4fc; color: black }
+body {
+  stroke: currentColor;
+}
+
+svg {
+  stroke: inherit;
+}
+
 ::selection { background: #b3d4fc; color: black }

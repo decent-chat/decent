@@ -13,6 +13,10 @@
   &.\--jumped-to {
     animation: jumped-message 4s;
   }
+
+  &.\--anticipated {
+    opacity: 0.7;
+  }
 }
 
 .Message-content {
@@ -65,7 +69,8 @@
   height: 1em;
   cursor: pointer;
 
-  & svg {
+  /* .markup is the <Icon>'s parent */
+  & .markup, & svg {
     width: inherit;
     height: inherit;
     stroke: var(--page-dim-fg);

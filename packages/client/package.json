@@ -1,6 +1,6 @@
 {
   "name": "@decent/client",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Standalone web client for Decent",
   "main": "index.js",
   "repository": "https://github.com/decent-chat/decent/tree/master/packages/client",
@@ -13,26 +13,62 @@
   "author": "Multiple contributors",
   "license": "GPL-3.0",
   "dependencies": {
-    "choo": "^6.6.1",
-    "choo-devtools": "^2.3.3",
-    "concurrently": "^3.5.1",
-    "cssnano": "^4.0.0-rc.2",
-    "mrk.js": "^2.0.1",
-    "nanobus": "^4.3.2",
-    "postcss-cli": "^5.0.0"
+    "decent.js": "1.0.0",
+    "eventemitter3": "^3.0.1",
+    "mrk.js": "^2.0.0",
+    "preact": "^8.2.7",
+    "preact-compat": "^3.18.0",
+    "preact-context-provider": "^1.1.1",
+    "preact-markup": "^1.6.0",
+    "preact-portal": "^1.1.2"
   },
   "devDependencies": {
-    "babel-minify": "^0.3.0",
+    "autoprefixer": "^8.1.0",
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.0",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-plugin-transform-do-expressions": "^6.22.0",
+    "babel-plugin-transform-react-jsx": "^6.24.1",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-minify": "^0.3.0",
+    "babelify": "^8.0.0",
     "browserify": "^15.1.0",
+    "budo": "^11.2.0",
+    "concurrently": "^3.5.1",
+    "cssnano": "^4.0.0-rc.2",
+    "postcss-cli": "^5.0.0",
     "postcss-import": "^11.1.0",
     "postcss-nesting": "^4.2.1",
+    "resolve": "^1.5.0",
     "stringify": "^5.2.0",
-    "watchify": "^3.9.0",
-    "yo-yoify": "^4.3.0"
+    "watchify": "^3.9.0"
+  },
+  "browserslist": "last 1 year",
+  "browserify": {
+    "require": {
+      "react": "preact-compat",
+      "react-dom": "preact-compat"
+    },
+    "transform": [
+      [
+        "stringify",
+        {
+          "extensions": [
+            ".svg"
+          ]
+        }
+      ],
+      "babelify"
+    ]
   },
   "scripts": {
-    "build": "browserify src/app.js -t [ stringify --extensions [.svg] ] -g yo-yoify | minify -o dist/bundle.js && postcss css/app.css -o dist/bundle.css",
-    "watch": "concurrently \"watchify src/app.js -o dist/bundle.js  -t [ stringify --extensions [.svg] ] -d -v\" \"postcss css/app.css -o dist/bundle.css -w --verbose\" ",
+    "build:css": "postcss css/app.css -o dist/bundle.css --verbose",
+    "watch:css": "postcss css/app.css -o dist/bundle.css --verbose --watch",
+    "build:js": "browserify --debug js/App.js -r preact-compat:react -r preact-compat:react-dom -o dist/bundle.js",
+    "watch:js": "watchify --debug js/App.js -r preact-compat:react -r preact-compat:react-dom -o dist/bundle.js --verbose",
+    "build": "npm run build:css && npm run build:js",
+    "watch": "concurrently \"npm run watch:css\" \"npm run watch:js\"",
+    "serve": "concurrently \"npm run watch:css\" \"budo js/App.js:dist/bundle.js --live \\\"*\\\" --open -- --debug -r preact-compat:react -r preact-compat:react-dom\"",
     "prepublishOnly": "npm run build"
   }
 }

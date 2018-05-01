@@ -89,6 +89,7 @@ See [CONTRIBUTING](CONTRIBUTING.md) for codestyle guidelines so we don't have to
 
 This repository is a [lerna monorepo](https://github.com/lerna/lerna), consisting of:
 * [@decent/server](https://github.com/decent-chat/decent/tree/master/packages/server) - implementation of the Decent server API
+* [decent.js](https://github.com/decent-chat/decent/tree/master/packages/decent.js) - library for interacting with Decent servers
 * [@decent/client](https://github.com/decent-chat/decent/tree/master/packages/client) - web-based client for Decent servers
 * [@decent/cli](https://github.com/decent-chat/decent/tree/master/packages/cli) - CLI interface for the above
 

@@ -24,11 +24,7 @@
   overflow-y: auto;
 
   background: var(--sidebar-bg);
-
-  -webkit-touch-callout: none;
-    -webkit-user-select: none;
-       -moz-user-select: none;
-            user-select: none;
+  user-select: none;
 
   &.\--on-left {
     border-right: 1px solid var(--sidebar-border-color);
@@ -169,9 +165,5 @@
   color: var(--sidebar-fg);
 
   font-size: 14px;
-
-  -webkit-touch-callout: default;
-    -webkit-user-select: text;
-       -moz-user-select: text;
-            user-select: text;
+  user-select: text;
 }
