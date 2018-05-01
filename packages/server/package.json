@@ -1,6 +1,6 @@
 {
   "name": "@decent/server",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Standalone reference implementation of a Decent server",
   "main": "index.js",
   "repository": "https://github.com/decent-chat/decent/tree/master/packages/server",
