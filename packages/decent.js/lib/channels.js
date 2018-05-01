@@ -34,17 +34,18 @@ const messageType = {
 
   dateCreated: 'Number',
   dateEdited: '?Number',
-  //date: 'Number',
-  //editDate: '?Number',
 }
 
 class Message extends Thing {
+  fixDates() {
+    this.dateCreated = new Date(this.dateCreated * 1000)
+    this.dateEdited = this.dateEdited ? new Date(this.dateEdited * 1000) : null
+  }
+
   constructor(client, data) {
     super(client, messageType, data)
 
-    this.dateCreated = new Date(this.dateCreated * 1000)
-    this.dateEdited = this.dateEdited ? new Date(this.dateEdited * 1000) : null
-
+    this.fixDates()
     this.deleted = false
 
     this.channel = this.client.channels.find(channel => channel.id === data.channelID)
@@ -53,6 +54,8 @@ class Message extends Thing {
     this.client._socket.on('message/edit', ({ message }) => {
       if (message.id === this.id) {
         this[SET_DATA](message)
+        this.fixDates()
+
         this.emit('edit', this)
         this.emit('change')
       }

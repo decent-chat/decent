@@ -16,7 +16,7 @@ class Thing extends EventEmitter {
       try {
         typeforce(this[SPEC], data)
       } catch (err) {
-        console.warn(`Typecheck failed for ${this.constructor.name}:`, err.message)
+        console.warn(`decent.js: Typecheck failed for ${this.constructor.name}:`, err.message)
       }
 
       for (const key of Object.keys(this[SPEC])) {
@@ -52,7 +52,7 @@ class Things extends ArrayEmitter {
       set = await this.client.fetch(`/api/${ts}/`)
     } catch (err) {
       if (err.code === 'NOT_FOUND' || err.code === 'NO') {
-        console.warn(`Server does not support /api/${ts}`)
+        console.warn(`decent.js: Server does not support /api/${ts}`)
         set = {[ts]: []}
       } else {
         throw err

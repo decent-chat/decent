@@ -23,7 +23,7 @@ class TimeAgo extends Component {
     if (ago < hour) return plural('min', Math.floor(ago / minute)) + ' ago'
     if (ago < day) return plural('hour', Math.floor(ago / hour)) + ' ago'
     if (ago < week) return plural('day', Math.floor(ago / day)) + ' ago'
-    
+
     // Written date (eg. Apr 2)
     let dateStr = months[date.getMonth()] + ' ' + date.getDate()
     if(date.getFullYear() !== new Date().getFullYear()) dateStr += ' ' + date.getFullYear()

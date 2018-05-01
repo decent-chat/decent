@@ -46,6 +46,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     getUnreadMessageCountInChannel,
     getMentionsFromMessageContent,
     getPrioritizedRoles,
+    addRole,
   } = util
 
   const sendToAllSockets = function(evt, data) {
@@ -1175,23 +1176,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
-  const addRole = async function(name, permissions) {
-    const role = await db.roles.insert({
-      name, permissions
-    })
-
-    // Also add the role to the role prioritization order!
-    // Default to being the most prioritized.
-    const { rolePrioritizationOrder } = await getAllSettings(db.settings, serverPropertiesID)
-    rolePrioritizationOrder.unshift(role._id)
-    await setSetting(
-      db.settings, serverPropertiesID,
-      'rolePrioritizationOrder', rolePrioritizationOrder
-    )
-
-    return role
-  }
-
   app.post('/api/roles', [
     // TODO: Permissions for this. Well, and everything else. But also this.
     ...middleware.loadVarFromBody('name'),
@@ -1210,19 +1194,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       response.status(201).json({roleID: role._id})
     }
   ])
-
-  // Should this go somewhere else in the file? ABSOLUTELY LOL.
-  // But I'm so lazy and can't figure out where to put this nicely.
-  if (await db.roles.findOne({name: 'Owner'}) === null) {
-    const { permissions } = (internalRoles.find(r => r._id === '_everyone'))
-    const ownerPermissions = {}
-
-    for (const key of Object.keys(permissions)) {
-      ownerPermissions[key] = true
-    }
-
-    await addRole('Owner', ownerPermissions)
-  }
 
   app.patch('/api/roles/:id', [
     // TODO: Permissions for this.

@@ -57,9 +57,15 @@ class User extends Thing {
     })
   }
 
-  // async as to keep the decent.js api between 0.1.0 and 1.0.0 more similar
+  /*
   async getMentions() {
     return new UserMentions(this.client, this)
+  }
+  */
+
+  async getPermissions() {
+    const { permissions } = await this.client.fetch('/api/users/' + this.id + '/permissions')
+    return permissions
   }
 
   toString() {
@@ -67,7 +73,7 @@ class User extends Thing {
   }
 }
 
-// TODO@1.0.0: figure out a good API for this as mentions are paginated.
+// TODO: figure out a good API for this as mentions are paginated.
 class UserMentions extends Things {
   constructor(client, user) {
     super(client)

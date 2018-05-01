@@ -5,11 +5,12 @@ const client = require('@decent/client')
 const express = require('express')
 const readline = require('readline')
 const fixWS = require('fix-whitespace')
+const roles = require('@decent/server/roles.js')
 
 const port = parseInt(process.argv[2]) || 3000
 const dbDir = process.argv[3] || server.DB_IN_MEMORY
 
-server(port, dbDir).then(async ({ settings, app, db, serialize, sendToAllSockets }) => {
+server(port, dbDir).then(async ({ settings, app, db, serialize, sendToAllSockets, util }) => {
   console.log(`Listening on port ${port} (try "license" or "help" for info)`)
 
   if (dbDir === server.DB_IN_MEMORY) {
@@ -42,7 +43,7 @@ server(port, dbDir).then(async ({ settings, app, db, serialize, sendToAllSockets
             interface for chatting; use an actual client for that.
             Commands:
             - license: shows license information (hint: it's GPL 3.0!)
-            - make-owner: give an already-registered user the "Owner" role
+            - make-admin: give an already-registered user the "Admin" role
             - get-property: shows a server property
             - set-property: sets a server property
             - list-properties: lists all server properties and their
@@ -134,9 +135,9 @@ server(port, dbDir).then(async ({ settings, app, db, serialize, sendToAllSockets
           break
         }
 
-        case 'make-owner': {
+        case 'make-admin': {
           if (parts.length !== 2) {
-            console.error('Expected (make-owner <username>)')
+            console.error('Expected (make-admin <username>)')
             break
           }
 
@@ -149,23 +150,28 @@ server(port, dbDir).then(async ({ settings, app, db, serialize, sendToAllSockets
             break
           }
 
-          const ownerRole = await db.roles.findOne({name: 'Owner'})
+          let adminRole = await db.roles.findOne({name: 'Admin'})
 
-          if (!ownerRole) {
-            console.error('Error: There is no role with the name "Owner".')
-            console.error('Restarting the server will regenerate this role.')
-            break
+          if (!adminRole) {
+            const perms = {}
+
+            for (const key of roles.permissionKeys) {
+              perms[key] = true
+            }
+
+            adminRole = await util.addRole('Admin', perms)
+            console.log(`Created 'Admin' role.`)
           }
 
           await db.users.update({username}, {
             $push: {
-              roleIDs: ownerRole._id
+              roleIDs: adminRole._id
             }
           })
 
           sendToAllSockets('user/update', {user: await serialize.user(user)})
 
-          console.log(`Made ${username} an owner.`)
+          console.log(`Granted ${username} the 'Admin' role.`)
 
           break
         }

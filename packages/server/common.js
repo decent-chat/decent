@@ -3,7 +3,7 @@
 const memoize = require('memoizee')
 const crypto = require('crypto')
 const mrk = require('mrk.js/async')
-const { serverPropertiesID, getAllSettings } = require('./settings')
+const { serverPropertiesID, getAllSettings, setSetting } = require('./settings')
 
 module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
   // The olde General Valid Name regex. In the off-chance it's decided that
@@ -98,6 +98,23 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
     // console.log('getUserPermissions - perms:', permissions)
 
     return Object.assign(...permissions)
+  }
+
+  const addRole = async function(name, permissions) {
+    const role = await db.roles.insert({
+      name, permissions
+    })
+
+    // Also add the role to the role prioritization order!
+    // Default to being the most prioritized.
+    const { rolePrioritizationOrder } = await getAllSettings(db.settings, serverPropertiesID)
+    rolePrioritizationOrder.unshift(role._id)
+    await setSetting(
+      db.settings, serverPropertiesID,
+      'rolePrioritizationOrder', rolePrioritizationOrder
+    )
+
+    return role
   }
 
   const userHasPermission = async function(userID, permissionKey, channelID = null) {
@@ -217,6 +234,7 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
     getUserIDBySessionID, getUserBySessionID,
     getPrioritizedRoles,
     getUserPermissions, userHasPermission,
+    addRole,
     md5,
     isUserOnline,
     emailToAvatarURL,

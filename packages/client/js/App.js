@@ -24,6 +24,8 @@ class App extends Component {
   pool = new Pool()
 
   async componentDidMount() {
+    global.$app = this
+
     //await this.pool.add(prompt("Server hostname?"))
     //await this.pool.setActive(0)
 

@@ -29,8 +29,11 @@ await channel.sendMessage(`Welcome, ${user}!`) // @mentions the user
 
 Note that just sending `@username` will not work to actually mention a user.
 
-## await user.getMentions()
+## _not implemented_ await user.getMentions()
 Resolves with an instance of [UserMentions](user-mentions.md) for this user.
+
+## await user.getPermissions()
+Resolves with an object mapping permission names to true/false values.
 
 ---
 

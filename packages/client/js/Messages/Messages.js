@@ -76,6 +76,7 @@ class Messages extends Component {
   // On channel change, load messages again.
   componentWillReceiveProps({ channel }) {
     if (channel === this.channel) return // No change!
+    if (!channel) return
 
     // Stop listening to the old channel for messages
     this.channel.removeListener('message', this.handleNewMessage)
