@@ -1424,6 +1424,8 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       await announceUserOffline(socketData.userID)
     })
 
+    socket.on('error', err => console.error(err))
+
     // Immediately send out a ping for data event; this will fill in important
     // data (like the session ID) for the socket as soon as possible. Without this
     // we wait for the next ping, which is an unwanted delay (e.g. it would make
