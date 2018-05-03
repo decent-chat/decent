@@ -158,6 +158,7 @@ class Messages extends Component {
     // Load messages ABOVE us.
     const firstMessage = flatten(this.state.messages)[0]
     const moreMessages = await this.channel.getMessages({before: firstMessage, limit: 25})
+      .catch(console.error)
 
     if (moreMessages.length > 0) {
       this.keepScrollAtAnchor(firstMessage)
@@ -197,6 +198,7 @@ class Messages extends Component {
     }
 
     const moreMessages = await this.channel.getMessages({after: finalMessage, limit: 25})
+      .catch(console.error)
 
     if (moreMessages.length < 25) {
       this.showingLatestMessage = true

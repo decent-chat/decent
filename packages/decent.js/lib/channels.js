@@ -32,8 +32,8 @@ const messageType = {
   authorUsername: '?String',
   authorAvatarURL: '?String',
 
-  dateCreated: 'Number',
-  dateEdited: '?Number',
+  dateCreated: typeforce.oneOf('Number', 'Date'),
+  dateEdited: typeforce.oneOf('?Number', 'Date'),
 }
 
 class Message extends Thing {
