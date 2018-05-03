@@ -165,15 +165,16 @@
 
   & > button {
     margin-left: auto;
-    padding: 6px 12px;
+    padding: 8px 12px;
 
-    color: var(--base01);
-    background: var(--base2C);
+    font-weight: bold;
+    color: var(--base0C);
+    background: transparent;
     &:hover { background: var(--base1C); }
 
     font-size: 12px;
-    border: 1px solid var(--green-a2);
-    border-radius: 100px;
+    border: 1px solid var(--base1C);
+    border-radius: 4px;
 
     cursor: pointer;
   }
