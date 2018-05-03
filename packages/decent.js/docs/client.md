@@ -33,6 +33,9 @@ Finds and resolves with the [message](message.md) with ID `id`.
 ## await client.setServerName(name: string)
 Attempts to change the server's name (`client.serverName`).
 
+## await client.setServerIconURL(url: string)
+Attempts to change the server's name (`client.serverIconURL`).
+
 ## await client.uploadImage(file: Blob)
 Resolves with the URL (string) of the uploaded file. The file must be a GIF, PNG, or JP(E)G.
 
@@ -50,6 +53,8 @@ The currently logged-in user, or `null` if not logged in.
 ## client.serverVersion (string)
 
 ## client.serverName (string)
+
+## client.serverIconURL (string)
 
 ## client.connected (boolean)
 

@@ -55,21 +55,34 @@ class Pool {
     return this.servers.length - 1
   }
 
+  async remove(index) {
+    this.servers.splice(index, 1)
+
+    if (index === this.activeIndex) {
+      if (this.servers[0]) this.setActive(0)
+      else this.setActive(-1)
+    } else if (index < this.activeIndex) {
+      this.activeIndex--
+    }
+  }
+
   async setActive(index) {
-    if (!this.servers[index]) throw new Error('pool.setActive(): index points to null')
+    //if (!this.servers[index]) throw new Error('pool.setActive(): index points to null')
 
     this.activeIndex = index
     const server = this.servers[index]
 
-    if (server.client.me) this.activeClientEE.emit('login', server.client.me)
+    if (server && server.client.me) this.activeClientEE.emit('login', server.client.me)
     else this.activeClientEE.emit('logout')
 
-    if (server.client.connected) this.activeClientEE.emit('reconnect')
+    if (server && server.client.connected) this.activeClientEE.emit('reconnect')
     else this.activeClientEE.emit('disconnect')
 
-    this.activeChannelsEE.emit('change', this.activeServer.client.channels)
-    this.activeUsersEE.emit('change', this.activeServer.client.users)
-    this.activeEmotesEE.emit('change', this.activeServer.client.emotes)
+    if (server) {
+      this.activeChannelsEE.emit('change', this.activeServer.client.channels)
+      this.activeUsersEE.emit('change', this.activeServer.client.users)
+      this.activeEmotesEE.emit('change', this.activeServer.client.emotes)
+    }
   }
 
   get activeServer() {

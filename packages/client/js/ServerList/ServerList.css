@@ -1,0 +1,92 @@
+.ServerList {
+  width: 100px;
+  user-select: none;
+
+  overflow-y: auto;
+}
+
+.ServerList-server {
+  margin: 16px;
+  cursor: pointer;
+
+  position: relative;
+
+  opacity: 0.6;
+  transition: opacity 120ms cubic-bezier(.17,.84,.44,1);
+
+  &:hover, &.is-active {
+    opacity: 1.0;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+
+    top: 8px;
+    left: -10px;
+    border-radius: 4px;
+
+    width: 4px;
+    height: 0;
+
+    transition: 120ms cubic-bezier(.17,.84,.44,1);
+    background: var(--base0C);
+  }
+
+  &.is-active {
+    cursor: default;
+
+    &::before {
+      height: 52px;
+      background: var(--base0C);
+    }
+  }
+}
+
+.ServerList-iconReal {
+  border-radius: 68px;
+
+  width: 68px;
+  height: 68px;
+}
+
+.ServerList-iconText {
+  border-radius: 68px;
+
+  width: 68px;
+  height: 68px;
+
+  color: var(--base05);
+  background: var(--base02);
+
+  font-weight: 600;
+  font-size: 24px;
+
+  text-align: center;
+  line-height: 68px;
+}
+
+.ServerList-addNew {
+  margin: 24px;
+  cursor: pointer;
+
+  box-sizing: border-box;
+  border: 1px dashed var(--base03);
+  background: var(--base23);
+
+  border-radius: 52px;
+
+  width: 52px;
+  height: 52px;
+
+  font-size: 14px;
+  line-height: 50px;
+  text-align: center;
+
+  color: var(--base04);
+  transition: color 120ms cubic-bezier(.17,.84,.44,1);
+
+  &:hover {
+    color: var(--base07);
+  }
+}

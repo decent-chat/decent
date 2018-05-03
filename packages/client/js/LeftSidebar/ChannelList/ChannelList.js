@@ -18,7 +18,10 @@ class ChannelList extends Component {
     })
 
     pool.activeChannelsEE.on('change', channels => {
-      this.setState({channels})
+      this.setState({
+        channels,
+        activeChannelIndex: pool.activeServer.ui.activeChannelIndex.get(),
+      })
     })
 
     const checkPermissions = k => async () => {
@@ -38,8 +41,8 @@ class ChannelList extends Component {
   }
 
   render(_, { channels, activeChannelIndex, canCreateChannel, showCreateChannelModal }) {
-    return <div class='Sidebar-section'>
-      <div class='Sidebar-section-title'>
+    return <div class='Sidebar-section --no-pad-horiz'>
+      <div class='Sidebar-section-title --pad-horiz'>
         <h4>Channels</h4>
         {canCreateChannel && <button onClick={() => this.setState({showCreateChannelModal: true})}>+ Create</button>}
       </div>

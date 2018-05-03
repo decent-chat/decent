@@ -1,0 +1,45 @@
+.ServerDetails {
+  display: flex;
+  position: relative;
+
+  align-items: center;
+  padding: 13px 16px;
+  padding-bottom: 14px;
+
+  color: var(--base07);
+  background: transparent;
+
+  border-bottom: 1px solid var(--base12);
+
+  font-weight: 600;
+  text-shadow: 0 1px 1px var(--base23), 0 1px 25px var(--base24);
+
+  transition: background 120ms cubic-bezier(.17,.84,.44,1);
+  &:hover {
+    background: var(--base12);
+  }
+
+  cursor: pointer;
+
+  &::after {
+    display: block;
+    content: ' ';
+
+    width: 20px;
+    height: 12px;
+    margin-left: auto;
+
+    background: url('/img/caret-down.svg') center center / 24px no-repeat;
+
+    opacity: 0.6;
+    transition: opacity 120ms cubic-bezier(.17,.84,.44,1);
+  }
+}
+
+.ServerDetails-activeName {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+
+  padding-right: 4px;
+}

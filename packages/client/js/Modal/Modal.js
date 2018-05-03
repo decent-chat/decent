@@ -83,6 +83,10 @@ class Input extends Component {
   componentDidMount() {
     const { value } = this.input
     this.context.modalUpdateInput(this.props.name, value)
+
+    if (this.props.focus) {
+      this.input.focus()
+    }
   }
 
   render({ label, type = 'text', placeholder = '' }, { value }) {
@@ -109,13 +113,15 @@ class Input extends Component {
   }
 
   handleKey = e => {
-    // TODO
+    if (this.props.final && e.keyCode === 13) {
+      this.context.modalSubmit()
+    }
   }
 }
 
 class Button extends Component {
   render(props) {
-    return <button class={'Modal-button Button' + ((' ' + props.class) || '')} onClick={this.handleClick}>
+    return <button class={'Modal-button Button --outlined2' + ((' ' + props.class) || '')} onClick={this.handleClick}>
       {props.children}
     </button>
   }

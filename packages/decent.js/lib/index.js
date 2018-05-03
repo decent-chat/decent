@@ -72,9 +72,12 @@ class Client extends EventEmitter {
     this.serverVersion = decentVersion
 
     // Load server details
-    const { settings: { name } } = await this.fetch('/api/settings')
+    const { settings: { name, iconURL } } = await this.fetch('/api/settings')
     typeforce('String', name)
+    typeforce('String', iconURL)
+
     this.serverName = name
+    this.serverIconURL = iconURL
 
     // Setup socket
     await this._socket.connect()
@@ -163,6 +166,17 @@ class Client extends EventEmitter {
     })
 
     this.serverName = name
+  }
+
+  async setServerIconURL(url) {
+    typeforce('String', url)
+
+    await this.fetch('/api/settings', {
+      method: 'POST',
+      body: {iconURL: url}
+    })
+
+    this.serverIconURL = url
   }
 
   async uploadImage(file) {

@@ -19,7 +19,14 @@
   position: relative;
 
   &.\--disabled {
-    color: var(--page-dim-fg);
+    color: var(--base03);
+
+    height: 66px;
+    line-height: 32px;
+    padding-left: 32px;
+    display: block;
+    user-select: none;
+    box-sizing: border-box;
   }
 
   &.is-uploading::after {
@@ -99,7 +106,7 @@
   color: transparent;
   text-indent: -99999px;
 
-  background: var(--base0E);
+  background: var(--base0D);
   border: none;
   outline: none;
   border-radius: 100px;
@@ -109,10 +116,13 @@
   background-repeat: no-repeat;
   transform: rotateZ(0);
 
-  transition: background-position 150ms ease-out, transform 400ms 200ms ease;
+  transition: background-position 150ms ease-out, transform 400ms 300ms ease;
   &:hover {
-    background-position: 21px 16px;
+    background-position: center center;
     transform: rotateZ(-15deg);
+  }
+  &:focus {
+    background-position: 60px 10px;
   }
 
   cursor: pointer;

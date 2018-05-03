@@ -11,29 +11,39 @@
   height: 52px;
   line-height: 12px;
 
-  color: var(--base0D);
-  background: var(--base2D);
+  color: var(--base0E);
+  background: var(--base2E);
 
-  border-right: 1px solid var(--base2D);
+  border-right: 1px solid var(--base2E);
   border-bottom: 1px solid var(--base24);
 
   cursor: pointer;
   font-size: .95rem;
 
+  &:first-child {
+    border-left: 1px solid var(--base2E);
+  }
+
   &:last-of-type {
     border-right: none;
   }
+
+  transition: background 120ms cubic-bezier(.17,.84,.44,1);
 
   &.--is-active {
     color: var(--base05);
     background: var(--base01);
 
     border-bottom-color: transparent;
+    border-right-color: var(--base1E);
+    border-left-color: var(--base24);
+
+    transition: none;
     cursor: default;
   }
 
   &:not(.--is-active):hover {
-    background: var(--base1D);
+    background: var(--base1E);
   }
 }
 

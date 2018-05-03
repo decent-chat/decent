@@ -12,7 +12,7 @@
   overflow: hidden;
 
   z-index: 950;
-  box-shadow: 0px 5px 11px 0px var(--base13);
+  box-shadow: 0px 5px 11px 0px var(--base10);
 
   &.is-loading .Modal-title::after {
     content: " ";
@@ -43,8 +43,8 @@
   padding: 70px;
   padding-bottom: 16px;
 
-  color: var(--base00);
-  background: var(--base0B);
+  color: #fefefe;
+  background:#4d5258;
 
   font-size: 24px;
   user-select: none;
@@ -85,7 +85,7 @@
 }
 
 .Modal-button {
-  margin-left: 13px;
+  margin-left: 18px;
   margin-top: 16px;
 
   line-height: 1.6;

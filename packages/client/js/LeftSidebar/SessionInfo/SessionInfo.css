@@ -1,0 +1,66 @@
+.SessionInfo {
+  padding: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  &.\--signed-in {
+    flex-direction: row;
+
+    box-sizing: border-box;
+    padding: 20px 16px;
+
+    border-top: 1px solid var(--base01);
+  }
+}
+
+.SessionInfo-signedOutText {
+  padding: 12px 16px;
+  display: block;
+
+  font-size: 14px;
+  border-top: 1px solid var(--base23);
+
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.SessionInfo-signedOutActions {
+  padding: 16px 48px;
+
+  background: var(--base0A);
+  box-shadow: inset 0 8px 8px -8px var(--base18);
+
+  & span {
+    padding: 0 12px;
+    text-align: center;
+    color: var(--base10);
+  }
+
+  & .Button {
+    color: var(--base00);
+    border-color: var(--base10) !important;
+  }
+}
+
+.SessionInfo-user {
+  display: flex;
+  cursor: pointer;
+}
+
+.SessionInfo-avatar {
+  margin: 8px;
+
+  width: 36px;
+  height: 36px;
+}
+
+.SessionInfo-username {
+  padding: 0 4px;
+  line-height: 48px;
+}
+
+.SessionInfo-spacer {
+  flex: 1;
+}

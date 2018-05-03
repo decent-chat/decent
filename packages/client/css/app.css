@@ -25,6 +25,12 @@
 @import 'pages/account-settings.css';
 @import 'pages/authorized-users.css';
 
+/* TODO: migrate everything to this format + use a glob import */
+@import '../js/LeftSidebar/ServerDetails/ServerDetails.css';
+@import '../js/ServerList/ServerList.css';
+@import '../js/Dropdown/Dropdown.css';
+@import '../js/LeftSidebar/SessionInfo/SessionInfo.css';
+
 :root {
   --base00: #ffffff;
   --base01: #eef2f5;
@@ -83,7 +89,9 @@ body {
   padding: 0;
 
   font-size: 16px;
-  font-family: -apple-system, BlinkMacSystemFont, "PT Sans", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", "Lato", system-ui, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+
+  line-height: 1.5;
 }
 
 .App {
@@ -122,4 +130,4 @@ svg {
   stroke: inherit;
 }
 
-::selection { background: var(--base19); color: var(--base07) }
+::selection { background: var(--base06); color: var(--base02); text-shadow: none }

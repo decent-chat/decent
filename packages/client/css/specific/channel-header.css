@@ -5,13 +5,16 @@
   padding: 8px 1em;
 
   line-height: 36px;
-  font-size: 24px;
+  font-size: 18px;
   font-weight: bold;
 
-  color: var(--base03);
-  background: var(--base00);
-  border-bottom: 1px solid var(--base24);
-  border-right: 1px solid var(--base2D);
+  color: var(--base06);
+  text-shadow: 0 1px 1px var(--base23), 0 1px 25px var(--base24);
 
-  box-shadow: 0 2px 4px var(--base22);
+  background: var(--base01);
+
+  border-bottom: 1px solid var(--base24);
+  border-left: 1px solid var(--base22);
+
+  user-select: none;
 }

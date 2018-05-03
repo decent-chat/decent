@@ -38,7 +38,7 @@ class MessageEditor extends Component {
   }
 
   render({ sendMessage }, { message, me, isUploading, height, showUploadModal }) {
-    if (!me) return <div class='MessageEditor --disabled'>You must be signed in to send messages.</div>
+    if (!me) return <div class='MessageEditor --disabled'><b>Sign in</b> to send messages.</div>
 
     return <div
       class={isUploading ? 'MessageEditor is-uploading' : 'MessageEditor'}

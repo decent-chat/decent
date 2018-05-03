@@ -24,6 +24,7 @@
   flex-shrink: 1;
 
   overflow-x: auto;
+  color: var(--base06);
 }
 
 .Message-fillerLine {

@@ -1,16 +1,20 @@
 .Button {
-  padding: 8px 16px;
+  padding: 6px 12px;
   font-family: inherit;
+
+  line-height: 20px;
+  white-space: nowrap;
 
   margin-right: 6px;
   &:last-child { margin-right: 0; }
 
   background: var(--base0B);
-  border-radius: 8px;
+  border-radius: 0.25em;
   box-shadow: 0 1px 6px var(--base12);
   border: none;
 
   font-size: 14px;
+  font-weight: bold;
   color: var(--base00);
 
   cursor: pointer;
@@ -19,11 +23,19 @@
   &.\--red { background-color: var(--base0F); color: var(--base00); }
 
   &.\--no-bg {
-    font-weight: bold;
     color: var(--base0B);
     background: transparent;
 
     box-shadow: none;
+
+    &.\--outlined {
+      padding: 5px 11px;
+      border: 1px solid var(--base13);
+    }
+
+    &.\--outlined2 {
+      border: 1px solid;
+    }
 
     &.\--red { color: var(--base0F); }
     &[disabled] { color: var(--base03); }

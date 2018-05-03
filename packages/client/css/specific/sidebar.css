@@ -1,8 +1,7 @@
-@import 'server-dropdown.css';
-@import 'session-info.css';
-
 .Sidebar {
   flex: 0 0 300px;
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
 
   background: var(--sidebar-bg);
@@ -11,17 +10,17 @@
   --sidebar-icon-color: var(--base14);
   --sidebar-icon-color-active: var(--base10);
 
-  --sidebar-list-item-hoverfg: var(--base18);
-  --sidebar-list-item-hoverbg: var(--base20);
+  --sidebar-list-item-hoverfg: var(--base06);
+  --sidebar-list-item-hoverbg: var(--base1C);
 
   --sidebar-list-item-activefg: var(--base00);
-  --sidebar-list-item-activebg: var(--base1C);
+  --sidebar-list-item-activebg: var(--base0C);
 
   &.\--on-left {
-    --sidebar-fg: var(--base0C);
-    --sidebar-bg: var(--base1C);
+    --sidebar-fg: var(--base06);
+    --sidebar-bg: var(--base00);
 
-    box-shadow: 0 0 4px var(--base13);
+    box-shadow: 0 0 1px var(--base14);
   }
 
   &.\--on-right {
@@ -36,6 +35,10 @@
   }
 }
 
+.Sidebar-spacer {
+  flex: 1;
+}
+
 .Sidebar-list {
   display: flex;
   flex-direction: column;
@@ -48,7 +51,6 @@
 
   align-items: center;
   padding: 8px 24px;
-  margin-bottom: 4px;
 
   font-size: 16px;
   text-decoration: none;
@@ -56,7 +58,6 @@
   overflow-x: hidden;
 
   cursor: pointer;
-  border-radius: 100px;
 
   color: var(--sidebar-list-item-fg);
   background: var(--sidebar-list-item-bg);
@@ -131,6 +132,15 @@
   &.\--bottom-line {
     border-bottom: 1px solid var(--sidebar-border-color);
   }
+
+  &.\--no-pad {
+    padding: 0;
+  }
+
+  &.\--no-pad-horiz {
+    padding-left: 0;
+    padding-right: 0;
+  }
 }
 
 .Sidebar-section-title {
@@ -142,9 +152,12 @@
 
   z-index: 10;
 
+  &.\--pad-horiz {
+    padding: 0 16px;
+  }
+
   & > h4 {
-    text-transform: lowercase;
-    color: var(--sidebar-fg);
+    color: var(--base15);
     font-size: 14px;
 
     margin: 0;
@@ -171,4 +184,8 @@
 
   font-size: 14px;
   user-select: text;
+}
+
+#Sidebar-section-serverList {
+  background: var(--base11);
 }
