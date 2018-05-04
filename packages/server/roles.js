@@ -15,9 +15,9 @@ const permissionKeys = [
 
 // These are the only permissions that have an effect on guest users
 // (i.e. anybody who is not logged in). Other permissions strictly
-// cannot be set on the _everyone and _guest roles. (If you want to
-// change one of the other permissions on all registered users, change
-// the _user role.)
+// cannot be set on the _everyone role. (If you want to change one of
+// the other permissions on all registered users, change the _user
+// role.)
 const guestPermissionKeys = [
   'readMessages',
 ]
@@ -44,12 +44,6 @@ const internalRoles = [
       uploadImages: false,
       allowNonUnique: false
     }
-  },
-
-  {
-    _id: '_guest',
-    name: 'Guest',
-    permissions: {}
   },
 
   {

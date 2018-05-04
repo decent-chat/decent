@@ -72,7 +72,6 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
     )
 
     prioritizedRoles.push(allRoles.find(r => r._id === '_user'))
-    prioritizedRoles.push(allRoles.find(r => r._id === '_guest'))
     prioritizedRoles.push(allRoles.find(r => r._id === '_everyone'))
 
     return prioritizedRoles
