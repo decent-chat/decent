@@ -157,3 +157,20 @@
     background: var(--mention-of-you-bg);
   }
 }
+
+.Message .MessageEditor {
+  flex: 1;
+
+  border-radius: 4px;
+  overflow: hidden;
+
+  padding: 8px;
+
+  color: var(--base07);
+  background: var(--base02);
+}
+
+.Message .MessageEditor-sendButton {
+  background-color: var(--base03);
+  transform: scale(0.8) !important;
+}

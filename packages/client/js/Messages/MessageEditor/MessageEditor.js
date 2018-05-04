@@ -4,6 +4,8 @@ const Modal = require('/Modal')
 const Icon = require('/Icon')
 
 class MessageEditor extends Component {
+  // TODO autocomplete (emotes, mentions, channelrefs)
+
   constructor() {
     super()
 
@@ -35,9 +37,25 @@ class MessageEditor extends Component {
     pool.activeClientEE.on('logout', () => {
       this.setState({me: null})
     })
+
+    setTimeout(() => {
+      console.log(this.ta)
+
+      if (this.props.content) {
+        this.updateSize({target: this.ta})
+      }
+
+      if (this.props.focus) {
+        this.ta.focus()
+      }
+    }, 1)
   }
 
-  render({ sendMessage }, { message, me, isUploading, height, showUploadModal }) {
+  componentWillMount() {
+    if (this.props.content) this.state.message = this.props.content
+  }
+
+  render({ sendMessage, allowUploads = true }, { message, me, isUploading, height, showUploadModal }) {
     if (!me) return <div class='MessageEditor --disabled'><b>Sign in</b> to send messages.</div>
 
     return <div
@@ -53,9 +71,12 @@ class MessageEditor extends Component {
           onKeyPress={this.handleKeyPress}
           onInput={e => { this.setState({message: e.target.value}); this.updateSize(e) }}
           onPaste={this.handlePaste}
+          ref={el => {
+            this.ta = el
+          }}
         />
 
-        <div class='MessageEditor-box-action' onClick={this.showUploadModal}>
+        {allowUploads && <div class='MessageEditor-box-action' onClick={this.showUploadModal}>
           <Icon icon='upload'/>
           {showUploadModal && <Modal.Async
             title='Upload an image'
@@ -65,7 +86,7 @@ class MessageEditor extends Component {
             <Modal.Input name='file' label='PNG, GIF, JPG' type='file'/>
             <Modal.Button action='submit'>Upload</Modal.Button>
           </Modal.Async>}
-        </div>
+        </div>}
       </div>
 
       <button
@@ -132,6 +153,10 @@ class MessageEditor extends Component {
 
   handleKeyPress = e => {
     this.updateSize(e)
+
+    if (e.keyCode === 27 && this.props.cancel) {
+      this.props.cancel()
+    }
   }
 
   updateSize = e => {

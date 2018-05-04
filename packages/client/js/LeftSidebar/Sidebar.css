@@ -32,6 +32,14 @@
 
     --sidebar-list-item-hoverfg: var(--base0D);
     --sidebar-list-item-hoverbg: var(--base1D);
+
+    & .Sidebar-section {
+      border-left: 1px solid var(--base12);
+
+      &:last-child {
+        flex-grow: 1;
+      }
+    }
   }
 }
 

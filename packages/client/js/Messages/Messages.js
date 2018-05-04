@@ -269,7 +269,11 @@ class Messages extends Component {
           ref={elem => { this.ScrollContainer = elem }}
         >
           <div class='Messages'>
-            {messages.map(group => <Message msg={group}/>)}
+            {messages.map(group => <Message showActions={do {
+              const me = this.context.pool.activeServer.client.me
+
+              me && group[0].authorID === me.id
+            }} msg={group}/>)}
           </div>
         </InfiniteScroll>
         <MessageEditor sendMessage={ this.sendMessage.bind(this) }/>
