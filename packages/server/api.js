@@ -389,6 +389,9 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
+  /*
+  // TODO: Permissions.
+  // TODO: Actually design the reactions endpoint.
   app.post('/api/add-message-reaction', [
     ...middleware.loadVarFromBody('reactionCode'),
     ...middleware.loadVarFromBody('messageID'),
@@ -434,6 +437,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       })
     }
   ])
+  */
 
   app.patch('/api/messages/:messageID', [
     ...middleware.loadVarFromParams('messageID'),
