@@ -18,8 +18,9 @@ class Message extends Component {
       message.on('change', () => this.forceUpdate())
     }
 
-    this.context.pool.activeClientEE.on('login',  this.forceUpdate)
-    this.context.pool.activeClientEE.on('logout', this.forceUpdate)
+    this.context.pool.activeClientEE.on('logout', () => {
+      this.setState({editing: null})
+    })
   }
 
   render({ msg, showActions = true }, { editing }) {

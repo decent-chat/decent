@@ -41,6 +41,7 @@ class Messages extends Component {
   state = {
     messages: null,
     isLoading: true,
+    me: null,
   }
 
   scrollPos = 10000
@@ -55,6 +56,24 @@ class Messages extends Component {
 
       this.ScrollContainer.scrollTop = '10000px'
     }
+
+    const onLogin = () => {
+      const { me } = this.context.pool.activeServer.client
+
+      this.setState({me})
+
+      me.on('change', () => {
+        // this.state.me may update automatically but we need to rerender
+        this.forceUpdate()
+      })
+    }
+
+    this.context.pool.activeClientEE.on('login', onLogin)
+    if (this.context.pool.activeServer.client.me) onLogin()
+
+    this.context.pool.activeClientEE.on('logout', () => {
+      this.setState({me: null})
+    })
   }
 
   // Clamp `messages.length` at `maxLength`, removing messages from the top/bottom
@@ -243,7 +262,7 @@ class Messages extends Component {
     this.props.channel.sendMessage(content)
   }
 
-  render({ channel }, { messages, isLoading }) {
+  render({ channel }, { messages, isLoading, me }) {
     this.channel = channel
 
     if (!channel) {
@@ -269,11 +288,8 @@ class Messages extends Component {
           ref={elem => { this.ScrollContainer = elem }}
         >
           <div class='Messages'>
-            {messages.map(group => <Message showActions={do {
-              const me = this.context.pool.activeServer.client.me
-
-              me && group[0].authorID === me.id
-            }} msg={group}/>)}
+            {messages.map(group =>
+              <Message showActions={me && group[0].authorID === me.id} msg={group}/>)}
           </div>
         </InfiniteScroll>
         <MessageEditor sendMessage={ this.sendMessage.bind(this) }/>
