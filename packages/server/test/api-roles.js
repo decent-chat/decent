@@ -70,10 +70,9 @@ test('GET /api/roles (default roles)', t => {
 
     t.deepEqual(Object.keys(response), ['roles'])
 
-    t.is(response.roles.length, 3)
+    t.is(response.roles.length, 2)
     t.true(response.roles.some(r => r.id === '_everyone'))
     t.true(response.roles.some(r => r.id === '_user'))
-    t.true(response.roles.some(r => r.id === '_guest'))
   })
 })
 
@@ -108,7 +107,7 @@ test('GET /api/roles (with new role)', t => {
     })
 
     const response = await fetch(port, '/roles')
-    t.is(response.roles.length, 5)
+    t.is(response.roles.length, 4)
 
     const botRole = response.roles.find(r => r.name === 'Basic Bot')
     t.truthy(botRole)
@@ -133,20 +132,6 @@ test('PATCH /api/roles/:id', t => {
 
     const { role: updatedRole } = await fetch(port, '/roles/_user')
 
-    // TODO: Tests for patching the _guest and _everyone roles, which shouldn't
-    // ever be allowed to send messages or do anything specific to their own
-    // self.
-
-    try {
-      await fetch(port, '/roles/_guest', {
-        method: 'PATCH',
-        body: JSON.stringify({permissions: {sendMessages: true}})
-      })
-      t.fail('Could set non-guest permission on _guest')
-    } catch (error) {
-      t.is(error.code, 'NOT_GUEST_PERMISSION')
-    }
-
     try {
       await fetch(port, '/roles/_everyone', {
         method: 'PATCH',
@@ -157,8 +142,8 @@ test('PATCH /api/roles/:id', t => {
       t.is(error.code, 'NOT_GUEST_PERMISSION')
     }
 
-    // *Should* be able to set readMessages permission on guests/everyone.
-    await fetch(port, '/roles/_guest', {
+    // *Should* be able to set readMessages permission on everyone.
+    await fetch(port, '/roles/_everyone', {
       method: 'PATCH',
       body: JSON.stringify({permissions: {readMessages: false}})
     })
@@ -180,11 +165,11 @@ test('DELETE /api/roles/:id', t => {
 
     await fetch(port, '/roles/' + roleID)
 
-    t.is((await fetch(port, '/roles')).roles.length, 5)
+    t.is((await fetch(port, '/roles')).roles.length, 4)
 
     await fetch(port, `/roles/${roleID}?sessionID=${sessionID}`, {method: 'DELETE'})
 
-    t.is((await fetch(port, '/roles')).roles.length, 4)
+    t.is((await fetch(port, '/roles')).roles.length, 3)
 
     try {
       await fetch(port, '/roles/' + roleID)

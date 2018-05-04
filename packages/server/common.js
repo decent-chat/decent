@@ -72,7 +72,6 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
     )
 
     prioritizedRoles.push(allRoles.find(r => r._id === '_user'))
-    prioritizedRoles.push(allRoles.find(r => r._id === '_guest'))
     prioritizedRoles.push(allRoles.find(r => r._id === '_everyone'))
 
     return prioritizedRoles
@@ -120,6 +119,19 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
   const userHasPermission = async function(userID, permissionKey, channelID = null) {
     const permissions = await getUserPermissions(userID, channelID)
     return permissions[permissionKey] === true
+  }
+
+  const userHasPermissions = async function(userID, permissionKeyList, channelID = null) {
+    // Don't bother calling userHasPermission() because it fetches the permission list
+    // each time.
+    const permissions = await getUserPermissions(userID, channelID)
+    return permissionKeyList.every(key => permissions[key] === true)
+  }
+
+  const userHasPermissionsOfRole = async function(userID, roleID, channelID = null) {
+    const { permissions } = await db.roles.findOne({_id: roleID})
+    const permissionKeys = Object.keys(permissions)
+    return await userHasPermissions(userID, permissionKeys, channelID)
   }
 
   const getUnreadMessageCountInChannel = async function(userObj, channelID) {
@@ -233,7 +245,9 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
     asUnixDate, unixDateNow,
     getUserIDBySessionID, getUserBySessionID,
     getPrioritizedRoles,
-    getUserPermissions, userHasPermission,
+    getUserPermissions,
+    userHasPermission, userHasPermissions,
+    userHasPermissionsOfRole,
     addRole,
     md5,
     isUserOnline,

@@ -389,6 +389,9 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
+  /*
+  // TODO: Permissions.
+  // TODO: Actually design the reactions endpoint.
   app.post('/api/add-message-reaction', [
     ...middleware.loadVarFromBody('reactionCode'),
     ...middleware.loadVarFromBody('messageID'),
@@ -434,6 +437,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       })
     }
   ])
+  */
 
   app.patch('/api/messages/:messageID', [
     ...middleware.loadVarFromParams('messageID'),
@@ -1211,7 +1215,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     async (request, response) => {
       const { id, name, permissions } = request[middleware.vars]
 
-      if (['_everyone', '_guest'].includes(id)) {
+      if (id === '_everyone') {
         if (Object.keys(permissions).some(k => !guestPermissionKeys.includes(k))) {
           response.status(403).json({error: errors.NOT_GUEST_PERMISSION})
           return

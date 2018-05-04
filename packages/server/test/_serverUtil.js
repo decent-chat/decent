@@ -92,7 +92,7 @@ const makeRole = async (server, port, permissions = {}, name = 'test_role_' + sh
     })
   })
 
-  return {roleID}
+  return {roleID, sessionID}
 }
 
 const giveRole = async (server, port, roleID, userID, sessionID = null) => {
