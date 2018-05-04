@@ -179,10 +179,23 @@ class Channel extends Thing {
     })
   }
 
+  async refresh() {
+    const { channel } = await this.client.fetch('/api/channels/' + this.id)
+
+    this[SET_DATA](channel)
+  }
+
   async markRead() {
-    await this.client.fetch('/api/channels/' + this.channel.id + '/mark-read', {
+    await this.client.fetch('/api/channels/' + this.id + '/mark-read', {
       method: 'POST',
     })
+
+    await this.refresh()
+
+    this.emit('change')
+
+    this.client.channels.emit('update', this)
+    this.client.channels.emit('change')
   }
 
   async getMessages({ before, after, limit } = {}) {
@@ -279,8 +292,24 @@ class Channels extends Things {
       this.emit('change')
     }))
 
-    this.client._socket.on('message/new', ({ message: messageObj }) => {
+    this.client._socket.on('message/new', async ({ message: messageObj }) => {
       this.emit('message', new Message(this.client, messageObj))
+
+      for (const channel of this.set) {
+        if (channel.id === messageObj.channelID) {
+          const unread = channel.unreadMessageCount
+
+          await channel.refresh()
+
+          if (unread != channel.unreadMessageCount) {
+            this.emit('update', channel)
+            channel.emit('update', channel)
+            channel.emit('change')
+          }
+        }
+      }
+
+      this.emit('change')
     })
 
     // pin-related events are found under Message(s)

@@ -77,7 +77,7 @@
     background: var(--sidebar-list-item-hoverbg);
 
     &.is-unread::after {
-      border-color: var(--sidebar-list-item-hoverbg);
+      opacity: 0.7;
     }
   }
 
@@ -124,13 +124,13 @@
 
     position: absolute;
     top: 9px;
-    left: 18px;
+    left: 14px;
     width: 6px;
     height: 6px;
 
     border-radius: 99px;
-    background: var(--unread-dot-color);
-    border: 2px solid var(--sidebar-bg); /* Border color should always match background */
+    background: var(--base0C);
+    border: 2px solid var(--base00); /* Border color should always match background */
   }
 }
 

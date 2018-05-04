@@ -17,9 +17,9 @@ class ChannelList extends Component {
       activeChannelIndex: pool.activeServer.ui.activeChannelIndex.get(),
     })
 
-    pool.activeChannelsEE.on('change', channels => {
+    pool.activeChannelsEE.on('change', () => {
       this.setState({
-        channels,
+        channels: pool.activeServer.client.channels,
         activeChannelIndex: pool.activeServer.ui.activeChannelIndex.get(),
       })
     })
@@ -66,13 +66,17 @@ class ChannelList extends Component {
       <div class='Sidebar-list'>
         {channels.map((channel, index) => {
           let className = 'Sidebar-list-item --icon-channel'
+
           if (index === activeChannelIndex) className += ' is-active'
+          else if (channel.unreadMessageCount) className +=' is-unread'
 
           return <a
             class={className}
             onClick={() => {
               this.context.pool.activeServer.ui.activeChannelIndex.set(index)
               this.setState({activeChannelIndex: index})
+              channel.markRead()
+              channel.unreadMessageCount = 0
             }}
           >
             {channel.name}

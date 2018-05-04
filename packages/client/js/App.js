@@ -41,12 +41,45 @@ class App extends Component {
     })
 
     this.pool.onUIChange('activeChannelIndex', () => this.forceUpdate())
+    this.pool.activeChannelsEE.on('change', () => this.updateDocumentTitle())
+
     this.pool.activeClientEE.on('disconnect', () => this.setState({disconnected: true}))
     this.pool.activeClientEE.on('reconnect', () => this.setState({disconnected: false}))
   }
 
+  updateDocumentTitle() {
+    const { activeServer, servers } = this.pool
+
+    if (!activeServer) {
+      return document.title = 'Decent'
+    }
+
+    const unreadStr = do {
+      servers.reduce(s => console.log(s))
+
+      const unreadSum = servers
+        .reduce((sum, { client }) =>
+          client.channels.reduce((sum, channel) =>
+            sum + (channel.unreadMessageCount || 0),
+          sum),
+        0)
+
+      unreadSum === 0 ? '' : `[${unreadSum}] `
+    }
+
+    const channelStr = do {
+      const activeChannel = activeServer.client.channels.nth(activeServer.ui.activeChannelIndex.get())
+
+      activeChannel ? `#${activeChannel.name}` : ''
+    }
+
+    document.title = `${unreadStr} ${channelStr}+${activeServer.hostname} - Decent`
+  }
+
   render(_, { isLoading, showJoinServerModal, disconnected, serverListVisible }) {
     const activeServer = this.pool.activeServer
+
+    this.updateDocumentTitle()
 
     if (isLoading) {
       return <div class='App Loading'></div>
@@ -80,7 +113,6 @@ class App extends Component {
       </Provider>
     } else {
       const { client, ui } = activeServer
-      document.title = client.serverName
 
       return <Provider pool={this.pool}>
         <div class='App'>

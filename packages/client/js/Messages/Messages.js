@@ -13,11 +13,17 @@ class Messages extends Component {
 
   static groupMessages(msgs, startingGroups = []) {
     const groups = startingGroups
+    const seenIDs = startingGroups.map(g => g.map(m => m.id)).reduce((g, s) => s.concat(g), [])
 
     // Max milliseconds between messages before they are split up
     const apart = 30 * 60 * 1000 // 30min
 
     for (const msg of msgs) {
+      if (seenIDs.includes(msg.id)) {
+        // Duplicate??
+        continue
+      }
+
       const group = groups[groups.length - 1]
 
       const usePrevGroup = typeof group !== 'undefined'
@@ -33,6 +39,8 @@ class Messages extends Component {
         // Add this message to the previous group
         group.push(msg)
       }
+
+      seenIDs.push(msg.id)
     }
 
     return groups
@@ -107,7 +115,7 @@ class Messages extends Component {
   handleNewMessage = newMessage => {
     if (!this.showingLatestMessage) return
 
-    const alreadyExisting = flatten(this.state.messages).find(msg => msg.id === newMessage)
+    const alreadyExisting = flatten(this.state.messages).find(msg => msg.id === newMessage.id)
 
     if (alreadyExisting) {
       // If we already added this message in anticipation (ie. WE sent it) of
@@ -123,7 +131,9 @@ class Messages extends Component {
         // ...I love network-dependent edge-cases!
       }
     } else {
-      if (this.scrolledToBottom) this.scrollPos = 10000
+      if (this.scrolledToBottom) {
+        this.scrollPos = 10000
+      }
 
       this.setState({
         messages: Messages.groupMessages(

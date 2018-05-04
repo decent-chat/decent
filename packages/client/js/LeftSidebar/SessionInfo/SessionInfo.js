@@ -59,6 +59,7 @@ class SessionInfo extends Component {
           <div class='Dropdown-separator'></div>
           <div class='Dropdown-listItem' onClick={() => {
             this.context.pool.activeServer.client.logout()
+            this.setState({yserDrop: false})
           }}>Sign out</div>
         </Dropdown>}
       </div>

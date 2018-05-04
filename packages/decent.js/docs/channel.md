@@ -18,6 +18,9 @@ The following properties are only provided if logged in:
 
 Extends [eventemitter3](https://npm.im/eventemitter3).
 
+## await channel.refresh()
+Refreshes properties to be consistent with the server.
+
 ## await channel.sendMessage(text: string) -> string messageID
 Sends a message to the channel, implicitly marking it as read.
 
