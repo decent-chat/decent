@@ -201,7 +201,9 @@ class Messages extends Component {
 
   componentDidUpdate() {
     if (this.ScrollContainer && this.scrolledToBottom) {
-      this.ScrollContainer.setScrollPosition(100000)
+      const { lastChild } = this.ScrollContainer.scroller
+
+      this.ScrollContainer.setScrollPosition(lastChild.offsetTop + lastChild.offsetHeight)
     }
 
     if (this.runAfterRender) {

@@ -83,8 +83,8 @@ class InfiniteScroll extends Component {
       onReachBottom
     } = this.props
 
-    const topEdge = firstChild.offsetTop
-    const bottomEdge = lastChild.offsetTop + lastChild.offsetHeight
+    const topEdge = firstChild.offsetTop + 100
+    const bottomEdge = lastChild.offsetTop + lastChild.offsetHeight - 100
     const scrolledUp = scrollTop + offsetTop
     const scrolledDown = scrolledUp + offsetHeight
 
