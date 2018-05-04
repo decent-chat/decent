@@ -1,8 +1,11 @@
 const theme = {
   light: {
     // Default - defined in the css/app.css
+    className: 'theme-light',
   },
   dark: {
+    className: 'theme-dark',
+
     [0]: 0x000000,
     [1]: 0x040404,
     [2]: 0x1c1f24,
@@ -24,8 +27,11 @@ const theme = {
 
 function apply(styles) {
   document.body.style = '' // Reset.
+  document.body.className = styles.className
 
   for (let [ prop, value ] of Object.entries(styles)) {
+    if (prop === 'className') continue
+
     document.body.style.setProperty(`--base0${prop}`, `#${value.toString(16).padStart(6, '0')}`)
     document.body.style.setProperty(`--base1${prop}`, `#${value.toString(16).padStart(6, '0')}60`)
     document.body.style.setProperty(`--base2${prop}`, `#${value.toString(16).padStart(6, '0')}30`)

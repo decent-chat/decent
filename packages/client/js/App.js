@@ -115,7 +115,7 @@ class App extends Component {
             <Modal.Button class='--no-bg' action='cancel'>Cancel</Modal.Button>
           </Modal.Async>}
 
-          {disconnected && <Toast>
+          {disconnected && <Toast color='red'>
             <Icon icon='disconnect'/>
             Disconnected from <b>{client.serverName}</b>!
           </Toast>}

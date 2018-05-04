@@ -17,7 +17,6 @@
 @import 'specific/user-list.css';
 @import 'specific/modal.css';
 @import 'specific/message-list.css';
-@import 'specific/toast.css';
 @import 'specific/channel-header.css';
 
 /* Pages */
@@ -30,6 +29,7 @@
 @import '../js/ServerList/ServerList.css';
 @import '../js/Dropdown/Dropdown.css';
 @import '../js/LeftSidebar/SessionInfo/SessionInfo.css';
+@import '../js/Toast/Toast.css';
 
 :root {
   --base00: #ffffff;
