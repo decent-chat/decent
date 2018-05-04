@@ -2,6 +2,10 @@
   --loading-icon: url(../img/message-solid-black.svg);
 }
 
+.theme-dark {
+  --loading-icon: url(../img/message-solid-white.svg);
+}
+
 .Loading {
   background-image: var(--loading-icon) !important;
   background-size: 24px 24px;

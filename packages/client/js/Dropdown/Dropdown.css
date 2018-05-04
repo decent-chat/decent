@@ -16,6 +16,20 @@
 
   box-shadow: 0 1px 24px rgba(0, 0, 0, 0.2);
   user-select: none;
+
+  animation: dropdownEntry 140ms;
+}
+
+@keyframes dropdownEntry {
+  0% {
+    transform: scale(1.1);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .Dropdown-muted {
@@ -68,4 +82,16 @@
   height: 100%;
 
   background: var(--base23);
+  animation: dropdownPageCoverEntry 140ms;
+}
+
+
+@keyframes dropdownPageCoverEntry {
+  0% {
+    background: transparent;
+  }
+
+  100% {
+    background: var(--base23);
+  }
 }

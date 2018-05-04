@@ -25,6 +25,8 @@
 
   overflow-x: auto;
   color: var(--base06);
+
+  white-space: pre-line;
 }
 
 .Message-fillerLine {

@@ -1,5 +1,5 @@
 .SessionInfo {
-  padding: 0;
+  padding: 0 !important;
 
   display: flex;
   flex-direction: column;
@@ -8,7 +8,7 @@
     flex-direction: row;
 
     box-sizing: border-box;
-    padding: 20px 16px;
+    padding: 12px 16px !important;
 
     border-top: 1px solid var(--base01);
   }
@@ -47,6 +47,12 @@
 .SessionInfo-user {
   display: flex;
   cursor: pointer;
+
+  opacity: 1;
+  transition: opacity 120ms;
+  &:hover {
+    opacity: 0.8;
+  }
 }
 
 .SessionInfo-avatar {

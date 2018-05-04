@@ -52,6 +52,8 @@ class Messages extends Component {
     if (this.channel) {
       await this.loadLatest(this.channel)
       this.channel.on('message', this.handleNewMessage)
+
+      this.ScrollContainer.scrollTop = '10000px'
     }
   }
 
@@ -248,17 +250,17 @@ class Messages extends Component {
       // TODO: make this prettier, show a graphic or something that tells
       // you that no channel has been opened and you should make/open one
       return <main>
-        <div class='ChannelHeader'></div>
-        <div class='MessageList'></div>
+        <div class='Messages-channelHeader'></div>
+        <div class='Messages'></div>
       </main>
     } else if (isLoading) {
       return <main>
-        <div class='ChannelHeader'></div>
-        <div class='MessageList Loading'></div>
+        <div class='Messages-channelHeader'></div>
+        <div class='Messages Loading'></div>
       </main>
     } else {
       return <main>
-        <div class='ChannelHeader'>{channel.toString()}</div>
+        <div class='Messages-channelHeader'>{channel.toString()}</div>
         <InfiniteScroll
           onReachBottom={() => this.handleReachBottom()}
           onReachTop={() => this.handleReachTop()}
@@ -266,7 +268,7 @@ class Messages extends Component {
           position={this.scrollPos}
           ref={elem => { this.ScrollContainer = elem }}
         >
-          <div class='MessageList'>
+          <div class='Messages'>
             {messages.map(group => <Message msg={group}/>)}
           </div>
         </InfiniteScroll>

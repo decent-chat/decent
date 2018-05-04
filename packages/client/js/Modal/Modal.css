@@ -11,6 +11,9 @@
   border-radius: 10px;
   overflow: hidden;
 
+  animation: modalEntry 240ms;
+  animation-fill-mode: forwards;
+
   z-index: 950;
   box-shadow: 0px 5px 11px 0px var(--base10);
 
@@ -27,6 +30,23 @@
     animation: loadingBarIndeterminate 1500ms cubic-bezier(0.86, 0, 0.07, 1) infinite;
   }
 }
+
+.theme-light .Modal {
+  box-shadow: 0px 5px 11px 0px var(--base17);
+}
+
+@keyframes modalEntry {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translate(-75%, -75%);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) translate(-50%, -50%);
+  }
+}
+
 
 .Modal-close-button {
   position: absolute;
@@ -101,6 +121,20 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--base24);
   z-index: 900;
+
+  animation: modalPageCoverEntry 240ms;
+  animation-fill-mode: forwards;
+}
+
+@keyframes modalPageCoverEntry {
+  0% {
+    background: transparent;
+    backdrop-filter: blur(0);
+  }
+
+  100% {
+    background: var(--base24);
+    backdrop-filter: blur(4px);
+  }
 }
