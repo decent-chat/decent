@@ -1,5 +1,6 @@
 const { test } = require('ava')
-const { testWithServer, makeUser, makeMessage } = require('./_serverUtil')
+const { testWithServer, makeUser, makeMessage, makeRole, giveRole } = require('./_serverUtil')
+const fetch = require('./_fetch')
 
 let portForCommonTests = 24000
 
@@ -73,6 +74,71 @@ test('isUserOnline', t => {
     t.false(util.isUserOnline(user.id))
     connectedSocketsMap.set({}, {userID: user.id})
     t.true(util.isUserOnline(user.id))
+  })
+})
+
+// TODO: Test for getUserPermissions.
+
+const PERMISSION_USERS_HAVE = 'sendMessages'
+const OTHER_PERMISSION_USERS_HAVE = 'readMessages'
+const PERMISSION_USERS_DO_NOT_HAVE = 'manageChannels'
+
+test('userHasPermission', t => {
+  // Only basic testing here - proper testing for user permission evaluation
+  // done in the getUserPermissions test.
+  return testWithServer(portForCommonTests++, async ({ util, server, port }) => {
+    const { user: { id: userID } } = await makeUser(server, port)
+    t.true(await util.userHasPermission(userID,  PERMISSION_USERS_HAVE))
+    t.false(await util.userHasPermission(userID, PERMISSION_USERS_DO_NOT_HAVE))
+    t.false(await util.userHasPermission(userID, 'bogusPermissionThatDoesNotExist'))
+
+    const { roleID, sessionID: ownerSessionID } = await makeRole(server, port, {
+      [PERMISSION_USERS_DO_NOT_HAVE]: true
+    })
+    await giveRole(server, port, roleID, userID, ownerSessionID)
+    t.true(await util.userHasPermission(userID, PERMISSION_USERS_DO_NOT_HAVE))
+
+    // TODO: Test for channel-specific permissions.
+  })
+})
+
+test('userHasPermissions', t => {
+  return testWithServer(portForCommonTests++, async ({ util, server, port }) => {
+    const { user: { id: userID } } = await makeUser(server, port)
+    t.true(await util.userHasPermissions(userID, [PERMISSION_USERS_HAVE, OTHER_PERMISSION_USERS_HAVE]))
+    t.false(await util.userHasPermissions(userID, [PERMISSION_USERS_HAVE, PERMISSION_USERS_DO_NOT_HAVE]))
+    t.true(await util.userHasPermissions(userID, [PERMISSION_USERS_HAVE]))
+    t.false(await util.userHasPermissions(userID, [PERMISSION_USERS_DO_NOT_HAVE]))
+  })
+})
+
+test('userHasPermissionsOfRole', t => {
+  return testWithServer(portForCommonTests++, async ({ util, server, port }) => {
+    const { user: { id: userID } } = await makeUser(server, port)
+    const { roleID, sessionID: ownerSessionID } = await makeRole(server, port, {
+      [PERMISSION_USERS_DO_NOT_HAVE]: true
+    })
+    t.false(await util.userHasPermissionsOfRole(userID, roleID))
+
+    const { roleID: roleID2 } = await makeRole(server, port, {
+      [PERMISSION_USERS_DO_NOT_HAVE]: false
+    })
+    t.false(await util.userHasPermissionsOfRole(userID, roleID2))
+
+    const { roleID: roleID3 } = await makeRole(server, port, {
+      [PERMISSION_USERS_HAVE]: true,
+      [OTHER_PERMISSION_USERS_HAVE]: true
+    })
+    t.true(await util.userHasPermissionsOfRole(userID, roleID3))
+
+    await giveRole(server, port, roleID, userID, ownerSessionID)
+    t.true(await util.userHasPermissionsOfRole(userID, roleID))
+
+    // Sanity check -- the user's permission must be TRUE in order for it to count!
+    // (We create a fresh user without the role.)
+    const { user: { id: userID2 } } = await makeUser(server, port)
+    await giveRole(server, port, roleID2, userID, ownerSessionID)
+    t.false(await util.userHasPermissionsOfRole(userID, roleID))
   })
 })
 
