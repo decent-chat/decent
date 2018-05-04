@@ -24,12 +24,7 @@
 @import 'pages/account-settings.css';
 @import 'pages/authorized-users.css';
 
-/* TODO: migrate everything to this format + use a glob import */
-@import '../js/LeftSidebar/ServerDetails/ServerDetails.css';
-@import '../js/ServerList/ServerList.css';
-@import '../js/Dropdown/Dropdown.css';
-@import '../js/LeftSidebar/SessionInfo/SessionInfo.css';
-@import '../js/Toast/Toast.css';
+@import '../js/**/*.css';
 
 :root {
   --base00: #ffffff;

@@ -1,4 +1,4 @@
-const cssimport = require('postcss-import')
+const cssimport = require('postcss-partial-import')
 const nesting = require('postcss-nesting')
 const nano = require('cssnano')
 const autoprefixer = require('autoprefixer')
