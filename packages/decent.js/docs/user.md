@@ -5,7 +5,7 @@ Represents a single registered user. Updated automatically.
 
 Properties:
 
-* user.id (string)
+* user.id
 * user.username (string)
 
 * user.avatarURL (string)

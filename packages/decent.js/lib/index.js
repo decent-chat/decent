@@ -7,6 +7,7 @@ const { EventEmitter } = require('./emitter')
 const { Emotes } = require('./emotes')
 const { Message, Channels } = require('./channels')
 const { User, Users } = require('./users')
+const { Roles } = require('./roles')
 
 // Typeforce relies on this function being callable.
 if (!Error.captureStackTrace) Error.captureStackTrace = () => {}
@@ -88,10 +89,12 @@ class Client extends EventEmitter {
     this.emotes = new Emotes(this)
     this.channels = new Channels(this)
     this.users = new Users(this)
+    this.roles = new Roles(this)
 
     await this.emotes.load()
     await this.channels.load()
     await this.users.load()
+    await this.roles.load()
   }
 
   async register(username, password) {

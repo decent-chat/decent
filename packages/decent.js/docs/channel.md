@@ -5,7 +5,7 @@ Represents a single channel. Updated automatically.
 
 Properties:
 
-* channel.id (string)
+* channel.id
 * channel.name (string)
 * channel.deleted (boolean)
 

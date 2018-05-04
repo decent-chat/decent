@@ -5,6 +5,7 @@ decent.js exports a single class - [Client](client.md). See also:
 * [client.channels](channels.md)
 * [client.users](users.md)
 * [client.emotes](emotes.md)
+* [client.roles](roles.md)
 
 ### error handling
 

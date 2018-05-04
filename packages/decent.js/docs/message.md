@@ -5,7 +5,7 @@ Represents a single message. Updated automatically.
 
 Properties:
 
-* message.id (string)
+* message.id
 * message.text (string)
 
 * message.dateCreated (Date)
