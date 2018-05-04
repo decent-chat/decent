@@ -23,7 +23,7 @@ class Messages extends Component {
       const usePrevGroup = typeof group !== 'undefined'
         && group[0].authorID === msg.authorID
         && group[0].authorAvatarURL === msg.authorAvatarURL
-        && group.length <= 20
+        //&& group.length <= 20
         && (msg.dateCreated - group[group.length - 1].dateCreated) < apart
 
       if (!usePrevGroup) {
@@ -53,8 +53,6 @@ class Messages extends Component {
     if (this.channel) {
       await this.loadLatest(this.channel)
       this.channel.on('message', this.handleNewMessage)
-
-      this.ScrollContainer.scrollTop = '10000px'
     }
 
     const onLogin = () => {
@@ -202,6 +200,10 @@ class Messages extends Component {
   }
 
   componentDidUpdate() {
+    if (this.ScrollContainer && this.scrolledToBottom) {
+      this.ScrollContainer.setScrollPosition(100000)
+    }
+
     if (this.runAfterRender) {
       this.runAfterRender()
       delete this.runAfterRender

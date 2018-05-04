@@ -13,7 +13,7 @@ class MessageEditor extends Component {
       message: '',
       me: null,
       isUploading: false,
-      height: 58,
+      height: 61,
     }
   }
 
@@ -39,13 +39,11 @@ class MessageEditor extends Component {
     })
 
     setTimeout(() => {
-      console.log(this.ta)
-
-      if (this.props.content) {
+      if (this.props.content && this.ta) {
         this.updateSize({target: this.ta})
       }
 
-      if (this.props.focus) {
+      if (this.props.focus && this.ta) {
         this.ta.focus()
       }
     }, 1)

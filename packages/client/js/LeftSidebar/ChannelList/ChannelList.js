@@ -27,6 +27,10 @@ class ChannelList extends Component {
     const checkPermissions = k => async () => {
       if (k) pool.activeServer.client.me.on('change', checkPermissions(false))
 
+      if (!pool.activeServer.client.me) {
+        return this.setState({canCreateChannel: false})
+      }
+
       const { manageChannels } = await pool.activeServer.client.me.getPermissions()
 
       this.setState({canCreateChannel: manageChannels})
