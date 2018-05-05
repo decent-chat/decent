@@ -38,7 +38,7 @@ class Pool {
       }
     }
 
-    this.activeIndex = load('activeServerIndex', this.servers.length - 1)
+    this.setActive(load('activeServerIndex', this.servers.length - 1))
   }
 
   async add(...hostnames) {
