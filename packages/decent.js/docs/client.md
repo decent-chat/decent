@@ -71,7 +71,7 @@ Emitted when the socket reconnects after a disconnect.
 ## event 'namechange' (name: string)
 Emitted when `client.serverName` changes.
 
-## event 'login' (as: [User](user.md))
+## event 'login' (as: [User](user.md), sessionID: string)
 Emitted when the client logs in with `await client.login(...)` or `await client.loginWithSessionID(...)`.
 
 ## event 'logout'

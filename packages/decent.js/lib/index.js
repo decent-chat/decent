@@ -136,7 +136,7 @@ class Client extends EventEmitter {
     this._host.sessionID = sessionID
     this._sessionUser = user
 
-    this.emit('login', user)
+    this.emit('login', user, sessionID)
     return user
   }
 

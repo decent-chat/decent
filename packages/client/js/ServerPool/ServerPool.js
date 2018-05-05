@@ -1,12 +1,45 @@
 const Client = require('decent.js')
 const EventEmitter = require('eventemitter3')
 const Atom = require('./Atom')
+const storage = /*window.sessionStorage ||*/ window.localStorage
+
+function save(key, value) {
+  if (value === undefined) storage.removeItem(key)
+  else storage.setItem(key, JSON.stringify(value))
+
+  console.log(`Storage: set ${key} =`, value)
+}
+
+function load(key, defaultValue) {
+  const str = storage.getItem(key)
+  const value = str ? JSON.parse(str) : defaultValue
+
+  console.log(`Storage: loaded ${key} =`, value)
+  return value
+}
 
 class Pool {
   static clientEvents = ['disconnect', 'reconnect', 'namechange', 'login', 'logout']
 
   servers = []
   activeIndex = -1
+
+  get serversSerializable() {
+    return this.servers.map(({ hostname, client }) =>
+      ({hostname, sessionID: client._host.sessionID}))
+  }
+
+  async load() {
+    for (const { hostname, sessionID } of load('servers', [])) {
+      const index = await this.add(hostname)
+
+      if (sessionID) {
+        this.servers[index].client.loginWithSessionID(sessionID)
+      }
+    }
+
+    this.activeIndex = load('activeServerIndex', this.servers.length - 1)
+  }
 
   async add(...hostnames) {
     for (const hostname of hostnames) {
@@ -21,6 +54,10 @@ class Pool {
           }
         })
       }
+
+      client.on('login', (user, sessionID) => {
+        save('servers', this.serversSerializable)
+      })
 
       client.channels.on('change', () => {
         if (client === this.activeServer.client) {
@@ -52,6 +89,8 @@ class Pool {
       })
     }
 
+    save('servers', this.serversSerializable)
+
     return this.servers.length - 1
   }
 
@@ -64,6 +103,9 @@ class Pool {
     } else if (index < this.activeIndex) {
       this.activeIndex--
     }
+
+    save('servers', this.serversSerializable)
+    save('activeServerIndex', this.activeIndex)
   }
 
   async setActive(index) {
@@ -83,6 +125,8 @@ class Pool {
       this.activeUsersEE.emit('change', this.activeServer.client.users)
       this.activeEmotesEE.emit('change', this.activeServer.client.emotes)
     }
+
+    save('activeServerIndex', index)
   }
 
   get activeServer() {
