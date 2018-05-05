@@ -1,5 +1,11 @@
 # Contributing
 
+**We're really happy you're interested in contributing to Decent!** :heart:
+
+If you have any problems whilst trying to contribute, feel free to ask us on [meta.decent.chat](https://meta.decent.chat/servers/meta.decent.chat/).
+
+Please attempt to follow the codestyle for JS/CSS below. If we find any issues with codestyle in pull-requests then we'll just flag them up and ask you to fix them.
+
 ## JavaScript Codestyle
 
 * Two spaces for indentation
@@ -34,6 +40,16 @@
   }
 ```
 
+* Use single quotes in HTML/JSX
+
+```js
+function msgTextToEl(text) {
+  return <div class='Message-content'>
+    {text}
+  </div>
+}
+```
+
 * Prefer `const` over `let` over `var`
 
 ```diff
@@ -65,7 +81,7 @@
 + const { a, b, c } = obj
 ```
 
-* Use trailing commas in multiline literals
+* Prefer trailing commas in multiline literals
 
 ```diff
   const arr = [
