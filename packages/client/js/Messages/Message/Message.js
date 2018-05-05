@@ -2,13 +2,14 @@ const { h, Component } = require('preact')
 const Icon = require('/Icon')
 const TimeAgo = require('./Timeago')
 const MessageEditor = require('../MessageEditor')
+const UserPopup = require('/UserPopup')
 
 // Note that this component supports both message groups (Array<Message>) *and*
 // lone messages (Message).
 class Message extends Component {
   // TODO: markdown
 
-  state = {editing: null}
+  state = {editing: null, popup: null}
 
   componentDidMount() {
     const messages = Array.isArray(this.props.msg) ? this.props.msg : [this.props.msg]
@@ -23,12 +24,13 @@ class Message extends Component {
     })
   }
 
-  render({ msg, showActions = true }, { editing }) {
+  render({ msg, showActions = true }, { editing, popup }) {
     const messages = (Array.isArray(msg) ? msg : [msg]).filter(msg => !msg.deleted)
 
     if (messages.length === 0) return null
 
     const {
+      authorID,
       authorAvatarURL,
       authorFlair,
       authorUsername,
@@ -36,10 +38,12 @@ class Message extends Component {
       anticipated: anticipatedGroup,
     } = messages[0]
 
+    const authorUser = this.context.pool.activeServer.client.users.find(user => user.id === authorID)
+
     if (anticipatedGroup) showActions = false
 
     return <div class={anticipatedGroup ? 'MessageGroup --anticipated' : 'MessageGroup'}>
-      <img class='MessageGroup-authorAvatar Avatar' src={authorAvatarURL}/>
+      <img class='MessageGroup-authorAvatar Avatar' src={authorAvatarURL} onClick={e => this.setState({popup: e})}/>
       <div class='MessageGroup-contents'>
         <div class='MessageGroup-info'>
           <div class='MessageGroup-authorUsername'>{authorUsername}</div>
@@ -79,6 +83,8 @@ class Message extends Component {
           }
         })}
       </div>
+
+      {popup && <UserPopup x={popup.x} y={popup.y} user={authorUser} onClose={() => this.setState({popup: null})}/>}
     </div>
   }
 

@@ -10,6 +10,7 @@ Properties:
 
 * user.avatarURL (string)
 * user.flair (string)
+* user.roles (Array<[Role](role.md)>)
 
 * user.online (boolean)
 * user.deleted (boolean)

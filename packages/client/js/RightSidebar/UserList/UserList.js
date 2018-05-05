@@ -1,7 +1,8 @@
 const { h, Component } = require('preact')
+const UserPopup = require('/UserPopup')
 
 class UserList extends Component {
-  state = {users: []}
+  state = {users: [], popup: null}
 
   componentDidMount() {
     const { pool } = this.context
@@ -13,7 +14,7 @@ class UserList extends Component {
     })
   }
 
-  render(_, { users }) {
+  render(_, { users, popup }) {
     const usersSorted = users.sort((a, b) => {
       if (a.online && !b.online) return -1
       if (b.online && !a.online) return 1
@@ -35,7 +36,13 @@ class UserList extends Component {
             'Sidebar-list-item UserList-user ' +
             (user.online ? 'is-online' : 'is-offline')
 
-          return <div title={title} class={className}>
+          return <div title={title} class={className} onClick={e =>
+            this.setState({popup: {
+              x: e.clientX,
+              y: e.clientY,
+              user,
+            }})
+          }>
             <div class='UserList-user-avatar'>
               <img src={user.avatarURL} class='Avatar' alt='' />
             </div>
@@ -43,6 +50,13 @@ class UserList extends Component {
           </div>
         })}
       </div>
+
+      {popup && <UserPopup
+        user={popup.user}
+        x={popup.x}
+        y={popup.y}
+        onClose={() => this.setState({popup: null})}
+      />}
     </section>
   }
 }

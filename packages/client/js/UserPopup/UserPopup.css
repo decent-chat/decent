@@ -1,0 +1,42 @@
+.UserPopup {
+  width: 180px;
+  max-height: 80vh;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.UserPopup-avatar {
+  width: 80px;
+  height: 80px;
+
+  margin: 25px 50px;
+  margin-bottom: 5px;
+}
+
+.UserPopup-username {
+  text-align: center;
+
+  font-size: 16px;
+  font-weight: bold;
+
+  color: var(--base08);
+
+  margin-bottom: 5px;
+}
+
+.UserPopup-roles {
+  margin: 16px;
+  margin-bottom: 4px;
+}
+
+.UserPopup-role {
+  display: inline-block;
+
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin: 2px;
+
+  color: var(--base00);
+  background: var(--base0D);
+}

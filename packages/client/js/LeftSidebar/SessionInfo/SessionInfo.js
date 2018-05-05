@@ -52,7 +52,7 @@ class SessionInfo extends Component {
         {userDrop && <Dropdown
           anchor='bottom'
           x={userDrop.clientX}
-          y={document.body.clientHeight - userDrop.clientY}
+          y={userDrop.clientY}
           onClose={() => this.setState({userDrop: false})}
         >
           <div class='Dropdown-text'>Signed in as <b>{me.username}</b></div>

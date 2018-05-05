@@ -72,7 +72,9 @@ class User extends Thing {
     return this.roleIDs.map(roleID => this.client.roles.find(role => role.id === roleID))
   }
 
-  // TODO: async update({ password, email, flair, roles })
+  // TODO: grantRole(role)
+  // TODO: revokeRole(role)
+  // TODO: async update({ password, email, flair })
 
   toString() {
     return `<@${this.id}>`
