@@ -264,7 +264,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       if (emote) {
         response.redirect(302, emote.imageURL)
       } else {
-        response.status(404).json({error: errors.NOT_FOUND})
+        response.status(404).json({error: errors.NOT_FOUND_emote})
       }
     }
   ])
@@ -281,7 +281,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       if (numRemoved) {
         response.status(200).json({})
       } else {
-        response.status(404).json({error: errors.NOT_FOUND})
+        response.status(404).json({error: errors.NOT_FOUND_emote})
       }
     }
   ])
@@ -916,7 +916,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       if (!user) {
         response.status(404).json({
-          error: errors.NOT_FOUND
+          error: errors.NOT_FOUND_user
         })
 
         return
@@ -1119,6 +1119,17 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     },
   ])
 
+  app.post('/api/users/:userID/roles', [
+    ...middleware.loadSessionID('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.loadVarFromParams('userID'),
+    ...middleware.loadVarFromBody('roleID'),
+    ...middleware.getUserFromID('userID', 'targetUser'),
+    ...middleware.getRoleFromID('roleID', 'role'),
+
+    async function(request, response, next) {}
+  ])
+
   app.get('/api/users/:id/roles', [
     ...middleware.loadVarFromParams('id'),
     ...middleware.getUserFromID('id', 'user'),
@@ -1174,7 +1185,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       if (role) {
         response.status(200).json({role: await serialize.role(role)})
       } else {
-        response.status(404).json({error: errors.NOT_FOUND})
+        response.status(404).json({error: errors.NOT_FOUND_role})
       }
     }
   ])
@@ -1261,7 +1272,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
         response.status(200).json({})
       } else {
-        response.status(404).json({error: errors.NOT_FOUND})
+        response.status(404).json({error: errors.NOT_FOUND_role})
       }
     }
   ])
@@ -1322,7 +1333,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       if (numRemoved) {
         response.status(200).json({})
       } else {
-        response.status(404).json({error: errors.NOT_FOUND})
+        response.status(404).json({error: errors.NOT_FOUND_session})
       }
     }
   ])
@@ -1337,7 +1348,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       if (!session) {
         response.status(404).json({
-          error: errors.NOT_FOUND
+          error: errors.NOT_FOUND_session
         })
 
         return

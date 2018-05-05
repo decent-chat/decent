@@ -1,7 +1,7 @@
 const { test } = require('ava')
 const { makeMiddleware, validate } = require('../middleware')
 const makeCommonUtils = require('../common')
-const { testWithServer, makeUser, giveOwnerRole, makeChannel, makeMessage } = require('./_serverUtil')
+const { testWithServer, makeUser, makeRole, giveOwnerRole, makeChannel, makeMessage } = require('./_serverUtil')
 const fetch = require('./_fetch')
 
 let portForMiddlewareTests = 22000
@@ -541,6 +541,43 @@ test('getUserFromID - id of nonexistent user', t => {
     t.is(response.statusCode, 404)
     t.is(response.endData.error.code, 'NOT_FOUND')
     t.is(request[middleware.vars].user, undefined)
+  })
+})
+
+test('getRoleFromID - basic functionality', t => {
+  return testWithServer(portForMiddlewareTests++, async ({ middleware, server, port }) => {
+    const { roleID } = await makeRole(server, port)
+    const request = {[middleware.vars]: {roleID}}
+    await interpretMiddleware(request,
+      middleware.getRoleFromID('roleID', 'role')
+    )
+    t.is(request[middleware.vars].role._id, roleID)
+  })
+})
+
+test('getRoleFromID - non-string id', t => {
+  return testWithServer(portForMiddlewareTests++, async ({ middleware }) => {
+    const request = {[middleware.vars]: {roleID: 4321}}
+    const { response } = await interpretMiddleware(request,
+      middleware.getRoleFromID('roleID', 'role')
+    )
+    t.true(response.wasEnded)
+    t.is(response.statusCode, 400)
+    t.is(response.endData.error.code, 'INVALID_PARAMETER_TYPE')
+    t.is(request[middleware.vars].role, undefined)
+  })
+})
+
+test('getRoleFromID - id of nonexistent role', t => {
+  return testWithServer(portForMiddlewareTests++, async ({ middleware }) => {
+    const request = {[middleware.vars]: {roleID: 'bogus'}}
+    const { response } = await interpretMiddleware(request,
+      middleware.getRoleFromID('roleID', 'role')
+    )
+    t.true(response.wasEnded)
+    t.is(response.statusCode, 404)
+    t.is(response.endData.error.code, 'NOT_FOUND')
+    t.is(request[middleware.vars].role, undefined)
   })
 })
 
