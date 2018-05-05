@@ -782,7 +782,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       if (channel.pinnedMessageIDs.includes(messageID)) {
         response.status(500).json({
-          error: errors.ALREADY_PERFORMED
+          error: errors.ALREADY_PERFORMED_pin_message
         })
 
         return
@@ -1127,7 +1127,31 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     ...middleware.getUserFromID('userID', 'targetUser'),
     ...middleware.getRoleFromID('roleID', 'role'),
 
-    async function(request, response, next) {}
+    async function(request, response) {
+      // TODO: Permissions. Util function already exists for this so it
+      // shouldn't be too hard.
+      const { sessionUser, role, targetUser, userID, roleID } = request[middleware.vars]
+
+      // Don't add the role if the user already has it!
+      if (targetUser.roleIDs.includes(roleID)) {
+        response.status(500).json({
+          error: errors.ALREADY_PERFORMED_give_role
+        })
+
+        return
+      }
+
+      // Actually add the role.
+      db.users.update({_id: userID}, {
+        $push: {roleIDs: roleID}
+      })
+
+      sendToAllSockets('user/update', {
+        user: await serialize.user(await db.users.findOne({_id: userID}))
+      })
+
+      response.status(200).json({})
+    }
   ])
 
   app.get('/api/users/:id/roles', [

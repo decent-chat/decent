@@ -1,5 +1,7 @@
 module.exports = {
-  ALREADY_PERFORMED: {code: 'ALREADY_PERFORMED', message: 'You have already done this.'},
+  ALREADY_PERFORMED: {code: 'ALREADY_PERFORMED', message: 'This has already been done.'},
+  ALREADY_PERFORMED_give_role: {code: 'ALREADY_PERFORMED', message: 'The user already has this role.'},
+  ALREADY_PERFORMED_pin_message: {code: 'ALREADY_PERFORMED', message: 'This message is already pinned.'},
   INCOMPLETE_PARAMETERS: {code: 'INCOMPLETE_PARAMETERS', message: 'The request is missing a parameter.'},
   INCORRECT_PASSWORD: {code: 'INCORRECT_PASSWORD', message: 'That is not the correct password.'},
   INTERNAL_ERROR: {code: 'INTERNAL_ERROR', message: 'There was an internal error.'},

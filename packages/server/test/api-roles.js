@@ -254,6 +254,47 @@ test('GET /api/users/:userID/permissions', t => {
   })
 })
 
+test('POST /api/users/:userID/roles', t => {
+  return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
+    const { roleID, sessionID: ownerSessionID } = await makeRole(server, port)
+    const { user: { id: userID } } = await makeUser(server, port)
+    const response = await fetch(port, `/users/${userID}/roles`, {
+      method: 'POST',
+      body: JSON.stringify({
+        sessionID: ownerSessionID,
+        roleID
+      })
+    })
+    t.deepEqual(response, {})
+    t.true((await fetch(port, `/users/${userID}`)).user.roleIDs.includes(roleID))
+
+    try {
+      await fetch(port, `/users/${userID}/roles`, {
+        method: 'POST',
+        body: JSON.stringify({
+          sessionID: ownerSessionID
+        })
+      })
+      t.fail('Could give a role without specifying which role to give')
+    } catch (error) {
+      t.is(error.code, 'INCOMPLETE_PARAMETERS')
+    }
+
+    try {
+      await fetch(port, `/users/${userID}/roles`, {
+        method: 'POST',
+        body: JSON.stringify({
+          sessionID: ownerSessionID,
+          roleID: 'a'
+        })
+      })
+      t.fail('Could give a role that does not exist')
+    } catch (error) {
+      t.is(error.code, 'NOT_FOUND')
+    }
+  })
+})
+
 test('GET /api/users/:id/roles', t => {
   return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
     // Should report the same data as /users/:id.
