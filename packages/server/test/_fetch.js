@@ -6,8 +6,12 @@ const defaults = {
   },
 }
 
-module.exports = (port, path = '', opts = {}) =>
-  fetch(`http://localhost:${port}/api${path}`, Object.assign({}, defaults, opts))
+module.exports = (port, path = '', opts = {}) => {
+  if (typeof port !== 'number') {
+    throw new TypeError('Passed port is not a number (did you forget to give it as the first argument?')
+  }
+
+  return fetch(`http://localhost:${port}/api${path}`, Object.assign({}, defaults, opts))
     .then(res => res.text())
     .then(text => {
       try {
@@ -32,3 +36,4 @@ module.exports = (port, path = '', opts = {}) =>
 
       return res
     })
+}

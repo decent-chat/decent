@@ -1015,16 +1015,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         requestFromAdmin, password, email, flair, roleIDs,
       } = request[middleware.vars]
 
-      /* TODO: Port this to use permissions.
-      if (!requestFromAdmin && (typeof permissionLevel !== 'undefined' || typeof authorized !== 'undefined')) {
-        // permissionLevel and authorized require an admin session to be provided!
-
-        return response.status(403).json({error: Object.assign({}, errors.MUST_BE_ADMIN, {
-          message: 'permissionLevel/authorized cannot be changed without an admin session',
-        })})
-      }
-      */
-
       if (typeof password !== 'undefined') {
         // { old: String, new: String }
 
@@ -1127,6 +1117,15 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       response.status(200).json({})
     },
+  ])
+
+  app.get('/api/users/:id/roles', [
+    ...middleware.loadVarFromParams('id'),
+    ...middleware.getUserFromID('id', 'user'),
+    async (request, response) => {
+      const { user: { roleIDs } } = request[middleware.vars]
+      response.status(200).json({roleIDs})
+    }
   ])
 
   app.get('/api/roles', [

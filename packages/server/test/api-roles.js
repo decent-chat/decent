@@ -1,5 +1,5 @@
 const { test } = require('ava')
-const { testWithServer, makeOwner, makeUser } = require('./_serverUtil')
+const { testWithServer, makeOwner, makeUser, giveRole, makeRole } = require('./_serverUtil')
 const fetch = require('./_fetch')
 
 let portForApiRoleTests = 31000
@@ -243,12 +243,24 @@ test('PATCH/GET /api/roles/order', t => {
   })
 })
 
-// Not strictly from the roles API, but related enough.
+// The following endpoints aren't strictly from the roles API, but are related enough.
+
 test('GET /api/users/:userID/permissions', t => {
   return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
     const { user: { id: userID } } = await makeUser(server, port)
     const response = await fetch(port, `/users/${userID}/permissions`)
     t.deepEqual(Object.keys(response), ['permissions'])
     t.true(Object.values(response.permissions).every(v => typeof v === 'boolean'))
+  })
+})
+
+test('GET /api/users/:id/roles', t => {
+  return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
+    // Should report the same data as /users/:id.
+    const { user: { id: userID } } = await makeUser(server, port)
+    await giveRole(server, port, (await makeRole(server, port, {})).roleID, userID)
+    const { user: { roleIDs: idsFromUser } } = await fetch(port, `/users/${userID}`)
+    const { roleIDs: idsFromRoles } = await fetch(port, `/users/${userID}/roles`)
+    t.deepEqual(idsFromRoles, idsFromUser)
   })
 })
