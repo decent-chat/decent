@@ -92,7 +92,7 @@ class App extends Component {
             submit={async ({ hostname }) => {
               if (!hostname) throw ''
 
-              const serverIndex = await this.pool.add(hostname, false).then(this.pool.setActive).catch(error => {
+              const serverIndex = await this.pool.add(hostname, false).then(i => this.pool.setActive(i)).catch(error => {
                 error.realMessage = error.message
                 error.message = 'Failed to connect'
 
@@ -138,7 +138,8 @@ class App extends Component {
             submit={async ({ hostname }) => {
               if (hostname === '') throw ''
 
-              const serverIndex = await this.pool.add(hostname, false).then(this.pool.setActive).catch(error => {
+              const serverIndex = await this.pool.add(hostname, false).then(i => this.pool.setActive(i)).catch(error => {
+                console.log(error)
                 error.realMessage = error.message
                 error.message = 'Failed to connect'
 
