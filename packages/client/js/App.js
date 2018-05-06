@@ -2,10 +2,10 @@ const { h, render, Component } = require('preact')
 const Provider = require('preact-context-provider')
 const Pool = require('./ServerPool')
 const Atom = require('./ServerPool/Atom')
+const storage = require('./storage')
 
 if (process.env !== 'production') {
   require('preact/debug')
-  require('preact/devtools')
 }
 
 const ServerList = require('./ServerList')
@@ -37,6 +37,7 @@ class App extends Component {
 
     this.setState({
       isLoading: false,
+      serverListVisible: storage.load('serverListVisible', false),
     })
 
     this.pool.onUIChange('activeChannelIndex', () => this.forceUpdate())
@@ -54,8 +55,6 @@ class App extends Component {
     }
 
     const unreadStr = do {
-      servers.reduce(s => console.log(s))
-
       const unreadSum = servers
         .reduce((sum, { client }) =>
           client.channels.reduce((sum, channel) =>
@@ -77,6 +76,7 @@ class App extends Component {
 
   render(_, { isLoading, showJoinServerModal, disconnected, serverListVisible }) {
     const activeServer = this.pool.activeServer
+    const failedToConnect = this.pool.failedServers.length > 0
 
     this.updateDocumentTitle()
 
@@ -87,10 +87,12 @@ class App extends Component {
       return <Provider pool={this.pool}>
         <div class='App'>
           <Modal.Async
-            title='Join a server'
+            title='Connect to a server'
             cancellable={false}
             submit={async ({ hostname }) => {
-              const serverIndex = await this.pool.setActive(await this.pool.add(hostname)).catch(error => {
+              if (!hostname) throw ''
+
+              const serverIndex = await this.pool.add(hostname, false).then(this.pool.setActive).catch(error => {
                 error.realMessage = error.message
                 error.message = 'Failed to connect'
 
@@ -104,6 +106,11 @@ class App extends Component {
             }}
             onHide={() => this.setState({showJoinServerModal: false})}
           >
+            {failedToConnect && <p class='Modal-muted'>
+              <b>Failed to connect to your saved servers.</b> Decent will keep trying
+              to reconnect, but in the meantime you can join another server here.
+            </p>}
+
             <Modal.Input focus final name='hostname' label='Hostname'/>
 
             <Modal.Button action='submit'>Join</Modal.Button>
@@ -117,7 +124,10 @@ class App extends Component {
         <div class='App'>
           {serverListVisible && <ServerList onAddServer={() => this.setState({showJoinServerModal: true})}/>}
           <LeftSidebar
-            toggleServerList={() => this.setState({serverListVisible: !this.state.serverListVisible})}
+            toggleServerList={() => {
+              storage.save('serverListVisible', !this.state.serverListVisible)
+              this.setState({serverListVisible: !this.state.serverListVisible})
+            }}
             onJoinClick={() => this.setState({showJoinServerModal: true})}
           />
           <Messages channel={client.channels.nth(ui.activeChannelIndex.get())}/>
@@ -126,7 +136,9 @@ class App extends Component {
           {showJoinServerModal && <Modal.Async
             title='Join server'
             submit={async ({ hostname }) => {
-              const serverIndex = await this.pool.setActive(await this.pool.add(hostname)).catch(error => {
+              if (hostname === '') throw ''
+
+              const serverIndex = await this.pool.add(hostname, false).then(this.pool.setActive).catch(error => {
                 error.realMessage = error.message
                 error.message = 'Failed to connect'
 

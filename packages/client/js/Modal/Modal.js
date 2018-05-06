@@ -5,7 +5,7 @@ const Provider = require('preact-context-provider')
 class Modal extends Component {
   inputs = {}
 
-  render({ title, subtitle, isLoading, children, cancellable = true }) {
+  render({ mini, title, subtitle, isLoading, children, cancellable = true }) {
     // Renders into document.body rather than as an actual child
     return <Portal into='body'>
       <Provider
@@ -16,10 +16,10 @@ class Modal extends Component {
         {!closed && <div>
           <div class={'Modal' + (isLoading ? ' is-loading' : '')}>
             {cancellable ? <div class='Modal-close-button' onClick={this.handleCancel}></div> : <div />}
-            <div class='Modal-title'>
+            {!mini && <div class='Modal-title'>
               {title}
               {subtitle && <span class='Modal-subtitle'>{subtitle}</span>}
-            </div>
+            </div>}
             <div class='Modal-content'>
               {children}
             </div>
@@ -47,17 +47,15 @@ class Modal extends Component {
 class AsyncModal extends Component {
   state = {isLoading: false, errorMessage: null}
 
-  render({ title, subtitle, children, cancellable }, { isLoading, errorMessage }) {
+  render(props, { isLoading, errorMessage }) {
     return <Modal
-      title={title}
-      subtitle={subtitle}
-      cancellable={cancellable}
+      {...props}
       isLoading={isLoading}
       onCancel={this.handleCancel}
       onSubmit={this.handleSubmit}
     >
       {errorMessage && <ModalError>{errorMessage}</ModalError>}
-      {children}
+      {props.children}
     </Modal>
   }
 
