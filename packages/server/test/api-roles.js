@@ -1,5 +1,5 @@
 const { test } = require('ava')
-const { testWithServer, makeOwner, makeUser, giveRole, makeRole } = require('./_serverUtil')
+const { testWithServer, makeOwner, makeUser, makeUserWithPermissions, giveRole, makeRole } = require('./_serverUtil')
 const fetch = require('./_fetch')
 
 let portForApiRoleTests = 31000
@@ -256,19 +256,24 @@ test('GET /api/users/:userID/permissions', t => {
 
 test('POST /api/users/:userID/roles', t => {
   return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
-    const { roleID, sessionID: ownerSessionID } = await makeRole(server, port)
-    const { user: { id: userID } } = await makeUser(server, port)
-    const response = await fetch(port, `/users/${userID}/roles`, {
-      method: 'POST',
-      body: JSON.stringify({
-        sessionID: ownerSessionID,
-        roleID
+    const { sessionID: ownerSessionID } = await makeOwner(server, port)
+
+    {
+      const { roleID } = await makeRole(server, port)
+      const { user: { id: userID } } = await makeUser(server, port)
+      const response = await fetch(port, `/users/${userID}/roles`, {
+        method: 'POST',
+        body: JSON.stringify({
+          sessionID: ownerSessionID,
+          roleID
+        })
       })
-    })
-    t.deepEqual(response, {})
-    t.true((await fetch(port, `/users/${userID}`)).user.roleIDs.includes(roleID))
+      t.deepEqual(response, {})
+      t.true((await fetch(port, `/users/${userID}`)).user.roleIDs.includes(roleID))
+    }
 
     try {
+      const { user: { id: userID } } = await makeUser(server, port)
       await fetch(port, `/users/${userID}/roles`, {
         method: 'POST',
         body: JSON.stringify({
@@ -281,6 +286,7 @@ test('POST /api/users/:userID/roles', t => {
     }
 
     try {
+      const { user: { id: userID } } = await makeUser(server, port)
       await fetch(port, `/users/${userID}/roles`, {
         method: 'POST',
         body: JSON.stringify({
@@ -291,6 +297,83 @@ test('POST /api/users/:userID/roles', t => {
       t.fail('Could give a role that does not exist')
     } catch (error) {
       t.is(error.code, 'NOT_FOUND')
+    }
+
+    {
+      const { sessionID } = await makeUserWithPermissions(server, port, {
+        manageRoles: false
+      })
+      const { userID } = await makeUser(server, port)
+      const { roleID } = await makeRole(server, port)
+      try {
+        await fetch(port, `/users/${userID}/roles`, {
+          method: 'POST',
+          body: JSON.stringify({
+            sessionID, roleID
+          })
+        })
+        t.fail('Could give a role without having manageRoles')
+      } catch (error) {
+        t.is(error.code, 'NOT_ALLOWED')
+      }
+    }
+
+    {
+      const { userID } = await makeUser(server, port)
+
+      const { sessionID } = await makeUserWithPermissions(server, port, {
+        manageRoles: true,
+        manageChannels: false,
+        manageEmotes: true
+      })
+
+      const { roleID } = await makeRole(server, port, {
+        manageChannels: true
+      })
+
+      const { roleID: roleID2 } = await makeRole(server, port, {
+        manageChannels: false
+      })
+
+      const { roleID: roleID3 } = await makeRole(server, port, {
+        manageEmotes: true
+      })
+
+      try {
+        await fetch(port, `/users/${userID}/roles`, {
+          method: 'POST',
+          body: JSON.stringify({
+            sessionID, roleID
+          })
+        })
+        t.fail('Could give a role without having a permission it specifies (as true)')
+      } catch (error) {
+        t.is(error.code, 'NOT_ALLOWED')
+      }
+
+      try {
+        await fetch(port, `/users/${userID}/roles`, {
+          method: 'POST',
+          body: JSON.stringify({
+            sessionID, roleID: roleID2
+          })
+        })
+        t.fail('Could give a role without having a permission it specifies (as false)')
+      } catch (error) {
+        t.is(error.code, 'NOT_ALLOWED')
+      }
+
+      // This SHOULD work!
+      try {
+        await fetch(port, `/users/${userID}/roles`, {
+          method: 'POST',
+          body: JSON.stringify({
+            sessionID, roleID: roleID3
+          })
+        })
+      } catch (error) {
+        t.fail('Could NOT give a role despite having the permissions it specifies')
+      }
     }
   })
 })

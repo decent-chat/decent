@@ -1122,15 +1122,24 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   app.post('/api/users/:userID/roles', [
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.requirePermission('sessionUser', 'manageRoles'),
     ...middleware.loadVarFromParams('userID'),
     ...middleware.loadVarFromBody('roleID'),
     ...middleware.getUserFromID('userID', 'targetUser'),
     ...middleware.getRoleFromID('roleID', 'role'),
 
     async function(request, response) {
-      // TODO: Permissions. Util function already exists for this so it
-      // shouldn't be too hard.
       const { sessionUser, role, targetUser, userID, roleID } = request[middleware.vars]
+
+      // Don't add the role if the session user doesn't have all the permissions
+      // that the role specifies!
+      if (!(await util.userHasPermissionsOfRole(sessionUser._id, roleID))) {
+        response.status(403).json({
+          error: errors.NOT_ALLOWED_give_role_without_perms
+        })
+
+        return
+      }
 
       // Don't add the role if the user already has it!
       if (targetUser.roleIDs.includes(roleID)) {

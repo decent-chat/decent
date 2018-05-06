@@ -10,6 +10,7 @@ module.exports = {
   INVALID_SESSION_ID: {code: 'INVALID_SESSION_ID', message: 'The session ID is invalid.'},
   NAME_ALREADY_TAKEN: {code: 'NAME_ALREADY_TAKEN', message: 'That name is already taken.'},
   NOT_ALLOWED: {code: 'NOT_ALLOWED', message: 'You are not allowed to do this.'},
+  NOT_ALLOWED_give_role_without_perms: {code: 'NOT_ALLOWED', message: 'You are not allowed to give this role because you don\'t have one of the permissions it specifies.'},
   NOT_DELETABLE_ROLE: {code: 'NOT_DELETABLE_ROLE', message: 'This role is internal and cannot be deleted.'},
   NOT_FOUND: {code: 'NOT_FOUND', message: 'This couldn\'t be found.'},
   NOT_FOUND_channel: {code: 'NOT_FOUND', message: 'This channel couldn\'t be found.'},
