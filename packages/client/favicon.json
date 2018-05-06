@@ -1,0 +1,72 @@
+
+
+{
+  "masterPicture": "img/decent-logo-circle.svg",
+  "iconsPath": "/img/favicon",
+  "design": {
+    "ios": {
+      "pictureAspect": "backgroundAndMargin",
+      "backgroundColor": "#ffffff",
+      "margin": "0%",
+      "assets": {
+        "ios6AndPriorIcons": false,
+        "ios7AndLaterIcons": false,
+        "precomposedIcons": false,
+        "declareOnlyDefaultIcon": true
+      },
+      "appName": "Decent"
+    },
+    "desktopBrowser": {},
+    "windows": {
+      "masterPicture": {
+        "type": "inline",
+        "content": "img/decent-logo.svg"
+      },
+      "pictureAspect": "whiteSilhouette",
+      "backgroundColor": "#165ea9",
+      "onConflict": "override",
+      "assets": {
+        "windows80Ie10Tile": false,
+        "windows10Ie11EdgeTiles": {
+          "small": false,
+          "medium": true,
+          "big": false,
+          "rectangle": false
+        }
+      },
+      "appName": "Decent"
+    },
+    "androidChrome": {
+      "pictureAspect": "noChange",
+      "themeColor": "#ffffff",
+      "manifest": {
+        "name": "Decent",
+        "display": "standalone",
+        "orientation": "notSet",
+        "onConflict": "override",
+        "declared": true
+      },
+      "assets": {
+        "legacyIcon": false,
+        "lowResolutionIcons": false
+      }
+    },
+    "safariPinnedTab": {
+      "masterPicture": {
+        "type": "inline",
+        "content": "img/decent-logo.svg"
+      },
+      "pictureAspect": "silhouette",
+      "themeColor": "#568bbf"
+    }
+  },
+  "settings": {
+    "compression": 2,
+    "scalingAlgorithm": "Mitchell",
+    "errorOnImageTooSmall": false,
+    "readmeFile": false,
+    "htmlCodeFile": false,
+    "usePathAsIs": false
+  }
+}
+

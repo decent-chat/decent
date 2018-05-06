@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "autoprefixer": "^8.1.0",
+    "cli-real-favicon": "^0.0.6",
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.0",
     "babel-plugin-transform-class-properties": "^6.24.1",
@@ -66,7 +67,8 @@
     "watch:css": "postcss css/app.css -o dist/bundle.css --verbose --watch",
     "build:js": "browserify --debug js/App.js -r preact-compat:react -r preact-compat:react-dom -o dist/bundle.js",
     "watch:js": "watchify --debug js/App.js -r preact-compat:react -r preact-compat:react-dom -o dist/bundle.js --verbose",
-    "build": "npm run build:css && npm run build:js",
+    "build:favicon": "real-favicon generate favicon.json favicon-data.json img/favicon",
+    "build": "npm run build:css && npm run build:js && npm run build:favicon",
     "watch": "concurrently \"npm run watch:css\" \"npm run watch:js\"",
     "serve": "concurrently \"npm run watch:css\" \"budo js/App.js:dist/bundle.js --live \\\"*\\\" --open -- --debug -r preact-compat:react -r preact-compat:react-dom\"",
     "prepublishOnly": "npm run build"

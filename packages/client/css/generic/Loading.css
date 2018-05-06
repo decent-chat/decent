@@ -1,14 +1,14 @@
 :root {
-  --loading-icon: url(../img/message-solid-black.svg);
+  --loading-icon: url(../img/decent-logo.svg);
 }
 
 .theme-dark {
-  --loading-icon: url(../img/message-solid-white.svg);
+  --loading-icon: url(../img/decent-logo-red.svg);
 }
 
 .Loading {
   background-image: var(--loading-icon) !important;
-  background-size: 24px 24px;
+  background-size: 48px 48px;
   background-position: center center !important;
   background-repeat: no-repeat !important;
 
@@ -19,15 +19,15 @@
 
 @keyframes loading {
   0% {
-    background-size: 24px 24px;
-  }
-
-  20% {
     background-size: 48px 48px;
   }
 
+  20% {
+    background-size: 64px 64px;
+  }
+
   100% {
-    background-size: 24px 24px;
+    background-size: 48px 48px;
   }
 }
 
