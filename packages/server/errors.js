@@ -1,6 +1,7 @@
 module.exports = {
   ALREADY_PERFORMED: {code: 'ALREADY_PERFORMED', message: 'This has already been done.'},
   ALREADY_PERFORMED_give_role: {code: 'ALREADY_PERFORMED', message: 'The user already has this role.'},
+  ALREADY_PERFORMED_take_role: {code: 'ALREADY_PERFORMED', message: 'The user does not have this role.'},
   ALREADY_PERFORMED_pin_message: {code: 'ALREADY_PERFORMED', message: 'This message is already pinned.'},
   INCOMPLETE_PARAMETERS: {code: 'INCOMPLETE_PARAMETERS', message: 'The request is missing a parameter.'},
   INCORRECT_PASSWORD: {code: 'INCORRECT_PASSWORD', message: 'That is not the correct password.'},
@@ -10,7 +11,7 @@ module.exports = {
   INVALID_SESSION_ID: {code: 'INVALID_SESSION_ID', message: 'The session ID is invalid.'},
   NAME_ALREADY_TAKEN: {code: 'NAME_ALREADY_TAKEN', message: 'That name is already taken.'},
   NOT_ALLOWED: {code: 'NOT_ALLOWED', message: 'You are not allowed to do this.'},
-  NOT_ALLOWED_give_role_without_perms: {code: 'NOT_ALLOWED', message: 'You are not allowed to give this role because you don\'t have one of the permissions it specifies.'},
+  NOT_ALLOWED_missing_perms_of_role: {code: 'NOT_ALLOWED', message: 'You are not allowed to do this because you don\'t have one of the permissions the role specifies.'},
   NOT_DELETABLE_ROLE: {code: 'NOT_DELETABLE_ROLE', message: 'This role is internal and cannot be deleted.'},
   NOT_FOUND: {code: 'NOT_FOUND', message: 'This couldn\'t be found.'},
   NOT_FOUND_channel: {code: 'NOT_FOUND', message: 'This channel couldn\'t be found.'},

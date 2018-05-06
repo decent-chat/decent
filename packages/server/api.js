@@ -1126,16 +1126,16 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     ...middleware.loadVarFromParams('userID'),
     ...middleware.loadVarFromBody('roleID'),
     ...middleware.getUserFromID('userID', 'targetUser'),
-    ...middleware.getRoleFromID('roleID', 'role'),
+    ...middleware.getRoleFromID('roleID', '_'), // Make sure it exists.
 
     async function(request, response) {
-      const { sessionUser, role, targetUser, userID, roleID } = request[middleware.vars]
+      const { sessionUser, targetUser, userID, roleID } = request[middleware.vars]
 
       // Don't add the role if the session user doesn't have all the permissions
       // that the role specifies!
       if (!(await util.userHasPermissionsOfRole(sessionUser._id, roleID))) {
         response.status(403).json({
-          error: errors.NOT_ALLOWED_give_role_without_perms
+          error: errors.NOT_ALLOWED_missing_perms_of_role
         })
 
         return
@@ -1153,6 +1153,51 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       // Actually add the role.
       db.users.update({_id: userID}, {
         $push: {roleIDs: roleID}
+      })
+
+      sendToAllSockets('user/update', {
+        user: await serialize.user(await db.users.findOne({_id: userID}))
+      })
+
+      response.status(200).json({})
+    }
+  ])
+
+  app.delete('/api/users/:userID/roles/:roleID', [
+    ...middleware.loadSessionID('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.requirePermission('sessionUser', 'manageRoles'),
+    ...middleware.loadVarFromParams('userID'),
+    ...middleware.loadVarFromParams('roleID'),
+    ...middleware.getUserFromID('userID', 'targetUser'),
+    ...middleware.getRoleFromID('roleID', '_'), // Make sure it exists.
+
+    async function(request, response) {
+      const { sessionUser, role, targetUser, userID, roleID } = request[middleware.vars]
+
+      // Same permission check as for giving roles -- this is so, for example,
+      // a lower-level role manager can't remove anyone's top-of-the-top
+      // admin role!
+      if (!(await util.userHasPermissionsOfRole(sessionUser._id, roleID))) {
+        response.status(403).json({
+          error: errors.NOT_ALLOWED_missing_perms_of_role
+        })
+
+        return
+      }
+
+      // Don't remove the role if the user doesn't have it!
+      if (!targetUser.roleIDs.includes(roleID)) {
+        response.status(500).json({
+          error: errors.ALREADY_PERFORMED_take_role
+        })
+
+        return
+      }
+
+      // Actually take the role:
+      await db.users.update({_id: userID}, {
+        $pull: {roleIDs: roleID}
       })
 
       sendToAllSockets('user/update', {

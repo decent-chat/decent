@@ -260,7 +260,7 @@ test('POST /api/users/:userID/roles', t => {
 
     {
       const { roleID } = await makeRole(server, port)
-      const { user: { id: userID } } = await makeUser(server, port)
+      const { userID } = await makeUser(server, port)
       const response = await fetch(port, `/users/${userID}/roles`, {
         method: 'POST',
         body: JSON.stringify({
@@ -273,7 +273,7 @@ test('POST /api/users/:userID/roles', t => {
     }
 
     try {
-      const { user: { id: userID } } = await makeUser(server, port)
+      const { userID } = await makeUser(server, port)
       await fetch(port, `/users/${userID}/roles`, {
         method: 'POST',
         body: JSON.stringify({
@@ -286,7 +286,7 @@ test('POST /api/users/:userID/roles', t => {
     }
 
     try {
-      const { user: { id: userID } } = await makeUser(server, port)
+      const { userID } = await makeUser(server, port)
       await fetch(port, `/users/${userID}/roles`, {
         method: 'POST',
         body: JSON.stringify({
@@ -373,6 +373,116 @@ test('POST /api/users/:userID/roles', t => {
         })
       } catch (error) {
         t.fail('Could NOT give a role despite having the permissions it specifies')
+      }
+    }
+  })
+})
+
+test('DELETE /api/users/:userID/roles/:roleID', t => {
+  return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
+    const { sessionID: ownerSessionID } = await makeOwner(server, port)
+
+    const makeSetupUser = async roleID => {
+      const { userID } = await makeUser(server, port)
+      await giveRole(server, port, roleID, userID)
+      return { userID }
+    }
+
+    {
+      const { roleID } = await makeRole(server, port)
+      const { userID } = await makeSetupUser(roleID)
+      // Sanity check:
+      t.true((await fetch(port, `/users/${userID}`)).user.roleIDs.includes(roleID))
+      // Now take it:
+      const response = await fetch(port, `/users/${userID}/roles/${roleID}`, {
+        method: 'DELETE',
+        body: JSON.stringify({sessionID: ownerSessionID})
+      })
+      t.deepEqual(response, {})
+      t.false((await fetch(port, `/users/${userID}`)).user.roleIDs.includes(roleID))
+    }
+
+    try {
+      const { user: { id: userID } } = await makeUser(server, port)
+      await fetch(port, `/users/${userID}/roles/a`, {
+        method: 'DELETE',
+        body: JSON.stringify({sessionID: ownerSessionID})
+      })
+      t.fail('Could take a role that does not exist')
+    } catch (error) {
+      t.is(error.code, 'NOT_FOUND')
+    }
+
+    {
+      const { sessionID } = await makeUserWithPermissions(server, port, {
+        manageRoles: false
+      })
+      const { userID } = await makeUser(server, port)
+      const { roleID } = await makeRole(server, port)
+      try {
+        await fetch(port, `/users/${userID}/roles/${roleID}`, {
+          method: 'DELETE',
+          body: JSON.stringify({sessionID})
+        })
+        t.fail('Could take a role without having manageRoles')
+      } catch (error) {
+        t.is(error.code, 'NOT_ALLOWED')
+      }
+    }
+
+    {
+      const { userID } = await makeUser(server, port)
+
+      const { sessionID } = await makeUserWithPermissions(server, port, {
+        manageRoles: true,
+        manageChannels: false,
+        manageEmotes: true
+      })
+
+      const { roleID } = await makeRole(server, port, {
+        manageChannels: true
+      })
+
+      const { roleID: roleID2 } = await makeRole(server, port, {
+        manageChannels: false
+      })
+
+      const { roleID: roleID3 } = await makeRole(server, port, {
+        manageEmotes: true
+      })
+
+      for (const id of [roleID, roleID2, roleID3]) {
+        await giveRole(server, port, id, userID)
+      }
+
+      try {
+        await fetch(port, `/users/${userID}/roles/${roleID}`, {
+          method: 'DELETE',
+          body: JSON.stringify({sessionID})
+        })
+        t.fail('Could take a role without having a permission it specifies (as true)')
+      } catch (error) {
+        t.is(error.code, 'NOT_ALLOWED')
+      }
+
+      try {
+        await fetch(port, `/users/${userID}/roles/${roleID2}`, {
+          method: 'DELETE',
+          body: JSON.stringify({sessionID})
+        })
+        t.fail('Could take a role without having a permission it specifies (as false)')
+      } catch (error) {
+        t.is(error.code, 'NOT_ALLOWED')
+      }
+
+      // This SHOULD work!
+      try {
+        await fetch(port, `/users/${userID}/roles/${roleID3}`, {
+          method: 'DELETE',
+          body: JSON.stringify({sessionID})
+        })
+      } catch (error) {
+        t.fail('Could NOT take a role despite having the permissions it specifies')
       }
     }
   })
