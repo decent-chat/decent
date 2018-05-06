@@ -159,6 +159,7 @@ class Pool extends EventEmitter {
 
   async setActive(index) {
     if (!this.servers[index] && index !== -1) throw new Error('pool.setActive(): index points to null')
+    if (this.servers.length > 0 && index < 0) index = 0
 
     this.activeIndex = index
     const server = this.servers[index]
