@@ -95,20 +95,12 @@ const makeRole = async (server, port, permissions = {}, name = 'test_role_' + sh
   return {roleID, sessionID}
 }
 
-const giveRole = async (server, port, roleID, userID, sessionID = null) => {
-  if (sessionID === null) {
-    sessionID = (await makeOwner(server, port)).sessionID
-  }
-
-  const oldRoles = (await fetch(port, '/users/' + userID)).user.roleIDs
-  const newRoles = oldRoles.concat([roleID])
-
-  await fetch(port, `/users/${userID}?sessionID=${sessionID}`, {
-    method: 'PATCH',
-    body: JSON.stringify({
-      roleIDs: newRoles
-    })
-  })
+const giveRole = async (server, port, roleID, userID) => {
+  // TODO: Get rid of port argument, it's not used.
+  //  - Also make sure callers aren't passing the sessionID argument
+  //    (5th argument).
+  // Dirtily add the role (i.e. by messing with the database).
+  await server.db.users.update({_id: userID}, {$push: {roleIDs: roleID}})
 }
 
 const makeUserWithPermissions = async (server, port, permissions) => {

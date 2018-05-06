@@ -1,5 +1,5 @@
 const { test } = require('ava')
-const { testWithServer, makeOwner, makeUser } = require('./_serverUtil')
+const { testWithServer, makeOwner, makeUser, makeUserWithPermissions, giveRole, makeRole } = require('./_serverUtil')
 const fetch = require('./_fetch')
 
 let portForApiRoleTests = 31000
@@ -243,12 +243,258 @@ test('PATCH/GET /api/roles/order', t => {
   })
 })
 
-// Not strictly from the roles API, but related enough.
+// The following endpoints aren't strictly from the roles API, but are related enough.
+
 test('GET /api/users/:userID/permissions', t => {
   return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
     const { user: { id: userID } } = await makeUser(server, port)
     const response = await fetch(port, `/users/${userID}/permissions`)
     t.deepEqual(Object.keys(response), ['permissions'])
     t.true(Object.values(response.permissions).every(v => typeof v === 'boolean'))
+  })
+})
+
+test('POST /api/users/:userID/roles', t => {
+  return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
+    const { sessionID: ownerSessionID } = await makeOwner(server, port)
+
+    {
+      const { roleID } = await makeRole(server, port)
+      const { userID } = await makeUser(server, port)
+      const response = await fetch(port, `/users/${userID}/roles`, {
+        method: 'POST',
+        body: JSON.stringify({
+          sessionID: ownerSessionID,
+          roleID
+        })
+      })
+      t.deepEqual(response, {})
+      t.true((await fetch(port, `/users/${userID}`)).user.roleIDs.includes(roleID))
+    }
+
+    try {
+      const { userID } = await makeUser(server, port)
+      await fetch(port, `/users/${userID}/roles`, {
+        method: 'POST',
+        body: JSON.stringify({
+          sessionID: ownerSessionID
+        })
+      })
+      t.fail('Could give a role without specifying which role to give')
+    } catch (error) {
+      t.is(error.code, 'INCOMPLETE_PARAMETERS')
+    }
+
+    try {
+      const { userID } = await makeUser(server, port)
+      await fetch(port, `/users/${userID}/roles`, {
+        method: 'POST',
+        body: JSON.stringify({
+          sessionID: ownerSessionID,
+          roleID: 'a'
+        })
+      })
+      t.fail('Could give a role that does not exist')
+    } catch (error) {
+      t.is(error.code, 'NOT_FOUND')
+    }
+
+    {
+      const { sessionID } = await makeUserWithPermissions(server, port, {
+        manageRoles: false
+      })
+      const { userID } = await makeUser(server, port)
+      const { roleID } = await makeRole(server, port)
+      try {
+        await fetch(port, `/users/${userID}/roles`, {
+          method: 'POST',
+          body: JSON.stringify({
+            sessionID, roleID
+          })
+        })
+        t.fail('Could give a role without having manageRoles')
+      } catch (error) {
+        t.is(error.code, 'NOT_ALLOWED')
+      }
+    }
+
+    {
+      const { userID } = await makeUser(server, port)
+
+      const { sessionID } = await makeUserWithPermissions(server, port, {
+        manageRoles: true,
+        manageChannels: false,
+        manageEmotes: true
+      })
+
+      const { roleID } = await makeRole(server, port, {
+        manageChannels: true
+      })
+
+      const { roleID: roleID2 } = await makeRole(server, port, {
+        manageChannels: false
+      })
+
+      const { roleID: roleID3 } = await makeRole(server, port, {
+        manageEmotes: true
+      })
+
+      try {
+        await fetch(port, `/users/${userID}/roles`, {
+          method: 'POST',
+          body: JSON.stringify({
+            sessionID, roleID
+          })
+        })
+        t.fail('Could give a role without having a permission it specifies (as true)')
+      } catch (error) {
+        t.is(error.code, 'NOT_ALLOWED')
+      }
+
+      try {
+        await fetch(port, `/users/${userID}/roles`, {
+          method: 'POST',
+          body: JSON.stringify({
+            sessionID, roleID: roleID2
+          })
+        })
+        t.fail('Could give a role without having a permission it specifies (as false)')
+      } catch (error) {
+        t.is(error.code, 'NOT_ALLOWED')
+      }
+
+      // This SHOULD work!
+      try {
+        await fetch(port, `/users/${userID}/roles`, {
+          method: 'POST',
+          body: JSON.stringify({
+            sessionID, roleID: roleID3
+          })
+        })
+      } catch (error) {
+        t.fail('Could NOT give a role despite having the permissions it specifies')
+      }
+    }
+  })
+})
+
+test('DELETE /api/users/:userID/roles/:roleID', t => {
+  return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
+    const { sessionID: ownerSessionID } = await makeOwner(server, port)
+
+    const makeSetupUser = async roleID => {
+      const { userID } = await makeUser(server, port)
+      await giveRole(server, port, roleID, userID)
+      return { userID }
+    }
+
+    {
+      const { roleID } = await makeRole(server, port)
+      const { userID } = await makeSetupUser(roleID)
+      // Sanity check:
+      t.true((await fetch(port, `/users/${userID}`)).user.roleIDs.includes(roleID))
+      // Now take it:
+      const response = await fetch(port, `/users/${userID}/roles/${roleID}`, {
+        method: 'DELETE',
+        body: JSON.stringify({sessionID: ownerSessionID})
+      })
+      t.deepEqual(response, {})
+      t.false((await fetch(port, `/users/${userID}`)).user.roleIDs.includes(roleID))
+    }
+
+    try {
+      const { user: { id: userID } } = await makeUser(server, port)
+      await fetch(port, `/users/${userID}/roles/a`, {
+        method: 'DELETE',
+        body: JSON.stringify({sessionID: ownerSessionID})
+      })
+      t.fail('Could take a role that does not exist')
+    } catch (error) {
+      t.is(error.code, 'NOT_FOUND')
+    }
+
+    {
+      const { sessionID } = await makeUserWithPermissions(server, port, {
+        manageRoles: false
+      })
+      const { userID } = await makeUser(server, port)
+      const { roleID } = await makeRole(server, port)
+      try {
+        await fetch(port, `/users/${userID}/roles/${roleID}`, {
+          method: 'DELETE',
+          body: JSON.stringify({sessionID})
+        })
+        t.fail('Could take a role without having manageRoles')
+      } catch (error) {
+        t.is(error.code, 'NOT_ALLOWED')
+      }
+    }
+
+    {
+      const { userID } = await makeUser(server, port)
+
+      const { sessionID } = await makeUserWithPermissions(server, port, {
+        manageRoles: true,
+        manageChannels: false,
+        manageEmotes: true
+      })
+
+      const { roleID } = await makeRole(server, port, {
+        manageChannels: true
+      })
+
+      const { roleID: roleID2 } = await makeRole(server, port, {
+        manageChannels: false
+      })
+
+      const { roleID: roleID3 } = await makeRole(server, port, {
+        manageEmotes: true
+      })
+
+      for (const id of [roleID, roleID2, roleID3]) {
+        await giveRole(server, port, id, userID)
+      }
+
+      try {
+        await fetch(port, `/users/${userID}/roles/${roleID}`, {
+          method: 'DELETE',
+          body: JSON.stringify({sessionID})
+        })
+        t.fail('Could take a role without having a permission it specifies (as true)')
+      } catch (error) {
+        t.is(error.code, 'NOT_ALLOWED')
+      }
+
+      try {
+        await fetch(port, `/users/${userID}/roles/${roleID2}`, {
+          method: 'DELETE',
+          body: JSON.stringify({sessionID})
+        })
+        t.fail('Could take a role without having a permission it specifies (as false)')
+      } catch (error) {
+        t.is(error.code, 'NOT_ALLOWED')
+      }
+
+      // This SHOULD work!
+      try {
+        await fetch(port, `/users/${userID}/roles/${roleID3}`, {
+          method: 'DELETE',
+          body: JSON.stringify({sessionID})
+        })
+      } catch (error) {
+        t.fail('Could NOT take a role despite having the permissions it specifies')
+      }
+    }
+  })
+})
+
+test('GET /api/users/:id/roles', t => {
+  return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
+    // Should report the same data as /users/:id.
+    const { user: { id: userID } } = await makeUser(server, port)
+    await giveRole(server, port, (await makeRole(server, port, {})).roleID, userID)
+    const { user: { roleIDs: idsFromUser } } = await fetch(port, `/users/${userID}`)
+    const { roleIDs: idsFromRoles } = await fetch(port, `/users/${userID}/roles`)
+    t.deepEqual(idsFromRoles, idsFromUser)
   })
 })

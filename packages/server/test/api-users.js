@@ -197,7 +197,5 @@ test('PATCH /api/users/:id', t => {
     updatedUser = await getUser()
     t.is(updatedUser.flair, 'Best of all the test users')
     t.is(updatedUser.email, undefined)
-
-    // TODO: Test changing role permissions.
   })
 })

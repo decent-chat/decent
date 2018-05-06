@@ -229,7 +229,7 @@ module.exports.makeMiddleware = function({db, util}) {
 
         if (!user) {
           response.status(404).end(JSON.stringify({
-            error: errors.NOT_FOUND
+            error: errors.NOT_FOUND_user
           }))
 
           return
@@ -250,7 +250,7 @@ module.exports.makeMiddleware = function({db, util}) {
 
         if (!user) {
           response.status(404).end(JSON.stringify({
-            error: errors.NOT_FOUND
+            error: errors.NOT_FOUND_user
           }))
 
           return
@@ -271,7 +271,7 @@ module.exports.makeMiddleware = function({db, util}) {
 
         if (!message) {
           response.status(404).end(JSON.stringify({
-            error: errors.NOT_FOUND
+            error: errors.NOT_FOUND_message
           }))
 
           return
@@ -292,13 +292,34 @@ module.exports.makeMiddleware = function({db, util}) {
 
         if (!channel) {
           response.status(404).end(JSON.stringify({
-            error: errors.NOT_FOUND
+            error: errors.NOT_FOUND_channel
           }))
 
           return
         }
 
         request[middleware.vars][channelVar] = channel
+
+        next()
+      }
+    ],
+
+    getRoleFromID: (roleIDVar, roleVar) => [
+      ...middleware.validateVar(roleIDVar, validate.string),
+
+      async function(request, response, next) {
+        const roleID = request[middleware.vars][roleIDVar]
+        const role = await db.roles.findOne({_id: roleID})
+
+        if (!role) {
+          response.status(404).end(JSON.stringify({
+            error: errors.NOT_FOUND_role
+          }))
+
+          return
+        }
+
+        request[middleware.vars][roleVar] = role
 
         next()
       }

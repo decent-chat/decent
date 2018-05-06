@@ -264,7 +264,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       if (emote) {
         response.redirect(302, emote.imageURL)
       } else {
-        response.status(404).json({error: errors.NOT_FOUND})
+        response.status(404).json({error: errors.NOT_FOUND_emote})
       }
     }
   ])
@@ -281,7 +281,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       if (numRemoved) {
         response.status(200).json({})
       } else {
-        response.status(404).json({error: errors.NOT_FOUND})
+        response.status(404).json({error: errors.NOT_FOUND_emote})
       }
     }
   ])
@@ -782,7 +782,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       if (channel.pinnedMessageIDs.includes(messageID)) {
         response.status(500).json({
-          error: errors.ALREADY_PERFORMED
+          error: errors.ALREADY_PERFORMED_pin_message
         })
 
         return
@@ -916,7 +916,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       if (!user) {
         response.status(404).json({
-          error: errors.NOT_FOUND
+          error: errors.NOT_FOUND_user
         })
 
         return
@@ -1014,16 +1014,6 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         user, sessionUser,
         requestFromAdmin, password, email, flair, roleIDs,
       } = request[middleware.vars]
-
-      /* TODO: Port this to use permissions.
-      if (!requestFromAdmin && (typeof permissionLevel !== 'undefined' || typeof authorized !== 'undefined')) {
-        // permissionLevel and authorized require an admin session to be provided!
-
-        return response.status(403).json({error: Object.assign({}, errors.MUST_BE_ADMIN, {
-          message: 'permissionLevel/authorized cannot be changed without an admin session',
-        })})
-      }
-      */
 
       if (typeof password !== 'undefined') {
         // { old: String, new: String }
@@ -1129,6 +1119,104 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     },
   ])
 
+  app.post('/api/users/:userID/roles', [
+    ...middleware.loadSessionID('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.requirePermission('sessionUser', 'manageRoles'),
+    ...middleware.loadVarFromParams('userID'),
+    ...middleware.loadVarFromBody('roleID'),
+    ...middleware.getUserFromID('userID', 'targetUser'),
+    ...middleware.getRoleFromID('roleID', '_'), // Make sure it exists.
+
+    async function(request, response) {
+      const { sessionUser, targetUser, userID, roleID } = request[middleware.vars]
+
+      // Don't add the role if the session user doesn't have all the permissions
+      // that the role specifies!
+      if (!(await util.userHasPermissionsOfRole(sessionUser._id, roleID))) {
+        response.status(403).json({
+          error: errors.NOT_ALLOWED_missing_perms_of_role
+        })
+
+        return
+      }
+
+      // Don't add the role if the user already has it!
+      if (targetUser.roleIDs.includes(roleID)) {
+        response.status(500).json({
+          error: errors.ALREADY_PERFORMED_give_role
+        })
+
+        return
+      }
+
+      // Actually add the role.
+      db.users.update({_id: userID}, {
+        $push: {roleIDs: roleID}
+      })
+
+      sendToAllSockets('user/update', {
+        user: await serialize.user(await db.users.findOne({_id: userID}))
+      })
+
+      response.status(200).json({})
+    }
+  ])
+
+  app.delete('/api/users/:userID/roles/:roleID', [
+    ...middleware.loadSessionID('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.requirePermission('sessionUser', 'manageRoles'),
+    ...middleware.loadVarFromParams('userID'),
+    ...middleware.loadVarFromParams('roleID'),
+    ...middleware.getUserFromID('userID', 'targetUser'),
+    ...middleware.getRoleFromID('roleID', '_'), // Make sure it exists.
+
+    async function(request, response) {
+      const { sessionUser, role, targetUser, userID, roleID } = request[middleware.vars]
+
+      // Same permission check as for giving roles -- this is so, for example,
+      // a lower-level role manager can't remove anyone's top-of-the-top
+      // admin role!
+      if (!(await util.userHasPermissionsOfRole(sessionUser._id, roleID))) {
+        response.status(403).json({
+          error: errors.NOT_ALLOWED_missing_perms_of_role
+        })
+
+        return
+      }
+
+      // Don't remove the role if the user doesn't have it!
+      if (!targetUser.roleIDs.includes(roleID)) {
+        response.status(500).json({
+          error: errors.ALREADY_PERFORMED_take_role
+        })
+
+        return
+      }
+
+      // Actually take the role:
+      await db.users.update({_id: userID}, {
+        $pull: {roleIDs: roleID}
+      })
+
+      sendToAllSockets('user/update', {
+        user: await serialize.user(await db.users.findOne({_id: userID}))
+      })
+
+      response.status(200).json({})
+    }
+  ])
+
+  app.get('/api/users/:id/roles', [
+    ...middleware.loadVarFromParams('id'),
+    ...middleware.getUserFromID('id', 'user'),
+    async (request, response) => {
+      const { user: { roleIDs } } = request[middleware.vars]
+      response.status(200).json({roleIDs})
+    }
+  ])
+
   app.get('/api/roles', [
     async (request, response) => {
       const prioritizedRoles = await getPrioritizedRoles()
@@ -1175,7 +1263,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       if (role) {
         response.status(200).json({role: await serialize.role(role)})
       } else {
-        response.status(404).json({error: errors.NOT_FOUND})
+        response.status(404).json({error: errors.NOT_FOUND_role})
       }
     }
   ])
@@ -1262,7 +1350,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
         response.status(200).json({})
       } else {
-        response.status(404).json({error: errors.NOT_FOUND})
+        response.status(404).json({error: errors.NOT_FOUND_role})
       }
     }
   ])
@@ -1323,7 +1411,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       if (numRemoved) {
         response.status(200).json({})
       } else {
-        response.status(404).json({error: errors.NOT_FOUND})
+        response.status(404).json({error: errors.NOT_FOUND_session})
       }
     }
   ])
@@ -1338,7 +1426,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
       if (!session) {
         response.status(404).json({
-          error: errors.NOT_FOUND
+          error: errors.NOT_FOUND_session
         })
 
         return
