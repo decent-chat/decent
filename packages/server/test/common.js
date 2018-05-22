@@ -1,5 +1,5 @@
 const { test } = require('ava')
-const { testWithServer, makeUser, makeMessage, makeRole, giveRole } = require('./_serverUtil')
+const { testWithServer, makeUser, makeMessage, makeRole, giveRole, orderRoles, giveOwnerRole } = require('./_serverUtil')
 const fetch = require('./_fetch')
 
 let portForCommonTests = 24000
@@ -139,6 +139,30 @@ test('userHasPermissionsOfRole', t => {
     const { user: { id: userID2 } } = await makeUser(server, port)
     await giveRole(server, port, roleID2, userID, ownerSessionID)
     t.false(await util.userHasPermissionsOfRole(userID, roleID))
+  })
+})
+
+test('getHighestRoleOfUser', t => {
+  return testWithServer(portForCommonTests++, async ({ util, server, port }) => {
+    const { userID } = await makeUser(server, port)
+    t.is(await util.getHighestRoleOfUser(userID), null)
+
+    // We have to be a bit careful about the "owner" role here. We need to keep
+    // track of its ID, because it's part of the role prioritization order.
+
+    const { userID: ownerUserID, sessionID: ownerSessionID } = await makeUser(server, port)
+    const { ownerRoleID } = await giveOwnerRole(server, ownerUserID)
+
+    const { roleID: roleID1 } = await makeRole(server, port, undefined, undefined, ownerSessionID)
+    const { roleID: roleID2 } = await makeRole(server, port, undefined, undefined, ownerSessionID)
+    await giveRole(server, port, roleID1, userID, ownerSessionID)
+    await giveRole(server, port, roleID2, userID, ownerSessionID)
+
+    await orderRoles(server, port, [ownerRoleID, roleID1, roleID2], ownerSessionID)
+    t.is(await util.getHighestRoleOfUser(userID), roleID1)
+
+    await orderRoles(server, port, [ownerRoleID, roleID2, roleID1], ownerSessionID)
+    t.is(await util.getHighestRoleOfUser(userID), roleID2)
   })
 })
 

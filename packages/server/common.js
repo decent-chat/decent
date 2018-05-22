@@ -94,8 +94,6 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
     // mostPrioritized to be applied last (on top). So we reverse the order.
     permissions.reverse()
 
-    // console.log('getUserPermissions - perms:', permissions)
-
     return Object.assign(...permissions)
   }
 
@@ -132,6 +130,19 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
     const { permissions } = await db.roles.findOne({_id: roleID})
     const permissionKeys = Object.keys(permissions)
     return await userHasPermissions(userID, permissionKeys, channelID)
+  }
+
+  const getHighestRoleOfUser = async function(userID) {
+    // Returns the role ID (not the role object) of the user's highest-priority role.
+    // Returns null if the user does not have any roles (besides _user and _everyone).
+    const { roleIDs } = await db.users.findOne({_id: userID})
+
+    if (roleIDs.length === 0) {
+      return null
+    }
+
+    const { rolePrioritizationOrder } = await getAllSettings(db.settings, serverPropertiesID)
+    return rolePrioritizationOrder.find(id => roleIDs.includes(id))
   }
 
   const getUnreadMessageCountInChannel = async function(userObj, channelID) {
@@ -248,6 +259,7 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
     getUserPermissions,
     userHasPermission, userHasPermissions,
     userHasPermissionsOfRole,
+    getHighestRoleOfUser,
     addRole,
     md5,
     isUserOnline,

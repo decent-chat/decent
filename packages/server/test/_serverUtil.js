@@ -70,6 +70,8 @@ const giveOwnerRole = async (server, userID) => {
   await server.db.users.update({_id: userID}, {
     $push: {roleIDs: ownerRole._id}
   })
+
+  return { ownerRole, ownerRoleID: ownerRole._id }
 }
 
 const makeOwner = async (server, port, username = 'test_admin_' + shortid()) => {
@@ -112,6 +114,19 @@ const makeUserWithPermissions = async (server, port, permissions) => {
   return { sessionID, userID, ownerSessionID}
 }
 
+const orderRoles = async (server, port, roleIDs, sessionID = null) => {
+  if (sessionID === null) {
+    sessionID = (await makeOwner(server, port)).sessionID
+  }
+
+  await fetch(port, '/roles/order?sessionID=' + sessionID, {
+    method: 'PATCH',
+    body: JSON.stringify({roleIDs})
+  })
+
+  return { sessionID }
+}
+
 const makeChannel = async (server, port, name = 'test_channel_' + shortid(), sessionID = null) => {
   if (sessionID === null) {
     sessionID = (await makeOwner(server, port)).sessionID
@@ -149,6 +164,6 @@ const makeMessage = async (server, port, text = 'Hello.', channelID = null, sess
 module.exports = {
   testWithServer,
   makeUserWithoutSession, makeUser, makeOwner, makeUserWithPermissions,
-  makeRole, giveRole, giveOwnerRole,
+  makeRole, giveRole, orderRoles, giveOwnerRole,
   makeChannel, makeMessage
 }
