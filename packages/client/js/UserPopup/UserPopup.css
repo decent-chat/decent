@@ -27,11 +27,15 @@
 
 .UserPopup-roles {
   margin: 16px;
-  margin-bottom: 4px;
+
+  &:last-child {
+    margin-bottom: 4px;
+  }
 }
 
 .UserPopup-role {
   display: inline-block;
+  position: relative;
 
   border-radius: 4px;
   padding: 4px 8px;
@@ -39,4 +43,32 @@
 
   color: var(--base00);
   background: var(--base0D);
+}
+
+.UserPopup-role-removeButton {
+  display: none;
+  position: absolute;
+
+  top: -8px;
+  right: -8px;
+
+  width: 16px;
+  height: 16px;
+
+  text-align: center;
+  line-height: 14px;
+
+  cursor: pointer;
+
+  border-radius: 16px;
+  font-weight: bold;
+  font-size: 17px;
+
+  color: var(--base00);
+  background: var(--base0F);
+  border: 2px solid var(--base00);
+}
+
+.UserPopup-role:hover .UserPopup-role-removeButton {
+  display: block;
 }

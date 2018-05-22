@@ -104,6 +104,18 @@
   top: 24px;
 }
 
+.Modal-muted {
+  color: var(--base03);
+}
+
+.Modal p {
+  margin: 2em 0;
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
 .Modal-button {
   margin-left: 18px;
   margin-top: 16px;

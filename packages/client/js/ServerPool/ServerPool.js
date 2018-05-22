@@ -1,32 +1,18 @@
 const Client = require('decent.js')
 const EventEmitter = require('eventemitter3')
 const Atom = require('./Atom')
-const storage = /*window.sessionStorage ||*/ window.localStorage
+const { save, load } = require('../storage')
 
-function save(key, value) {
-  if (value === undefined) storage.removeItem(key)
-  else storage.setItem(key, JSON.stringify(value))
-
-  console.log(`Storage: set ${key} =`, value)
-}
-
-function load(key, defaultValue) {
-  const str = storage.getItem(key)
-  const value = str ? JSON.parse(str) : defaultValue
-
-  console.log(`Storage: loaded ${key} =`, value)
-  return value
-}
-
-class Pool {
+class Pool extends EventEmitter {
   static clientEvents = ['disconnect', 'reconnect', 'namechange', 'login', 'logout']
 
   servers = []
   activeIndex = -1
+  failedServers = []
 
   get serversSerializable() {
-    return this.servers.map(({ hostname, client }) =>
-      ({hostname, sessionID: client._host.sessionID}))
+    return this.servers.concat(this.failedServers).map(({ hostname, client }) =>
+      ({hostname, sessionID: client ? client._host.sessionID : undefined}))
   }
 
   async load() {
@@ -38,60 +24,118 @@ class Pool {
       }
     }
 
-    this.setActive(load('activeServerIndex', this.servers.length - 1))
+    const activeIndex = load('activeServerIndex', this.servers.length - 1)
+
+    if (activeIndex >= this.servers.length) {
+      // ???
+      if (this.servers.length > 0) this.setActive(0)
+      else this.setActive(-1)
+    } else {
+      this.setActive(activeIndex)
+    }
+
+    // Every 20 seconds, try and connect to failed servers, if any.
+    setInterval(() => {
+      this.tryReconnect()
+    }, 20 * 1000)
   }
 
-  async add(...hostnames) {
-    for (const hostname of hostnames) {
-      const client = new Client()
+  async tryReconnect() {
+    const successful = []
 
-      await client.connectTo(hostname)
+    for (const server of this.failedServers) {
+      if (!server) return
 
-      for (const event of Pool.clientEvents) {
-        client.on(event, (...args) => {
-          if (client === this.activeServer.client) {
-            this.activeClientEE.emit(event, ...args)
-          }
-        })
+      try {
+        await server.client.connectTo(server.hostname)
+      } catch (err) {
+        // Still failed; do nothing.
+        continue
       }
 
-      client.on('login', (user, sessionID) => {
-        save('servers', this.serversSerializable)
-      })
+      // We connected!!
+      await this.finalizeConnection(server.client, server.hostname)
+      successful.push(server)
 
-      client.channels.on('change', () => {
-        if (client === this.activeServer.client) {
-          this.activeChannelsEE.emit('change', client.channels)
-        }
-      })
-
-      client.users.on('change', () => {
-        if (client === this.activeServer.client) {
-          this.activeUsersEE.emit('change', client.users)
-        }
-      })
-
-      client.emotes.on('change', () => {
-        if (client === this.activeServer.client) {
-          this.activeEmotesEE.emit('change', client.emotes)
-        }
-      })
-
-      const ui = {
-        activeChannelIndex: new Atom((client.channels.length > 0) ? 0 : -1),
-      }
-
-      this._listenToUI(ui)
-
-      this.servers.push({
-        hostname, client,
-        ui,
-      })
+      if (!this.activeServer) this.setActive(0)
     }
+
+    // Remove successful ones
+    this.failedServers = this.failedServers.filter(s => !successful.includes(s))
+
+    if (successful.length > 0) this.emit('connectionchange')
+  }
+
+  async add(hostname, allowFailure = true) {
+    const client = new Client()
+    let failed = false
+
+    try {
+      await client.connectTo(hostname)
+    } catch (err) {
+      if (!allowFailure) throw err
+
+      console.warn('Failed to connect to', hostname)
+      failed = true
+
+      this.failedServers.push({client, hostname})
+    }
+
+    if (!failed) await this.finalizeConnection(client, hostname)
 
     save('servers', this.serversSerializable)
 
     return this.servers.length - 1
+  }
+
+  async finalizeConnection(client, hostname) {
+    for (const event of Pool.clientEvents) {
+      client.on(event, (...args) => {
+        if (this.activeServer && client === this.activeServer.client) {
+          this.activeClientEE.emit(event, ...args)
+        }
+      })
+    }
+
+    client.on('login', (user, sessionID) => {
+      save('servers', this.serversSerializable)
+    })
+
+    client.channels.on('change', () => {
+      if (client === this.activeServer.client) {
+        this.activeChannelsEE.emit('change', client.channels)
+      }
+    })
+
+    client.users.on('change', () => {
+      if (client === this.activeServer.client) {
+        this.activeUsersEE.emit('change', client.users)
+      }
+    })
+
+    client.emotes.on('change', () => {
+      if (client === this.activeServer.client) {
+        this.activeEmotesEE.emit('change', client.emotes)
+      }
+    })
+
+    const ui = {
+      activeChannelIndex: new Atom((client.channels.length > 0) ? 0 : -1),
+    }
+
+    this._listenToUI(ui)
+
+    const index = this.servers.push({
+      hostname, client, ui,
+    }) - 1
+
+    client.on('disconnect', () => {
+      this.remove(index)
+      this.failedServers.push({client, hostname})
+
+      this.emit('connectionchange')
+      save('servers', this.serversSerializable)
+    })
   }
 
   async remove(index) {
@@ -108,8 +152,14 @@ class Pool {
     save('activeServerIndex', this.activeIndex)
   }
 
+  async removeFailedHost(hostname) {
+    this.failedServers = this.failedServers.filter(server => server.hostname !== hostname)
+    save('servers', this.serversSerializable)
+  }
+
   async setActive(index) {
-    //if (!this.servers[index]) throw new Error('pool.setActive(): index points to null')
+    if (!this.servers[index] && index !== -1) throw new Error('pool.setActive(): index points to null')
+    if (this.servers.length > 0 && index < 0) index = 0
 
     this.activeIndex = index
     const server = this.servers[index]

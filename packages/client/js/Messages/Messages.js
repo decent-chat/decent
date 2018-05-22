@@ -106,7 +106,7 @@ class Messages extends Component {
     if (!channel) return
 
     // Stop listening to the old channel for messages
-    this.channel.removeListener('message', this.handleNewMessage)
+    if (this.channel) this.channel.removeListener('message', this.handleNewMessage)
 
     this.channel = channel
     this.componentDidMount()
@@ -273,7 +273,7 @@ class Messages extends Component {
   }
 
   sendMessage = content => {
-    this.props.channel.sendMessage(content)
+    if (content) this.props.channel.sendMessage(content)
   }
 
   render({ channel }, { messages, isLoading, me }) {

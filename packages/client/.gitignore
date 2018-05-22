@@ -1,4 +1,7 @@
 dist/*
 
+img/favicon
+favicon-data.json
+
 package-lock.json
 yarn.lock

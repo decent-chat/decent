@@ -125,14 +125,16 @@ class MessageEditor extends Component {
   }
 
   sendMessage = message => {
-    if (!message) return
+    //if (!message) return
 
     let messageFormatted = this.parseMarkdown(message)
     this.props.sendMessage(messageFormatted)
   }
 
   sendMessageFromInput = () => {
-    if (this.state.message === '') return false
+    //if (this.state.message === '') return false
+
+    console.log(this.state)
 
     this.sendMessage(this.state.message)
     this.setState({

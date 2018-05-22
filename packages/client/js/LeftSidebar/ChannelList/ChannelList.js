@@ -75,7 +75,7 @@ class ChannelList extends Component {
             onClick={() => {
               this.context.pool.activeServer.ui.activeChannelIndex.set(index)
               this.setState({activeChannelIndex: index})
-              channel.markRead()
+              if (this.context.pool.activeServer.client.me) channel.markRead()
               channel.unreadMessageCount = 0
             }}
           >

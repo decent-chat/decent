@@ -41,6 +41,21 @@
       background: var(--base0C);
     }
   }
+
+  &.is-failed {
+    width: 68px;
+    height: 68px;
+    border-radius: 68px;
+
+    stroke: var(--base00);
+    background: var(--base0F);
+
+    & .ServerList-dcIcon {
+      margin: 17px;
+      width: 32px;
+      height: 32px;
+    }
+  }
 }
 
 .ServerList-iconReal {
