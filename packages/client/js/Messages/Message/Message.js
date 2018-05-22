@@ -61,8 +61,15 @@ class Message extends Component {
                 content={message.text}
 
                 sendMessage={async text => {
+                  console.log(text)
+
                   this.setState({editing: null})
-                  await message.edit(text)
+
+                  if (text.trim().length === 0) {
+                    await message.delete()
+                  } else {
+                    await message.edit(text)
+                  }
                 }}
                 cancel={() => this.setState({editing: null})}
               />

@@ -273,7 +273,7 @@ class Messages extends Component {
   }
 
   sendMessage = content => {
-    this.props.channel.sendMessage(content)
+    if (content) this.props.channel.sendMessage(content)
   }
 
   render({ channel }, { messages, isLoading, me }) {
