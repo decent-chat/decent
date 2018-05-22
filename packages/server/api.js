@@ -742,6 +742,30 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     }
   ])
 
+  /*
+  app.patch('/api/channels/:channelID/role-permissions', [
+    ...middleware.loadVarFromParams('channelID'),
+    ...middleware.getChannelFromID('channelID', 'channel'),
+
+    (request, response) => {
+      const { channel } = request[middleware.vars]
+    }
+  ])
+  */
+
+  app.get('/api/channels/:channelID/role-permissions', [
+    ...middleware.loadVarFromParams('channelID'),
+    ...middleware.getChannelFromID('channelID', 'channel'),
+
+    (request, response) => {
+      const { channel } = request[middleware.vars]
+
+      response.status(200).json({
+        rolePermissions: channel.rolePermissions || {}
+      })
+    }
+  ])
+
   app.get('/api/channels/:channelID/pins', [
     ...middleware.loadVarFromParams('channelID'),
     ...middleware.getChannelFromID('channelID', 'channel'),
