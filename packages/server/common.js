@@ -97,15 +97,21 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
     return Object.assign(...permissions)
   }
 
-  const addRole = async function(name, permissions) {
+  const addRole = async function(name, permissions, actorUserID) {
     const role = await db.roles.insert({
       name, permissions
     })
 
     // Also add the role to the role prioritization order!
-    // Default to being the most prioritized.
+    // Default to being the most prioritized under the acting user's own
+    // highest role (so that they can rearrange it in the priority order).
+
     const { rolePrioritizationOrder } = await getAllSettings(db.settings, serverPropertiesID)
-    rolePrioritizationOrder.unshift(role._id)
+
+    const highestRoleID = await getHighestRoleOfUser(actorUserID)
+    const highestRoleIndex = rolePrioritizationOrder.indexOf(highestRoleID)
+    rolePrioritizationOrder.splice(highestRoleIndex + 1, 0, role._id)
+
     await setSetting(
       db.settings, serverPropertiesID,
       'rolePrioritizationOrder', rolePrioritizationOrder

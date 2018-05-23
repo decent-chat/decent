@@ -77,9 +77,9 @@ const giveOwnerRole = async (server, userID) => {
 const makeOwner = async (server, port, username = 'test_admin_' + shortid()) => {
   const { user, userID, sessionID } = await makeUser(server, port, username)
 
-  await giveOwnerRole(server, userID)
+  const { ownerRole, ownerRoleID } = await giveOwnerRole(server, userID)
 
-  return {user, userID, sessionID}
+  return {user, userID, sessionID, ownerRole, ownerRoleID}
 }
 
 const makeRole = async (server, port, permissions = {}, name = 'test_role_' + shortid(), sessionID = null) => {

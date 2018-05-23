@@ -1294,6 +1294,8 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
 
   app.post('/api/roles', [
     // TODO: Permissions for this. Well, and everything else. But also this.
+    ...middleware.loadSessionID('sessionID'),
+    ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.loadVarFromBody('name'),
     ...middleware.loadVarFromBody('permissions'),
     ...middleware.validateVar('name', validate.roleName),
@@ -1303,8 +1305,8 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     // middleware (taking the session-user and permissions objects).
 
     async (request, response) => {
-      const { name, permissions } = request[middleware.vars]
-      const role = await addRole(name, permissions)
+      const { name, permissions, sessionUser } = request[middleware.vars]
+      const role = await addRole(name, permissions, sessionUser._id)
 
       sendToAllSockets('role/new', {role: await serialize.role(role)})
       response.status(201).json({roleID: role._id})
