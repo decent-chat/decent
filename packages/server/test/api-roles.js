@@ -193,23 +193,8 @@ test('PATCH/GET /api/roles/order', t => {
 
     t.deepEqual(await fetch(port, '/roles/order'), {roleIDs: [ownerRoleID]})
 
-    const { roleID: roleID1 } = await fetch(port, '/roles', {
-      method: 'POST',
-      body: JSON.stringify({
-        sessionID,
-        name: 'Role 1',
-        permissions: {}
-      })
-    })
-
-    const { roleID: roleID2 } = await fetch(port, '/roles', {
-      method: 'POST',
-      body: JSON.stringify({
-        sessionID,
-        name: 'Role 2',
-        permissions: {}
-      })
-    })
+    const { roleID: roleID1 } = await makeRole(server, port, undefined, undefined, sessionID)
+    const { roleID: roleID2 } = await makeRole(server, port, undefined, undefined, sessionID)
 
     // Default prioritization order should be role 2 then role 1, because
     // newer roles are more prioritized, but both of those should be below
@@ -239,6 +224,67 @@ test('PATCH/GET /api/roles/order', t => {
 
     // And make sure that deleting the role is reflected:
     t.deepEqual(await fetch(port, '/roles/order'), {roleIDs: [ownerRoleID, roleID2]})
+  })
+})
+
+test('PATCH /api/roles/order - priority-related permissions', t => {
+  return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
+    const { sessionID: ownerSessionID, ownerRoleID } = await makeOwner(server, port)
+    const { roleID: roleID1 } = await makeRole(server, port, undefined, undefined, ownerSessionID)
+    const { roleID: roleID2 } = await makeRole(server, port, undefined, undefined, ownerSessionID)
+
+    // Sanity-check for the initial order.
+    t.deepEqual(await fetch(port, '/roles/order'), {roleIDs: [ownerRoleID, roleID2, roleID1]})
+
+    // Don't let us change the position of our highest role.
+    try {
+      await fetch(port, '/roles/order?sessionID=' + ownerSessionID, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          roleIDs: [roleID2, ownerRoleID, roleID1]
+        })
+      })
+      t.fail('Could change the position of own highest role')
+    } catch (error) {
+      t.is(error.code, 'NOT_ALLOWED')
+    }
+
+    // Make sure it didn't have an effect!
+    t.deepEqual(await fetch(port, '/roles/order'), {roleIDs: [ownerRoleID, roleID2, roleID1]})
+
+    // Don't let the order of any roles above the highest role be changed.
+    // We create a new user, so that there can be two roles above that user's
+    // range of roles they can reorder (i.e. <= their highest index).
+    // (The owner can never have any roles beside the "owner" role above them,
+    // because there cannot be a user who can create a role and put it above
+    // the owner role, since there would need to be a role above the owner role
+    // in the first place!)
+
+    const { roleID: roleID3 } = await makeRole(server, port, {
+      manageRoles: true
+    }, undefined, ownerSessionID)
+
+    await fetch(port, '/roles/order?sessionID=' + ownerSessionID, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        roleIDs: [ownerRoleID, roleID2, roleID3, roleID1]
+      })
+    })
+
+    const { sessionID: otherSessionID, userID: otherUserID } = await makeUser(server, port)
+    await giveRole(server, port, roleID3, otherUserID)
+
+    try {
+      await fetch(port, '/roles/order?sessionID=' + otherSessionID, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          roleIDs: [roleID2, ownerRoleID, roleID3, roleID1]
+        })
+      })
+      t.fail('Could change the position of roles above own highest role')
+    } catch (error) {
+      t.is(error.code, 'NOT_ALLOWED')
+    }
   })
 })
 

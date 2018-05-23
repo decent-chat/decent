@@ -1269,12 +1269,41 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   app.patch('/api/roles/order', [
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
-    // TODO: Check permissions - manageRoles.
+    ...middleware.requirePermission('sessionUser', 'manageRoles'),
     ...middleware.loadVarFromBody('roleIDs'),
     ...middleware.validateVar('roleIDs', validate.arrayOfAllRoleIDs),
 
     async (request, response) => {
-      const { roleIDs } = request[middleware.vars]
+      const { roleIDs, sessionUser } = request[middleware.vars]
+
+      // Don't let the user change the order of any roles above their own
+      // highest role. To do so, make note of the original order of all roles
+      // above that one, and then confirm this order is the same in the
+      // roleIDs given.
+
+      const { rolePrioritizationOrder: oldRoleIDs } = (
+        await getAllSettings(db.settings, serverPropertiesID)
+      )
+
+      const highestRoleID = await util.getHighestRoleOfUser(sessionUser._id)
+      const highestRoleIndex = oldRoleIDs.indexOf(highestRoleID)
+
+      const oldFront = oldRoleIDs.slice(0, highestRoleIndex + 1)
+      const newFront = roleIDs.slice(0, highestRoleIndex + 1)
+
+      for (let i = 0; i <= highestRoleIndex; i++) {
+        if (newFront[i] !== oldFront[i]) {
+          response.status(403).json({
+            error: errors.NOT_ALLOWED_reorder_roles_above_self
+          })
+
+          return
+        }
+      }
+
+      // TODO: Don't let the user reorder roles such that they wouldn't have
+      // the manageRoles permission anymore.
+
       await setSetting(db.settings, serverPropertiesID, 'rolePrioritizationOrder', roleIDs)
       response.status(200).json({})
     }
