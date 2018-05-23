@@ -46,6 +46,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     getUnreadMessageCountInChannel,
     getMentionsFromMessageContent,
     getPrioritizedRoles,
+    getUserPermissions,
     addRole,
   } = util
 
@@ -1301,8 +1302,16 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
         }
       }
 
-      // TODO: Don't let the user reorder roles such that they wouldn't have
-      // the manageRoles permission anymore.
+      // Don't let the user reorder roles such that they wouldn't have the
+      // manageRoles permission anymore.
+      const newPermissions = await getUserPermissions(sessionUser._id, null, roleIDs)
+      if (!newPermissions.manageRoles) {
+        response.status(403).json({
+          error: errors.NOT_ALLOWED_reorder_lose_permission
+        })
+
+        return
+      }
 
       await setSetting(db.settings, serverPropertiesID, 'rolePrioritizationOrder', roleIDs)
       response.status(200).json({})

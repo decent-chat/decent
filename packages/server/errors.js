@@ -13,6 +13,7 @@ module.exports = {
   NOT_ALLOWED: {code: 'NOT_ALLOWED', message: 'You are not allowed to do this.'},
   NOT_ALLOWED_missing_perms_of_role: {code: 'NOT_ALLOWED', message: 'You are not allowed to do this because you don\'t have one of the permissions the role specifies.'},
   NOT_ALLOWED_reorder_roles_above_self: {code: 'NOT_ALLOWED', message: 'You are not allowed to reorder roles that are higher in the existing list than your own highest-priority role.'},
+  NOT_ALLOWED_reorder_lose_permission: {code: 'NOT_ALLOWED', message: 'You are not allowed to reorder roles this way because you would lose your permission to reorder roles.'},
   NOT_DELETABLE_ROLE: {code: 'NOT_DELETABLE_ROLE', message: 'This role is internal and cannot be deleted.'},
   NOT_FOUND: {code: 'NOT_FOUND', message: 'This couldn\'t be found.'},
   NOT_FOUND_channel: {code: 'NOT_FOUND', message: 'This channel couldn\'t be found.'},

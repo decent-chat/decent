@@ -340,11 +340,60 @@ test('PATCH /api/roles/order - priority-related permissions', t => {
   })
 })
 
-/* WIP!
 test('PATCH /api/roles/order - prevent losing permission to rearrange roles', t => {
-  return testWithServer(portForApiRoleTests++, async ({ server, port }) => {})
+  return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
+    const { sessionID: ownerSessionID, ownerRoleID } = await makeOwner(server, port)
+
+    const { roleID: roleIDNoManage } = await makeRole(server, port, {
+      manageRoles: false
+    }, 'no-manage', ownerSessionID)
+
+    const { roleID: roleIDCanManage } = await makeRole(server, port, {
+      manageRoles: true
+    }, 'can-manage', ownerSessionID)
+
+    const { roleID: roleIDHighPriority } = await makeRole(server, port, undefined, 'high-prio', ownerSessionID)
+
+    const { sessionID: otherSessionID, userID: otherUserID } = await makeUser(server, port)
+    await giveRole(server, port, roleIDNoManage, otherUserID)
+    await giveRole(server, port, roleIDCanManage, otherUserID)
+    await giveRole(server, port, roleIDHighPriority, otherUserID)
+
+    // Another quick sanity check.
+    t.deepEqual(await fetch(port, '/roles/order'), {
+      roleIDs: [ownerRoleID, roleIDHighPriority, roleIDCanManage, roleIDNoManage]
+    })
+
+    try {
+      await fetch(port, '/roles/order?sessionID=' + otherSessionID, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          roleIDs: [ownerRoleID, roleIDHighPriority, roleIDNoManage, roleIDCanManage]
+        })
+      })
+      t.fail('Could change the position of roles and end up not having manageRoles')
+    } catch (error) {
+      t.is(error.code, 'NOT_ALLOWED')
+    }
+
+    // Make sure that we can change the order if that role DOESN'T remove our
+    // manageRoles permission!
+
+    await fetch(port, '/roles/' + roleIDNoManage + '?sessionID=' + ownerSessionID, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        permissions: {}
+      })
+    })
+
+    await fetch(port, '/roles/order?sessionID=' + otherSessionID, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        roleIDs: [ownerRoleID, roleIDHighPriority, roleIDNoManage, roleIDCanManage]
+      })
+    })
+  })
 })
-*/
 
 // The following endpoints aren't strictly from the roles API, but are related enough.
 

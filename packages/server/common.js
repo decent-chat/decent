@@ -64,10 +64,15 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
       .some(socketData => socketData.userID === userID)
   }
 
-  const getPrioritizedRoles = async function() {
+  const getPrioritizedRoles = async function(roleOrderSetting = undefined) {
     const allRoles = await db.roles.find({})
-    const { rolePrioritizationOrder } = await getAllSettings(db.settings, serverPropertiesID)
-    const prioritizedRoles = rolePrioritizationOrder.map(
+
+    if (roleOrderSetting === undefined) {
+      const { rolePrioritizationOrder } = await getAllSettings(db.settings, serverPropertiesID)
+      roleOrderSetting = rolePrioritizationOrder
+    }
+
+    const prioritizedRoles = roleOrderSetting.map(
       id => allRoles.find(r => r._id === id)
     )
 
@@ -77,11 +82,16 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
     return prioritizedRoles
   }
 
-  const getUserPermissions = async function(userID, channelID = null) {
+  const getUserPermissions = async function(userID, channelID = null, roleOrderSetting = undefined) {
+    // Returns the computed permissions of a user. Takes a channel ID for
+    // channel-specific permissions, and a "roleOrderSetting" argument for
+    // checking what the resulting permissions after reordering roles would
+    // be, without actually reordering those roles.
+
     // TODO: Handle channel ID, for channel-specific permissions.
 
     const { roleIDs } = await db.users.findOne({_id: userID})
-    const prioritizedRoles = await getPrioritizedRoles()
+    const prioritizedRoles = await getPrioritizedRoles(roleOrderSetting)
     const userRoles = prioritizedRoles.filter(r => {
       return ['_everyone', '_user', ...roleIDs].includes(r._id)
     })
