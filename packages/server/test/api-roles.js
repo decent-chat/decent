@@ -227,6 +227,58 @@ test('PATCH/GET /api/roles/order', t => {
   })
 })
 
+test('PATCH /api/roles/order - require manageRoles', t => {
+  return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
+    const { sessionID: ownerSessionID, ownerRoleID } = await makeOwner(server, port)
+    const { roleID: roleID1 } = await makeRole(server, port, undefined, undefined, ownerSessionID)
+    const { roleID: roleID2 } = await makeRole(server, port, undefined, undefined, ownerSessionID)
+    const { roleID: roleID3 } = await makeRole(server, port, undefined, undefined, ownerSessionID)
+
+    // Note on this test - we give the other user the third role ID, which is
+    // more prioritized than roles two and one, but does not give the user
+    // manageRoles. We give them this relatively higher-priority role so that
+    // we can be sure that, if they did have the manageRoles permission, they
+    // would be permitted to reorder the lesser two roles.
+
+    // Sanity-check for initial role order - this test won't work if it's different.
+    t.deepEqual(await fetch(port, '/roles/order'), {roleIDs: [ownerRoleID, roleID3, roleID2, roleID1]})
+
+    const { sessionID: otherSessionID, userID: otherUserID } = await makeUser(server, port)
+    await giveRole(server, port, roleID3, otherUserID)
+    try {
+      await fetch(port, '/roles/order?sessionID=' + otherSessionID, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          roleIDs: [ownerRoleID, roleID3, roleID1, roleID2]
+        })
+      })
+      t.fail('Could rearrange roles without having manageRoles permission')
+    } catch (error) {
+      t.is(error.code, 'NOT_ALLOWED')
+    }
+
+    // Check that the above change WASN'T reflected:
+    t.deepEqual(await fetch(port, '/roles/order'), {roleIDs: [ownerRoleID, roleID3, roleID2, roleID1]})
+
+    // Following up on the block comment above, make sure that they can make
+    // this change if they do have the managePermissions role:
+
+    await fetch(port, '/roles/' + roleID3 + '?sessionID=' + ownerSessionID, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        permissions: {manageRoles: true}
+      })
+    })
+
+    await fetch(port, '/roles/order?sessionID=' + otherSessionID, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        roleIDs: [ownerRoleID, roleID3, roleID1, roleID2]
+      })
+    })
+  })
+})
+
 test('PATCH /api/roles/order - priority-related permissions', t => {
   return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
     const { sessionID: ownerSessionID, ownerRoleID } = await makeOwner(server, port)
@@ -287,6 +339,12 @@ test('PATCH /api/roles/order - priority-related permissions', t => {
     }
   })
 })
+
+/* WIP!
+test('PATCH /api/roles/order - prevent losing permission to rearrange roles', t => {
+  return testWithServer(portForApiRoleTests++, async ({ server, port }) => {})
+})
+*/
 
 // The following endpoints aren't strictly from the roles API, but are related enough.
 
