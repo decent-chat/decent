@@ -1324,6 +1324,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   app.post('/api/roles', [
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
+    ...middleware.requirePermission('sessionUser', 'manageRoles'),
     ...middleware.loadVarFromBody('name'),
     ...middleware.loadVarFromBody('permissions'),
     ...middleware.validateVar('name', validate.roleName),

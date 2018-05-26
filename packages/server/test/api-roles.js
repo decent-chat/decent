@@ -60,6 +60,20 @@ test('POST /api/roles', t => {
       t.is(error.code, 'INCOMPLETE_PARAMETERS')
     }
 
+    const { sessionID: otherSessionID } = await makeUser(server, port)
+    try {
+      await fetch(port, '/roles', {
+        method: 'POST',
+        body: JSON.stringify({
+          sessionID: otherSessionID,
+          name: 'Role', permissions: {}
+        })
+      })
+      t.fail('Could create a role without having manageRoles')
+    } catch (error) {
+      t.is(error.code, 'NOT_ALLOWED')
+    }
+
     // TODO: Tests for creating a role with the same name as an existing role.
   })
 })
