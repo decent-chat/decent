@@ -1152,19 +1152,10 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     ...middleware.loadVarFromBody('roleID'),
     ...middleware.getUserFromID('userID', 'targetUser'),
     ...middleware.getRoleFromID('roleID', '_'), // Make sure it exists.
+    ...middleware.requirePermissionsOfRole('sessionUser', 'roleID'),
 
     async function(request, response) {
       const { sessionUser, targetUser, userID, roleID } = request[middleware.vars]
-
-      // Don't add the role if the session user doesn't have all the permissions
-      // that the role specifies!
-      if (!(await util.userHasPermissionsOfRole(sessionUser._id, roleID))) {
-        response.status(403).json({
-          error: errors.NOT_ALLOWED_missing_perms_of_role
-        })
-
-        return
-      }
 
       // Don't add the role if the user already has it!
       if (targetUser.roleIDs.includes(roleID)) {
@@ -1331,16 +1322,13 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
   ])
 
   app.post('/api/roles', [
-    // TODO: Permissions for this. Well, and everything else. But also this.
     ...middleware.loadSessionID('sessionID'),
     ...middleware.getSessionUserFromID('sessionID', 'sessionUser'),
     ...middleware.loadVarFromBody('name'),
     ...middleware.loadVarFromBody('permissions'),
     ...middleware.validateVar('name', validate.roleName),
     ...middleware.validateVar('permissions', validate.permissionsObject),
-    // TODO: Error 403 if the requester doesn't have one or more of the
-    // permissions they want to give this role. This should be a portable
-    // middleware (taking the session-user and permissions objects).
+    ...middleware.requirePermissionsOfObject('sessionUser', 'permissions'),
 
     async (request, response) => {
       const { name, permissions, sessionUser } = request[middleware.vars]

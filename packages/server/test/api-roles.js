@@ -64,6 +64,49 @@ test('POST /api/roles', t => {
   })
 })
 
+test('POST /api/roles - check for existing permissions', t => {
+  return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
+    const { userID, sessionID } = await makeUserWithPermissions(server, port, {
+      manageRoles: true, manageChannels: false
+    })
+
+    try {
+      await fetch(port, '/roles', {
+        method: 'POST',
+        body: JSON.stringify({
+          sessionID,
+          name: 'Role', permissions: {manageChannels: true}
+        })
+      })
+      t.fail('Could create a role without one of the specified (as true) permissions')
+    } catch (error) {
+      t.is(error.code, 'NOT_ALLOWED')
+    }
+
+    try {
+      await fetch(port, '/roles', {
+        method: 'POST',
+        body: JSON.stringify({
+          sessionID,
+          name: 'Role', permissions: {manageChannels: false}
+        })
+      })
+      t.fail('Could create a role without one of the specified (as false) permissions')
+    } catch (error) {
+      t.is(error.code, 'NOT_ALLOWED')
+    }
+
+    // This should work:
+    await fetch(port, '/roles', {
+      method: 'POST',
+      body: JSON.stringify({
+        sessionID,
+        name: 'Role', permissions: {manageRoles: true}
+      })
+    })
+  })
+})
+
 test('GET /api/roles (default roles)', t => {
   return testWithServer(portForApiRoleTests++, async ({ server, port }) => {
     const response = await fetch(port, '/roles')

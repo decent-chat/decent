@@ -1,7 +1,7 @@
 const { test } = require('ava')
 const { makeMiddleware, validate } = require('../middleware')
 const makeCommonUtils = require('../common')
-const { testWithServer, makeUser, makeRole, giveOwnerRole, makeChannel, makeMessage } = require('./_serverUtil')
+const { testWithServer, makeUser, makeOwner, makeRole, giveRole, giveOwnerRole, makeChannel, makeMessage } = require('./_serverUtil')
 const fetch = require('./_fetch')
 
 let portForMiddlewareTests = 22000
@@ -660,7 +660,7 @@ test('getChannelFromID - channelID of nonexistent channel', t => {
 test('requirePermission', t => {
   return testWithServer(portForMiddlewareTests++, async ({ middleware, server, port }) => {
     // By default, everyone has the readMessages permission, so we check for that:
-    const { user: { id: userID }, sessionID } = await makeUser(server, port)
+    const { userID, sessionID } = await makeUser(server, port)
     const request = {[middleware.vars]: {sessionID}}
     const { response } = await interpretMiddleware(request, [
       ...middleware.getSessionUserFromID('sessionID', 'user'),
@@ -689,6 +689,79 @@ test('requirePermission', t => {
       ...middleware.requirePermission('user', 'manageRoles')
     ])
     t.false(response3.wasEnded)
+  })
+})
+
+test('requirePermissionsOfObject', t => {
+  return testWithServer(portForMiddlewareTests++, async ({ middleware, server, port }) => {
+    const { userID: ownerUserID, sessionID: ownerSessionID } = await makeOwner(server, port)
+    const { userID, sessionID } = await makeUser(server, port)
+    const { roleID } = await makeRole(server, port, {manageChannels: true}, undefined, ownerSessionID)
+    await giveRole(server, port, roleID, userID)
+
+    const doRequest = perms => {
+      const request = {[middleware.vars]: {sessionID, perms}}
+      return interpretMiddleware(request, [
+        ...middleware.getSessionUserFromID('sessionID', 'user'),
+        ...middleware.requirePermissionsOfObject('user', 'perms')
+      ])
+    }
+
+    const { response: response1 } = await doRequest({manageChannels: true})
+    t.false(response1.wasEnded)
+
+    // Take the manageChannels permission:
+    await fetch(port, '/roles/' + roleID + '?sessionID=' + ownerSessionID, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        permissions: {manageChannels: false}
+      })
+    })
+
+    const { response: response2 } = await doRequest({manageChannels: true})
+    t.true(response2.wasEnded)
+    t.is(response2.statusCode, 403)
+    t.is(response2.endData.error.code, 'NOT_ALLOWED')
+
+    // Make sure it's checking based on the presence of a key, irregardless
+    // of the value:
+    const { response: response3 } = await doRequest({manageChannels: false})
+    t.true(response3.wasEnded)
+    t.is(response3.statusCode, 403)
+    t.is(response3.endData.error.code, 'NOT_ALLOWED')
+
+    // Make sure that it passes if there are no keys at all:
+    const { response: response4 } = await doRequest({})
+    t.false(response4.wasEnded)
+  })
+})
+
+test('requirePermissionsOfRole', t => {
+  // TODO: Figure out a way to make sure this is calling common.js/util's
+  // userHasPermissionsOfRole function. For now this is just a very very
+  // simple test.
+  return testWithServer(portForMiddlewareTests++, async ({ middleware, server, port }) => {
+    const { userID: ownerUserID, sessionID: ownerSessionID } = await makeOwner(server, port)
+    const { userID, sessionID } = await makeUser(server, port)
+    const { roleID } = await makeRole(server, port, {manageChannels: true}, undefined, ownerSessionID)
+
+    const doRequest = roleID => {
+      const request = {[middleware.vars]: {sessionID, roleID}}
+      return interpretMiddleware(request, [
+        ...middleware.getSessionUserFromID('sessionID', 'user'),
+        ...middleware.requirePermissionsOfRole('user', 'roleID')
+      ])
+    }
+
+    const { response: response1 } = await doRequest(roleID)
+    t.true(response1.wasEnded)
+    t.is(response1.statusCode, 403)
+    t.is(response1.endData.error.code, 'NOT_ALLOWED')
+
+    await giveRole(server, port, roleID, userID)
+
+    const { response: response2 } = await doRequest(roleID)
+    t.false(response2.wasEnded)
   })
 })
 

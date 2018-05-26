@@ -4,9 +4,12 @@ const { internalRoles, permissionKeys } = require('./roles')
 module.exports.makeMiddleware = function({db, util}) {
   const {
     getUserIDBySessionID, getUserBySessionID,
-    isUserOnline, isUserAuthorized,
+    isUserOnline,
     emailToAvatarURL, isNameValid,
-    getUserPermissions, userHasPermission,
+    getUserPermissions,
+    userHasPermission,
+    userHasPermissions,
+    userHasPermissionsOfRole,
     getUnreadMessageCountInChannel
   } = util
 
@@ -337,6 +340,39 @@ module.exports.makeMiddleware = function({db, util}) {
               missingPermission: permissionKey
             })
           }))
+        }
+      }
+    ],
+
+    requirePermissionsOfObject: (userVar, permissionsObjectVar) => [
+      // Note -- this and requirePermissionsOfRole do not take a channelID.
+      // No particular reason for this; we just don't need that right now.
+
+      async function(request, response, next) {
+        const { _id: userID } = request[middleware.vars][userVar]
+        const permissionsObject = request[middleware.vars][permissionsObjectVar]
+
+        if (await userHasPermissions(userID, Object.keys(permissionsObject))) {
+          next()
+        } else {
+          response.status(403).json({
+            error: errors.NOT_ALLOWED_missing_perms_of_role
+          })
+        }
+      }
+    ],
+
+    requirePermissionsOfRole: (userVar, roleIDVar) => [
+      async function(request, response, next) {
+        const { _id: userID } = request[middleware.vars][userVar]
+        const roleID = request[middleware.vars][roleIDVar]
+
+        if (await userHasPermissionsOfRole(userID, roleID)) {
+          next()
+        } else {
+          response.status(403).json({
+            error: errors.NOT_ALLOWED_missing_perms_of_role
+          })
         }
       }
     ],
