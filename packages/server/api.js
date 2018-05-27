@@ -358,16 +358,41 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
     ...middleware.requireChannelPermission('sessionUser', 'channel', 'sendMessages'),
     ...middleware.loadVarFromBody('text'),
     ...middleware.validateVar('text', validate.string),
+    ...middleware.loadVarFromBody('type', false),
 
     async (request, response) => {
-      const { text, channelID, sessionUser } = request[middleware.vars]
+      const { text, type, channelID, sessionUser } = request[middleware.vars]
+
+      const messageType = type || 'user'
+
+      if (messageType === 'user') {
+        ;
+      } else if (messageType === 'system') {
+        // Requires 'sendSystemMessages' permission.
+        const hasPerms = await util.userHasPermission(sessionUser._id, 'sendSystemMessages', channelID)
+
+        if (!hasPerms) {
+          return response.status(403).json({
+            error: Object.assign({}, errors.NOT_ALLOWED, {
+              missingPermission: 'sendSystemMessages',
+              requirePermissionInChannel: true
+            })
+          })
+        }
+      } else {
+        // Invalid message.type!!
+        return response.status(400).json({
+          error: Object.assign({}, errors.INVALID_PARAMETER_TYPE, {
+            message: `Expected type to be "user" or "system".`
+          })
+        })
+      }
 
       const message = await db.messages.insert({
-        authorID: sessionUser._id,
-        authorUsername: sessionUser.username,
-        authorEmail: sessionUser.email,
-        authorFlair: sessionUser.flair,
-        type: 'user',
+        authorID: messageType === 'system' ? null : sessionUser._id,
+        authorUsername: messageType === 'system' ? null : sessionUser.username,
+        authorAvatarURL: messageType === 'system' ? null : util.emailToAvatarURL(sessionUser.email),
+        type: messageType,
         text: request.body.text,
         dateCreated: unixDateNow() - 1,
         dateEdited: null,

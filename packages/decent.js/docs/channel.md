@@ -21,8 +21,8 @@ Extends [eventemitter3](https://npm.im/eventemitter3).
 ## await channel.refresh()
 Refreshes properties to be consistent with the server.
 
-## await channel.sendMessage(text: string) -> string messageID
-Sends a message to the channel, implicitly marking it as read.
+## await channel.sendMessage(text: string, type: ?string) -> string messageID
+Sends a message to the channel, implicitly marking it as read. `type` must be either `"user" (default) or `"system"`. Note that sending a system message requires the `sendSystemMessages` permission.
 
 ## await channel.markRead()
 Only works if logged in. Marks the channel as read for the logged-in user.

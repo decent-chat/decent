@@ -228,14 +228,14 @@ class Channel extends Thing {
     return pins
   }
 
-  async sendMessage(text) {
+  async sendMessage(text, type = 'text') {
     typeforce('String', text)
 
     const { messageID } = await this.client.fetch('/api/messages', {
       method: 'POST',
       body: {
         channelID: this.id,
-        text,
+        text, type,
       },
     })
 

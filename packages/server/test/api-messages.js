@@ -47,6 +47,21 @@ test('POST /api/messages', t => {
       t.is(error.code, 'NOT_ALLOWED')
       t.is(error.missingPermission, 'sendMessages')
     }
+
+    try {
+      await fetch(port, '/messages', {
+        method: 'POST',
+        body: JSON.stringify({
+          channelID, sessionID: senderSID,
+          text: 'Important message important message important message aaaaa',
+          type: 'system'
+        })
+      })
+      t.fail('Could post system message without sendSystemMessages permission')
+    } catch (error) {
+      t.is(error.code, 'NOT_ALLOWED')
+      t.is(error.missingPermission, 'sendSystemMessages')
+    }
   })
 })
 
