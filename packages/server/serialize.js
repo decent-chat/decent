@@ -7,9 +7,9 @@ module.exports = function makeSerializers({util, db}) {
   const serialize = {
     message: async m => ({
       id: m._id,
-      authorUsername: m.authorUsername,
-      authorID: m.authorID,
-      authorAvatarURL: emailToAvatarURL(m.authorEmail || m.authorID),
+      authorUsername: m.type === 'system' ? null : m.authorUsername,
+      authorID: m.type === 'system' ? null : m.authorID,
+      authorAvatarURL: m.type === 'system' ? null : emailToAvatarURL(m.authorEmail || m.authorID),
       type: m.type,
       text: m.text,
       dateCreated: m.dateCreated,
