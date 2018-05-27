@@ -391,7 +391,7 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       const message = await db.messages.insert({
         authorID: messageType === 'system' ? null : sessionUser._id,
         authorUsername: messageType === 'system' ? null : sessionUser.username,
-        authorAvatarURL: messageType === 'system' ? null : util.emailToAvatarURL(sessionUser.email),
+        authorEmail: messageType === 'system' ? null : sessionUser.email,
         type: messageType,
         text: request.body.text,
         dateCreated: unixDateNow() - 1,
