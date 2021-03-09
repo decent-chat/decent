@@ -47,6 +47,12 @@ class ServerDetails extends Component {
           </div>
         })}
 
+        {servers.length === 1 && servers[0].isActive &&
+          <div class='Dropdown-listItem Dropdown-listItem-notInteractive'>
+            <div class='Dropdown-muted'>This is the only saved server available!</div>
+          </div>
+        }
+
         <div class='Dropdown-separator'></div>
 
         <div class='Dropdown-listItem' onClick={() => {

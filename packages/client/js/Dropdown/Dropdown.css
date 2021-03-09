@@ -41,14 +41,17 @@
   width: 100%;
 
   box-sizing: border-box;
-  cursor: pointer;
 
-  &:hover {
-    color: var(--base00);
-    background: var(--base0B);
+  &:not(.Dropdown-listItem-notInteractive){
+    cursor: pointer;
 
-    & .Dropdown-muted {
-      color: var(--base10);
+    &:hover {
+      color: var(--base00);
+      background: var(--base0B);
+
+      & .Dropdown-muted {
+        color: var(--base10);
+      }
     }
   }
 }
