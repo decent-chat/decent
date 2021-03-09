@@ -1,6 +1,6 @@
 const { h, Component } = require('preact')
+const { default: Provider } = require('preact-context-provider')
 const Portal = require('preact-portal')
-const Provider = require('preact-context-provider')
 
 class Dropdown extends Component {
   state = {x: 0, y: 0, ok: false}

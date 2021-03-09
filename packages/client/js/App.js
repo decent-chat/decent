@@ -1,5 +1,5 @@
 const { h, render, Component } = require('preact')
-const Provider = require('preact-context-provider')
+const { default: Provider } = require('preact-context-provider')
 const Pool = require('./ServerPool')
 const Atom = require('./ServerPool/Atom')
 const storage = require('./storage')

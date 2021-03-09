@@ -1,6 +1,6 @@
 const { h, Component } = require('preact')
+const { default: Provider } = require('preact-context-provider')
 const Portal = require('preact-portal')
-const Provider = require('preact-context-provider')
 
 class Modal extends Component {
   inputs = {}
