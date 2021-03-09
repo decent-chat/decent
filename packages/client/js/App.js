@@ -108,7 +108,7 @@ class App extends Component {
           >
             {failedToConnect && <p class='Modal-muted'>
               <b>Failed to connect to your saved servers.</b> Decent will keep trying
-              to reconnect, but in the meantime you can join another server here.
+              to reconnect, but in the meantime you can connect to another server here.
             </p>}
 
             <Modal.Input focus final name='hostname' label='Hostname'/>
@@ -134,7 +134,7 @@ class App extends Component {
           <RightSidebar/>
 
           {showJoinServerModal && <Modal.Async
-            title='Join server'
+            title='Connect to server'
             submit={async ({ hostname }) => {
               if (hostname === '') throw ''
 
