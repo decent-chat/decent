@@ -6,6 +6,12 @@ const mrk = require('mrk.js/async')
 const { serverPropertiesID, getAllSettings, setSetting } = require('./settings')
 
 module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
+  // Symbol which can be passed to some functions to indicate particular
+  // behavior coming from the CLI. Sorta hacky? But necessary to keep other
+  // code places which use these utility functions from accidentally doing
+  // things they shouldn't.
+  const fromCLI = Symbol()
+
   // The olde General Valid Name regex. In the off-chance it's decided that
   // emojis should be allowed (or whatever) in channel/user/etc names, this
   // regex can be updated.
@@ -118,9 +124,19 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
 
     const { rolePrioritizationOrder } = await getAllSettings(db.settings, serverPropertiesID)
 
-    const highestRoleID = await getHighestRoleOfUser(actorUserID)
-    const highestRoleIndex = rolePrioritizationOrder.indexOf(highestRoleID)
-    rolePrioritizationOrder.splice(highestRoleIndex + 1, 0, role._id)
+    if (actorUserID === fromCLI) {
+      // If this is coming from the CLI, there is no user whose highest role
+      // we would place this new role under. So, place the new role at the top.
+      // (This is pretty much only expected to be used for creating the admin
+      // role.)
+      rolePrioritizationOrder.unshift(role._id);
+    } else if (!actorUserID) {
+      throw new Error('Expected actor user ID!');
+    } else {
+      const highestRoleID = await getHighestRoleOfUser(actorUserID)
+      const highestRoleIndex = rolePrioritizationOrder.indexOf(highestRoleID)
+      rolePrioritizationOrder.splice(highestRoleIndex + 1, 0, role._id)
+    }
 
     await setSetting(
       db.settings, serverPropertiesID,
@@ -268,6 +284,7 @@ module.exports = function makeCommonUtils({db, connectedSocketsMap}) {
   }
 
   return {
+    fromCLI,
     isNameValid,
     asUnixDate, unixDateNow,
     getUserIDBySessionID, getUserBySessionID,

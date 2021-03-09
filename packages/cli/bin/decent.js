@@ -159,7 +159,10 @@ server(port, dbDir).then(async ({ settings, app, db, serialize, sendToAllSockets
               perms[key] = true
             }
 
-            adminRole = await util.addRole('Admin', perms)
+            // Pass fromCLI to indicate that this role isn't being created by
+            // an existing user and should thus be placed at the top of the top
+            // of the role prioritization list.
+            adminRole = await util.addRole('Admin', perms, util.fromCLI)
             console.log(`Created 'Admin' role.`)
           }
 
