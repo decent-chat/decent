@@ -67,7 +67,7 @@
     "build:js": "browserify --debug js/App.js -r preact-compat:react -r preact-compat:react-dom -o dist/bundle.js",
     "watch:js": "watchify --debug js/App.js -r preact-compat:react -r preact-compat:react-dom -o dist/bundle.js --verbose",
     "build:favicon": "real-favicon generate favicon.json favicon-data.json img/favicon",
-    "build": "npm run build:css && npm run build:js # NOTE: favicon module is currently broken. && npm run build:favicon",
+    "build": "npm run build:css && npm run build:js",
     "watch": "concurrently \"npm run watch:css\" \"npm run watch:js\"",
     "serve": "concurrently \"npm run watch:css\" \"budo js/App.js:dist/bundle.js --live \\\"*\\\" --open -- --debug -r preact-compat:react -r preact-compat:react-dom\"",
     "prepublishOnly": "npm run build"
