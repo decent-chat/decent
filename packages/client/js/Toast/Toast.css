@@ -18,9 +18,11 @@
   }
 }
 
-.theme-dark .Toast {
-  box-shadow: none;
-  border: 2px solid var(--base26);
+@media (prefers-color-scheme: dark) {
+  .Toast {
+    box-shadow: none;
+    border: 2px solid var(--base26);
+  }
 }
 
 /* Icon container */

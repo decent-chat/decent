@@ -2,8 +2,10 @@
   --loading-icon: url(../img/decent-logo.svg);
 }
 
-.theme-dark {
-  --loading-icon: url(../img/decent-logo-red.svg);
+@media (prefers-color-scheme: dark) {
+  :root {
+    --loading-icon: url(../img/decent-logo-red.svg);
+  }
 }
 
 .Loading {
