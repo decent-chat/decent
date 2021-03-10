@@ -35,7 +35,8 @@ class SessionInfo extends Component {
     this.setState({serverName: pool.activeServer.client.serverName})
   }
 
-  render(_, { me, serverName, signInVisible, registerVisible, userDrop }) {
+  render({ onOpenAccountSettings },
+         { me, serverName, signInVisible, registerVisible, userDrop }) {
     if (me) {
       return <div class='Sidebar-section SessionInfo --signed-in'>
         <div class='SessionInfo-user' onClick={evt => {
@@ -58,9 +59,17 @@ class SessionInfo extends Component {
           <div class='Dropdown-text'>Signed in as <b>{me.username}</b></div>
           <div class='Dropdown-separator'></div>
           <div class='Dropdown-listItem' onClick={() => {
+            onOpenAccountSettings()
+            this.setState({userDrop: false})
+          }}>
+            Account settings
+          </div>
+          <div class='Dropdown-listItem' onClick={() => {
             this.context.pool.activeServer.client.logout()
-            this.setState({yserDrop: false})
-          }}>Sign out</div>
+            this.setState({userDrop: false})
+          }}>
+            Sign out
+          </div>
         </Dropdown>}
       </div>
     } else {

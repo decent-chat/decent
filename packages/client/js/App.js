@@ -24,6 +24,7 @@ class App extends Component {
   state = {
     isLoading: true,
     disconnected: false,
+    showAccountSettingsModal: false,
     showJoinServerModal: false,
     serverListVisible: false,
   }
@@ -74,7 +75,7 @@ class App extends Component {
     document.title = `${unreadStr} ${channelStr}+${activeServer.hostname} - Decent`
   }
 
-  render(_, { isLoading, showJoinServerModal, disconnected, serverListVisible }) {
+  render(_, { isLoading, showAccountSettingsModal, showJoinServerModal, disconnected, serverListVisible }) {
     const activeServer = this.pool.activeServer
     const failedToConnect = this.pool.failedServers.length > 0
 
@@ -128,10 +129,25 @@ class App extends Component {
               storage.save('serverListVisible', !this.state.serverListVisible)
               this.setState({serverListVisible: !this.state.serverListVisible})
             }}
+            onAccountSettingsClick={() => this.setState({showAccountSettingsModal: true})}
             onJoinClick={() => this.setState({showJoinServerModal: true})}
           />
           <Messages channel={client.channels.nth(ui.activeChannelIndex.get())}/>
           <RightSidebar/>
+
+          {showAccountSettingsModal && <Modal.Async
+            title='Account settings'
+            submit={async ({email, flair}) => {
+              await client.me.update({email, flair});
+            }}
+            onHide={() => this.setState({showAccountSettingsModal: false})}
+          >
+            <p>These settings apply for user <b>{client.me.username}</b> on server <b>{client.serverName}</b>.</p>
+            <Modal.Input focus final name='email' label='Email' defaultValue={client.me.email} />
+            <Modal.Input final name='flair' label='Flair' defaultValue={client.me.flair} />
+            <Modal.Button action='submit'>Apply</Modal.Button>
+            <Modal.Button class='--no-bg' action='cancel'>Cancel</Modal.Button>
+          </Modal.Async>}
 
           {showJoinServerModal && <Modal.Async
             title='Join server'

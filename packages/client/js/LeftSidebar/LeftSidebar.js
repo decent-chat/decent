@@ -4,7 +4,7 @@ const ChannelList = require('./ChannelList')
 const SessionInfo = require('./SessionInfo')
 
 class LeftSidebar extends Component {
-  render({ onJoinClick, toggleServerList }) {
+  render({ onAccountSettingsClick, onJoinClick, toggleServerList }) {
 
     return <aside class='Sidebar --on-left'>
       <ServerDetails toggleServerList={toggleServerList} onAddServer={onJoinClick}/>
@@ -12,7 +12,7 @@ class LeftSidebar extends Component {
 
       <div class='Sidebar-spacer'></div>
 
-      <SessionInfo />
+      <SessionInfo onOpenAccountSettings={onAccountSettingsClick} />
     </aside>
   }
 }
