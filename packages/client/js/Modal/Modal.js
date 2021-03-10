@@ -78,6 +78,13 @@ class Input extends Component {
 
   inputRef = ref => this.input = ref
 
+  constructor({defaultValue}) {
+    super();
+    if (defaultValue) {
+      this.setState({value: defaultValue});
+    }
+  }
+
   componentDidMount() {
     const { value } = this.input
     this.context.modalUpdateInput(this.props.name, value)
