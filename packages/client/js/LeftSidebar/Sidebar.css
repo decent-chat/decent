@@ -20,7 +20,7 @@
     --sidebar-fg: var(--base06);
     --sidebar-bg: var(--base00);
 
-    box-shadow: 0 0 1px var(--base14);
+    box-shadow: 0 0 1px var(--base04);
   }
 
   &.\--on-right {
@@ -33,9 +33,9 @@
     --sidebar-list-item-hoverfg: var(--base0D);
     --sidebar-list-item-hoverbg: var(--base1D);
 
-    & .Sidebar-section {
-      border-left: 1px solid var(--base12);
+    box-shadow: 0 0 1px var(--base04);
 
+    & .Sidebar-section {
       &:last-child {
         flex-grow: 1;
       }

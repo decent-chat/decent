@@ -135,6 +135,10 @@ body {
 
   height: 100vh;
 
+  /* Aligning box-shadows is easiest when the sidebars are below the main view. */
+  & > .Sidebar { z-index: 1; }
+  & > main { z-index: 2; }
+
   & > main {
     display: flex;
     flex-direction: column;
