@@ -18,7 +18,9 @@
   color: var(--base00);
 
   cursor: pointer;
-  :disabled { cursor: default; }
+  &:disabled { cursor: default; }
+
+  user-select: none;
 
   &.\--red { background-color: var(--base0F); color: var(--base00); }
 

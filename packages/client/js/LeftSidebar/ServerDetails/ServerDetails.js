@@ -57,7 +57,7 @@ class ServerDetails extends Component {
           onAddServer()
           this.setState({dropdownVisible: false})
         }}>
-          Join server...
+          Connect to a server...
         </div>
 
         <div class='Dropdown-listItem' onClick={() => {
@@ -71,7 +71,7 @@ class ServerDetails extends Component {
           this.setState({dropdownVisible: false})
           this.context.pool.remove(this.context.pool.activeIndex)
         }}>
-          Leave <b>{client.serverName}</b>
+          Forget <b>{client.serverName}</b>
         </div>
       </Dropdown>}
     </div>

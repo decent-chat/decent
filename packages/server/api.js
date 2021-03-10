@@ -1598,6 +1598,11 @@ module.exports = async function attachAPI(app, {wss, db, dbDir}) {
       })
     })
 
+    socket.on('error', () => {
+      // TODO: surface errors other than ECONNRESET. Surfacing should not
+      // involve killing the process (like unhandled errors do).
+    })
+
     socket.on('close', async () => {
       const socketData = connectedSocketsMap.get(socket)
       connectedSocketsMap.delete(socket)

@@ -16,10 +16,6 @@ const Icon = require('./Icon')
 const Toast = require('./Toast')
 const Messages = require('./Messages')
 
-// TODO: make theming an actual option
-const theme = require('./theme')
-theme.apply(theme.light)
-
 class App extends Component {
   state = {
     isLoading: true,
@@ -109,7 +105,7 @@ class App extends Component {
           >
             {failedToConnect && <p class='Modal-muted'>
               <b>Failed to connect to your saved servers.</b> Decent will keep trying
-              to reconnect, but in the meantime you can join another server here.
+              to reconnect, but in the meantime you can connect to another server here.
             </p>}
 
             <Modal.Input focus final name='hostname' label='Hostname'/>
@@ -150,7 +146,7 @@ class App extends Component {
           </Modal.Async>}
 
           {showJoinServerModal && <Modal.Async
-            title='Join server'
+            title='Connect to server'
             submit={async ({ hostname }) => {
               if (hostname === '') throw ''
 
