@@ -1,4 +1,3 @@
-const fetch = require('./fetch')
 const typeforce = require('typeforce')
 const { Thing, Things, SET_DATA } = require('./things')
 const { Message } = require('./channels')
@@ -15,6 +14,16 @@ const userType = {
   roleIDs: typeforce.arrayOf('String'),
 
   email: '?String',
+}
+
+const detailsType = {
+  password: typeforce.maybe({
+    old: 'String',
+    new: 'String'
+  }),
+
+  email: '?String',
+  flair: '?String'
 }
 
 class User extends Thing {
@@ -74,7 +83,14 @@ class User extends Thing {
 
   // TODO: grantRole(role)
   // TODO: revokeRole(role)
-  // TODO: async update({ password, email, flair })
+
+  async update(details) {
+    typeforce(detailsType, details)
+    await this.client.fetch('/api/users/' + this.id, {
+      method: 'PATCH',
+      body: details
+    })
+  }
 
   toString() {
     return `<@${this.id}>`
