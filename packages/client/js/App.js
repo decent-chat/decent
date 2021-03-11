@@ -21,6 +21,7 @@ class App extends Component {
     isLoading: true,
     disconnected: false,
     showAccountSettingsModal: false,
+    showServerSettingsModal: false,
     showJoinServerModal: false,
     serverListVisible: false,
   }
@@ -71,7 +72,7 @@ class App extends Component {
     document.title = `${unreadStr} ${channelStr}+${activeServer.hostname} - Decent`
   }
 
-  render(_, { isLoading, showAccountSettingsModal, showJoinServerModal, disconnected, serverListVisible }) {
+  render(_, { isLoading, showAccountSettingsModal, showServerSettingsModal, showJoinServerModal, disconnected, serverListVisible }) {
     const activeServer = this.pool.activeServer
     const failedToConnect = this.pool.failedServers.length > 0
 
@@ -126,6 +127,7 @@ class App extends Component {
               this.setState({serverListVisible: !this.state.serverListVisible})
             }}
             onAccountSettingsClick={() => this.setState({showAccountSettingsModal: true})}
+            onServerSettingsClick={() => this.setState({showServerSettingsModal: true})}
             onJoinClick={() => this.setState({showJoinServerModal: true})}
           />
           <Messages channel={client.channels.nth(ui.activeChannelIndex.get())}/>
@@ -141,6 +143,20 @@ class App extends Component {
             <p>These settings apply for user <b>{client.me.username}</b> on server <b>{client.serverName}</b>.</p>
             <Modal.Input focus final name='email' label='Email' defaultValue={client.me.email} />
             <Modal.Input final name='flair' label='Flair' defaultValue={client.me.flair} />
+            <Modal.Button action='submit'>Apply</Modal.Button>
+            <Modal.Button class='--no-bg' action='cancel'>Cancel</Modal.Button>
+          </Modal.Async>}
+
+          {showServerSettingsModal && <Modal.Async
+            title='Server settings'
+            submit={async ({name, iconURL}) => {
+              await client.setServerName(name)
+              await client.setServerIconURL(iconURL)
+            }}
+            onHide={() => this.setState({showServerSettingsModal: false})}
+          >
+            <Modal.Input focus final name='name' label='Server Name' defaultValue={client.serverName} />
+            <Modal.Input final name='iconURL' label='Icon URL' defaultValue={client.serverIconURL} />
             <Modal.Button action='submit'>Apply</Modal.Button>
             <Modal.Button class='--no-bg' action='cancel'>Cancel</Modal.Button>
           </Modal.Async>}

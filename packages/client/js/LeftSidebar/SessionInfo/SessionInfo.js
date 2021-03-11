@@ -5,6 +5,7 @@ const Dropdown = require('/Dropdown')
 class SessionInfo extends Component {
   state = {
     me: null,
+    permissions: {},
     serverName: null,
     signInVisible: false,
     registerVisible: false,
@@ -35,12 +36,17 @@ class SessionInfo extends Component {
     this.setState({serverName: pool.activeServer.client.serverName})
   }
 
-  render({ onOpenAccountSettings },
-         { me, serverName, signInVisible, registerVisible, userDrop }) {
+  _updatePermissions(me) {
+    me.getPermissions().then(permissions => this.setState({permissions}))
+  }
+
+  render({ onOpenAccountSettings, onOpenServerSettings },
+         { me, permissions, serverName, signInVisible, registerVisible, userDrop }) {
     if (me) {
       return <div class='Sidebar-section SessionInfo --signed-in'>
         <div class='SessionInfo-user' onClick={evt => {
           this.setState({userDrop: evt})
+          this._updatePermissions(me)
         }}>
           <img src={me.avatarURL} class='SessionInfo-avatar Avatar' />
           <span class='SessionInfo-username'>{me.username}</span>
@@ -58,6 +64,12 @@ class SessionInfo extends Component {
         >
           <div class='Dropdown-text'>Signed in as <b>{me.username}</b></div>
           <div class='Dropdown-separator'></div>
+          {permissions.manageServer && <div class='Dropdown-listItem' onClick={() => {
+            onOpenServerSettings()
+            this.setState({userDrop: false})
+          }}>
+            Server settings
+          </div>}
           <div class='Dropdown-listItem' onClick={() => {
             onOpenAccountSettings()
             this.setState({userDrop: false})
