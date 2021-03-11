@@ -164,7 +164,7 @@ class Client extends EventEmitter {
     typeforce('String', name)
 
     await this.fetch('/api/settings', {
-      method: 'POST',
+      method: 'PATCH',
       body: {name}
     })
 
@@ -175,7 +175,7 @@ class Client extends EventEmitter {
     typeforce('String', url)
 
     await this.fetch('/api/settings', {
-      method: 'POST',
+      method: 'PATCH',
       body: {iconURL: url}
     })
 
